@@ -1,0 +1,12 @@
+reviews:
+  request_changes_workflow: true
+  path_filters:
+    - '!.agents/skills/**'
+    - '!.claude/skills/**'
+    - '!skills-lock.json'
+    - '!bun.lock'
+  tools:
+    biome:
+      enabled: false
+    eslint:
+      enabled: false
