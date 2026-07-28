@@ -1,7 +1,7 @@
 import { defineCommand } from 'citty';
 import { resolve } from 'node:path';
 
-import { findRepositoryRoot } from '../repository.ts';
+import { planInitialization } from '../initialize.ts';
 
 export default defineCommand({
   meta: {
@@ -16,14 +16,14 @@ export default defineCommand({
     },
   },
   async run({ args }) {
-    const root = await findRepositoryRoot(args.cwd);
+    const plan = await planInitialization(args.cwd);
 
-    if (root === undefined) {
+    if (plan === undefined) {
       throw new Error(
         `no git repository above ${resolve(args.cwd)}. ket keeps its state at the repository root, so run this inside a repository`,
       );
     }
 
-    return { root };
+    return plan;
   },
 });
