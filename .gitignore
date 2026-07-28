@@ -1,0 +1,11 @@
+node_modules/
+.stryker-tmp/
+reports/
+*.log
+.DS_Store
+.turbo
+dist/
+*.tsbuildinfo
+
+# Local scratch, never committed
+.trash

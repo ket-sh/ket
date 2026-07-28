@@ -1,0 +1,25 @@
+{
+  "name": "ket",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.3.14",
+  "workspaces": [
+    "packages/*",
+    "presets/*"
+  ],
+  "engines": {
+    "bun": ">=1.3.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "check-types": "turbo run check-types",
+    "gate": "turbo run gate"
+  },
+  "devDependencies": {
+    "turbo": "^2.10.7",
+    "typescript": "^5.9.3"
+  },
+  "trustedDependencies": []
+}
