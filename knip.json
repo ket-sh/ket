@@ -1,6 +1,13 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": [".claude/workflows/**/*.{mts,mjs}"],
-  "project": [".claude/workflows/**/*.{mts,mjs}"],
-  "ignoreBinaries": ["mise"]
+  "ignoreBinaries": ["mise"],
+  "workspaces": {
+    ".": {
+      "entry": [".claude/workflows/**/*.{mts,mjs}"],
+      "project": [".claude/workflows/**/*.{mts,mjs}"]
+    },
+    "packages/cli": {
+      "project": ["src/**/*.ts"]
+    }
+  }
 }

@@ -15,6 +15,7 @@ depcruise
 dorny
 electricsql
 frontmatter
+gitdir
 gitleaks
 jscpd
 Karpathy
