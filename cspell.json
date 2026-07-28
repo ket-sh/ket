@@ -25,6 +25,7 @@
     ".vale/styles",
     ".git",
     "bun.lock",
+    "skills-lock.json",
     "cspell-words.txt"
   ],
   "useGitignore": true,

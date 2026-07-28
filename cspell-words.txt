@@ -1,4 +1,3 @@
-Karpathy
 aaabbccccd
 arrayify
 artipacked
@@ -15,6 +14,7 @@ electricsql
 frontmatter
 gitleaks
 jscpd
+Karpathy
 ket
 lefthook
 lockfiles
@@ -35,6 +35,7 @@ tsarch
 tsconfigs
 tsgolint
 turborepo
+unlinted
 unlocks
 usecase
 usecases
