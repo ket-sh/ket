@@ -21,6 +21,19 @@ describe('planning what init will write', () => {
     await expect(planInitialization(repository)).resolves.toStrictEqual({
       root: repository,
       key: 'OFS',
+      configured: false,
+    });
+  });
+
+  it('reports a repository that already carries .ket as configured', async () => {
+    const repository = await makeRepository('order-fulfilment-service');
+
+    await mkdir(join(repository, '.ket'));
+
+    await expect(planInitialization(repository)).resolves.toStrictEqual({
+      root: repository,
+      key: 'OFS',
+      configured: true,
     });
   });
 
@@ -33,6 +46,7 @@ describe('planning what init will write', () => {
     await expect(planInitialization(deep)).resolves.toStrictEqual({
       root: repository,
       key: 'BG',
+      configured: false,
     });
   });
 
@@ -42,6 +56,7 @@ describe('planning what init will write', () => {
     await expect(planInitialization(repository)).resolves.toStrictEqual({
       root: repository,
       key: undefined,
+      configured: false,
     });
   });
 

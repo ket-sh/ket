@@ -1,11 +1,22 @@
-import { basename } from 'node:path';
+import { access } from 'node:fs/promises';
+import { basename, join } from 'node:path';
 
 import { deriveProjectKey } from './project-key.ts';
 import { findRepositoryRoot } from './repository.ts';
 
+export const KET_DIRECTORY = '.ket';
+
 export interface InitializationPlan {
   root: string;
   key: string | undefined;
+  configured: boolean;
+}
+
+async function carriesKetDirectory(root: string): Promise<boolean> {
+  return access(join(root, KET_DIRECTORY)).then(
+    () => true,
+    () => false,
+  );
 }
 
 export async function planInitialization(
@@ -17,5 +28,9 @@ export async function planInitialization(
     return undefined;
   }
 
-  return { root, key: deriveProjectKey(basename(root)) };
+  return {
+    root,
+    key: deriveProjectKey(basename(root)),
+    configured: await carriesKetDirectory(root),
+  };
 }
