@@ -23,6 +23,14 @@ pre-commit:
       priority: 1
       glob: '*.md'
       run: mise install -q && (test .vale/styles/Microsoft -nt .vale.ini || mise exec -- vale sync) && bun run lint:prose
+    - name: workflows
+      priority: 1
+      glob: '.github/workflows/*.{yml,yaml}'
+      run: bun run lint:workflows
+    - name: dead
+      priority: 1
+      glob: '*.{ts,tsx,mts}'
+      run: bun run lint:dead
     - name: fmt
       priority: 2
       glob: '*.{ts,tsx,mts,js,jsx,mjs,cjs,json,md,yaml,yml,html,css}'
