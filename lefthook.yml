@@ -35,6 +35,10 @@ pre-commit:
       priority: 1
       glob: '{packages,presets}/**/*.{ts,tsx}'
       run: bun run lint:boundaries
+    - name: fsd
+      priority: 1
+      glob: 'packages/tui/src/**/*.{ts,tsx}'
+      run: bun run lint:fsd
     - name: fmt
       priority: 2
       glob: '*.{ts,tsx,mts,js,jsx,mjs,cjs,json,md,yaml,yml,html,css}'

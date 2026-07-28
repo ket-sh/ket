@@ -11,7 +11,7 @@
     "build": "turbo run build",
     "test": "turbo run test",
     "lint": "turbo run lint",
-    "check-types": "turbo run check-types && bun run check-types:workflows",
+    "check-types": "turbo run check-types && bun run check-types:workflows && bun run check-types:root-configs",
     "check-types:workflows": "tsc -p .claude/workflows/tsconfig.json",
     "lint:prose": "mise exec -- vale .",
     "lint:spell": "cspell --no-progress \"**\"",
@@ -20,13 +20,17 @@
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "gate": "turbo run gate",
-    "lint:boundaries": "depcruise packages presets --config .dependency-cruiser.cjs"
+    "lint:boundaries": "depcruise packages presets --config .dependency-cruiser.cjs",
+    "lint:fsd": "steiger packages/tui/src --fail-on-warnings",
+    "check-types:root-configs": "tsc -p tsconfig.root-configs.json"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.1",
     "@commitlint/config-conventional": "21.2.0",
+    "@feature-sliced/steiger-plugin": "0.7.0",
     "@nizos/probity": "1.10.0",
     "@opentui/react": "0.4.5",
+    "@steiger/toolkit": "0.2.3",
     "@stryker-mutator/core": "9.6.1",
     "@stryker-mutator/vitest-runner": "9.6.1",
     "@stylistic/eslint-plugin": "5.10.0",
@@ -40,6 +44,7 @@
     "oxfmt": "0.61.0",
     "oxlint": "1.76.0",
     "oxlint-tsgolint": "7.0.2001",
+    "steiger": "0.6.0",
     "turbo": "2.10.7",
     "typescript": "5.9.3",
     "vitest": "4.1.10"

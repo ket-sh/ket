@@ -1,5 +1,5 @@
-import type { Status } from './appearance.ts';
-import type { Size, Stage } from './pipeline.ts';
+import type { Status } from '../lib';
+import type { Size, Stage } from '../lib';
 
 export interface StageView {
   stage: Stage;

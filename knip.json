@@ -3,11 +3,22 @@
   "ignoreBinaries": ["mise"],
   "workspaces": {
     ".": {
-      "entry": [".claude/workflows/**/*.{mts,mjs}", "probity.config.ts", "commitlint.config.ts"],
-      "project": [".claude/workflows/**/*.{mts,mjs}", "probity.config.ts", "commitlint.config.ts"]
+      "entry": [
+        ".claude/workflows/**/*.{mts,mjs}",
+        "probity.config.ts",
+        "commitlint.config.ts",
+        "steiger.config.ts"
+      ],
+      "project": [
+        ".claude/workflows/**/*.{mts,mjs}",
+        "probity.config.ts",
+        "commitlint.config.ts",
+        "steiger.config.ts"
+      ]
     },
     "packages/cli": {
       "project": ["src/**/*.ts"]
     }
-  }
+  },
+  "ignoreDependencies": ["@steiger/toolkit"]
 }
