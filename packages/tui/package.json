@@ -1,22 +1,22 @@
 {
-  "name": "@ket/cli",
+  "name": "@ket/tui",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/run.ts"
+    ".": "./src/index.ts"
   },
   "scripts": {
-    "build": "bun build src/run.ts --compile --outfile dist/ket",
     "test": "vitest run",
     "lint": "oxlint --config ../../.oxlintrc.json .",
     "fmt": "oxfmt --config ../../.oxfmtrc.json .",
     "fmt:check": "oxfmt --config ../../.oxfmtrc.json --check .",
-    "check-types": "tsc --noEmit -p tsconfig.json",
-    "test:mutation": "stryker run"
+    "check-types": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@ket/tui": "workspace:*",
-    "citty": "0.2.2"
+    "@opentui/core": "0.4.5",
+    "@opentui/react": "0.4.5",
+    "cli-spinners": "3.4.0",
+    "react": "19.2.8"
   }
 }

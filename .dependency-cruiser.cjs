@@ -18,7 +18,10 @@ module.exports = {
         'A package reaches another through its published entry, never by path. Deep imports outlive the refactor that breaks them.',
       severity: 'error',
       from: { path: WORKSPACE },
-      to: { path: WORKSPACE, pathNot: '^$1/$2/src/' },
+      to: {
+        path: WORKSPACE,
+        pathNot: ['^$1/$2/src/', '^(packages|presets)/[^/]+/src/index\\.ts$'],
+      },
     },
     {
       name: 'no-orphans',

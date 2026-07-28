@@ -8,7 +8,9 @@ export default defineCommand({
     description: 'Watch the pipeline as it runs',
   },
   args: COMMAND_ARGS,
-  run() {
-    throw new Error('the watch view is not built yet');
+  async run() {
+    const { watch } = await import('@ket/tui');
+
+    await watch();
   },
 });

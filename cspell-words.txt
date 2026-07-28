@@ -37,10 +37,12 @@ pglite
 pipx
 probity
 rhysd
+scrollbox
 semgrep
 shellcheck
 stryker
 testcontainers
+titleAlignment
 tsarch
 tsconfigs
 tsgolint

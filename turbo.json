@@ -10,11 +10,15 @@
       "dependsOn": ["^build"]
     },
     "lint": {},
+    "fmt": {
+      "cache": false
+    },
+    "fmt:check": {},
     "test": {
       "dependsOn": ["^build"]
     },
     "gate": {
-      "dependsOn": ["lint", "check-types", "test"]
+      "dependsOn": ["lint", "fmt:check", "check-types", "test"]
     }
   }
 }
