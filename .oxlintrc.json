@@ -177,23 +177,7 @@
     "typescript/no-unsafe-return": "error",
     "typescript/no-unsafe-unary-minus": "error",
     "typescript/no-useless-default-assignment": "error",
-    "typescript/only-throw-error": [
-      "error",
-      {
-        "allow": [
-          {
-            "from": "package",
-            "name": "Redirect",
-            "package": "@tanstack/router-core"
-          },
-          {
-            "from": "package",
-            "name": "NotFoundError",
-            "package": "@tanstack/router-core"
-          }
-        ]
-      }
-    ],
+    "typescript/only-throw-error": "error",
     "typescript/prefer-find": "error",
     "typescript/prefer-includes": "error",
     "typescript/prefer-optional-chain": "error",

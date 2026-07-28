@@ -21,8 +21,10 @@
     "erasableSyntaxOnly": true,
     "noUncheckedSideEffectImports": true,
     "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
-    "skipLibCheck": true
-  },
-  "$comment": "Extend this from each package. Settings are settled in reference/README.md."
+    "skipLibCheck": true,
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
+  }
 }
