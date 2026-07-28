@@ -20,5 +20,5 @@
       "project": ["src/**/*.ts"]
     }
   },
-  "ignoreDependencies": ["@steiger/toolkit"]
+  "ignoreDependencies": ["@steiger/toolkit", "pilotty"]
 }

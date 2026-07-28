@@ -25,6 +25,12 @@
       "skillPath": "plugins/javascript-typescript/skills/javascript-testing-patterns/SKILL.md",
       "computedHash": "8d0a8d7615ff343770af0218720691d56c55ae258793565936c8b3a97e188f51"
     },
+    "opentui": {
+      "source": "msmps/opentui-skill",
+      "sourceType": "github",
+      "skillPath": "skill/opentui/SKILL.md",
+      "computedHash": "ccd85cd91952b9a711aa88d9ce6f01862e3cdc8136ac580ef830067cb5d9bd3f"
+    },
     "turborepo": {
       "source": "vercel/turborepo",
       "sourceType": "github",

@@ -1,5 +1,6 @@
 aaabbccccd
 actionlint
+anscribe
 arrayify
 artipacked
 backoff
@@ -29,11 +30,13 @@ nizos
 nofilter
 openspec
 opentui
+opentui-spinner
 oxfmt
 oxfmtrc
 oxlint
 oxlintrc
 pglite
+pilotty
 pipx
 probity
 rhysd
@@ -47,6 +50,7 @@ titleAlignment
 tsarch
 tsconfigs
 tsgolint
+tuiparts
 turborepo
 unlinted
 unlocks

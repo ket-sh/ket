@@ -22,11 +22,11 @@ describe('showing a stage by its status', () => {
     expect(appearanceOf('active', BLINK_FRAMES * 2).color).toBe(lit);
   });
 
-  it('turns the running mark so the screen never looks frozen', () => {
-    expect(appearanceOf('active', 0).mark).not.toBe(appearanceOf('active', 1).mark);
+  it('leaves the running mark to the spinner component', () => {
+    expect(appearanceOf('active', 0).mark).toBe('');
   });
 
-  it('holds every other mark still', () => {
+  it('holds every settled mark still', () => {
     expect(appearanceOf('done', 0).mark).toBe(appearanceOf('done', 7).mark);
     expect(appearanceOf('blocked', 0).mark).toBe(appearanceOf('blocked', 7).mark);
   });

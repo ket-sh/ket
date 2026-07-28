@@ -1,3 +1,4 @@
+import 'opentui-spinner/react';
 import type { ReactNode } from 'react';
 
 import type { StageView } from '../../../shared/model';
@@ -29,7 +30,14 @@ function StageBox({
       titleAlignment="center"
       {...(stage.note === undefined ? {} : { title: stage.note })}
     >
-      <text fg={color}>{`${mark} ${stage.stage}`}</text>
+      <box flexDirection="row" flexShrink={0}>
+        {stage.status === 'active' ? (
+          <spinner name="dots" color={color} />
+        ) : (
+          <text fg={color}>{mark}</text>
+        )}
+        <text fg={color}>{` ${stage.stage}`}</text>
+      </box>
     </box>
   );
 }
