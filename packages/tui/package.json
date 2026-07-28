@@ -7,8 +7,9 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "test": "vitest run",
-    "test:components": "bun test src/**/*.test.tsx",
+    "dev": "bun src/app/dev.ts",
+    "test": "vitest run && bun test .test.tsx",
+    "test:components": "bun test .test.tsx",
     "lint": "oxlint --config ../../.oxlintrc.json .",
     "fmt": "oxfmt --config ../../.oxfmtrc.json .",
     "fmt:check": "oxfmt --config ../../.oxfmtrc.json --check .",
@@ -19,5 +20,8 @@
     "@opentui/react": "0.4.5",
     "opentui-spinner": "^0.0.7",
     "react": "19.2.8"
+  },
+  "devDependencies": {
+    "@anscribe/opentui": "1.0.1"
   }
 }

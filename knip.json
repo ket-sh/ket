@@ -18,6 +18,10 @@
     },
     "packages/cli": {
       "project": ["src/**/*.ts"]
+    },
+    "packages/tui": {
+      "entry": ["src/index.ts", "src/app/dev.ts", "src/**/*.test.tsx"],
+      "project": ["src/**/*.{ts,tsx}"]
     }
   },
   "ignoreDependencies": ["@steiger/toolkit", "pilotty"]

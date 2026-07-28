@@ -50,6 +50,8 @@ outside version control, and it carries the reasoning behind every rule below.
 
 - Bun runs everything: ket itself and every project ket scaffolds.
 - Vitest owns the tests. `bun:test` stays out, because Stryker's mutation runner binds to Vitest, and the mutation gate is this product's central claim.
+- One exception, and it stops there: `*.test.tsx` in `packages/tui` runs under `bun test`, because OpenTUI's core needs Bun's foreign function interface and Vitest can't give it one. Domain code never runs under Bun.
+- `packages/tui` follows Feature-Sliced Design and steiger enforces it. `packages/cli` groups by command instead, with `shared/` holding only what more than one command uses.
 - Use the `turborepo` skill for task pipelines, caching, filtering and workspace structure.
 
 ## Package boundaries
