@@ -1,6 +1,6 @@
 import { defineCommand } from 'citty';
 
-import { COMMAND_ARGS } from '../command-args.ts';
+import { COMMAND_ARGS } from '../../shared/args.ts';
 
 export default defineCommand({
   meta: {

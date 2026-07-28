@@ -1,4 +1,4 @@
-import type { InitializationPlan } from './initialize.ts';
+import type { InitializationPlan } from './plan.ts';
 
 const NO_KEY = 'none derived from the directory name, so init will ask';
 

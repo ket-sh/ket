@@ -1,8 +1,8 @@
 import { defineCommand } from 'citty';
 
 export const commands = {
-  init: async () => (await import('./commands/init.ts')).default,
-  watch: async () => (await import('./commands/watch.ts')).default,
+  init: async () => (await import('./commands/init/command.ts')).default,
+  watch: async () => (await import('./commands/watch/command.ts')).default,
 };
 
 export const main = defineCommand({

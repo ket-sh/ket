@@ -11,8 +11,8 @@
     "!src/**/*.test.ts",
     "!src/main.ts",
     "!src/run.ts",
-    "!src/commands/**",
-    "!src/io/**"
+    "!src/commands/*/command.ts",
+    "!src/shared/write-files.ts"
   ],
   "reporters": ["progress", "clear-text"],
   "coverageAnalysis": "perTest",

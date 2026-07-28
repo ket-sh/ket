@@ -31,6 +31,12 @@
 - A surviving mutant is a defect in the test, not in the threshold. Kill it.
 - Some mutants are equivalent: the mutated code behaves identically, so no test can distinguish it. That's a design signal, not an exemption. It usually means a value is only ever read for truth, as with a boolean consumed by a truthiness check where `false` and `undefined` are interchangeable. Restructure so the distinction matters, or expose the behavior the value actually represents.
 
+## Tests that touch the filesystem stay hermetic
+
+- A test that exercises real I/O names its own temporary directory and never relies on the working directory. Passing `--cwd` isn't optional politeness, it's the boundary.
+- Mutation testing is what makes this strict rather than tidy. Stryker drives the code down branches the author never meant to reach, so a test that would only write somewhere safe "because the happy path goes elsewhere" will eventually write somewhere real.
+- A mutation run that changes anything outside its sandbox is a defect in the test, and it gets fixed in the test.
+
 ## Why this isn't negotiable here
 
 ket exists to prove that AI-written code is what it appears to be, and mutation

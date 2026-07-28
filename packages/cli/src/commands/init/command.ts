@@ -1,11 +1,11 @@
 import { defineCommand } from 'citty';
 import { resolve } from 'node:path';
 
-import { COMMAND_ARGS } from '../command-args.ts';
-import { planInitialization } from '../initialize.ts';
-import { readTextIfPresent, writeFiles } from '../io/write-files.ts';
-import { describePlan } from '../report.ts';
-import { scaffoldFor } from '../scaffold.ts';
+import { COMMAND_ARGS } from '../../shared/args.ts';
+import { readTextIfPresent, writeFiles } from '../../shared/write-files.ts';
+import { planInitialization } from './plan.ts';
+import { describePlan } from './report.ts';
+import { scaffoldFor } from './scaffold.ts';
 
 export default defineCommand({
   meta: {

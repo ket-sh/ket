@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { planInitialization } from './initialize.ts';
+import { planInitialization } from './plan.ts';
 
 async function makeRepository(name: string): Promise<string> {
   const base = await mkdtemp(join(tmpdir(), 'ket-'));

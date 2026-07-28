@@ -1,7 +1,10 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, relative, resolve, sep } from 'node:path';
 
-import type { ScaffoldFile } from '../scaffold.ts';
+export interface ScaffoldFile {
+  path: string;
+  contents: string;
+}
 
 function resolveInside(root: string, path: string): string {
   const target = resolve(root, path);

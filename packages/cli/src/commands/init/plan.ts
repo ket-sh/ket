@@ -1,8 +1,8 @@
 import { access } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 
+import { findRepositoryRoot } from '../../shared/repository.ts';
 import { deriveProjectKey } from './project-key.ts';
-import { findRepositoryRoot } from './repository.ts';
 
 export const KET_DIRECTORY = '.ket';
 

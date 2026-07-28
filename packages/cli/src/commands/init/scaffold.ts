@@ -1,12 +1,9 @@
-import { KET_DIRECTORY } from './initialize.ts';
+import type { ScaffoldFile } from '../../shared/write-files.ts';
+
+import { KET_DIRECTORY } from './plan.ts';
 
 export interface ProjectConfiguration {
   key: string;
-}
-
-export interface ScaffoldFile {
-  path: string;
-  contents: string;
 }
 
 function configContents(configuration: ProjectConfiguration): string {
