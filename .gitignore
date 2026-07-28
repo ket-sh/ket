@@ -9,3 +9,6 @@ dist/
 
 # Local scratch, never committed
 .trash
+
+# Downloaded by `vale sync`
+.vale/styles/Microsoft
