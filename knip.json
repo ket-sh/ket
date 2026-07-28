@@ -3,8 +3,8 @@
   "ignoreBinaries": ["mise"],
   "workspaces": {
     ".": {
-      "entry": [".claude/workflows/**/*.{mts,mjs}"],
-      "project": [".claude/workflows/**/*.{mts,mjs}"]
+      "entry": [".claude/workflows/**/*.{mts,mjs}", "probity.config.ts", "commitlint.config.ts"],
+      "project": [".claude/workflows/**/*.{mts,mjs}", "probity.config.ts", "commitlint.config.ts"]
     },
     "packages/cli": {
       "project": ["src/**/*.ts"]

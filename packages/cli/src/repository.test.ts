@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { findRepositoryRoot } from './repository.ts';
+import { findRepositoryRoot, isRepositoryRoot } from './repository.ts';
 
 async function makeDirectoryTree(...segments: string[]): Promise<string> {
   const base = await mkdtemp(join(tmpdir(), 'ket-'));
@@ -33,6 +33,20 @@ describe('resolving the repository root', () => {
     const root = await findRepositoryRoot(join(base, 'src'));
 
     expect(root).toBe(base);
+  });
+
+  it('reports a directory holding .git as a root', async () => {
+    const base = await makeDirectoryTree('src');
+
+    await mkdir(join(base, '.git'));
+
+    expect(await isRepositoryRoot(base)).toBe(true);
+  });
+
+  it('reports a directory without a .git entry as no root', async () => {
+    const base = await makeDirectoryTree('src');
+
+    expect(await isRepositoryRoot(base)).toBe(false);
   });
 
   it('reports no root when no ancestor holds a .git entry', async () => {

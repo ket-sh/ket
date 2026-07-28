@@ -1,21 +1,18 @@
 import { access } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
-async function holdsGitEntry(directory: string): Promise<boolean> {
-  try {
-    await access(join(directory, '.git'));
-
-    return true;
-  } catch {
-    return false;
-  }
+export async function isRepositoryRoot(directory: string): Promise<boolean> {
+  return access(join(directory, '.git')).then(
+    () => true,
+    () => false,
+  );
 }
 
 export async function findRepositoryRoot(startDirectory: string): Promise<string | undefined> {
   let directory = resolve(startDirectory);
 
   for (;;) {
-    if (await holdsGitEntry(directory)) {
+    if (await isRepositoryRoot(directory)) {
       return directory;
     }
 

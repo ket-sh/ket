@@ -18,6 +18,18 @@
             "command": "c=$(jq -r '.tool_input.command // empty'); case \"$c\" in *--no-verify*|*--no-gpg-sign*) echo 'hook bypass flags are blocked - fix the failing gate instead of skipping it' >&2; exit 2;; esac"
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./node_modules/.bin/probity",
+            "args": ["--agent", "claude-code"],
+            "timeout": 120,
+            "statusMessage": "test-first gate"
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -27,9 +39,7 @@
           {
             "type": "command",
             "command": "bun",
-            "args": [
-              "${CLAUDE_PROJECT_DIR}/.claude/workflows/hooks/format-edit.mts"
-            ],
+            "args": ["${CLAUDE_PROJECT_DIR}/.claude/workflows/hooks/format-edit.mts"],
             "timeout": 60,
             "statusMessage": "oxfmt + oxlint"
           }

@@ -9,13 +9,7 @@
       "addWords": true
     }
   ],
-  "dictionaries": [
-    "ket-words",
-    "typescript",
-    "node",
-    "npm",
-    "softwareTerms"
-  ],
+  "dictionaries": ["ket-words", "typescript", "node", "npm", "softwareTerms"],
   "ignorePaths": [
     "node_modules",
     "dist",
@@ -23,6 +17,8 @@
     ".turbo",
     ".trash",
     ".vale/styles",
+    ".agents",
+    ".claude/skills",
     ".git",
     "bun.lock",
     "skills-lock.json",
@@ -32,9 +28,7 @@
   "overrides": [
     {
       "filename": "**/*.test.ts",
-      "ignoreRegExpList": [
-        "/'[^'\\s]{4,}'/g"
-      ]
+      "ignoreRegExpList": ["/'[^'\\s]{4,}'/g"]
     }
   ]
 }

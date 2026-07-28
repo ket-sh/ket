@@ -10,7 +10,8 @@
     "build": "bun build src/run.ts --compile --outfile dist/ket",
     "test": "vitest run",
     "lint": "oxlint --config ../../.oxlintrc.json .",
-    "check-types": "tsc --noEmit -p tsconfig.json"
+    "check-types": "tsc --noEmit -p tsconfig.json",
+    "test:mutation": "stryker run"
   },
   "dependencies": {
     "citty": "0.2.2"
