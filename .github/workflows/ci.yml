@@ -56,6 +56,7 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run fmt:check
       - run: bunx turbo run lint check-types build test
+      - run: bun run lint:boundaries
       - run: bun run check-types:workflows
       - run: bun run lint:spell
 

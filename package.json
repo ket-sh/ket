@@ -19,7 +19,8 @@
     "lint:workflows": "mise install -q && mise exec -- zizmor --min-severity medium .github/workflows/ && mise exec -- actionlint -color",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
-    "gate": "turbo run gate"
+    "gate": "turbo run gate",
+    "lint:boundaries": "depcruise packages presets --config .dependency-cruiser.cjs"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.1",
@@ -30,6 +31,7 @@
     "@stylistic/eslint-plugin": "5.10.0",
     "@types/bun": "1.3.14",
     "cspell": "10.0.1",
+    "dependency-cruiser": "18.1.0",
     "fast-check": "4.5.0",
     "jscpd": "5.0.14",
     "knip": "6.29.0",

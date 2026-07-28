@@ -31,6 +31,10 @@ pre-commit:
       priority: 1
       glob: '*.{ts,tsx,mts}'
       run: bun run lint:dead
+    - name: boundaries
+      priority: 1
+      glob: '{packages,presets}/**/*.{ts,tsx}'
+      run: bun run lint:boundaries
     - name: fmt
       priority: 2
       glob: '*.{ts,tsx,mts,js,jsx,mjs,cjs,json,md,yaml,yml,html,css}'
