@@ -72,7 +72,7 @@ module.exports = {
   ],
   options: {
     doNotFollow: { path: 'node_modules' },
-    exclude: { path: '(^|/)(dist|coverage|\\.stryker-tmp)/' },
+    exclude: { path: '(^|/)(dist|coverage|\\.stryker-tmp)/|^presets/[^/]+/files/' },
     tsPreCompilationDeps: true,
     enhancedResolveOptions: {
       conditionNames: ['import', 'require', 'node', 'default', 'types'],

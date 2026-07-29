@@ -52,6 +52,10 @@
         "@anscribe/opentui": "1.0.1",
       },
     },
+    "presets/cli": {
+      "name": "@ket/preset-cli",
+      "version": "0.0.0",
+    },
   },
   "packages": {
     "@anscribe/core": ["@anscribe/core@1.0.1", "", { "dependencies": { "effect": "^4.0.0-beta.65", "nanoid": "^5.1.6" } }, "sha512-Sh+e1dw3pdvgAnSbRmedR/QMAXRs+Mq7k6AxDmaKt73f6Q6G1hHX480VvvlFL1h8LsXOYZ/glgaF27ZFKACQ7A=="],
@@ -451,6 +455,8 @@
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.31", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.1.0", "@jridgewell/sourcemap-codec": "^1.4.14" } }, "sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw=="],
 
     "@ket/cli": ["@ket/cli@workspace:packages/cli"],
+
+    "@ket/preset-cli": ["@ket/preset-cli@workspace:presets/cli"],
 
     "@ket/tui": ["@ket/tui@workspace:packages/tui"],
 
