@@ -9,6 +9,7 @@ citty
 clack
 codegen
 coderabbit
+COLORTERM
 consola
 cucumberjs
 dedup
@@ -48,6 +49,7 @@ steiger
 stryker
 testcontainers
 titleAlignment
+truecolor
 tsarch
 tsconfigs
 tsgolint

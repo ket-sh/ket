@@ -1,6 +1,13 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
-  "ignorePatterns": ["dist/**", "coverage/**", ".turbo/**", ".trash/**"],
+  "ignorePatterns": [
+    "dist/**",
+    "coverage/**",
+    ".turbo/**",
+    ".trash/**",
+    ".agents/**",
+    ".claude/**"
+  ],
   "singleQuote": true,
   "embeddedLanguageFormatting": "auto",
   "jsxSingleQuote": false,

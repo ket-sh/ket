@@ -14,7 +14,8 @@
     "!src/commands/*/command.ts",
     "!src/shared/write-files.ts",
     "!src/commands/*/wizard.ts",
-    "!src/shared/git.ts"
+    "!src/shared/git.ts",
+    "!src/commands/*/announce.ts"
   ],
   "reporters": ["progress", "clear-text"],
   "coverageAnalysis": "perTest",

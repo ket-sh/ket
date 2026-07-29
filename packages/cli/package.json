@@ -16,8 +16,11 @@
     "test:mutation": "stryker run"
   },
   "dependencies": {
-    "@clack/prompts": "^1.7.0",
+    "@clack/prompts": "1.7.0",
+    "@ket/preset-cli": "workspace:*",
     "@ket/tui": "workspace:*",
-    "citty": "0.2.2"
+    "citty": "0.2.2",
+    "cli-table3": "0.6.5",
+    "picocolors": "1.1.1"
   }
 }
