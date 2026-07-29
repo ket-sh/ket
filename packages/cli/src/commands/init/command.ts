@@ -34,7 +34,7 @@ export default defineCommand({
 
     const gitignore = await readTextIfPresent(plan.root, '.gitignore');
 
-    await writeFiles(plan.root, scaffoldFor({ key: plan.key }, gitignore));
+    await writeFiles(plan.root, scaffoldFor({ key: plan.key, targets: {} }, gitignore));
 
     for (const line of describePlan(plan)) {
       console.log(line);
