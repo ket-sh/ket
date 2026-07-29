@@ -29,6 +29,7 @@ export const CLI_PRESET: PresetItem = {
   devDependencies: [
     'oxlint@1.76.0',
     'oxfmt@0.61.0',
+    '@stylistic/eslint-plugin@5.10.0',
     'oxlint-tsgolint@7.0.2001',
     'vitest@4.1.10',
     'fast-check@4.5.0',
@@ -51,6 +52,7 @@ export const CLI_PRESET: PresetItem = {
     writes('tsconfig.json', 'tsconfig.json'),
     writes('vitest.config.ts', 'vitest.config.ts'),
     writes('stryker.conf.json', 'stryker.conf.json'),
+    writes('vitest.mutation.config.ts', 'vitest.mutation.config.ts'),
     writes('dependency-cruiser.cjs', '.dependency-cruiser.cjs'),
     writes('knip.json', 'knip.json'),
     writes('jscpd.json', '.jscpd.json'),
@@ -66,5 +68,14 @@ export const CLI_PRESET: PresetItem = {
     writes('vale-styles/Terminology.yml', '.vale/styles/ket/Terminology.yml'),
     writes('vale-styles/Intensifiers.yml', '.vale/styles/ket/Intensifiers.yml'),
     writes('vale-styles/WeakOpeners.yml', '.vale/styles/ket/WeakOpeners.yml'),
+    writes('source/run.ts', 'src/run.ts'),
+    writes('source/main.ts', 'src/main.ts'),
+    writes('source/commands/hello/command.ts', 'src/commands/hello/command.ts'),
+    writes('source/commands/hello/greeting.ts', 'src/commands/hello/greeting.ts'),
+    writes('source/commands/hello/greeting.test.ts', 'src/commands/hello/greeting.test.ts'),
+    writes(
+      'source/commands/hello/greeting.property.test.ts',
+      'src/commands/hello/greeting.property.test.ts',
+    ),
   ],
 };

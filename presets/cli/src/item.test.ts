@@ -1,8 +1,9 @@
 import { access, readdir, readFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { CLI_PRESET } from './item.ts';
+import { CLI_SEMANTICS, testFileFor } from './semantics.ts';
 
 const CONFIGURED_BY: Record<string, string> = {
   oxlint: '~/.oxlintrc.json',
@@ -81,6 +82,42 @@ async function compilerOptionsItWrites(): Promise<Record<string, unknown>> {
   }
 
   return options;
+}
+
+async function mutationTestConfigItNames(): Promise<string> {
+  const written: unknown = JSON.parse(
+    await readFile(join(import.meta.dirname, '..', 'files', 'stryker.conf.json'), 'utf8'),
+  );
+  const runner = isRecord(written) ? written['vitest'] : undefined;
+  const named = isRecord(runner) ? runner['configFile'] : undefined;
+
+  if (typeof named !== 'string') {
+    throw new Error('the mutation config the preset writes names no test config');
+  }
+
+  return named;
+}
+
+async function lintPluginsItWrites(): Promise<string[]> {
+  const written: unknown = JSON.parse(
+    await readFile(join(import.meta.dirname, '..', 'files', 'oxlintrc.json'), 'utf8'),
+  );
+  const declared = isRecord(written) ? written['jsPlugins'] : undefined;
+
+  if (!Array.isArray(declared)) {
+    return [];
+  }
+
+  return declared
+    .map((plugin: unknown) => (isRecord(plugin) ? plugin['specifier'] : undefined))
+    .filter((specifier): specifier is string => typeof specifier === 'string');
+}
+
+async function commitJobsItWrites(): Promise<string[]> {
+  const written = await readFile(join(import.meta.dirname, '..', 'files', 'lefthook.yml'), 'utf8');
+  const upToCommitMsg = written.slice(0, written.indexOf('commit-msg:'));
+
+  return [...upToCommitMsg.matchAll(/- name: (\S+)/g)].map(([, job]) => job ?? '');
 }
 
 function namedPackages(options: Record<string, unknown>): string[] {
@@ -183,7 +220,72 @@ describe('the cli preset against this repository', () => {
     }
   });
 
+  it('writes a lint config that names no plugin it does not ship', async () => {
+    const shipped = new Set(CLI_PRESET.devDependencies.map((pin) => splitPin(pin).name));
+
+    for (const specifier of await lintPluginsItWrites()) {
+      expect({ specifier, shipped: shipped.has(specifier) }).toStrictEqual({
+        specifier,
+        shipped: true,
+      });
+    }
+  });
+
+  it('ships the test config its mutation config points at', async () => {
+    const targets = CLI_PRESET.files.map((file) => file.target);
+
+    expect(targets).toContain(`~/${await mutationTestConfigItNames()}`);
+  });
+});
+
+describe('the tests the cli preset ships', () => {
+  it('names every test it ships the way its own semantics declares', () => {
+    const shipped = CLI_PRESET.files
+      .map((file) => basename(file.target))
+      .filter((name) => name.endsWith('.test.ts'));
+
+    expect(shipped.length).toBeGreaterThan(0);
+
+    for (const name of shipped) {
+      const unit = name.slice(0, name.indexOf('.'));
+      const declared = [
+        testFileFor(CLI_SEMANTICS.tests.example, unit),
+        testFileFor(CLI_SEMANTICS.tests.property, unit),
+      ];
+
+      expect({ name, declared: declared.includes(name) }).toStrictEqual({ name, declared: true });
+    }
+  });
+
+  it('ships a property suite beside the example suite, since one preset teaches both', () => {
+    const shipped = CLI_PRESET.files.map((file) => basename(file.target));
+
+    expect(shipped.some((name) => name.endsWith('.property.test.ts'))).toBe(true);
+  });
+
   it('names the preset ket resolves it by', () => {
     expect(CLI_PRESET.name).toBe('ket-cli');
+  });
+});
+
+describe('the gate chain the cli preset arms at commit time', () => {
+  it('names a job the shipped hook file actually runs', async () => {
+    const jobs = await commitJobsItWrites();
+
+    for (const gate of CLI_SEMANTICS.gates.filter((candidate) => candidate.commitJob !== '')) {
+      expect({ job: gate.commitJob, runs: jobs.includes(gate.commitJob) }).toStrictEqual({
+        job: gate.commitJob,
+        runs: true,
+      });
+    }
+  });
+
+  it('claims every job the hook file runs, so no gate hides from the chain', async () => {
+    const claimed = new Set(CLI_SEMANTICS.gates.map((gate) => gate.commitJob));
+    const unclaimed = (await commitJobsItWrites()).filter(
+      (job) => job !== 'protect-main' && !claimed.has(job),
+    );
+
+    expect(unclaimed).toStrictEqual([]);
   });
 });
