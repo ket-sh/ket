@@ -62,6 +62,34 @@ async function versionsKetPins(): Promise<Record<string, string>> {
   return declared;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((entry) => typeof entry === 'string');
+}
+
+async function compilerOptionsItWrites(): Promise<Record<string, unknown>> {
+  const written: unknown = JSON.parse(
+    await readFile(join(import.meta.dirname, '..', 'files', 'tsconfig.json'), 'utf8'),
+  );
+  const options = isRecord(written) ? written['compilerOptions'] : undefined;
+
+  if (!isRecord(options)) {
+    throw new Error('the tsconfig the preset writes declares no compilerOptions');
+  }
+
+  return options;
+}
+
+function namedPackages(options: Record<string, unknown>): string[] {
+  const source = options['jsxImportSource'];
+  const types = options['types'];
+
+  return [...(typeof source === 'string' ? [source] : []), ...(isStringArray(types) ? types : [])];
+}
+
 function splitPin(pin: string): { name: string; version: string } {
   const at = pin.lastIndexOf('@');
 
@@ -139,6 +167,20 @@ describe('the cli preset against this repository', () => {
     );
 
     expect(missing).toStrictEqual([]);
+  });
+
+  it('writes a tsconfig that names no package it does not ship', async () => {
+    const options = await compilerOptionsItWrites();
+    const shipped = new Set(
+      [...CLI_PRESET.dependencies, ...CLI_PRESET.devDependencies].map((pin) => splitPin(pin).name),
+    );
+
+    for (const named of namedPackages(options)) {
+      expect({
+        named,
+        shipped: shipped.has(named) || shipped.has(`@types/${named}`),
+      }).toStrictEqual({ named, shipped: true });
+    }
   });
 
   it('names the preset ket resolves it by', () => {

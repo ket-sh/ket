@@ -22,8 +22,6 @@
     "noUncheckedSideEffectImports": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "jsx": "react-jsx",
-    "jsxImportSource": "@opentui/react",
     "types": ["bun"],
     "allowImportingTsExtensions": true,
     "noEmit": true
