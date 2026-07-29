@@ -1,18 +1,17 @@
-import { defineCommand } from 'citty';
-import { resolve } from 'node:path';
+import { defineCommand, showUsage } from 'citty';
+import { mkdir } from 'node:fs/promises';
 
 import type { Configuration } from '../../shared/configuration.ts';
 
-import { COMMAND_ARGS } from '../../shared/args.ts';
+import { initializeRepository } from '../../shared/git.ts';
 import { readTextIfPresent, writeFiles } from '../../shared/write-files.ts';
-import { planInitialization } from './plan.ts';
-import { describePlan } from './report.ts';
+import { planCreation } from './plan.ts';
 import { scaffoldFor } from './scaffold.ts';
 import { runWizard } from './wizard.ts';
 
 async function settleConfiguration(key: string | undefined): Promise<Configuration | undefined> {
   if (!process.stdin.isTTY) {
-    return key === undefined ? undefined : { key, targets: {} };
+    return key === undefined ? undefined : { key, targets: { '.': 'cli' } };
   }
 
   const outcome = await runWizard(key);
@@ -20,39 +19,42 @@ async function settleConfiguration(key: string | undefined): Promise<Configurati
   return 'configured' in outcome ? outcome.configured : undefined;
 }
 
-export default defineCommand({
+const create = defineCommand({
   meta: {
-    name: 'init',
-    description: 'Configure this repository for ket',
+    name: 'create',
+    description: 'Create a project under ket',
   },
-  args: COMMAND_ARGS,
+  args: {
+    directory: {
+      type: 'positional',
+      description: 'Where the project goes',
+      required: true,
+    },
+  },
   async run({ args }) {
-    const plan = await planInitialization(args.cwd);
-
-    if (plan === undefined) {
-      throw new Error(
-        `no git repository above ${resolve(args.cwd)}. ket keeps its state at the repository root, so run this inside a repository`,
-      );
-    }
-
-    if (plan.configured) {
-      throw new Error(`${plan.root} is already configured for ket`);
-    }
-
+    const plan = await planCreation(args.directory);
     const configuration = await settleConfiguration(plan.key);
 
     if (configuration === undefined) {
       throw new Error(`nothing was configured for ${plan.root}`);
     }
 
+    await mkdir(plan.root, { recursive: true });
+    await initializeRepository(plan.root);
+
     const gitignore = await readTextIfPresent(plan.root, '.gitignore');
 
     await writeFiles(plan.root, scaffoldFor(configuration, gitignore));
 
-    for (const line of describePlan(plan)) {
-      console.log(line);
-    }
+    console.log(`created  ${plan.root}`);
+    console.log(`key      ${configuration.key}`);
 
     return plan;
   },
 });
+
+export async function usage(): Promise<void> {
+  await showUsage(create);
+}
+
+export default create;

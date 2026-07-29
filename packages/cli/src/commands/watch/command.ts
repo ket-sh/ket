@@ -1,8 +1,8 @@
-import { defineCommand } from 'citty';
+import { defineCommand, showUsage } from 'citty';
 
 import { COMMAND_ARGS } from '../../shared/args.ts';
 
-export default defineCommand({
+const watch = defineCommand({
   meta: {
     name: 'watch',
     description: 'Watch the pipeline as it runs',
@@ -14,3 +14,9 @@ export default defineCommand({
     await watch();
   },
 });
+
+export async function usage(): Promise<void> {
+  await showUsage(watch);
+}
+
+export default watch;

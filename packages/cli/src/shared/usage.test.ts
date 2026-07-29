@@ -13,11 +13,11 @@ describe('deciding whose usage to print', () => {
   });
 
   it('asks for a command usage when help follows a command', () => {
-    expect(usageRequest(['init', '--help'])).toBe('command');
-    expect(usageRequest(['init', '--cwd', '/work', '-h'])).toBe('command');
+    expect(usageRequest(['create', '--help'])).toBe('command');
+    expect(usageRequest(['create', '--cwd', '/work', '-h'])).toBe('command');
   });
 
   it('asks for no usage from an ordinary invocation', () => {
-    expect(usageRequest(['init', '--cwd', '/work'])).toBe('none');
+    expect(usageRequest(['create', '--cwd', '/work'])).toBe('none');
   });
 });

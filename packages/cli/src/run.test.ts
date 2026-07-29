@@ -1,48 +1,44 @@
-import { mkdir, mkdtemp, readFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { runCommand } from './run.ts';
 
-describe('the ket command line', () => {
-  it('refuses to initialize a directory outside any git repository', async () => {
-    const outside = await mkdtemp(join(tmpdir(), 'ket-'));
+async function scratch(): Promise<string> {
+  return mkdtemp(join(tmpdir(), 'ket-'));
+}
 
-    await expect(runCommand('init', ['--cwd', outside])).rejects.toThrow(/git repository/);
+describe('the ket command line', () => {
+  it('creates a project where it was told to', async () => {
+    const where = join(await scratch(), 'order-service');
+
+    await runCommand('create', [where]);
+
+    await expect(readFile(join(where, '.ket/config.ts'), 'utf8')).resolves.toContain("key: 'OS'");
   });
 
-  it('writes the ket directory into a repository that has none', async () => {
-    const base = await mkdtemp(join(tmpdir(), 'ket-'));
-    const repository = join(base, 'order-fulfilment-service');
+  it('makes the project a repository, since .ket lives at a git root', async () => {
+    const where = join(await scratch(), 'billing-gateway');
 
-    await mkdir(join(repository, '.git'), { recursive: true });
-    await runCommand('init', ['--cwd', repository]);
+    await runCommand('create', [where]);
 
-    await expect(readFile(join(repository, '.ket/config.ts'), 'utf8')).resolves.toContain(
-      "key: 'OFS'",
-    );
+    await expect(readFile(join(where, '.git', 'HEAD'), 'utf8')).resolves.toContain('ref:');
+  });
+
+  it('refuses a directory that already holds something', async () => {
+    const where = join(await scratch(), 'taken');
+
+    await mkdir(where);
+    await writeFile(join(where, 'README.md'), 'mine\n');
+
+    await expect(runCommand('create', [where])).rejects.toThrow(/not empty/);
   });
 
   it('writes nothing when it cannot settle a configuration without asking', async () => {
-    const base = await mkdtemp(join(tmpdir(), 'ket-'));
-    const repository = join(base, '2026');
+    const where = join(await scratch(), '2026');
 
-    await mkdir(join(repository, '.git'), { recursive: true });
-
-    await expect(runCommand('init', ['--cwd', repository])).rejects.toThrow(
-      /nothing was configured/,
-    );
-  });
-
-  it('refuses a repository it has already configured', async () => {
-    const base = await mkdtemp(join(tmpdir(), 'ket-'));
-    const repository = join(base, 'order-fulfilment-service');
-
-    await mkdir(join(repository, '.git'), { recursive: true });
-    await mkdir(join(repository, '.ket'), { recursive: true });
-
-    await expect(runCommand('init', ['--cwd', repository])).rejects.toThrow(/already/);
+    await expect(runCommand('create', [where])).rejects.toThrow(/nothing was configured/);
   });
 
   it('names the command it was asked for when that command does not exist', async () => {

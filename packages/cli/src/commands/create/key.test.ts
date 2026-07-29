@@ -4,7 +4,7 @@ import { refuseKey } from './key.ts';
 
 describe('judging the key the wizard was given', () => {
   it('accepts what the person typed', () => {
-    expect(refuseKey('AUTH', undefined)).toBeUndefined();
+    expect(refuseKey('AUTH', '')).toBeUndefined();
   });
 
   it('accepts an empty answer when a suggestion stands behind it', () => {
@@ -12,16 +12,16 @@ describe('judging the key the wizard was given', () => {
   });
 
   it('refuses an empty answer with nothing behind it', () => {
-    expect(refuseKey('', undefined)).toBe('Use two to ten capital letters');
+    expect(refuseKey('', '')).toBe('Use two to ten capital letters');
   });
 
   it('refuses lowercase, since item IDs read as AUTH-3', () => {
-    expect(refuseKey('auth', undefined)).toBe('Use two to ten capital letters');
+    expect(refuseKey('auth', '')).toBe('Use two to ten capital letters');
   });
 
   it('refuses a single letter and a long run alike', () => {
-    expect(refuseKey('A', undefined)).toBe('Use two to ten capital letters');
-    expect(refuseKey('ABCDEFGHIJK', undefined)).toBe('Use two to ten capital letters');
+    expect(refuseKey('A', '')).toBe('Use two to ten capital letters');
+    expect(refuseKey('ABCDEFGHIJK', '')).toBe('Use two to ten capital letters');
   });
 
   it('judges what was typed, not the suggestion behind it', () => {

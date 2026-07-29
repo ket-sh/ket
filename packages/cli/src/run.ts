@@ -1,6 +1,6 @@
 import { runCommand as runCittyCommand, showUsage } from 'citty';
 
-import { commands, main } from './main.ts';
+import { commands, main, showUsageOf } from './main.ts';
 import { usageRequest } from './shared/usage.ts';
 
 function isKnownCommand(name: string): name is keyof typeof commands {
@@ -26,7 +26,7 @@ async function showCommandUsage(argv: string[]): Promise<boolean> {
     return false;
   }
 
-  await showUsage(await commands[name]());
+  await showUsageOf(name);
 
   return true;
 }

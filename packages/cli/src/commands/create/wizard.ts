@@ -32,14 +32,14 @@ async function askKey(suggested: string | undefined): Promise<string | symbol> {
     message: 'What key should item IDs carry?',
     placeholder: suggested ?? 'AUTH',
     ...(suggested === undefined ? {} : { defaultValue: suggested }),
-    validate: (given) => refuseKey(given ?? '', suggested),
+    validate: (given) => refuseKey(given ?? '', suggested ?? ''),
   });
 }
 
 async function askOneTarget(
   gathered: Record<string, PresetName>,
 ): Promise<Record<string, PresetName> | symbol> {
-  const directory = await askDirectory(gathered);
+  const directory = Object.keys(gathered).length === 0 ? '.' : await askDirectory(gathered);
 
   if (isCancel(directory)) {
     return directory;
@@ -81,7 +81,7 @@ async function gatherTargets(): Promise<Record<string, PresetName> | symbol> {
 }
 
 export async function runWizard(suggestedKey: string | undefined): Promise<WizardOutcome> {
-  intro('ket init');
+  intro('ket create');
 
   const targets = await gatherTargets();
 

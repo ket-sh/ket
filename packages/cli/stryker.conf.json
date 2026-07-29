@@ -13,7 +13,8 @@
     "!src/run.ts",
     "!src/commands/*/command.ts",
     "!src/shared/write-files.ts",
-    "!src/commands/*/wizard.ts"
+    "!src/commands/*/wizard.ts",
+    "!src/shared/git.ts"
   ],
   "reporters": ["progress", "clear-text"],
   "coverageAnalysis": "perTest",
