@@ -1,4 +1,4 @@
-type PresetName = 'cli' | 'tui' | 'web' | 'api' | 'desktop' | 'mobile';
+export type PresetName = 'cli' | 'tui' | 'web' | 'api' | 'desktop' | 'mobile';
 
 export interface Configuration {
   key: string;

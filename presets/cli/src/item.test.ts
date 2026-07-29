@@ -1,8 +1,37 @@
-import { access, readFile } from 'node:fs/promises';
+import { access, readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { CLI_PRESET } from './item.ts';
+
+const CONFIGURED_BY: Record<string, string> = {
+  oxlint: '~/.oxlintrc.json',
+  oxfmt: '~/.oxfmtrc.json',
+  vitest: '~/vitest.config.ts',
+  '@stryker-mutator/core': '~/stryker.conf.json',
+  'dependency-cruiser': '~/.dependency-cruiser.cjs',
+  knip: '~/knip.json',
+  jscpd: '~/.jscpd.json',
+  cspell: '~/cspell.json',
+  lefthook: '~/lefthook.yml',
+  '@commitlint/cli': '~/commitlint.config.ts',
+  '@nizos/probity': '~/probity.config.ts',
+  typescript: '~/tsconfig.json',
+};
+
+const CONFIG_PATTERN = /^\.?[a-z0-9-]+(\.config)?\.(json|ts|cjs|yml|yaml|toml|ini)$/;
+
+const MONOREPO_ONLY = new Set([
+  'package.json',
+  'bun.lock',
+  'turbo.json',
+  'steiger.config.ts',
+  'tsconfig.base.json',
+  'tsconfig.root-configs.json',
+  'skills-lock.json',
+  'coderabbit.yaml',
+  '.coderabbit.yaml',
+]);
 
 const REPOSITORY_ROOT = join(import.meta.dirname, '..', '..', '..');
 
@@ -67,10 +96,20 @@ describe('the cli preset item', () => {
     }
   });
 
-  it('writes the configs that make the gate chain real', () => {
+  it('writes a config for every gate that reads one, since a gate without one runs on defaults', () => {
     const targets = CLI_PRESET.files.map((file) => file.target);
 
-    for (const config of ['~/.oxlintrc.json', '~/stryker.conf.json', '~/lefthook.yml']) {
+    for (const [gate, config] of Object.entries(CONFIGURED_BY)) {
+      expect({ gate, targets: targets.includes(config) }).toStrictEqual({ gate, targets: true });
+    }
+  });
+
+  it('carries the toolchain manifest, since four gates arrive through mise and not npm', () => {
+    const targets = CLI_PRESET.files.map((file) => file.target);
+
+    expect(targets).toContain('~/mise.toml');
+
+    for (const config of ['~/.gitleaks.toml', '~/.vale.ini']) {
       expect(targets).toContain(config);
     }
   });
@@ -87,6 +126,19 @@ describe('the cli preset item', () => {
     for (const file of CLI_PRESET.files) {
       await expect(access(join(import.meta.dirname, '..', file.path))).resolves.toBeUndefined();
     }
+  });
+});
+
+describe('the cli preset against this repository', () => {
+  it('mirrors every config this repository keeps, or says why it does not', async () => {
+    const entries = await readdir(REPOSITORY_ROOT);
+    const configs = entries.filter((entry) => CONFIG_PATTERN.test(entry));
+    const targets = new Set(CLI_PRESET.files.map((file) => file.target));
+    const missing = configs.filter(
+      (config) => !MONOREPO_ONLY.has(config) && !targets.has(`~/${config}`),
+    );
+
+    expect(missing).toStrictEqual([]);
   });
 
   it('names the preset ket resolves it by', () => {
