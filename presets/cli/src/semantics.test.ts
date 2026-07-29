@@ -1,8 +1,6 @@
-import { readdir, readFile } from 'node:fs/promises';
+import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-
-import type { PresetSemantics } from './semantics.ts';
 
 import { CLI_SEMANTICS, sliceDirectoryOf } from './semantics.ts';
 
@@ -36,24 +34,6 @@ describe('what the cli preset declares about a project', () => {
 
   it('asks for no structure gate beyond the dependency graph', () => {
     expect(CLI_SEMANTICS.gates).toStrictEqual([]);
-  });
-});
-
-describe('the semantics file the preset writes', () => {
-  it('holds exactly what this package declares, so the two cannot drift', async () => {
-    const module = await import('../files/ket-preset-cli.ts');
-    const shipped: PresetSemantics = module.default;
-
-    expect(shipped).toStrictEqual(CLI_SEMANTICS);
-  });
-
-  it('types itself from a declaration the preset also writes', async () => {
-    const shipped = await readFile(
-      join(import.meta.dirname, '..', 'files', 'ket-preset-cli.ts'),
-      'utf8',
-    );
-
-    expect(shipped).toContain("import type { PresetSemantics } from './semantics.d.ts'");
   });
 });
 

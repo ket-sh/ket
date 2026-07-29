@@ -66,7 +66,5 @@ export const CLI_PRESET: PresetItem = {
     writes('vale-styles/Terminology.yml', '.vale/styles/ket/Terminology.yml'),
     writes('vale-styles/Intensifiers.yml', '.vale/styles/ket/Intensifiers.yml'),
     writes('vale-styles/WeakOpeners.yml', '.vale/styles/ket/WeakOpeners.yml'),
-    writes('semantics.d.ts', '.ket/presets/semantics.d.ts'),
-    writes('ket-preset-cli.ts', '.ket/presets/cli.ts'),
   ],
 };
