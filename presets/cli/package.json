@@ -12,6 +12,11 @@
     "lint": "oxlint --config ../../.oxlintrc.json .",
     "fmt": "oxfmt --config ../../.oxfmtrc.json .",
     "fmt:check": "oxfmt --config ../../.oxfmtrc.json --check .",
-    "check-types": "tsc --noEmit -p tsconfig.json"
+    "check-types": "tsc --noEmit -p tsconfig.json",
+    "test:mutation": "stryker run"
+  },
+  "devDependencies": {
+    "@stryker-mutator/core": "9.6.1",
+    "@stryker-mutator/vitest-runner": "9.6.1"
   }
 }

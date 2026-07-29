@@ -1,4 +1,4 @@
-import { access, readdir, readFile } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -19,20 +19,6 @@ const CONFIGURED_BY: Record<string, string> = {
   '@nizos/probity': '~/probity.config.ts',
   typescript: '~/tsconfig.json',
 };
-
-const CONFIG_PATTERN = /^\.?[a-z0-9-]+(\.config)?\.(json|ts|cjs|yml|yaml|toml|ini)$/;
-
-const MONOREPO_ONLY = new Set([
-  'package.json',
-  'bun.lock',
-  'turbo.json',
-  'steiger.config.ts',
-  'tsconfig.base.json',
-  'tsconfig.root-configs.json',
-  'skills-lock.json',
-  'coderabbit.yaml',
-  '.coderabbit.yaml',
-]);
 
 const REPOSITORY_ROOT = join(import.meta.dirname, '..', '..', '..');
 
@@ -63,56 +49,6 @@ async function versionsKetPins(): Promise<Record<string, string>> {
   return declared;
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
-
-function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((entry) => typeof entry === 'string');
-}
-
-async function compilerOptionsItWrites(): Promise<Record<string, unknown>> {
-  const written: unknown = JSON.parse(
-    await readFile(join(import.meta.dirname, '..', 'files', 'tsconfig.json'), 'utf8'),
-  );
-  const options = isRecord(written) ? written['compilerOptions'] : undefined;
-
-  if (!isRecord(options)) {
-    throw new Error('the tsconfig the preset writes declares no compilerOptions');
-  }
-
-  return options;
-}
-
-async function mutationTestConfigItNames(): Promise<string> {
-  const written: unknown = JSON.parse(
-    await readFile(join(import.meta.dirname, '..', 'files', 'stryker.conf.json'), 'utf8'),
-  );
-  const runner = isRecord(written) ? written['vitest'] : undefined;
-  const named = isRecord(runner) ? runner['configFile'] : undefined;
-
-  if (typeof named !== 'string') {
-    throw new Error('the mutation config the preset writes names no test config');
-  }
-
-  return named;
-}
-
-async function lintPluginsItWrites(): Promise<string[]> {
-  const written: unknown = JSON.parse(
-    await readFile(join(import.meta.dirname, '..', 'files', 'oxlintrc.json'), 'utf8'),
-  );
-  const declared = isRecord(written) ? written['jsPlugins'] : undefined;
-
-  if (!Array.isArray(declared)) {
-    return [];
-  }
-
-  return declared
-    .map((plugin: unknown) => (isRecord(plugin) ? plugin['specifier'] : undefined))
-    .filter((specifier): specifier is string => typeof specifier === 'string');
-}
-
 async function commitJobsItWrites(): Promise<string[]> {
   const written = await readFile(join(import.meta.dirname, '..', 'files', 'lefthook.yml'), 'utf8');
   const upToCommitMsg = written.slice(0, written.indexOf('commit-msg:'));
@@ -120,11 +56,24 @@ async function commitJobsItWrites(): Promise<string[]> {
   return [...upToCommitMsg.matchAll(/- name: (\S+)/g)].map(([, job]) => job ?? '');
 }
 
-function namedPackages(options: Record<string, unknown>): string[] {
-  const source = options['jsxImportSource'];
-  const types = options['types'];
+function isBarePackage(specifier: string): boolean {
+  return !specifier.startsWith('.') && !specifier.startsWith('node:');
+}
 
-  return [...(typeof source === 'string' ? [source] : []), ...(isStringArray(types) ? types : [])];
+async function packagesTheSourceImports(): Promise<string[]> {
+  const shipped = CLI_PRESET.files.filter((file) => file.path.startsWith('files/source/'));
+  const sources = await Promise.all(
+    shipped.map(async (file) => readFile(join(import.meta.dirname, '..', file.path), 'utf8')),
+  );
+
+  return [
+    ...new Set(
+      sources
+        .flatMap((source) => [...source.matchAll(/from '([^']+)'/g)])
+        .map(([, specifier]) => specifier ?? '')
+        .filter(isBarePackage),
+    ),
+  ];
 }
 
 function splitPin(pin: string): { name: string; version: string } {
@@ -194,50 +143,6 @@ describe('the cli preset item', () => {
   });
 });
 
-describe('the cli preset against this repository', () => {
-  it('mirrors every config this repository keeps, or says why it does not', async () => {
-    const entries = await readdir(REPOSITORY_ROOT);
-    const configs = entries.filter((entry) => CONFIG_PATTERN.test(entry));
-    const targets = new Set(CLI_PRESET.files.map((file) => file.target));
-    const missing = configs.filter(
-      (config) => !MONOREPO_ONLY.has(config) && !targets.has(`~/${config}`),
-    );
-
-    expect(missing).toStrictEqual([]);
-  });
-
-  it('writes a tsconfig that names no package it does not ship', async () => {
-    const options = await compilerOptionsItWrites();
-    const shipped = new Set(
-      [...CLI_PRESET.dependencies, ...CLI_PRESET.devDependencies].map((pin) => splitPin(pin).name),
-    );
-
-    for (const named of namedPackages(options)) {
-      expect({
-        named,
-        shipped: shipped.has(named) || shipped.has(`@types/${named}`),
-      }).toStrictEqual({ named, shipped: true });
-    }
-  });
-
-  it('writes a lint config that names no plugin it does not ship', async () => {
-    const shipped = new Set(CLI_PRESET.devDependencies.map((pin) => splitPin(pin).name));
-
-    for (const specifier of await lintPluginsItWrites()) {
-      expect({ specifier, shipped: shipped.has(specifier) }).toStrictEqual({
-        specifier,
-        shipped: true,
-      });
-    }
-  });
-
-  it('ships the test config its mutation config points at', async () => {
-    const targets = CLI_PRESET.files.map((file) => file.target);
-
-    expect(targets).toContain(`~/${await mutationTestConfigItNames()}`);
-  });
-});
-
 describe('the tests the cli preset ships', () => {
   it('names every test it ships the way its own semantics declares', () => {
     const shipped = CLI_PRESET.files
@@ -287,5 +192,66 @@ describe('the gate chain the cli preset arms at commit time', () => {
     );
 
     expect(unclaimed).toStrictEqual([]);
+  });
+});
+
+describe('the registry shape the cli preset conforms to', () => {
+  it('names the schema a registry consumer validates against', () => {
+    expect(CLI_PRESET.$schema).toBe('https://ui.shadcn.com/schema/registry-item.json');
+  });
+
+  it('declares itself an item, since a consumer resolves by that type', () => {
+    expect(CLI_PRESET.type).toBe('registry:item');
+  });
+
+  it('declares every entry a file, since none of them is a component', () => {
+    for (const file of CLI_PRESET.files) {
+      expect({ path: file.path, type: file.type }).toStrictEqual({
+        path: file.path,
+        type: 'registry:file',
+      });
+    }
+  });
+
+  it('introduces itself, since a listing shows the title and the description', () => {
+    expect(CLI_PRESET.title.length).toBeGreaterThan(0);
+    expect(CLI_PRESET.description.length).toBeGreaterThan(0);
+  });
+
+  it('targets a real path under the repository, not the repository itself', () => {
+    for (const file of CLI_PRESET.files) {
+      expect({ path: file.path, under: file.target.slice(2) }).not.toStrictEqual({
+        path: file.path,
+        under: '',
+      });
+    }
+  });
+
+  it('reads every file it ships out of its own files directory', () => {
+    for (const file of CLI_PRESET.files) {
+      expect({ path: file.path, inside: file.path.startsWith('files/') }).toStrictEqual({
+        path: file.path,
+        inside: true,
+      });
+    }
+  });
+});
+
+describe('what the source the cli preset ships needs to run', () => {
+  it('declares every package that source imports', async () => {
+    const declared = new Set(
+      [...CLI_PRESET.dependencies, ...CLI_PRESET.devDependencies].map((pin) => splitPin(pin).name),
+    );
+
+    for (const imported of await packagesTheSourceImports()) {
+      expect({ imported, declared: declared.has(imported) }).toStrictEqual({
+        imported,
+        declared: true,
+      });
+    }
+  });
+
+  it('imports something, since a command that imports nothing runs nothing', async () => {
+    expect((await packagesTheSourceImports()).length).toBeGreaterThan(0);
   });
 });

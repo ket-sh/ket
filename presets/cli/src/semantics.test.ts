@@ -2,9 +2,10 @@ import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
+import { repositoryRootFrom } from './repository-root.ts';
 import { CLI_SEMANTICS, sliceDirectoryOf, testFileFor } from './semantics.ts';
 
-const OUR_CLI = join(import.meta.dirname, '..', '..', '..', 'packages', 'cli');
+const OUR_CLI = join(repositoryRootFrom(import.meta.dirname), 'packages', 'cli');
 
 describe('what the cli preset declares about a project', () => {
   it('roots a slice where this repository roots its commands', async () => {
@@ -120,5 +121,39 @@ describe('resolving a slice directory', () => {
 
   it('refuses a slice name that would escape the root', () => {
     expect(() => sliceDirectoryOf(CLI_SEMANTICS, '../elsewhere')).toThrow(/slice name/);
+  });
+});
+
+describe('the shape of what the cli preset declares', () => {
+  it('gives every script a command to run', () => {
+    for (const [name, command] of Object.entries(CLI_SEMANTICS.scripts)) {
+      expect({ name, runs: command.length > 0 }).toStrictEqual({ name, runs: true });
+    }
+  });
+
+  it('names the substrate a hermetic test writes into', () => {
+    expect(CLI_SEMANTICS.substrate).toBe('temporary-directories');
+  });
+
+  it('keeps tests, the adapter and the edge out of mutation, and nothing else', () => {
+    expect(CLI_SEMANTICS.slice.mutate).toStrictEqual([
+      '**/*.ts',
+      '!**/*.test.ts',
+      '!command.ts',
+      '!io/**',
+    ]);
+  });
+
+  it('marks where a unit name goes in each test pattern', () => {
+    expect(CLI_SEMANTICS.tests.example).toBe('{unit}.test.ts');
+    expect(CLI_SEMANTICS.tests.property).toBe('{unit}.property.test.ts');
+  });
+
+  it('refuses a slice name that only starts out well', () => {
+    expect(() => sliceDirectoryOf(CLI_SEMANTICS, 'auth login')).toThrow(/slice name/);
+  });
+
+  it('refuses a unit name that only starts out well', () => {
+    expect(() => testFileFor(CLI_SEMANTICS.tests.example, 'greeting TWO')).toThrow(/unit name/);
   });
 });
