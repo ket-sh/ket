@@ -1,14 +1,28 @@
-import { cancel, confirm, intro, isCancel, outro, select, text } from '@clack/prompts';
+import { cancel, confirm, isCancel, select, text } from '@clack/prompts';
+import { homedir } from 'node:os';
+import color from 'picocolors';
 
 import type { Configuration, PresetName } from '../../shared/configuration.ts';
 
 import { PRESET_NAMES } from '../../shared/configuration.ts';
+import { directoryLabel } from './directory-label.ts';
 import { refuseKey } from './key.ts';
+import { refuseName } from './name.ts';
 import { addTarget, refuseDirectory } from './targets.ts';
 
 export type WizardOutcome = { configured: Configuration } | { cancelled: true };
 
 const CANCELLED = { cancelled: true } as const;
+
+export async function askName(under: string): Promise<string | symbol> {
+  const shown = directoryLabel(under, homedir());
+
+  return text({
+    message: `What will your project be called?\n${color.gray('│')}  ${color.dim(shown)}`,
+    placeholder: 'my-app',
+    validate: (given) => refuseName(given ?? ''),
+  });
+}
 
 async function askDirectory(gathered: Record<string, PresetName>): Promise<string | symbol> {
   return text({
@@ -81,8 +95,6 @@ async function gatherTargets(): Promise<Record<string, PresetName> | symbol> {
 }
 
 export async function runWizard(suggestedKey: string | undefined): Promise<WizardOutcome> {
-  intro('ket create');
-
   const targets = await gatherTargets();
 
   if (isCancel(targets)) {
@@ -98,8 +110,6 @@ export async function runWizard(suggestedKey: string | undefined): Promise<Wizar
 
     return CANCELLED;
   }
-
-  outro('Writing .ket');
 
   return { configured: { key, targets } };
 }
