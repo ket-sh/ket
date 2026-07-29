@@ -16,6 +16,7 @@
     "test:mutation": "stryker run"
   },
   "dependencies": {
+    "@clack/prompts": "^1.7.0",
     "@ket/tui": "workspace:*",
     "citty": "0.2.2"
   }

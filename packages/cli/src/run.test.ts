@@ -24,6 +24,17 @@ describe('the ket command line', () => {
     );
   });
 
+  it('writes nothing when it cannot settle a configuration without asking', async () => {
+    const base = await mkdtemp(join(tmpdir(), 'ket-'));
+    const repository = join(base, '2026');
+
+    await mkdir(join(repository, '.git'), { recursive: true });
+
+    await expect(runCommand('init', ['--cwd', repository])).rejects.toThrow(
+      /nothing was configured/,
+    );
+  });
+
   it('refuses a repository it has already configured', async () => {
     const base = await mkdtemp(join(tmpdir(), 'ket-'));
     const repository = join(base, 'order-fulfilment-service');

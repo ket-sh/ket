@@ -1,4 +1,6 @@
-export type PresetName = 'cli' | 'tui' | 'web' | 'api' | 'desktop' | 'mobile';
+export const PRESET_NAMES = ['cli', 'tui', 'web', 'api', 'desktop', 'mobile'] as const;
+
+export type PresetName = (typeof PRESET_NAMES)[number];
 
 export interface Configuration {
   key: string;

@@ -1,0 +1,105 @@
+import { cancel, confirm, intro, isCancel, outro, select, text } from '@clack/prompts';
+
+import type { Configuration, PresetName } from '../../shared/configuration.ts';
+
+import { PRESET_NAMES } from '../../shared/configuration.ts';
+import { refuseKey } from './key.ts';
+import { addTarget, refuseDirectory } from './targets.ts';
+
+export type WizardOutcome = { configured: Configuration } | { cancelled: true };
+
+const CANCELLED = { cancelled: true } as const;
+
+async function askDirectory(gathered: Record<string, PresetName>): Promise<string | symbol> {
+  return text({
+    message: 'Which directory does this target cover?',
+    placeholder: '.',
+    defaultValue: '.',
+    validate: (given) =>
+      refuseDirectory(gathered, given === undefined || given === '' ? '.' : given),
+  });
+}
+
+async function askPreset(): Promise<PresetName | symbol> {
+  return select({
+    message: 'Which preset governs it?',
+    options: PRESET_NAMES.map((preset) => ({ value: preset, label: preset })),
+  });
+}
+
+async function askKey(suggested: string | undefined): Promise<string | symbol> {
+  return text({
+    message: 'What key should item IDs carry?',
+    placeholder: suggested ?? 'AUTH',
+    ...(suggested === undefined ? {} : { defaultValue: suggested }),
+    validate: (given) => refuseKey(given ?? '', suggested),
+  });
+}
+
+async function askOneTarget(
+  gathered: Record<string, PresetName>,
+): Promise<Record<string, PresetName> | symbol> {
+  const directory = await askDirectory(gathered);
+
+  if (isCancel(directory)) {
+    return directory;
+  }
+
+  const preset = await askPreset();
+
+  if (isCancel(preset)) {
+    return preset;
+  }
+
+  const outcome = addTarget(gathered, directory, preset);
+
+  return 'added' in outcome ? outcome.added : gathered;
+}
+
+async function gatherTargets(): Promise<Record<string, PresetName> | symbol> {
+  let gathered: Record<string, PresetName> = {};
+
+  for (;;) {
+    const withOneMore = await askOneTarget(gathered);
+
+    if (isCancel(withOneMore)) {
+      return withOneMore;
+    }
+
+    gathered = withOneMore;
+
+    const another = await confirm({ message: 'Add another target?', initialValue: false });
+
+    if (isCancel(another)) {
+      return another;
+    }
+
+    if (!another) {
+      return gathered;
+    }
+  }
+}
+
+export async function runWizard(suggestedKey: string | undefined): Promise<WizardOutcome> {
+  intro('ket init');
+
+  const targets = await gatherTargets();
+
+  if (isCancel(targets)) {
+    cancel('Nothing was written.');
+
+    return CANCELLED;
+  }
+
+  const key = await askKey(suggestedKey);
+
+  if (isCancel(key)) {
+    cancel('Nothing was written.');
+
+    return CANCELLED;
+  }
+
+  outro('Writing .ket');
+
+  return { configured: { key, targets } };
+}
