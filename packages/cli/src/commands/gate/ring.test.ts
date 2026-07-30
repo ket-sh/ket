@@ -26,7 +26,7 @@ describe('turning a declared check into something runnable', () => {
     expect(argvFor(PER_FILE, 'src/auth.ts')).toStrictEqual([
       './node_modules/.bin/oxlint',
       '--no-error-on-unmatched-pattern',
-      'src/auth.ts',
+      './src/auth.ts',
     ]);
   });
 
@@ -64,5 +64,35 @@ describe('reporting what a ring found', () => {
     expect(Object.keys(probeReply([{ runs: 'oxlint', said: 'a' }]) ?? {})).toStrictEqual([
       'hookSpecificOutput',
     ]);
+  });
+});
+
+describe('a written path that reads like a flag', () => {
+  it('anchors an ordinary path, since a path is what it has to stay', () => {
+    expect(argvFor(PER_FILE, 'src/auth.ts')).toContain('./src/auth.ts');
+  });
+
+  it('refuses to let a leading dash become an argument', () => {
+    expect(argvFor(PER_FILE, '--fix')).toStrictEqual([
+      './node_modules/.bin/oxlint',
+      '--no-error-on-unmatched-pattern',
+      './--fix',
+    ]);
+  });
+
+  it('does the same for a single dash, since that means stdin to many tools', () => {
+    expect(argvFor(PER_FILE, '-')).toContain('./-');
+  });
+
+  it('leaves a path already anchored to the working directory alone', () => {
+    expect(argvFor(PER_FILE, './src/auth.ts')).toContain('./src/auth.ts');
+  });
+
+  it('leaves an absolute path alone, since it cannot be read as a flag', () => {
+    expect(argvFor(PER_FILE, '/tmp/auth.ts')).toContain('/tmp/auth.ts');
+  });
+
+  it('anchors a path that climbs, since it is still a path', () => {
+    expect(argvFor(PER_FILE, '../outside/auth.ts')).toContain('./../outside/auth.ts');
   });
 });

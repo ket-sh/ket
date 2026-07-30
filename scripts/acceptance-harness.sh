@@ -219,6 +219,17 @@ echo "$elsewhere" | grep -q 'oxlint' &&
 rm "$PROJECT/src/broken.ts"
 CHECKED=$((CHECKED + 4))
 
+echo "acceptance: a written path never reaches a tool as a flag"
+# The path comes from whatever asked for the write, so a file named --fix would
+# otherwise arrive at the linter as the flag it looks like.
+smuggled="$(printf '{"hook_event_name":"PostToolUse","tool_input":{"file_path":"--not-a-flag"}}' |
+  (cd "$PROJECT" && "$KET" gate probe))"
+echo "$smuggled" | grep -q 'not expected in this context' &&
+  fail "a path starting with a dash reached the linter as an argument"
+echo "$smuggled" | grep -q 'unknown argument' &&
+  fail "a path starting with a dash reached the linter as an argument"
+CHECKED=$((CHECKED + 1))
+
 echo "acceptance: the harness runs ring one on every write"
 grep -q 'ket gate probe' harness/hooks/hooks.json ||
   fail "the harness hooks never call the probe gate"
