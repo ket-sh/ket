@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { pathFrom, refusal, verdictReply } from './envelope.ts';
+import { pathFrom, verdictReply } from './envelope.ts';
 
 describe('reading the path a hook event is about', () => {
   it('reads the file a write names', () => {
@@ -35,18 +35,6 @@ describe('answering a pre-tool-use hook', () => {
         hookEventName: 'PreToolUse',
         permissionDecision: 'deny',
         permissionDecisionReason: 'AUTH-1 is triaged',
-      },
-    });
-  });
-});
-
-describe('refusing before any item is read', () => {
-  it('names what it could not do, so the reason is never bare', () => {
-    expect(refusal('no .ket directory above src/auth.ts')).toStrictEqual({
-      hookSpecificOutput: {
-        hookEventName: 'PreToolUse',
-        permissionDecision: 'deny',
-        permissionDecisionReason: 'no .ket directory above src/auth.ts',
       },
     });
   });

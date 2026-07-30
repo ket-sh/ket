@@ -1,8 +1,8 @@
 import { adapterPatternsOf, CLI_SEMANTICS } from '@ket/preset-cli';
 import { defineCommand, showUsage } from 'citty';
 import { spawn } from 'node:child_process';
-import { appendFile, readdir, readFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { appendFile, readdir, readFile, realpath } from 'node:fs/promises';
+import { basename, dirname, join } from 'node:path';
 
 import type { PresetName } from '../../shared/configuration.ts';
 import type { StoredItem } from '../../shared/read-item.ts';
@@ -11,10 +11,10 @@ import type { Denial } from './envelope.ts';
 import type { GateEvent } from './event.ts';
 import type { ProbeReply, RingFailure } from './ring.ts';
 
-import { ketRootFrom, sourceRootsOf, targetsFrom } from '../../shared/locate.ts';
+import { insideRepository, ketRootFrom, sourceRootsOf, targetsFrom } from '../../shared/locate.ts';
 import { inFlightFrom } from '../../shared/read-item.ts';
 import { verdictFor } from '../../shared/write-gate.ts';
-import { pathFrom, refusal, verdictReply } from './envelope.ts';
+import { pathFrom, verdictReply } from './envelope.ts';
 import { renderEvent } from './event.ts';
 import { argvFor, probeReply } from './ring.ts';
 
@@ -82,22 +82,56 @@ function keyOf(inFlight: GovernedItem[]): string | undefined {
   return inFlight.length === 1 ? inFlight[0]?.key : undefined;
 }
 
-async function judgeWrite(): Promise<Denial | undefined> {
-  const envelope = await readEnvelope();
-  const path = pathFrom(envelope);
+// A repository reached through a symlink names its files one way and reports its
+// working directory another, and the two have to meet before anything compares
+// them. The written file does not exist yet, so the nearest ancestor that does
+// is what can be resolved.
+async function settled(path: string): Promise<string> {
+  const found = await realpath(path).catch(() => undefined);
 
-  if (path === undefined) {
+  if (found !== undefined) {
+    return found;
+  }
+
+  const parent = dirname(path);
+
+  return parent === path ? path : join(await settled(parent), basename(path));
+}
+
+interface GovernedFile {
+  root: string;
+  path: string;
+}
+
+// Nothing governs a repository ket never touched, or a file outside the one it
+// does. Refusing either would block every write in every unrelated project the
+// moment somebody enables the plugin at user scope.
+async function governedFile(): Promise<GovernedFile | undefined> {
+  const written = pathFrom(await readEnvelope());
+
+  if (written === undefined) {
     return undefined;
   }
 
   const root = await ketRootFrom(process.cwd());
 
   if (root === undefined) {
-    return refusal(
-      `no ${KET_DIRECTORY} directory above ${process.cwd()}, so nothing governs ${path}`,
-    );
+    return undefined;
   }
 
+  const path = insideRepository(root, await settled(written));
+
+  return path === undefined ? undefined : { root, path };
+}
+
+async function judgeWrite(): Promise<Denial | undefined> {
+  const governed = await governedFile();
+
+  if (governed === undefined) {
+    return undefined;
+  }
+
+  const { root, path } = governed;
   const inFlight = inFlightFrom(await readStored(root));
   const denial = verdictReply(
     verdictFor({
@@ -150,13 +184,13 @@ async function ringOne(root: string, path: string): Promise<RingFailure[]> {
 }
 
 async function probeRing(): Promise<ProbeReply | undefined> {
-  const path = pathFrom(await readEnvelope());
-  const root = path === undefined ? undefined : await ketRootFrom(process.cwd());
+  const governed = await governedFile();
 
-  if (path === undefined || root === undefined) {
+  if (governed === undefined) {
     return undefined;
   }
 
+  const { root, path } = governed;
   const failures = await ringOne(root, path);
 
   await record(root, {

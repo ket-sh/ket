@@ -19,7 +19,7 @@ export function pathFrom(envelope: unknown): string | undefined {
   return typeof named === 'string' ? named : undefined;
 }
 
-export function refusal(reason: string): Denial {
+function refusal(reason: string): Denial {
   return {
     hookSpecificOutput: {
       hookEventName: 'PreToolUse',

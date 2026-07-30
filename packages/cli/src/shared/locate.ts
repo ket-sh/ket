@@ -1,5 +1,5 @@
 import { access } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { dirname, isAbsolute, join, relative } from 'node:path';
 
 import type { PresetName } from './configuration.ts';
 
@@ -55,6 +55,18 @@ export function targetsFrom(loaded: unknown): Record<string, PresetName> {
   return Object.fromEntries(
     Object.entries(declared).filter((entry): entry is [string, PresetName] => isPreset(entry[1])),
   );
+}
+
+// A hook sends an absolute path, and every rule here is written against a path
+// relative to the repository. Reading one as the other silently governs nothing.
+export function insideRepository(root: string, path: string): string | undefined {
+  if (!isAbsolute(path)) {
+    return path;
+  }
+
+  const within = relative(root, path);
+
+  return within.startsWith('..') ? undefined : within;
 }
 
 export function keyFrom(loaded: unknown): string | undefined {

@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { keyFrom, ketRootFrom, sourceRootsOf, targetsFrom } from './locate.ts';
+import { insideRepository, keyFrom, ketRootFrom, sourceRootsOf, targetsFrom } from './locate.ts';
 
 let root = '';
 
@@ -115,5 +115,33 @@ describe('reading the project key out of a config module', () => {
 
   it('reads nothing from a module that is not there', () => {
     expect(keyFrom(null)).toBeUndefined();
+  });
+});
+
+describe('reading a written path the way a hook sends it', () => {
+  it('makes an absolute path relative to the repository, since that is what the rules read', () => {
+    expect(insideRepository('/work/shop', '/work/shop/src/auth.ts')).toBe('src/auth.ts');
+  });
+
+  it('leaves a path already relative alone', () => {
+    expect(insideRepository('/work/shop', 'src/auth.ts')).toBe('src/auth.ts');
+  });
+
+  it('reads the repository root itself as nothing under it', () => {
+    expect(insideRepository('/work/shop', '/work/shop')).toBe('');
+  });
+
+  it('reports nothing for a path outside the repository', () => {
+    expect(insideRepository('/work/shop', '/work/elsewhere/a.ts')).toBeUndefined();
+  });
+
+  it('reports nothing for a sibling whose name starts the same way', () => {
+    expect(insideRepository('/work/shop', '/work/shop-legacy/a.ts')).toBeUndefined();
+  });
+
+  it('keeps a nested path whole', () => {
+    expect(insideRepository('/work/shop', '/work/shop/src/commands/hello/command.ts')).toBe(
+      'src/commands/hello/command.ts',
+    );
   });
 });
