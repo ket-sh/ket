@@ -36,7 +36,7 @@ const WHY_NOT_APPROVE: Refusals = {
   shipped: 'already shipped',
 };
 
-const DESIGNED: ItemSize[] = ['epic', 'story'];
+const OWES_DESIGN: ItemSize[] = ['epic', 'story'];
 
 function moveTo(item: Item, status: ItemStatus, whyNot: Refusals): Transition {
   const refused = whyNot[item.status];
@@ -53,7 +53,7 @@ export function submissionOf(item: Item): Transition {
 }
 
 function designOwedBy(item: Item): string | undefined {
-  if (item.status !== 'triaged' || !DESIGNED.some((size) => size === item.size)) {
+  if (item.status !== 'triaged' || !OWES_DESIGN.some((size) => size === item.size)) {
     return undefined;
   }
 

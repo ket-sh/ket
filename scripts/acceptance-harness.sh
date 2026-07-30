@@ -50,7 +50,6 @@ only_item() {
   item "$@"
 }
 
-# An item that fanned out, written the way the binary writes one.
 parent_item() {
   local key=$1 kind=$2 size=$3 status=$4 title=$5
   shift 5
@@ -66,18 +65,19 @@ parent_item() {
 }
 
 child_item() {
-  mkdir -p "$PROJECT/.ket/items/$1"
+  local key=$1 kind=$2 size=$3 status=$4 title=$5 parent=$6
+
+  mkdir -p "$PROJECT/.ket/items/$key"
   printf 'title: %s\nkind: %s\nsize: %s\nstatus: %s\nparent: %s\nchildren: []\n' \
-    "$5" "$2" "$3" "$4" "$6" >"$PROJECT/.ket/items/$1/item.yaml"
+    "$title" "$kind" "$size" "$status" "$parent" >"$PROJECT/.ket/items/$key/item.yaml"
 }
 
 ket() {
   (cd "$PROJECT" && "$KET" "$@")
 }
 
-# Runs a command that has to fail, and checks what it said about why. Kept out
-# of a command substitution on purpose: a failure inside one would be swallowed
-# and the count of decisions would not survive the subshell.
+# Kept out of a command substitution: a failure inside one is swallowed, and the
+# count of decisions would not survive the subshell.
 refuses_command() {
   local expected=$1
   local said
@@ -173,23 +173,17 @@ second="$(cd "$PROJECT" && "$KET" item file --title 'logout' --kind chore --size
 test "$second" = "OS-2" || fail "expected the second item to be OS-2, got: $second"
 
 echo "acceptance: a classification the command refuses outright"
-(cd "$PROJECT" && "$KET" item file --title 'x' --kind poem --size story >/dev/null 2>&1) &&
-  fail "file accepted a kind the pipeline does not name"
-(cd "$PROJECT" && "$KET" item file --title 'x' --kind feature --size huge >/dev/null 2>&1) &&
-  fail "file accepted a size the matrix does not name"
-CHECKED=$((CHECKED + 2))
+refuses_command 'poem is not one of feature, bug, refactor, chore' \
+  item file --title 'x' --kind poem --size story
+refuses_command 'huge is not one of epic, story, subtask, trivial' \
+  item file --title 'x' --kind feature --size huge
 
 echo "acceptance: approving something that is not there"
-(cd "$PROJECT" && "$KET" item approve OS-99 >/dev/null 2>&1) &&
-  fail "approve accepted a key with no item"
-CHECKED=$((CHECKED + 1))
+refuses_command 'OS-99 has no item this repository can read' item approve OS-99
 refuses_command 'OS-99 has no item this repository can read' item design OS-99
 refuses_command 'OS-99 has no item this repository can read' item submit OS-99
 
 echo "acceptance: work small enough that design would be ceremony"
-# The size rule has to cut somewhere. Below the line the item goes straight to
-# the approval gate, above it design is owed first, and a rule that fires at
-# every size or at none is not a rule.
 for size in trivial subtask; do
   only_item OS-1 chore "$size" triaged 'rename a variable'
   ket item approve OS-1 >/dev/null || fail "approve refused a triaged $size, which owes no design"
@@ -281,8 +275,6 @@ grep -q 'children: \[\]' "$PROJECT/.ket/items/OS-1/item.yaml" ||
 CHECKED=$((CHECKED + 1))
 
 echo "acceptance: an epic does not block the child that carries it"
-# Decomposing puts two items in flight, and one job means one branch. An epic
-# that fanned out is a container rather than a second job, so the child governs.
 rm -rf "$PROJECT/.ket/items"
 mkdir -p "$PROJECT/.ket/items"
 parent_item OS-1 feature epic designing 'authentication' OS-2
@@ -292,7 +284,6 @@ child_item OS-2 feature story triaged 'lock an account' OS-1
 refuses src/auth.ts 'OS-2 is triaged, not implementing'
 child_item OS-2 feature story awaiting-approval 'lock an account' OS-1
 refuses src/auth.ts 'OS-2 is awaiting-approval, not implementing'
-# The classification the gate reads is the one on the child, not on the epic.
 child_item OS-2 feature trivial implementing 'lock an account' OS-1
 refuses src/commands/hello/command.ts 'OS-2 is trivial'
 
@@ -301,8 +292,7 @@ child_item OS-2 feature story shipped 'lock an account' OS-1
 refuses src/auth.ts 'OS-1 is designing, not implementing'
 
 echo "acceptance: an item that lists itself as its own child"
-# Delegating to a child is what stops an epic counting twice. An item naming
-# itself delegates to nobody, and it has to keep governing rather than vanish.
+# An item naming itself delegates to nobody, so it has to keep governing.
 rm -rf "$PROJECT/.ket/items"
 mkdir -p "$PROJECT/.ket/items"
 parent_item OS-1 feature story triaged 'login with lockout' OS-1
@@ -464,8 +454,6 @@ test -f "$PROJECT/.ket/events.jsonl" || fail "the gate recorded no events"
 grep -q '"outcome":"refused"' "$PROJECT/.ket/events.jsonl" || fail "no refusal was recorded"
 grep -q '"outcome":"allowed"' "$PROJECT/.ket/events.jsonl" || fail "no allowance was recorded"
 grep -q '"item":"OS-1"' "$PROJECT/.ket/events.jsonl" || fail "no event named the item"
-# The item a decision is about is the one that governed it, so a write judged
-# under a decomposed epic is recorded against the child that carried it.
 grep -q '"about":"src/auth.ts","item":"OS-2"' "$PROJECT/.ket/events.jsonl" ||
   fail "no event named the child that governed a write under its epic"
 grep -q '"gate":"probe"' "$PROJECT/.ket/events.jsonl" || fail "the probe gate recorded nothing"
