@@ -191,11 +191,46 @@ answer="$(printf '{"hook_event_name":"PreToolUse","tool_name":"Bash","tool_input
 test -z "$answer" || fail "expected a bash envelope to be ignored, gate said: $answer"
 CHECKED=$((CHECKED + 1))
 
+echo "acceptance: ring one runs on the file that was written"
+(cd "$PROJECT" && bun install >/dev/null 2>&1) || fail "the created project does not install"
+clean="$(printf '{"hook_event_name":"PostToolUse","tool_input":{"file_path":"src/commands/hello/greeting.ts"}}' |
+  (cd "$PROJECT" && "$KET" gate probe))"
+test -z "$clean" || fail "expected a clean file to pass ring one, probe said: $clean"
+CHECKED=$((CHECKED + 1))
+
+printf 'const unused = 1;\n' >"$PROJECT/src/broken.ts"
+dirty="$(printf '{"hook_event_name":"PostToolUse","tool_input":{"file_path":"src/broken.ts"}}' |
+  (cd "$PROJECT" && "$KET" gate probe))"
+echo "$dirty" | grep -q 'ring 1 found something' ||
+  fail "expected ring one to report a lint failure, probe said: ${dirty:-nothing}"
+echo "$dirty" | grep -q 'no-unused-vars' ||
+  fail "expected ring one to name what the linter said"
+echo "$dirty" | grep -q 'permissionDecision' &&
+  fail "probe carried a decision, and a post-tool-use hook must never block"
+
+# The whole claim of ring 1 is that its per-file check looks at one file. A check
+# that dropped the path would lint the project and name broken.ts even while
+# probing a clean one. The project-scoped checks in the same ring are expected to
+# report it, so the assertion is about the linter alone.
+elsewhere="$(printf '{"hook_event_name":"PostToolUse","tool_input":{"file_path":"src/commands/hello/greeting.ts"}}' |
+  (cd "$PROJECT" && "$KET" gate probe))"
+echo "$elsewhere" | grep -q 'oxlint' &&
+  fail "the linter reported a file other than the written one, so it is not scoped to it"
+rm "$PROJECT/src/broken.ts"
+CHECKED=$((CHECKED + 4))
+
+echo "acceptance: the harness runs ring one on every write"
+grep -q 'ket gate probe' harness/hooks/hooks.json ||
+  fail "the harness hooks never call the probe gate"
+grep -q '"PostToolUse"' harness/hooks/hooks.json ||
+  fail "the probe gate is not wired to a post-tool-use event"
+
 echo "acceptance: every decision was recorded"
 test -f "$PROJECT/.ket/events.jsonl" || fail "the gate recorded no events"
 grep -q '"outcome":"refused"' "$PROJECT/.ket/events.jsonl" || fail "no refusal was recorded"
 grep -q '"outcome":"allowed"' "$PROJECT/.ket/events.jsonl" || fail "no allowance was recorded"
 grep -q '"item":"OS-1"' "$PROJECT/.ket/events.jsonl" || fail "no event named the item"
+grep -q '"gate":"probe"' "$PROJECT/.ket/events.jsonl" || fail "the probe gate recorded nothing"
 while read -r line; do
   echo "$line" | grep -q '^{.*}$' || fail "a recorded line is not one json object: $line"
 done <"$PROJECT/.ket/events.jsonl"

@@ -13,6 +13,19 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ket gate probe",
+            "timeout": 30,
+            "statusMessage": "running ring one over the file"
+          }
+        ]
+      }
     ]
   }
 }

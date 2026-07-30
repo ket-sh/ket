@@ -1,5 +1,6 @@
 import { adapterPatternsOf, CLI_SEMANTICS } from '@ket/preset-cli';
 import { defineCommand, showUsage } from 'citty';
+import { spawn } from 'node:child_process';
 import { appendFile, readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -8,12 +9,14 @@ import type { StoredItem } from '../../shared/read-item.ts';
 import type { GovernedItem } from '../../shared/write-gate.ts';
 import type { Denial } from './envelope.ts';
 import type { GateEvent } from './event.ts';
+import type { ProbeReply, RingFailure } from './ring.ts';
 
 import { ketRootFrom, sourceRootsOf, targetsFrom } from '../../shared/locate.ts';
 import { inFlightFrom } from '../../shared/read-item.ts';
 import { verdictFor } from '../../shared/write-gate.ts';
 import { pathFrom, refusal, verdictReply } from './envelope.ts';
 import { renderEvent } from './event.ts';
+import { argvFor, probeReply } from './ring.ts';
 
 const KET_DIRECTORY = '.ket';
 
@@ -110,6 +113,72 @@ async function judgeWrite(): Promise<Denial | undefined> {
   return denial;
 }
 
+async function ran(argv: string[], root: string): Promise<string | undefined> {
+  return new Promise((settle) => {
+    const [binary, ...rest] = argv;
+    const child = spawn(binary ?? '', rest, { cwd: root });
+    let said = '';
+
+    const gather = (chunk: Buffer): void => {
+      said += chunk.toString();
+    };
+
+    child.stdout.on('data', gather);
+    child.stderr.on('data', gather);
+    child.on('error', (cause: Error) => {
+      settle(cause.message);
+    });
+
+    child.on('close', (code) => {
+      settle(code === 0 ? undefined : said.trim());
+    });
+  });
+}
+
+async function ringOne(root: string, path: string): Promise<RingFailure[]> {
+  const failures: RingFailure[] = [];
+
+  for (const check of CLI_SEMANTICS.rings.one) {
+    const said = await ran(argvFor(check, path), root);
+
+    if (said !== undefined) {
+      failures.push({ runs: check.runs, said });
+    }
+  }
+
+  return failures;
+}
+
+async function probeRing(): Promise<ProbeReply | undefined> {
+  const path = pathFrom(await readEnvelope());
+  const root = path === undefined ? undefined : await ketRootFrom(process.cwd());
+
+  if (path === undefined || root === undefined) {
+    return undefined;
+  }
+
+  const failures = await ringOne(root, path);
+
+  await record(root, {
+    gate: 'probe',
+    outcome: failures.length === 0 ? 'allowed' : 'refused',
+    about: path,
+  });
+
+  return probeReply(failures);
+}
+
+const probe = defineCommand({
+  meta: { name: 'probe', description: 'Run ring one over the file that was written' },
+  async run() {
+    const reply = await probeRing();
+
+    if (reply !== undefined) {
+      process.stdout.write(JSON.stringify(reply));
+    }
+  },
+});
+
 const write = defineCommand({
   meta: { name: 'write', description: 'Decide whether an item permits this write' },
   async run() {
@@ -123,7 +192,7 @@ const write = defineCommand({
 
 const gate = defineCommand({
   meta: { name: 'gate', description: 'Run a pipeline gate' },
-  subCommands: { write },
+  subCommands: { write, probe },
 });
 
 export async function usage(): Promise<void> {
