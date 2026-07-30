@@ -135,6 +135,10 @@ describe('the shape of what the cli preset declares', () => {
     expect(CLI_SEMANTICS.substrate).toBe('temporary-directories');
   });
 
+  it('names the lockfile as a file, since a workspace keeps one in any directory', () => {
+    expect(CLI_SEMANTICS.lockfile).not.toContain('/');
+  });
+
   it('keeps tests, the adapter and the edge out of mutation, and nothing else', () => {
     expect(CLI_SEMANTICS.slice.mutate).toStrictEqual([
       '**/*.ts',

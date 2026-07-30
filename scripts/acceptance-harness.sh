@@ -165,6 +165,31 @@ only_item OS-1 feature story implementing 'login with lockout'
 allows src/commands/hello/command.ts
 allows src/features/login.feature
 
+echo "acceptance: files a tool writes and a person does not"
+# The lockfile name comes from the preset, so a target on another toolchain gets
+# its own. Nothing here retypes ket's choice.
+only_item OS-1 feature story implementing 'login with lockout'
+refuses bun.lock 'is a lockfile'
+refuses packages/api/bun.lock 'is a lockfile'
+allows docs/bun.lock.md
+allows package.json
+
+echo "acceptance: files that hold secrets"
+refuses .env 'holds secrets'
+refuses .env.local 'holds secrets'
+refuses apps/api/.env 'holds secrets'
+allows .env.example
+allows src/env.ts
+allows .gitignore
+allows .oxlintrc.json
+
+echo "acceptance: key material"
+refuses secrets/server.pem 'is key material'
+refuses certs/bundle.p12 'is key material'
+refuses .ssh/id_rsa 'is key material'
+refuses .ssh/id_ed25519 'is key material'
+allows src/key.ts
+
 echo "acceptance: paths no target governs"
 only_item OS-1 feature story triaged 'login with lockout'
 allows README.md

@@ -138,6 +138,7 @@ async function judgeWrite(): Promise<Denial | undefined> {
       path,
       sources: sourceRootsOf(await readTargets(root)),
       adapters: adapterPatternsOf(CLI_SEMANTICS),
+      lockfile: CLI_SEMANTICS.lockfile,
       inFlight,
     }),
   );

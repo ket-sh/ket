@@ -36,6 +36,7 @@ export interface PresetSemantics {
   tests: TestSemantics;
   acceptance: AcceptanceSemantics;
   substrate: string;
+  lockfile: string;
   gates: GateSemantics[];
   rings: RingSemantics;
   testRuntime: string;
@@ -76,6 +77,7 @@ export const CLI_SEMANTICS: PresetSemantics = {
   },
   acceptance: { runner: 'cucumber', drives: 'binary' },
   substrate: 'temporary-directories',
+  lockfile: 'bun.lock',
   rings: {
     formats: [{ runs: 'oxfmt', scope: 'file' }],
     one: [

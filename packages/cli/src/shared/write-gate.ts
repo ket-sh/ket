@@ -8,6 +8,14 @@ const ITEM_FILE = '.ket/items/*/item.yaml';
 
 const WRITEABLE: ItemStatus = 'implementing';
 
+const ENVIRONMENT = '.env';
+
+const ENVIRONMENT_TEMPLATE = '.env.example';
+
+const KEY_SUFFIXES = ['.pem', '.key', '.p12'];
+
+const KEY_NAMES = ['id_rsa', 'id_ed25519'];
+
 export interface GovernedItem {
   key: string;
   kind: ItemKind;
@@ -19,6 +27,7 @@ export interface WriteAttempt {
   path: string;
   sources: string[];
   adapters: string[];
+  lockfile: string;
   inFlight: GovernedItem[];
 }
 
@@ -76,6 +85,46 @@ function governing(attempt: WriteAttempt): GovernedItem | undefined {
   return underSource(attempt.path, attempt.sources) ? attempt.inFlight[0] : undefined;
 }
 
+function nameOf(path: string): string {
+  const segments = path.split('/');
+
+  return segments[segments.length - 1] ?? path;
+}
+
+function generated(path: string, lockfile: string): Verdict | undefined {
+  if (nameOf(path) !== lockfile) {
+    return undefined;
+  }
+
+  return {
+    refused: `${path} is a lockfile. Install the dependency rather than editing the record of one.`,
+  };
+}
+
+function secret(path: string): Verdict | undefined {
+  const name = nameOf(path);
+  const holds = name === ENVIRONMENT || name.startsWith(`${ENVIRONMENT}.`);
+
+  if (!holds || name === ENVIRONMENT_TEMPLATE) {
+    return undefined;
+  }
+
+  return { refused: `${path} holds secrets. The person who owns them edits it.` };
+}
+
+function keyMaterial(path: string): Verdict | undefined {
+  const name = nameOf(path);
+  const material =
+    KEY_SUFFIXES.some((suffix) => name.endsWith(suffix)) ||
+    KEY_NAMES.some((known) => name.startsWith(known));
+
+  if (!material) {
+    return undefined;
+  }
+
+  return { refused: `${path} is key material. The person who owns it edits it.` };
+}
+
 function byHand(path: string): Verdict | undefined {
   if (!matchesGlob(ITEM_FILE, path)) {
     return undefined;
@@ -96,6 +145,15 @@ function governed(attempt: WriteAttempt): Verdict {
   return crowded(attempt.inFlight) ?? unapproved(item) ?? misclassified(item, attempt) ?? ALLOWED;
 }
 
+function sealed(attempt: WriteAttempt): Verdict | undefined {
+  return (
+    generated(attempt.path, attempt.lockfile) ??
+    secret(attempt.path) ??
+    keyMaterial(attempt.path) ??
+    byHand(attempt.path)
+  );
+}
+
 export function verdictFor(attempt: WriteAttempt): Verdict {
-  return byHand(attempt.path) ?? governed(attempt);
+  return sealed(attempt) ?? governed(attempt);
 }

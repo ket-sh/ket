@@ -16,6 +16,7 @@ function attempt(over: Partial<WriteAttempt>): WriteAttempt {
     path: 'src/auth.ts',
     sources: ['src'],
     adapters: ['src/commands/*/command.ts'],
+    lockfile: 'bun.lock',
     inFlight: [STORY],
     ...over,
   };

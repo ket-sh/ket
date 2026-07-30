@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { CLI_PRESET } from './item.ts';
 import { repositoryRootFrom } from './repository-root.ts';
+import { CLI_SEMANTICS } from './semantics.ts';
 
 const CONFIG_PATTERN = /^\.?[a-z0-9-]+(\.config)?\.(json|ts|cjs|yml|yaml|toml|ini)$/;
 
@@ -185,6 +186,12 @@ describe('the cli preset against this repository', () => {
     const targets = CLI_PRESET.files.map((file) => file.target);
 
     expect(targets).toContain(`~/${await mutationTestConfigItNames()}`);
+  });
+
+  it('names the lockfile this repository actually keeps, since the gate refuses it', async () => {
+    const entries = await readdir(REPOSITORY_ROOT);
+
+    expect(entries).toContain(CLI_SEMANTICS.lockfile);
   });
 });
 
