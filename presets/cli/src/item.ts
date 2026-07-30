@@ -68,6 +68,8 @@ export const CLI_PRESET: PresetItem = {
     writes('vale-styles/Terminology.yml', '.vale/styles/ket/Terminology.yml'),
     writes('vale-styles/Intensifiers.yml', '.vale/styles/ket/Intensifiers.yml'),
     writes('vale-styles/WeakOpeners.yml', '.vale/styles/ket/WeakOpeners.yml'),
+    writes('vale-vocabulary/accept.txt', '.vale/styles/config/vocabularies/ket/accept.txt'),
+    writes('gitignore', '.gitignore'),
     writes('source/run.ts', 'src/run.ts'),
     writes('source/main.ts', 'src/main.ts'),
     writes('source/commands/hello/command.ts', 'src/commands/hello/command.ts'),

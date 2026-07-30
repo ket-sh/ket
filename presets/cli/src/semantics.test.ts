@@ -1,4 +1,4 @@
-import { readdir } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -226,5 +226,18 @@ describe('the ring a preset runs on every write', () => {
         local: true,
       });
     }
+  });
+});
+
+describe('the prose gate against the config the preset writes', () => {
+  it('syncs the very package its prose config declares, so a fresh checkout finds it', async () => {
+    const configuration = await readFile(
+      join(import.meta.dirname, '..', 'files', 'vale.ini'),
+      'utf8',
+    );
+    const declared = /\/(?<name>[A-Za-z]+)\.zip/u.exec(configuration)?.groups?.['name'];
+
+    expect(declared).toBeDefined();
+    expect(CLI_SEMANTICS.scripts['lint:prose']).toContain(`.vale/styles/${declared ?? ''}`);
   });
 });

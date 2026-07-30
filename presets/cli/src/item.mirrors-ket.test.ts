@@ -67,6 +67,37 @@ async function lintPluginsItWrites(): Promise<string[]> {
     .filter((specifier): specifier is string => typeof specifier === 'string');
 }
 
+function settingIn(configuration: string, key: string): string | undefined {
+  const line = configuration
+    .split('\n')
+    .find((entry) => entry.trimStart().startsWith(`${key} `) || entry.trimStart() === key);
+
+  return line?.split('=')[1]?.trim();
+}
+
+// Vale itself supplies the Vale style, and Packages downloads Microsoft. Every
+// other name in BasedOnStyles has to arrive as a file the preset writes.
+const VALE_SUPPLIES = new Set(['Vale', 'Microsoft']);
+
+async function proseStylesItNames(): Promise<string[]> {
+  const named = settingIn(await readsPresetFile('vale.ini'), 'BasedOnStyles') ?? '';
+
+  return named
+    .split(',')
+    .map((style) => style.trim())
+    .filter((style) => style !== '' && !VALE_SUPPLIES.has(style));
+}
+
+async function proseVocabularyItNames(): Promise<string> {
+  const named = settingIn(await readsPresetFile('vale.ini'), 'Vocab');
+
+  if (named === undefined || named === '') {
+    throw new Error('the prose config the preset writes names no vocabulary');
+  }
+
+  return named;
+}
+
 async function mutationTestConfigItNames(): Promise<string> {
   const written: unknown = JSON.parse(await readsPresetFile('stryker.conf.json'));
   const runner = isRecord(written) ? written['vitest'] : undefined;
@@ -134,6 +165,20 @@ describe('the cli preset against this repository', () => {
         shipped: true,
       });
     }
+  });
+
+  it('ships every style and vocabulary its prose config names', async () => {
+    const targets = new Set(CLI_PRESET.files.map((file) => file.target));
+
+    for (const style of await proseStylesItNames()) {
+      const shipped = [...targets].some((target) => target.startsWith(`~/.vale/styles/${style}/`));
+
+      expect({ style, shipped }).toStrictEqual({ style, shipped: true });
+    }
+
+    const vocabulary = await proseVocabularyItNames();
+
+    expect(targets).toContain(`~/.vale/styles/config/vocabularies/${vocabulary}/accept.txt`);
   });
 
   it('ships the test config its mutation config points at', async () => {

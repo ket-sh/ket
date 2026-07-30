@@ -58,7 +58,7 @@ export const CLI_SEMANTICS: PresetSemantics = {
     'lint:dead': 'knip',
     'lint:dup': 'jscpd -c .jscpd.json src',
     'lint:spell': 'cspell --no-progress --dot "**"',
-    'lint:prose': 'mise exec -- vale .',
+    'lint:prose': 'mise exec -- sh -c "test -d .vale/styles/Microsoft || vale sync && vale ."',
     fmt: 'oxfmt .',
     'fmt:check': 'oxfmt --check .',
     'check-types': 'tsc --noEmit -p tsconfig.json',
