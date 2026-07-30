@@ -33,7 +33,6 @@ nonword
 openspec
 opentui
 opentui-spinner
-ORDE
 oxfmt
 oxfmtrc
 oxlint
@@ -61,6 +60,7 @@ unlocks
 usecase
 usecases
 vitest
+vtsls
 worktree
 worktrees
 zizmor

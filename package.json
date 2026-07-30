@@ -15,7 +15,7 @@
     "check-types": "turbo run check-types && bun run check-types:workflows && bun run check-types:root-configs",
     "check-types:workflows": "tsc -p .claude/workflows/tsconfig.json",
     "lint:prose": "mise exec -- vale .",
-    "lint:spell": "cspell --no-progress \"**\"",
+    "lint:spell": "cspell --no-progress --dot \"**\"",
     "lint:dead": "knip",
     "lint:workflows": "mise install -q && mise exec -- zizmor --min-severity medium .github/workflows/ && mise exec -- actionlint -color",
     "fmt": "oxfmt",

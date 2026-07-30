@@ -47,7 +47,7 @@ export const CLI_SEMANTICS: PresetSemantics = {
     'lint:boundaries': 'depcruise src --config .dependency-cruiser.cjs',
     'lint:dead': 'knip',
     'lint:dup': 'jscpd -c .jscpd.json src',
-    'lint:spell': 'cspell --no-progress "**"',
+    'lint:spell': 'cspell --no-progress --dot "**"',
     'lint:prose': 'mise exec -- vale .',
     fmt: 'oxfmt .',
     'fmt:check': 'oxfmt --check .',
