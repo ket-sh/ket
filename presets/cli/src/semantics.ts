@@ -16,12 +16,13 @@ export interface TestSemantics {
 
 export interface RingCheck {
   runs: string;
-  scope: 'file' | 'project';
+  scope: 'file' | 'covering' | 'project';
 }
 
 export interface RingSemantics {
   formats: RingCheck[];
   one: RingCheck[];
+  two: RingCheck[];
 }
 
 export interface GateSemantics {
@@ -82,6 +83,9 @@ export const CLI_SEMANTICS: PresetSemantics = {
     formats: [{ runs: 'oxfmt', scope: 'file' }],
     one: [
       { runs: 'oxlint --no-error-on-unmatched-pattern', scope: 'file' },
+      { runs: 'vitest run', scope: 'covering' },
+    ],
+    two: [
       { runs: 'tsc --noEmit -p tsconfig.json', scope: 'project' },
       { runs: 'depcruise src --config .dependency-cruiser.cjs', scope: 'project' },
     ],
@@ -130,6 +134,47 @@ export function adapterPatternsOf(semantics: PresetSemantics): string[] {
   return semantics.slice.mutate
     .filter((entry) => isExclusion(entry) && !isTestPattern(entry))
     .map((entry) => `${anySlice}/${entry.slice(EXCLUSION.length)}`);
+}
+
+const SEPARATOR = '/';
+
+const EXTENSION = '.';
+
+function directoryOf(path: string): string {
+  return path.slice(0, path.lastIndexOf(SEPARATOR) + 1);
+}
+
+function testSuffixOf(pattern: string): string {
+  return pattern.slice(UNIT_PLACEHOLDER.length);
+}
+
+function sourceSuffixOf(pattern: string): string {
+  return pattern.slice(pattern.lastIndexOf(EXTENSION));
+}
+
+// A written file that has no unit name has no test named after it, and running
+// the whole suite instead would answer a question nobody asked.
+export function coveringTestsOf(semantics: PresetSemantics, path: string): string[] {
+  const patterns = [semantics.tests.example, semantics.tests.property];
+  const name = path.slice(directoryOf(path).length);
+
+  if (patterns.some((pattern) => name.endsWith(testSuffixOf(pattern)))) {
+    return [path];
+  }
+
+  const source = sourceSuffixOf(semantics.tests.example);
+
+  if (!name.endsWith(source)) {
+    return [];
+  }
+
+  const unit = name.slice(0, -source.length);
+
+  if (!UNIT_NAME.test(unit)) {
+    return [];
+  }
+
+  return patterns.map((pattern) => `${directoryOf(path)}${testFileFor(pattern, unit)}`);
 }
 
 export function ringOneOf(semantics: PresetSemantics): RingCheck[] {

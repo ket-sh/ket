@@ -326,15 +326,54 @@ echo "$dirty" | grep -q 'no-unused-vars' ||
 echo "$dirty" | grep -q 'permissionDecision' &&
   fail "probe carried a decision, and a post-tool-use hook must never block"
 
-# The whole claim of ring 1 is that its per-file check looks at one file. A check
-# that dropped the path would lint the project and name broken.ts even while
-# probing a clean one. The project-scoped checks in the same ring are expected to
-# report it, so the assertion is about the linter alone.
+# The whole claim of ring 1 is that it looks at one file. A check that dropped
+# the path would sweep the project and name broken.ts even while probing a clean
+# one, and nothing in ring one is allowed to do that.
 elsewhere="$(envelope PostToolUse "$PROJECT/src/commands/hello/greeting.ts" | (cd "$PROJECT" && "$KET" gate probe))"
-echo "$elsewhere" | grep -q 'oxlint' &&
-  fail "the linter reported a file other than the written one, so it is not scoped to it"
+test -z "$elsewhere" ||
+  fail "ring one reported a file other than the written one, so it is not scoped to it: $elsewhere"
 rm "$PROJECT/src/broken.ts"
 CHECKED=$((CHECKED + 4))
+
+echo "acceptance: ring one waits for no sweep of the project"
+# Measured at about a second a write on a toy project, and it grows. The two
+# project-wide checks answer what the commit hook answers anyway, so a write no
+# longer waits for them.
+printf 'export const broken: number = "not a number";\n' >"$PROJECT/src/mistyped.ts"
+typed="$(envelope PostToolUse "$PROJECT/src/mistyped.ts" | (cd "$PROJECT" && "$KET" gate probe))"
+echo "$typed" | grep -q 'tsc' &&
+  fail "a write waited for a typecheck of the whole project"
+echo "$typed" | grep -q 'depcruise' &&
+  fail "a write waited for a dependency sweep of the whole project"
+rm "$PROJECT/src/mistyped.ts"
+CHECKED=$((CHECKED + 2))
+
+echo "acceptance: ring one runs the tests that cover the written file"
+# Nothing else runs a test automatically, so this is the fastest true signal the
+# pipeline has. The example command ships with a suite that passes.
+covered="$(envelope PostToolUse "$PROJECT/src/commands/hello/greeting.ts" | (cd "$PROJECT" && "$KET" gate probe))"
+test -z "$covered" || fail "a passing suite was reported as a failure: $covered"
+CHECKED=$((CHECKED + 1))
+
+cp "$PROJECT/src/commands/hello/greeting.ts" "$SANDBOX/greeting.intact"
+printf 'export function greeting(name: string): string {\n  return `goodbye ${name}`;\n}\n' \
+  >"$PROJECT/src/commands/hello/greeting.ts"
+regressed="$(envelope PostToolUse "$PROJECT/src/commands/hello/greeting.ts" | (cd "$PROJECT" && "$KET" gate probe))"
+echo "$regressed" | grep -q 'vitest run' ||
+  fail "a write broke the suite that covers it and the gate said: ${regressed:-nothing}"
+CHECKED=$((CHECKED + 1))
+
+# A file no test is named after runs no test at all. Running the whole suite
+# instead would answer a question nobody asked, and refusing a file with no test
+# is the test-first gate's business rather than ring one's. The suite is still
+# broken here on purpose: a sweep of it would be loud, and running nothing quiet.
+printf 'export const alone = 1;\n' >"$PROJECT/src/uncovered.ts"
+uncovered="$(envelope PostToolUse "$PROJECT/src/uncovered.ts" | (cd "$PROJECT" && "$KET" gate probe))"
+echo "$uncovered" | grep -q 'vitest' &&
+  fail "a file no test covers still ran the runner: $uncovered"
+rm "$PROJECT/src/uncovered.ts"
+cp "$SANDBOX/greeting.intact" "$PROJECT/src/commands/hello/greeting.ts"
+CHECKED=$((CHECKED + 1))
 
 echo "acceptance: a written path never reaches a tool as a flag"
 # The path comes from whatever asked for the write, so a file named --fix would

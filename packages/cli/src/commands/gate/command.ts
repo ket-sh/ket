@@ -1,7 +1,7 @@
-import { adapterPatternsOf, CLI_SEMANTICS, ringOneOf } from '@ket/preset-cli';
+import { adapterPatternsOf, CLI_SEMANTICS, coveringTestsOf, ringOneOf } from '@ket/preset-cli';
 import { defineCommand, showUsage } from 'citty';
 import { spawn } from 'node:child_process';
-import { readdir, readFile, realpath } from 'node:fs/promises';
+import { access, readdir, readFile, realpath } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
 
 import type { PresetName } from '../../shared/configuration.ts';
@@ -173,11 +173,30 @@ async function ran(argv: string[], root: string): Promise<string | undefined> {
   });
 }
 
+// The tests a preset names after a unit are the ones that cover it, and the ones
+// that are not there yet are the test-first gate's business rather than ring
+// one's. Absolute, so the runner matches the file rather than a pattern.
+async function coveringOn(root: string, path: string): Promise<string[]> {
+  const named = coveringTestsOf(CLI_SEMANTICS, path).map((test) => join(root, test));
+  const found = await Promise.all(
+    named.map(async (test) =>
+      access(test).then(
+        () => test,
+        () => undefined,
+      ),
+    ),
+  );
+
+  return found.filter((test): test is string => test !== undefined);
+}
+
 async function ringOne(root: string, path: string): Promise<RingFailure[]> {
+  const covering = await coveringOn(root, path);
   const failures: RingFailure[] = [];
 
   for (const check of ringOneOf(CLI_SEMANTICS)) {
-    const said = await ran(argvFor(check, path), root);
+    const argv = argvFor(check, covering, path);
+    const said = argv === undefined ? undefined : await ran(argv, root);
 
     if (said !== undefined) {
       failures.push({ runs: check.runs, said });

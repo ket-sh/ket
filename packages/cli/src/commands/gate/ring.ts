@@ -25,10 +25,20 @@ function asPath(path: string): string {
   return path.startsWith(ANCHOR) || path.startsWith('/') ? path : `${ANCHOR}${path}`;
 }
 
-export function argvFor(check: RingCheck, path: string): string[] {
+// A check with nothing to look at has no command. Running it bare would sweep
+// the whole project, which is the cost ring one exists to avoid.
+export function argvFor(check: RingCheck, covering: string[], path: string): string[] | undefined {
   const argv = check.runs.split(' ').map((part, at) => (at === 0 ? `${LOCAL_BIN}${part}` : part));
 
-  return check.scope === 'file' ? [...argv, asPath(path)] : argv;
+  if (check.scope === 'file') {
+    return [...argv, asPath(path)];
+  }
+
+  if (check.scope === 'project') {
+    return argv;
+  }
+
+  return covering.length === 0 ? undefined : [...argv, ...covering.map(asPath)];
 }
 
 export function probeReply(failures: RingFailure[]): ProbeReply | undefined {

@@ -16,11 +16,11 @@ describe('the ring a preset runs on every write', () => {
     }
   });
 
-  it('scopes every check to a file or to the project, and nothing else', () => {
+  it('scopes every check to the file or to what covers it, and nothing else', () => {
     for (const check of CLI_SEMANTICS.rings.one) {
       expect({ runs: check.runs, scope: check.scope }).toStrictEqual({
         runs: check.runs,
-        scope: check.scope === 'file' ? 'file' : 'project',
+        scope: check.scope === 'file' ? 'file' : 'covering',
       });
     }
   });
@@ -31,16 +31,71 @@ describe('the ring a preset runs on every write', () => {
     expect(perFile.map((check) => check.runs)).toContain('oxlint --no-error-on-unmatched-pattern');
   });
 
-  it('names the three checks section eight measures at one point two seconds', () => {
+  it('names the linter, which is the check a write can afford to wait for', () => {
     const commands = CLI_SEMANTICS.rings.one.map((check) => check.runs).join(' ');
 
     expect(commands).toContain('oxlint');
+  });
+
+  it('reaches every binary through the project, not through a global install', () => {
+    for (const check of CLI_SEMANTICS.rings.one) {
+      expect({ runs: check.runs, local: !check.runs.startsWith('/') }).toStrictEqual({
+        runs: check.runs,
+        local: true,
+      });
+    }
+  });
+});
+
+describe('what ring one refuses to do after a write', () => {
+  it('sweeps no project, since that answer costs what a write cannot', () => {
+    for (const check of ringOneOf(CLI_SEMANTICS)) {
+      expect({ runs: check.runs, scope: check.scope }).not.toStrictEqual({
+        runs: check.runs,
+        scope: 'project',
+      });
+    }
+  });
+
+  it('runs the tests that cover the written file, since nothing else runs them', () => {
+    const covering = CLI_SEMANTICS.rings.one.filter((check) => check.scope === 'covering');
+
+    expect(covering.map((check) => check.runs)).toStrictEqual(['vitest run']);
+  });
+
+  it('runs those tests on the runner the preset declares', () => {
+    for (const check of CLI_SEMANTICS.rings.one.filter((entry) => entry.scope === 'covering')) {
+      expect({ runs: check.runs, runner: check.runs.split(' ')[0] }).toStrictEqual({
+        runs: check.runs,
+        runner: CLI_SEMANTICS.testRuntime,
+      });
+    }
+  });
+});
+
+describe('the ring a preset runs when a stage ends', () => {
+  it('declares the checks that read the whole project', () => {
+    expect(CLI_SEMANTICS.rings.two.length).toBeGreaterThan(0);
+  });
+
+  it('scopes every one of them to the project, since that is what makes it ring two', () => {
+    for (const check of CLI_SEMANTICS.rings.two) {
+      expect({ runs: check.runs, scope: check.scope }).toStrictEqual({
+        runs: check.runs,
+        scope: 'project',
+      });
+    }
+  });
+
+  it('holds the typechecker and the dependency graph, which a write no longer waits for', () => {
+    const commands = CLI_SEMANTICS.rings.two.map((check) => check.runs).join(' ');
+
     expect(commands).toContain('tsc');
     expect(commands).toContain('depcruise');
   });
 
   it('reaches every binary through the project, not through a global install', () => {
-    for (const check of CLI_SEMANTICS.rings.one) {
+    for (const check of CLI_SEMANTICS.rings.two) {
       expect({ runs: check.runs, local: !check.runs.startsWith('/') }).toStrictEqual({
         runs: check.runs,
         local: true,
