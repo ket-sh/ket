@@ -63,6 +63,56 @@ bun run --cwd packages/cli build >/dev/null || fail "the binary does not build"
 
 test -f "$PROJECT/.ket/config.ts" || fail "create wrote no ket config"
 
+echo "acceptance: create registered the harness"
+grep -q '"ket@ket": true' "$PROJECT/.claude/settings.json" ||
+  fail "create did not enable the harness plugin"
+grep -q '"repo": "ket-sh/ket"' "$PROJECT/.claude/settings.json" ||
+  fail "create did not register the marketplace the harness ships from"
+
+echo "acceptance: the harness ships what it declares"
+for name in feature approve status continue; do
+  test -f "harness/commands/$name.md" || fail "the harness declares no /ket:$name command"
+done
+for name in triage researcher decomposer adr solution-design ui-design gherkin implementer reviewer qa; do
+  test -f "harness/agents/$name.md" || fail "the harness declares no $name agent"
+done
+grep -q 'ket gate write' harness/hooks/hooks.json ||
+  fail "the harness hooks call no write gate"
+grep -q '"source": "./harness"' .claude-plugin/marketplace.json ||
+  fail "the marketplace does not point at the harness"
+
+echo "acceptance: the whole loop, through the binary only"
+(cd "$PROJECT" && rm -rf .ket/items && mkdir -p .ket/items)
+filed="$(cd "$PROJECT" && "$KET" item file --title 'login with lockout' --kind feature --size story)"
+test "$filed" = "OS-1" || fail "expected the first item to be OS-1, got: $filed"
+grep -q 'status: triaged' "$PROJECT/.ket/items/OS-1/item.yaml" ||
+  fail "a filed item does not start triaged"
+refuses src/auth.ts 'OS-1 is triaged, not implementing'
+refuses .ket/items/OS-1/item.yaml 'only a gate writes one'
+(cd "$PROJECT" && "$KET" item approve OS-1 >/dev/null) || fail "approve refused a triaged item"
+grep -q 'status: implementing' "$PROJECT/.ket/items/OS-1/item.yaml" ||
+  fail "approve did not move the status"
+allows src/auth.ts
+(cd "$PROJECT" && "$KET" item approve OS-1 >/dev/null 2>&1) &&
+  fail "approve accepted an item already implementing"
+CHECKED=$((CHECKED + 1))
+
+echo "acceptance: a second item takes the next key"
+second="$(cd "$PROJECT" && "$KET" item file --title 'logout' --kind chore --size trivial)"
+test "$second" = "OS-2" || fail "expected the second item to be OS-2, got: $second"
+
+echo "acceptance: a classification the command refuses outright"
+(cd "$PROJECT" && "$KET" item file --title 'x' --kind poem --size story >/dev/null 2>&1) &&
+  fail "file accepted a kind the pipeline does not name"
+(cd "$PROJECT" && "$KET" item file --title 'x' --kind feature --size huge >/dev/null 2>&1) &&
+  fail "file accepted a size the matrix does not name"
+CHECKED=$((CHECKED + 2))
+
+echo "acceptance: approving something that is not there"
+(cd "$PROJECT" && "$KET" item approve OS-99 >/dev/null 2>&1) &&
+  fail "approve accepted a key with no item"
+CHECKED=$((CHECKED + 1))
+
 echo "acceptance: nothing in flight"
 rm -rf "$PROJECT/.ket/items"
 mkdir -p "$PROJECT/.ket/items"
@@ -70,52 +120,52 @@ allows src/auth.ts
 allows src/commands/hello/command.ts
 
 echo "acceptance: the approve gate"
-only_item ORDE-1 feature story triaged 'login with lockout'
-refuses src/auth.ts 'ORDE-1 is triaged, not implementing'
+only_item OS-1 feature story triaged 'login with lockout'
+refuses src/auth.ts 'OS-1 is triaged, not implementing'
 for status in designing awaiting-approval verifying; do
-  only_item ORDE-1 feature story "$status" 'login with lockout'
-  refuses src/auth.ts "ORDE-1 is $status, not implementing"
+  only_item OS-1 feature story "$status" 'login with lockout'
+  refuses src/auth.ts "OS-1 is $status, not implementing"
 done
-only_item ORDE-1 feature story implementing 'login with lockout'
+only_item OS-1 feature story implementing 'login with lockout'
 allows src/auth.ts
 
 echo "acceptance: a classification the change contradicts"
-only_item ORDE-1 feature trivial implementing 'rename a variable'
+only_item OS-1 feature trivial implementing 'rename a variable'
 refuses src/commands/hello/command.ts 'It was never trivial'
 allows src/greeting.ts
-only_item ORDE-1 refactor story implementing 'extract the reader'
+only_item OS-1 refactor story implementing 'extract the reader'
 refuses src/features/login.feature 'A changed scenario makes it a feature'
 allows src/auth.ts
 
 echo "acceptance: a size and kind that owe nothing"
-only_item ORDE-1 feature story implementing 'login with lockout'
+only_item OS-1 feature story implementing 'login with lockout'
 allows src/commands/hello/command.ts
 allows src/features/login.feature
 
 echo "acceptance: paths no target governs"
-only_item ORDE-1 feature story triaged 'login with lockout'
+only_item OS-1 feature story triaged 'login with lockout'
 allows README.md
 allows package.json
 allows src-legacy/auth.ts
 
 echo "acceptance: settled items do not govern"
 for status in idea shipped; do
-  only_item ORDE-1 feature story "$status" 'login with lockout'
+  only_item OS-1 feature story "$status" 'login with lockout'
   allows src/auth.ts
 done
 
 echo "acceptance: one job means one branch"
-only_item ORDE-1 feature story implementing 'login with lockout'
-item ORDE-2 feature story implementing 'logout'
+only_item OS-1 feature story implementing 'login with lockout'
+item OS-2 feature story implementing 'logout'
 refuses src/auth.ts 'One job means one branch'
 
 echo "acceptance: an item it cannot read never waves a write through"
 rm -rf "$PROJECT/.ket/items"
-mkdir -p "$PROJECT/.ket/items/ORDE-1"
-printf 'nonsense\n' >"$PROJECT/.ket/items/ORDE-1/item.yaml"
+mkdir -p "$PROJECT/.ket/items/OS-1"
+printf 'nonsense\n' >"$PROJECT/.ket/items/OS-1/item.yaml"
 allows src/auth.ts
 printf 'title: t\nkind: feature\nsize: story\nstatus: halfway\nchildren: []\n' \
-  >"$PROJECT/.ket/items/ORDE-1/item.yaml"
+  >"$PROJECT/.ket/items/OS-1/item.yaml"
 allows src/auth.ts
 
 echo "acceptance: outside a ket repository"
@@ -134,7 +184,7 @@ echo "acceptance: every decision was recorded"
 test -f "$PROJECT/.ket/events.jsonl" || fail "the gate recorded no events"
 grep -q '"outcome":"refused"' "$PROJECT/.ket/events.jsonl" || fail "no refusal was recorded"
 grep -q '"outcome":"allowed"' "$PROJECT/.ket/events.jsonl" || fail "no allowance was recorded"
-grep -q '"item":"ORDE-1"' "$PROJECT/.ket/events.jsonl" || fail "no event named the item"
+grep -q '"item":"OS-1"' "$PROJECT/.ket/events.jsonl" || fail "no event named the item"
 while read -r line; do
   echo "$line" | grep -q '^{.*}$' || fail "a recorded line is not one json object: $line"
 done <"$PROJECT/.ket/events.jsonl"
