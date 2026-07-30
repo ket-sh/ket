@@ -14,6 +14,15 @@ export interface TestSemantics {
   property: string;
 }
 
+export interface RingCheck {
+  runs: string;
+  scope: 'file' | 'project';
+}
+
+export interface RingSemantics {
+  one: RingCheck[];
+}
+
 export interface GateSemantics {
   script: string;
   guards: string;
@@ -27,6 +36,7 @@ export interface PresetSemantics {
   acceptance: AcceptanceSemantics;
   substrate: string;
   gates: GateSemantics[];
+  rings: RingSemantics;
   testRuntime: string;
 }
 
@@ -65,6 +75,13 @@ export const CLI_SEMANTICS: PresetSemantics = {
   },
   acceptance: { runner: 'cucumber', drives: 'binary' },
   substrate: 'temporary-directories',
+  rings: {
+    one: [
+      { runs: 'oxlint --no-error-on-unmatched-pattern', scope: 'file' },
+      { runs: 'tsc --noEmit -p tsconfig.json', scope: 'project' },
+      { runs: 'depcruise src --config .dependency-cruiser.cjs', scope: 'project' },
+    ],
+  },
   gates: [
     { script: 'lint', guards: 'It checks style, correctness and imports.', commitJob: 'lint' },
     {

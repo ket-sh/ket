@@ -181,3 +181,50 @@ describe('the paths a preset calls an adapter', () => {
     }
   });
 });
+
+describe('the ring a preset runs on every write', () => {
+  it('declares at least one check, since a ring with none is not a ring', () => {
+    expect(CLI_SEMANTICS.rings.one.length).toBeGreaterThan(0);
+  });
+
+  it('gives every check a command to run', () => {
+    for (const check of CLI_SEMANTICS.rings.one) {
+      expect({ runs: check.runs, given: check.runs.length > 0 }).toStrictEqual({
+        runs: check.runs,
+        given: true,
+      });
+    }
+  });
+
+  it('scopes every check to a file or to the project, and nothing else', () => {
+    for (const check of CLI_SEMANTICS.rings.one) {
+      expect({ runs: check.runs, scope: check.scope }).toStrictEqual({
+        runs: check.runs,
+        scope: check.scope === 'file' ? 'file' : 'project',
+      });
+    }
+  });
+
+  it('runs the linter per file, since that is what makes the ring cheap', () => {
+    const perFile = CLI_SEMANTICS.rings.one.filter((check) => check.scope === 'file');
+
+    expect(perFile.map((check) => check.runs)).toContain('oxlint --no-error-on-unmatched-pattern');
+  });
+
+  it('names the three checks section eight measures at one point two seconds', () => {
+    const commands = CLI_SEMANTICS.rings.one.map((check) => check.runs).join(' ');
+
+    expect(commands).toContain('oxlint');
+    expect(commands).toContain('tsc');
+    expect(commands).toContain('depcruise');
+  });
+
+  it('reaches every binary through the project, not through a global install', () => {
+    for (const check of CLI_SEMANTICS.rings.one) {
+      expect({ runs: check.runs, local: !check.runs.startsWith('/') }).toStrictEqual({
+        runs: check.runs,
+        local: true,
+      });
+    }
+  });
+});
