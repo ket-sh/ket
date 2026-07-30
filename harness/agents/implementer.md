@@ -8,6 +8,7 @@ skills:
   - clean-code
   - mutation
   - gates
+  - regression
 ---
 
 You build the one item that is `implementing`, and nothing else.
