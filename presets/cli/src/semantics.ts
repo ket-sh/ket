@@ -20,6 +20,7 @@ export interface RingCheck {
 }
 
 export interface RingSemantics {
+  formats: RingCheck[];
   one: RingCheck[];
 }
 
@@ -76,6 +77,7 @@ export const CLI_SEMANTICS: PresetSemantics = {
   acceptance: { runner: 'cucumber', drives: 'binary' },
   substrate: 'temporary-directories',
   rings: {
+    formats: [{ runs: 'oxfmt', scope: 'file' }],
     one: [
       { runs: 'oxlint --no-error-on-unmatched-pattern', scope: 'file' },
       { runs: 'tsc --noEmit -p tsconfig.json', scope: 'project' },
@@ -126,6 +128,10 @@ export function adapterPatternsOf(semantics: PresetSemantics): string[] {
   return semantics.slice.mutate
     .filter((entry) => isExclusion(entry) && !isTestPattern(entry))
     .map((entry) => `${anySlice}/${entry.slice(EXCLUSION.length)}`);
+}
+
+export function ringOneOf(semantics: PresetSemantics): RingCheck[] {
+  return [...semantics.rings.formats, ...semantics.rings.one];
 }
 
 export function testFileFor(pattern: string, unit: string): string {

@@ -275,6 +275,25 @@ echo "$smuggled" | grep -q 'unknown argument' &&
   fail "a path starting with a dash reached the linter as an argument"
 CHECKED=$((CHECKED + 1))
 
+echo "acceptance: the write is formatted before anything reads it"
+# Advice about formatting fixes nothing, so the gate that reads the file is also
+# the gate that rewrites it. The preset declares the formatter, and this asserts
+# the file on disk, not the list.
+printf 'export const total   =   1\n' >"$PROJECT/src/unformatted.ts"
+envelope PostToolUse "$PROJECT/src/unformatted.ts" | (cd "$PROJECT" && "$KET" gate probe) >/dev/null
+grep -qx 'export const total = 1;' "$PROJECT/src/unformatted.ts" ||
+  fail "the probe gate left the written file unformatted: $(cat "$PROJECT/src/unformatted.ts")"
+CHECKED=$((CHECKED + 1))
+
+# A formatter that reached past the written file would rewrite the whole project
+# on every keystroke, so a second unformatted file has to survive untouched.
+printf 'export const other   =   2\n' >"$PROJECT/src/untouched.ts"
+envelope PostToolUse "$PROJECT/src/unformatted.ts" | (cd "$PROJECT" && "$KET" gate probe) >/dev/null
+grep -qx 'export const other   =   2' "$PROJECT/src/untouched.ts" ||
+  fail "the formatter rewrote a file other than the one that was written"
+rm "$PROJECT/src/unformatted.ts" "$PROJECT/src/untouched.ts"
+CHECKED=$((CHECKED + 1))
+
 echo "acceptance: the harness runs ring one on every write"
 grep -q 'ket gate probe' harness/hooks/hooks.json ||
   fail "the harness hooks never call the probe gate"

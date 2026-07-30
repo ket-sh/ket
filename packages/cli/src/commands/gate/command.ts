@@ -1,4 +1,4 @@
-import { adapterPatternsOf, CLI_SEMANTICS } from '@ket/preset-cli';
+import { adapterPatternsOf, CLI_SEMANTICS, ringOneOf } from '@ket/preset-cli';
 import { defineCommand, showUsage } from 'citty';
 import { spawn } from 'node:child_process';
 import { appendFile, readdir, readFile, realpath } from 'node:fs/promises';
@@ -172,7 +172,7 @@ async function ran(argv: string[], root: string): Promise<string | undefined> {
 async function ringOne(root: string, path: string): Promise<RingFailure[]> {
   const failures: RingFailure[] = [];
 
-  for (const check of CLI_SEMANTICS.rings.one) {
+  for (const check of ringOneOf(CLI_SEMANTICS)) {
     const said = await ran(argvFor(check, path), root);
 
     if (said !== undefined) {
