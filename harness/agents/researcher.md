@@ -5,6 +5,7 @@ tools: WebSearch, WebFetch, Read, Bash
 model: opus
 skills:
   - research
+  - prior-art
 ---
 
 You gather what the team does not already know, from outside the repository.

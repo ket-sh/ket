@@ -1,28 +1,45 @@
-import { adapterPatternsOf, CLI_SEMANTICS, coveringTestsOf, ringOneOf } from '@ket/preset-cli';
+import {
+  adapterPatternsOf,
+  CLI_PRESET,
+  CLI_SEMANTICS,
+  coveringTestsOf,
+  dependencyNamesOf,
+  ringOneOf,
+} from '@ket/preset-cli';
 import { defineCommand, showUsage } from 'citty';
 import { spawn } from 'node:child_process';
-import { access } from 'node:fs/promises';
+import { access, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import type { Verdict } from '../../shared/verdict.ts';
-import type { GovernedItem } from '../../shared/write-gate.ts';
+import type { Cited } from '../../shared/citations.ts';
+import type { CitationReply } from './citations.ts';
 import type { Denial } from './envelope.ts';
+import type { ProposalReply } from './proposal.ts';
 import type { ProbeReply, RingFailure } from './ring.ts';
 
-import { writesOf } from '../../shared/command-writes.ts';
 import { ketRootFrom } from '../../shared/locate.ts';
 import { inFlightFrom } from '../../shared/read-item.ts';
-import { shellVerdict, unreadableVerdict } from '../../shared/shell-gate.ts';
+import { arrivalsIn, declaredIn, recordToolchain, seenIn } from '../../shared/toolchain.ts';
 import { verdictFor, workingFrom } from '../../shared/write-gate.ts';
-import { commandFrom, verdictReply } from './envelope.ts';
-import { governedFile, governedPaths, readEnvelope, readStored, sourcesOf } from './governed.ts';
-import { eventFor, record } from './journal.ts';
+import { citationReply, pathsCitedIn, missingIn } from './citations.ts';
+import {
+  eventFor,
+  governedFile,
+  KET_DIRECTORY,
+  keyOf,
+  MANIFEST,
+  readEnvelope,
+  readJson,
+  readStored,
+  record,
+  sourcesOf,
+  TOOLCHAIN,
+} from './context.ts';
+import { verdictReply } from './envelope.ts';
+import { proposalReply } from './proposal.ts';
 import { argvFor, probeReply } from './ring.ts';
+import { judgeCommand } from './shell.ts';
 import { askTestFirst } from './test-first.ts';
-
-function keyOf(working: GovernedItem[]): string | undefined {
-  return working.length === 1 ? working[0]?.key : undefined;
-}
 
 async function judgeWrite(): Promise<Denial | undefined> {
   const governed = await governedFile(await readEnvelope());
@@ -44,47 +61,6 @@ async function judgeWrite(): Promise<Denial | undefined> {
   );
 
   await record(root, eventFor('write', path, denial, keyOf(workingFrom(inFlight))));
-
-  return denial;
-}
-
-async function commandVerdict(root: string, command: string): Promise<Verdict> {
-  const writes = writesOf(command);
-
-  if ('unreadable' in writes) {
-    return unreadableVerdict(writes.unreadable);
-  }
-
-  const inFlight = inFlightFrom(await readStored(root));
-
-  return shellVerdict({
-    command,
-    written: await governedPaths(root, writes.paths),
-    sources: await sourcesOf(root),
-    adapters: adapterPatternsOf(CLI_SEMANTICS),
-    lockfile: CLI_SEMANTICS.lockfile,
-    inFlight,
-  });
-}
-
-// A shell writes the same files the Write tool does, so a gate that reads only
-// one of the two is a gate an agent steps around with a redirect.
-async function judgeCommand(): Promise<Denial | undefined> {
-  const command = commandFrom(await readEnvelope());
-
-  if (command === undefined) {
-    return undefined;
-  }
-
-  const root = await ketRootFrom(process.cwd());
-
-  if (root === undefined) {
-    return undefined;
-  }
-
-  const denial = verdictReply(await commandVerdict(root, command));
-
-  await record(root, eventFor('shell', command, denial));
 
   return denial;
 }
@@ -163,6 +139,106 @@ async function probeRing(): Promise<ProbeReply | undefined> {
   return probeReply(failures);
 }
 
+// A cited directory is not a missing citation. It exists, it just holds no
+// contents a symbol could live in.
+async function reads(root: string, path: string): Promise<Cited> {
+  const contents = await readFile(join(root, path), 'utf8').catch(() => undefined);
+
+  if (contents !== undefined) {
+    return { path, contents };
+  }
+
+  const reachable = await access(join(root, path)).then(
+    () => true,
+    () => false,
+  );
+
+  return reachable ? { path, contents: '' } : { path, missing: true };
+}
+
+// A design artifact names paths and symbols and claims the repository has them.
+// Only what an item wrote is checked, because a README naming a file ket has not
+// built yet is a plan, not a claim.
+const DESIGNS = '.ket/items/';
+
+async function checkCitations(): Promise<CitationReply | undefined> {
+  const governed = await governedFile(await readEnvelope());
+
+  if (
+    governed === undefined ||
+    !governed.path.startsWith(DESIGNS) ||
+    !governed.path.endsWith('.md')
+  ) {
+    return undefined;
+  }
+
+  const { root, path } = governed;
+  const markdown = await readFile(join(root, path), 'utf8').catch(() => '');
+  const read = await Promise.all(pathsCitedIn(markdown).map(async (cited) => reads(root, cited)));
+  const missing = missingIn(markdown, read);
+
+  await record(root, {
+    gate: 'citations',
+    outcome: missing.length === 0 ? 'allowed' : 'refused',
+    about: path,
+  });
+
+  return citationReply(missing);
+}
+
+const citations = defineCommand({
+  meta: {
+    name: 'citations',
+    description: 'Check what a design artifact claims the repository has',
+  },
+  async run() {
+    const reply = await checkCitations();
+
+    if (reply !== undefined) {
+      process.stdout.write(JSON.stringify(reply));
+    }
+  },
+});
+
+// A dependency ket installed carries the checks ket already runs, so only what
+// arrived after it is worth a proposal. The record is written when the gate
+// answers, and never otherwise, so a name is put to a session once.
+async function lookAtToolchain(): Promise<ProposalReply | undefined> {
+  const root = await ketRootFrom(process.cwd());
+
+  if (root === undefined) {
+    return undefined;
+  }
+
+  const record = join(root, KET_DIRECTORY, TOOLCHAIN);
+  const seen = seenIn(await readJson(record));
+  const arrivals = arrivalsIn({
+    declared: declaredIn(await readJson(join(root, MANIFEST))),
+    shipped: dependencyNamesOf(CLI_PRESET),
+    seen,
+  });
+  const reply = proposalReply(arrivals);
+
+  if (reply === undefined) {
+    return undefined;
+  }
+
+  await writeFile(record, recordToolchain([...seen, ...arrivals]), 'utf8');
+
+  return reply;
+}
+
+const toolchain = defineCommand({
+  meta: { name: 'toolchain', description: 'Name what arrived since ket last looked' },
+  async run() {
+    const reply = await lookAtToolchain();
+
+    if (reply !== undefined) {
+      process.stdout.write(JSON.stringify(reply));
+    }
+  },
+});
+
 const probe = defineCommand({
   meta: { name: 'probe', description: 'Run ring one over the file that was written' },
   async run() {
@@ -185,6 +261,17 @@ const write = defineCommand({
   },
 });
 
+const shell = defineCommand({
+  meta: { name: 'shell', description: 'Decide whether a command may skip a gate' },
+  async run() {
+    const denial = await judgeCommand();
+
+    if (denial !== undefined) {
+      process.stdout.write(JSON.stringify(denial));
+    }
+  },
+});
+
 const testFirst = defineCommand({
   meta: { name: 'test-first', description: 'Ask the test-first gate whether this write is earned' },
   async run() {
@@ -197,20 +284,9 @@ const testFirst = defineCommand({
   },
 });
 
-const shell = defineCommand({
-  meta: { name: 'shell', description: 'Decide whether a command may skip a gate' },
-  async run() {
-    const denial = await judgeCommand();
-
-    if (denial !== undefined) {
-      process.stdout.write(JSON.stringify(denial));
-    }
-  },
-});
-
 const gate = defineCommand({
   meta: { name: 'gate', description: 'Run a pipeline gate' },
-  subCommands: { write, probe, shell, 'test-first': testFirst },
+  subCommands: { write, probe, shell, citations, toolchain, 'test-first': testFirst },
 });
 
 export async function usage(): Promise<void> {

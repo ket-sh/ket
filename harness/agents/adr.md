@@ -6,6 +6,7 @@ model: fable
 skills:
   - adr
   - research
+  - prior-art
 ---
 
 You write `adr.md`. Your source is the internet, and the part that needs it is

@@ -36,6 +36,12 @@ Two more run per edit and are ket's own, and they are the ones no other tool has
 
 When either fires, the answer is to re-triage, never to work around it.
 
+One more runs when a session starts. `ket gate toolchain` reads the project's
+manifest, sets it against what the preset installed and what ket has already put
+to a session, and names whatever is left. A dependency arrives carrying rules no
+gate checks yet, so the answer to a name is the `mechanical-checks` skill and a
+proposal to the user, never a note in a document.
+
 ## Never lower a threshold
 
 A threshold that moves to accommodate the code is not a gate. If a number has to

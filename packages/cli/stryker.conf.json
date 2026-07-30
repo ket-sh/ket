@@ -17,10 +17,10 @@
     "!src/shared/git.ts",
     "!src/commands/*/announce.ts",
     "!src/commands/gate/command.ts",
-    "!src/commands/gate/journal.ts",
+    "!src/commands/*/context.ts",
     "!src/commands/gate/test-first.ts",
     "!src/commands/item/command.ts",
-    "!src/commands/gate/governed.ts"
+    "!src/commands/gate/shell.ts"
   ],
   "reporters": ["progress", "clear-text"],
   "coverageAnalysis": "perTest",

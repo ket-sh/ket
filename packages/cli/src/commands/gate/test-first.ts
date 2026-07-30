@@ -4,8 +4,8 @@ import { access } from 'node:fs/promises';
 import type { Denial } from './envelope.ts';
 
 import { ketRootFrom } from '../../shared/locate.ts';
+import { eventFor, record } from './context.ts';
 import { actingTranscript, pointedAt, refusal } from './envelope.ts';
-import { eventFor, record } from './journal.ts';
 
 const TEST_FIRST = './node_modules/.bin/probity';
 

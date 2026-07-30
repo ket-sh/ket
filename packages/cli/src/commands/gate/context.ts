@@ -1,24 +1,25 @@
-import { readdir, readFile, realpath } from 'node:fs/promises';
+import { appendFile, readdir, readFile, realpath } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 
 import type { PresetName } from '../../shared/configuration.ts';
 import type { StoredItem } from '../../shared/read-item.ts';
+import type { GovernedItem } from '../../shared/write-gate.ts';
+import type { Denial } from './envelope.ts';
+import type { GateEvent } from './event.ts';
 
-import {
-  insideRepository,
-  KET_DIRECTORY,
-  ketRootFrom,
-  sourceRootsOf,
-  targetsFrom,
-} from '../../shared/locate.ts';
+import { insideRepository, ketRootFrom, sourceRootsOf, targetsFrom } from '../../shared/locate.ts';
 import { pathFrom } from './envelope.ts';
+import { renderEvent } from './event.ts';
+
+export const KET_DIRECTORY = '.ket';
+
+const EVENTS = 'events.jsonl';
 
 const ITEM_FILE = 'item.yaml';
 
-export interface GovernedFile {
-  root: string;
-  path: string;
-}
+export const MANIFEST = 'package.json';
+
+export const TOOLCHAIN = 'toolchain.json';
 
 export async function readEnvelope(): Promise<unknown> {
   const text = await new Response(process.stdin).text();
@@ -55,6 +56,29 @@ export async function readStored(root: string): Promise<StoredItem[]> {
   );
 }
 
+export async function record(root: string, event: GateEvent): Promise<void> {
+  await appendFile(join(root, KET_DIRECTORY, EVENTS), renderEvent(event), 'utf8');
+}
+
+export function eventFor(
+  gate: GateEvent['gate'],
+  about: string,
+  denial: Denial | undefined,
+  item?: string,
+): GateEvent {
+  return {
+    gate,
+    outcome: denial === undefined ? 'allowed' : 'refused',
+    about,
+    ...(item === undefined ? {} : { item }),
+    ...(denial === undefined ? {} : { reason: denial.hookSpecificOutput.permissionDecisionReason }),
+  };
+}
+
+export function keyOf(working: GovernedItem[]): string | undefined {
+  return working.length === 1 ? working[0]?.key : undefined;
+}
+
 // A repository reached through a symlink names its files one way and reports its
 // working directory another, and the two have to meet before anything compares
 // them. The written file does not exist yet, so the nearest ancestor that does
@@ -69,6 +93,11 @@ async function settled(path: string): Promise<string> {
   const parent = dirname(path);
 
   return parent === path ? path : join(await settled(parent), basename(path));
+}
+
+export interface GovernedFile {
+  root: string;
+  path: string;
 }
 
 // Nothing governs a repository ket never touched, or a file outside the one it
@@ -100,4 +129,16 @@ export async function governedPaths(root: string, named: string[]): Promise<stri
   return settledPaths
     .map((path) => insideRepository(root, path))
     .filter((path): path is string => path !== undefined);
+}
+
+export async function readJson(path: string): Promise<unknown> {
+  const text = await readFile(path, 'utf8').catch(() => '');
+
+  try {
+    const parsed: unknown = JSON.parse(text);
+
+    return parsed;
+  } catch {
+    return undefined;
+  }
 }

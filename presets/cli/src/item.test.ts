@@ -2,7 +2,7 @@ import { access, readFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { CLI_PRESET } from './item.ts';
+import { CLI_PRESET, dependencyNamesOf } from './item.ts';
 import { CLI_SEMANTICS, testFileFor } from './semantics.ts';
 
 const CONFIGURED_BY: Record<string, string> = {
@@ -144,6 +144,28 @@ describe('the cli preset item', () => {
     for (const file of CLI_PRESET.files) {
       await expect(access(join(import.meta.dirname, '..', file.path))).resolves.toBeUndefined();
     }
+  });
+});
+
+describe('the packages the cli preset installs', () => {
+  it('names a package it installs without the version it pins to', () => {
+    for (const name of dependencyNamesOf(CLI_PRESET)) {
+      expect({ name, pinned: /@\d/.test(name) }).toStrictEqual({ name, pinned: false });
+    }
+  });
+
+  it('names what the project runs as well as what checks it', () => {
+    expect(dependencyNamesOf(CLI_PRESET)).toEqual(expect.arrayContaining(['citty', 'oxlint']));
+  });
+
+  it('keeps a scoped package whole, since the scope is half its name', () => {
+    expect(dependencyNamesOf(CLI_PRESET)).toContain('@stryker-mutator/core');
+  });
+
+  it('leaves out no package it installs, since a gap there proposes a checker twice', () => {
+    expect(dependencyNamesOf(CLI_PRESET)).toHaveLength(
+      CLI_PRESET.dependencies.length + CLI_PRESET.devDependencies.length,
+    );
   });
 });
 

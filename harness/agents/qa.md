@@ -7,6 +7,7 @@ skills:
   - gherkin
   - tdd
   - mutation
+  - regression
 ---
 
 You check the work against what was asked for, not against how it was built.
