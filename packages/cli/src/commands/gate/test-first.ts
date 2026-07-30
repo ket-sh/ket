@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 import { access } from 'node:fs/promises';
 
 import { ketRootFrom } from '../../shared/locate.ts';
-import { actingTranscript, pathFrom, pointedAt, refusal } from './envelope.ts';
+import { actingTranscript, pointedAt, refusal } from './envelope.ts';
 import { eventFor, record } from './journal.ts';
 
 const TEST_FIRST = './node_modules/.bin/probity';
@@ -61,12 +61,17 @@ async function reachable(envelope: unknown): Promise<string | undefined> {
 
 // ket records what ket decided. A refusal the test-first gate wrote is its own,
 // and it reaches the agent in its own words rather than through a second voice.
-async function refusedHere(root: string, envelope: unknown, reason: string): Promise<string> {
-  const denial = refusal(reason);
-  const path = pathFrom(envelope);
+interface Refused {
+  root: string;
+  about: string | undefined;
+  reason: string;
+}
 
-  if (path !== undefined) {
-    await record(root, eventFor('test-first', path, denial));
+async function refusedHere(refused: Refused): Promise<string> {
+  const denial = refusal(refused.reason);
+
+  if (refused.about !== undefined) {
+    await record(refused.root, eventFor('test-first', refused.about, denial));
   }
 
   return JSON.stringify(denial);
@@ -74,7 +79,10 @@ async function refusedHere(root: string, envelope: unknown, reason: string): Pro
 
 // A gate that cannot run has to refuse. Any other answer lets the write through,
 // so a project that never installed the gate it declares would silently lose it.
-export async function askTestFirst(envelope: unknown): Promise<string | undefined> {
+export async function askTestFirst(
+  envelope: unknown,
+  about: string | undefined,
+): Promise<string | undefined> {
   const root = await ketRootFrom(process.cwd());
 
   if (root === undefined) {
@@ -84,7 +92,7 @@ export async function askTestFirst(envelope: unknown): Promise<string | undefine
   const transcript = await reachable(envelope);
 
   if (transcript === undefined) {
-    return refusedHere(root, envelope, UNRESOLVED);
+    return refusedHere({ root, about, reason: UNRESOLVED });
   }
 
   const answer = await asked(root, pointedAt(envelope, transcript));
@@ -93,5 +101,5 @@ export async function askTestFirst(envelope: unknown): Promise<string | undefine
     return answer.said === '' ? undefined : answer.said;
   }
 
-  return refusedHere(root, envelope, `${UNAVAILABLE}: ${answer.said}`);
+  return refusedHere({ root, about, reason: `${UNAVAILABLE}: ${answer.said}` });
 }

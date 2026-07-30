@@ -86,8 +86,8 @@ interface GovernedFile {
 // Nothing governs a repository ket never touched, or a file outside the one it
 // does. Refusing either would block every write in every unrelated project the
 // moment somebody enables the plugin at user scope.
-async function governedFile(): Promise<GovernedFile | undefined> {
-  const written = pathFrom(await readEnvelope());
+async function governedFile(envelope: unknown): Promise<GovernedFile | undefined> {
+  const written = pathFrom(envelope);
 
   if (written === undefined) {
     return undefined;
@@ -105,7 +105,7 @@ async function governedFile(): Promise<GovernedFile | undefined> {
 }
 
 async function judgeWrite(): Promise<Denial | undefined> {
-  const governed = await governedFile();
+  const governed = await governedFile(await readEnvelope());
 
   if (governed === undefined) {
     return undefined;
@@ -207,7 +207,7 @@ async function ringOne(root: string, path: string): Promise<RingFailure[]> {
 }
 
 async function probeRing(): Promise<ProbeReply | undefined> {
-  const governed = await governedFile();
+  const governed = await governedFile(await readEnvelope());
 
   if (governed === undefined) {
     return undefined;
@@ -250,7 +250,8 @@ const write = defineCommand({
 const testFirst = defineCommand({
   meta: { name: 'test-first', description: 'Ask the test-first gate whether this write is earned' },
   async run() {
-    const said = await askTestFirst(await readEnvelope());
+    const envelope = await readEnvelope();
+    const said = await askTestFirst(envelope, (await governedFile(envelope))?.path);
 
     if (said !== undefined) {
       process.stdout.write(said);

@@ -489,6 +489,11 @@ grep -q '"outcome":"refused"' "$PROJECT/.ket/events.jsonl" || fail "no refusal w
 grep -q '"outcome":"allowed"' "$PROJECT/.ket/events.jsonl" || fail "no allowance was recorded"
 grep -q '"item":"OS-1"' "$PROJECT/.ket/events.jsonl" || fail "no event named the item"
 grep -q '"gate":"probe"' "$PROJECT/.ket/events.jsonl" || fail "the probe gate recorded nothing"
+grep -q '"gate":"shell"' "$PROJECT/.ket/events.jsonl" || fail "the shell gate recorded nothing"
+# Every gate names a file the way the repository names it, or the log reads as
+# two logs and nothing can group by what a decision was about.
+grep -q '"gate":"test-first","outcome":"refused","about":"README.md"' "$PROJECT/.ket/events.jsonl" ||
+  fail "the test-first gate recorded a decision under some other name for the file"
 # A decision about a file the repository does not contain is not a decision it
 # gets to record, and the log is what /ket:status and ket watch later read.
 grep -q '"about":"\.\.' "$PROJECT/.ket/events.jsonl" &&
