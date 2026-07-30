@@ -76,6 +76,17 @@ done
 for name in triage researcher decomposer adr solution-design ui-design gherkin implementer reviewer qa; do
   test -f "harness/agents/$name.md" || fail "the harness declares no $name agent"
 done
+for name in tdd clean-code mutation gates commit; do
+  test -f "harness/skills/$name/SKILL.md" || fail "the harness declares no /ket:$name skill"
+  grep -q "^name: $name$" "harness/skills/$name/SKILL.md" ||
+    fail "the $name skill does not name itself, so /ket:$name would not resolve"
+  grep -q '^description:' "harness/skills/$name/SKILL.md" ||
+    fail "the $name skill has no description, so Claude cannot tell when it applies"
+done
+for name in feature approve status continue; do
+  grep -q '^description:' "harness/commands/$name.md" ||
+    fail "/ket:$name has no description"
+done
 grep -q 'ket gate write' harness/hooks/hooks.json ||
   fail "the harness hooks call no write gate"
 grep -q '"source": "./harness"' .claude-plugin/marketplace.json ||
