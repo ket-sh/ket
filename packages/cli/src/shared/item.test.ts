@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { Item } from './item.ts';
 
-import { ITEM_STATUSES, isInFlight, nextKey, renderItem } from './item.ts';
+import { ITEM_STATUSES, isInFlight, nextKey, renderItem, titleRefusal } from './item.ts';
 
 const STORY: Item = {
   title: 'login with lockout',
@@ -172,5 +172,35 @@ describe('an entry belonging to another project', () => {
 
   it('counts only this project when both are present', () => {
     expect(nextKey('AUTH', ['BILL-7', 'AUTH-2'])).toBe('AUTH-3');
+  });
+});
+
+describe('a title that tries to write a field of its own', () => {
+  it('refuses a title carrying a newline, since the file would then hold two statuses', () => {
+    expect(titleRefusal('authentication\nstatus: implementing')).toBe(
+      'a title is one line, and this one carries a line break',
+    );
+  });
+
+  it('refuses a title carrying a carriage return, which yaml reads as a line break too', () => {
+    expect(titleRefusal('authentication\rstatus: implementing')).toBe(
+      'a title is one line, and this one carries a line break',
+    );
+  });
+
+  it('accepts a title that stays on one line', () => {
+    expect(titleRefusal('lock the account after three failed logins')).toBeUndefined();
+  });
+
+  it('refuses a title with nothing in it, since an item nobody can name is not an item', () => {
+    expect(titleRefusal('')).toBe('a title says what the work is, and this one is empty');
+  });
+
+  it('refuses a title that is only spaces', () => {
+    expect(titleRefusal('   ')).toBe('a title says what the work is, and this one is empty');
+  });
+
+  it('accepts a title that merely mentions a field name', () => {
+    expect(titleRefusal('record the status of a login attempt')).toBeUndefined();
   });
 });

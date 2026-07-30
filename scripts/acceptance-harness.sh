@@ -187,6 +187,16 @@ echo "acceptance: a second item takes the next key"
 second="$(cd "$PROJECT" && "$KET" item file --title 'logout' --kind chore --size trivial)"
 test "$second" = "OS-2" || fail "expected the second item to be OS-2, got: $second"
 
+echo "acceptance: a title that tries to write a field of its own"
+# A field is one per line, so a title carrying a break writes a second field. A
+# forged status above the real one would let source through with no approval.
+forged="$(printf 'authentication\nstatus: implementing')"
+(cd "$PROJECT" && "$KET" item file --title "$forged" --kind feature --size story >/dev/null 2>&1) &&
+  fail "file accepted a title carrying a line break, which forges a status"
+(cd "$PROJECT" && "$KET" item file --title '' --kind feature --size story >/dev/null 2>&1) &&
+  fail "file accepted an item nobody can name"
+CHECKED=$((CHECKED + 2))
+
 echo "acceptance: a classification the command refuses outright"
 refuses_command 'poem is not one of feature, bug, refactor, chore' \
   item file --title 'x' --kind poem --size story

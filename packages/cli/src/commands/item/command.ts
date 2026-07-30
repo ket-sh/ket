@@ -7,7 +7,7 @@ import type { Item, ItemKind, ItemSize } from '../../shared/item.ts';
 import type { Transition } from '../../shared/transition.ts';
 
 import { decompositionOf } from '../../shared/decompose.ts';
-import { ITEM_KINDS, ITEM_SIZES, nextKey, renderItem } from '../../shared/item.ts';
+import { ITEM_KINDS, ITEM_SIZES, nextKey, renderItem, titleRefusal } from '../../shared/item.ts';
 import { keyFrom, ketRootFrom } from '../../shared/locate.ts';
 import { parseItem } from '../../shared/read-item.ts';
 import { approvalOf, designOf, submissionOf } from '../../shared/transition.ts';
@@ -109,6 +109,12 @@ const file = defineCommand({
 
     const kind: ItemKind = oneOf(ITEM_KINDS, args.kind);
     const size: ItemSize = oneOf(ITEM_SIZES, args.size);
+    const refused = titleRefusal(args.title);
+
+    if (refused !== undefined) {
+      throw new Error(`${args.title.split('\n')[0] ?? ''} is not a title: ${refused}`);
+    }
+
     const filing: Filing = { key: allocated, title: args.title, kind, size };
 
     if (args.parent === undefined) {
