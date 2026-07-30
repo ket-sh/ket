@@ -1,7 +1,7 @@
-import { adapterPatternsOf, CLI_SEMANTICS } from '@ket/preset-cli';
+import { adapterPatternsOf, CLI_PRESET, CLI_SEMANTICS, dependencyNamesOf } from '@ket/preset-cli';
 import { defineCommand, showUsage } from 'citty';
 import { spawn } from 'node:child_process';
-import { appendFile, readdir, readFile, realpath } from 'node:fs/promises';
+import { appendFile, readdir, readFile, realpath, writeFile } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
 
 import type { PresetName } from '../../shared/configuration.ts';
@@ -9,13 +9,16 @@ import type { StoredItem } from '../../shared/read-item.ts';
 import type { GovernedItem } from '../../shared/write-gate.ts';
 import type { Denial } from './envelope.ts';
 import type { GateEvent } from './event.ts';
+import type { ProposalReply } from './proposal.ts';
 import type { ProbeReply, RingFailure } from './ring.ts';
 
 import { insideRepository, ketRootFrom, sourceRootsOf, targetsFrom } from '../../shared/locate.ts';
 import { inFlightFrom } from '../../shared/read-item.ts';
+import { arrivalsIn, declaredIn, recordToolchain, seenIn } from '../../shared/toolchain.ts';
 import { verdictFor, workingFrom } from '../../shared/write-gate.ts';
 import { pathFrom, verdictReply } from './envelope.ts';
 import { renderEvent } from './event.ts';
+import { proposalReply } from './proposal.ts';
 import { argvFor, probeReply } from './ring.ts';
 
 const KET_DIRECTORY = '.ket';
@@ -23,6 +26,10 @@ const KET_DIRECTORY = '.ket';
 const EVENTS = 'events.jsonl';
 
 const ITEM_FILE = 'item.yaml';
+
+const MANIFEST = 'package.json';
+
+const TOOLCHAIN = 'toolchain.json';
 
 async function readEnvelope(): Promise<unknown> {
   const text = await new Response(process.stdin).text();
@@ -202,6 +209,57 @@ async function probeRing(): Promise<ProbeReply | undefined> {
   return probeReply(failures);
 }
 
+async function readJson(path: string): Promise<unknown> {
+  const text = await readFile(path, 'utf8').catch(() => '');
+
+  try {
+    const parsed: unknown = JSON.parse(text);
+
+    return parsed;
+  } catch {
+    return undefined;
+  }
+}
+
+// A dependency ket installed carries the checks ket already runs, so only what
+// arrived after it is worth a proposal. The record is written when the gate
+// answers, and never otherwise, so a name is put to a session once.
+async function lookAtToolchain(): Promise<ProposalReply | undefined> {
+  const root = await ketRootFrom(process.cwd());
+
+  if (root === undefined) {
+    return undefined;
+  }
+
+  const record = join(root, KET_DIRECTORY, TOOLCHAIN);
+  const seen = seenIn(await readJson(record));
+  const arrivals = arrivalsIn({
+    declared: declaredIn(await readJson(join(root, MANIFEST))),
+    shipped: dependencyNamesOf(CLI_PRESET),
+    seen,
+  });
+  const reply = proposalReply(arrivals);
+
+  if (reply === undefined) {
+    return undefined;
+  }
+
+  await writeFile(record, recordToolchain([...seen, ...arrivals]), 'utf8');
+
+  return reply;
+}
+
+const toolchain = defineCommand({
+  meta: { name: 'toolchain', description: 'Name what arrived since ket last looked' },
+  async run() {
+    const reply = await lookAtToolchain();
+
+    if (reply !== undefined) {
+      process.stdout.write(JSON.stringify(reply));
+    }
+  },
+});
+
 const probe = defineCommand({
   meta: { name: 'probe', description: 'Run ring one over the file that was written' },
   async run() {
@@ -226,7 +284,7 @@ const write = defineCommand({
 
 const gate = defineCommand({
   meta: { name: 'gate', description: 'Run a pipeline gate' },
-  subCommands: { write, probe },
+  subCommands: { write, probe, toolchain },
 });
 
 export async function usage(): Promise<void> {
