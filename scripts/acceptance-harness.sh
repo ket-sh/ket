@@ -82,23 +82,38 @@ grep -q '"repo": "ket-sh/ket"' "$PROJECT/.claude/settings.json" ||
   fail "create did not register the marketplace the harness ships from"
 
 echo "acceptance: the harness ships what it declares"
-for name in feature approve status continue; do
+for name in feature explore approve status continue; do
   test -f "harness/commands/$name.md" || fail "the harness declares no /ket:$name command"
+  grep -q '^description:' "harness/commands/$name.md" ||
+    fail "/ket:$name has no description"
 done
 for name in triage researcher decomposer adr solution-design ui-design gherkin implementer reviewer qa; do
   test -f "harness/agents/$name.md" || fail "the harness declares no $name agent"
 done
-for name in tdd clean-code mutation gates commit; do
+for name in tdd clean-code mutation gates commit gherkin adr progress; do
   test -f "harness/skills/$name/SKILL.md" || fail "the harness declares no /ket:$name skill"
   grep -q "^name: $name$" "harness/skills/$name/SKILL.md" ||
     fail "the $name skill does not name itself, so /ket:$name would not resolve"
   grep -q '^description:' "harness/skills/$name/SKILL.md" ||
     fail "the $name skill has no description, so Claude cannot tell when it applies"
 done
-for name in feature approve status continue; do
-  grep -q '^description:' "harness/commands/$name.md" ||
-    fail "/ket:$name has no description"
+# A subagent's tools list has no Skill tool, so a skill named in prose alone
+# never reaches it. Pinning is what loads the content, and a pin that names a
+# skill the harness does not ship loads nothing and says nothing.
+pinned_skills() {
+  awk '/^---$/ { fence++; next } fence == 1 && /^  - / { print $2 }' "$1"
+}
+
+echo "acceptance: every agent pins a model, and pins only skills the harness ships"
+for agent in harness/agents/*.md; do
+  grep -q '^model: ' "$agent" ||
+    fail "$agent pins no model, so ket's model map is a claim nothing honours"
+  for pinned in $(pinned_skills "$agent"); do
+    test -f "harness/skills/$pinned/SKILL.md" ||
+      fail "$agent pins the $pinned skill, and the harness ships no such skill"
+  done
 done
+
 grep -q 'ket gate write' harness/hooks/hooks.json ||
   fail "the harness hooks call no write gate"
 grep -q '"source": "./harness"' .claude-plugin/marketplace.json ||
