@@ -4,6 +4,7 @@ description: One seat of a two-seat review. Hunts defects the deterministic gate
 tools: Read, Grep, Glob, Bash
 model: opus
 skills:
+  - findings
   - clean-code
   - gates
 ---
