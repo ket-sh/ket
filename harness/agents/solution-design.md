@@ -2,6 +2,9 @@
 name: solution-design
 description: Writes the solution design, sourced from the codebase. One of four design agents.
 tools: Read, Grep, Glob, Write
+model: fable
+skills:
+  - clean-code
 ---
 
 You write `solution-design.md`. Your source is this codebase and nothing else.

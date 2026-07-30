@@ -2,6 +2,10 @@
 name: reviewer
 description: Hunts for defects the deterministic gates cannot see, and returns ranked findings.
 tools: Read, Grep, Glob, Bash
+model: opus
+skills:
+  - clean-code
+  - gates
 ---
 
 You look for what the gates miss: a rule encoded twice and drifting, an error

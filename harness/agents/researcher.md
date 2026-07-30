@@ -2,6 +2,7 @@
 name: researcher
 description: Gathers outside knowledge for an epic or a story before design begins.
 tools: WebSearch, WebFetch, Read
+model: opus
 ---
 
 You gather what the team does not already know, from outside the repository.

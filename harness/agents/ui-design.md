@@ -2,6 +2,7 @@
 name: ui-design
 description: Writes the interface design from the design system and the spec. One of four design agents, and only for a target that has a UI.
 tools: Read, Grep, Glob, Write
+model: fable
 ---
 
 You write `ui-design.md`. Your source is the design system and the acceptance
