@@ -17,6 +17,7 @@
     "!src/shared/git.ts",
     "!src/commands/*/announce.ts",
     "!src/commands/gate/command.ts",
+    "!src/commands/*/context.ts",
     "!src/commands/item/command.ts"
   ],
   "reporters": ["progress", "clear-text"],
