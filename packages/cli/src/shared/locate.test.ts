@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { ketRootFrom, sourceRootsOf, targetsFrom } from './locate.ts';
+import { keyFrom, ketRootFrom, sourceRootsOf, targetsFrom } from './locate.ts';
 
 let root = '';
 
@@ -79,5 +79,41 @@ describe('reading the target map out of a config module', () => {
     expect(targetsFrom({ default: { targets: { '.': 'cli', old: 'php' } } })).toStrictEqual({
       '.': 'cli',
     });
+  });
+});
+
+describe('a config module that is not there', () => {
+  it('reads nothing from nothing', () => {
+    expect(targetsFrom(null)).toStrictEqual({});
+  });
+
+  it('reads nothing when the default export is null', () => {
+    expect(targetsFrom({ default: null })).toStrictEqual({});
+  });
+
+  it('reads nothing when the targets are null', () => {
+    expect(targetsFrom({ default: { targets: null } })).toStrictEqual({});
+  });
+});
+
+describe('reading the project key out of a config module', () => {
+  it('reads the key a project config exports', () => {
+    expect(keyFrom({ default: { key: 'AUTH' } })).toBe('AUTH');
+  });
+
+  it('reads nothing when the config names no key', () => {
+    expect(keyFrom({ default: { targets: {} } })).toBeUndefined();
+  });
+
+  it('reads nothing when the key is empty, since an item needs a prefix', () => {
+    expect(keyFrom({ default: { key: '' } })).toBeUndefined();
+  });
+
+  it('reads nothing when the key is not a string', () => {
+    expect(keyFrom({ default: { key: 7 } })).toBeUndefined();
+  });
+
+  it('reads nothing from a module that is not there', () => {
+    expect(keyFrom(null)).toBeUndefined();
   });
 });

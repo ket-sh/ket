@@ -1,9 +1,9 @@
 import { access } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
-import type { PresetName } from '../../shared/configuration.ts';
+import type { PresetName } from './configuration.ts';
 
-import { PRESET_NAMES } from '../../shared/configuration.ts';
+import { PRESET_NAMES } from './configuration.ts';
 
 const KET_DIRECTORY = '.ket';
 
@@ -11,17 +11,18 @@ const SOURCE_DIRECTORY = 'src';
 
 const REPOSITORY_ROOT = '.';
 
-async function holdsKet(directory: string): Promise<boolean> {
+async function ketAt(directory: string): Promise<string | undefined> {
   return access(join(directory, KET_DIRECTORY)).then(
-    () => true,
-    () => false,
+    () => directory,
+    () => undefined,
   );
 }
 
 export async function ketRootFrom(start: string): Promise<string | undefined> {
   let walking = start;
+  let found = await ketAt(walking);
 
-  while (!(await holdsKet(walking))) {
+  while (found === undefined) {
     const above = dirname(walking);
 
     if (above === walking) {
@@ -29,9 +30,10 @@ export async function ketRootFrom(start: string): Promise<string | undefined> {
     }
 
     walking = above;
+    found = await ketAt(walking);
   }
 
-  return walking;
+  return found;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -53,6 +55,13 @@ export function targetsFrom(loaded: unknown): Record<string, PresetName> {
   return Object.fromEntries(
     Object.entries(declared).filter((entry): entry is [string, PresetName] => isPreset(entry[1])),
   );
+}
+
+export function keyFrom(loaded: unknown): string | undefined {
+  const exported = isRecord(loaded) ? loaded['default'] : undefined;
+  const declared = isRecord(exported) ? exported['key'] : undefined;
+
+  return typeof declared === 'string' && declared !== '' ? declared : undefined;
 }
 
 export function sourceRootsOf(targets: Record<string, PresetName>): string[] {

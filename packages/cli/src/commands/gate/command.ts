@@ -9,11 +9,11 @@ import type { GovernedItem } from '../../shared/write-gate.ts';
 import type { Denial } from './envelope.ts';
 import type { GateEvent } from './event.ts';
 
+import { ketRootFrom, sourceRootsOf, targetsFrom } from '../../shared/locate.ts';
 import { inFlightFrom } from '../../shared/read-item.ts';
 import { verdictFor } from '../../shared/write-gate.ts';
 import { pathFrom, refusal, verdictReply } from './envelope.ts';
 import { renderEvent } from './event.ts';
-import { ketRootFrom, sourceRootsOf, targetsFrom } from './locate.ts';
 
 const KET_DIRECTORY = '.ket';
 

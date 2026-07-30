@@ -201,3 +201,51 @@ describe('a target that calls more than one path an adapter', () => {
     ).toStrictEqual({ allowed: true });
   });
 });
+
+describe('a status written by hand rather than by a gate', () => {
+  it('refuses an edit to an item file, since only a gate moves a status', () => {
+    expect(
+      verdictFor(attempt({ path: '.ket/items/AUTH-1/item.yaml', sources: ['src'] })),
+    ).toStrictEqual({
+      refused:
+        '.ket/items/AUTH-1/item.yaml records a status, and only a gate writes one. Use /ket:approve.',
+    });
+  });
+
+  it('refuses it even when nothing is in flight, since the file is still state', () => {
+    expect(
+      verdictFor(attempt({ path: '.ket/items/AUTH-1/item.yaml', inFlight: [] })),
+    ).toStrictEqual({
+      refused:
+        '.ket/items/AUTH-1/item.yaml records a status, and only a gate writes one. Use /ket:approve.',
+    });
+  });
+
+  it('refuses it before it reads the classification, since the file is the classification', () => {
+    expect(
+      verdictFor(
+        attempt({
+          path: '.ket/items/AUTH-1/item.yaml',
+          inFlight: [{ ...STORY, size: 'trivial' }],
+        }),
+      ),
+    ).toStrictEqual({
+      refused:
+        '.ket/items/AUTH-1/item.yaml records a status, and only a gate writes one. Use /ket:approve.',
+    });
+  });
+
+  it('allows the notes beside an item, since prose is not a status', () => {
+    expect(verdictFor(attempt({ path: '.ket/items/AUTH-1/spec.md' }))).toStrictEqual({
+      allowed: true,
+    });
+  });
+
+  it('allows the board, since it is generated from the items', () => {
+    expect(verdictFor(attempt({ path: '.ket/BOARD.md' }))).toStrictEqual({ allowed: true });
+  });
+
+  it('allows a file merely named like an item file elsewhere', () => {
+    expect(verdictFor(attempt({ path: 'docs/item.yaml' }))).toStrictEqual({ allowed: true });
+  });
+});

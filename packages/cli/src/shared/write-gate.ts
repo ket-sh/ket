@@ -4,6 +4,8 @@ import { matchesGlob } from './glob.ts';
 
 const SCENARIO = '.feature';
 
+const ITEM_FILE = '.ket/items/*/item.yaml';
+
 const WRITEABLE: ItemStatus = 'implementing';
 
 export interface GovernedItem {
@@ -74,7 +76,17 @@ function governing(attempt: WriteAttempt): GovernedItem | undefined {
   return underSource(attempt.path, attempt.sources) ? attempt.inFlight[0] : undefined;
 }
 
-export function verdictFor(attempt: WriteAttempt): Verdict {
+function byHand(path: string): Verdict | undefined {
+  if (!matchesGlob(ITEM_FILE, path)) {
+    return undefined;
+  }
+
+  return {
+    refused: `${path} records a status, and only a gate writes one. Use /ket:approve.`,
+  };
+}
+
+function governed(attempt: WriteAttempt): Verdict {
   const item = governing(attempt);
 
   if (item === undefined) {
@@ -82,4 +94,8 @@ export function verdictFor(attempt: WriteAttempt): Verdict {
   }
 
   return crowded(attempt.inFlight) ?? unapproved(item) ?? misclassified(item, attempt) ?? ALLOWED;
+}
+
+export function verdictFor(attempt: WriteAttempt): Verdict {
+  return byHand(attempt.path) ?? governed(attempt);
 }
