@@ -134,13 +134,21 @@ done
 for name in triage researcher decomposer adr solution-design ui-design gherkin implementer reviewer qa; do
   test -f "harness/agents/$name.md" || fail "the harness declares no $name agent"
 done
-for name in tdd clean-code mutation gates commit research suppression verification generated gherkin adr progress stages findings; do
-  test -f "harness/skills/$name/SKILL.md" || fail "the harness declares no /ket:$name skill"
-  grep -q "^name: $name$" "harness/skills/$name/SKILL.md" ||
+# The list of skills used to be typed in here, and a skill missing from it
+# shipped unchecked. The directory is the authority, so a new skill is held to
+# the same two rules on the day it lands.
+shipped=0
+for skill in harness/skills/*/SKILL.md; do
+  test -f "$skill" ||
+    fail "the harness skills directory holds nothing, so this loop reads no skill at all"
+  name="$(basename "$(dirname "$skill")")"
+  grep -q "^name: $name$" "$skill" ||
     fail "the $name skill does not name itself, so /ket:$name would not resolve"
-  grep -q '^description:' "harness/skills/$name/SKILL.md" ||
+  grep -q '^description:' "$skill" ||
     fail "the $name skill has no description, so Claude cannot tell when it applies"
+  shipped=$((shipped + 1))
 done
+echo "acceptance: $shipped skills name themselves and say when they apply"
 # A subagent's tools list has no Skill tool, so a skill named in prose alone
 # never reaches it. Pinning is what loads the content, and a pin that names a
 # skill the harness does not ship loads nothing and says nothing.
