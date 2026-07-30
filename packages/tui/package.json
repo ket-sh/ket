@@ -22,6 +22,7 @@
     "react": "19.2.8"
   },
   "devDependencies": {
-    "@anscribe/opentui": "1.0.1"
+    "@anscribe/opentui": "1.0.1",
+    "@types/react": "19.2.17"
   }
 }
