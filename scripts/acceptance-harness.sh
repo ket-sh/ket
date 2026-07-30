@@ -164,13 +164,31 @@ grep -q '"source": "./harness"' .claude-plugin/marketplace.json ||
   fail "the marketplace does not point at the harness"
 
 echo "acceptance: the review runs as a pair with a judge, not as one seat"
-# Every assertion here is about the mechanism rather than the wording. An
-# orchestrator that loses the model split, the lens split or the judge is back to
-# self-review, and self-review is what this command exists to prevent.
-grep -q 'correctness-regression' harness/commands/review.md ||
-  fail "/ket:review does not name the correctness seat"
-grep -q 'security-failure-modes' harness/commands/review.md ||
-  fail "/ket:review does not name the security seat"
+# A grep for the guard's wording proves only that the sentence survived. These
+# read the seat table itself, because the defect that matters is two seats
+# quietly landing on one model while the sentence about it still reads fine.
+seat_rows() {
+  awk '/^## 1\./ { inside = 1; next }
+       inside && /^## / { inside = 0 }
+       inside && /^\| / && $0 !~ /^\| *Seat/ && $0 !~ /^\| *-/ { print }' harness/commands/review.md
+}
+
+seat_column() {
+  seat_rows | awk -F'|' -v at="$1" '{ gsub(/^ +| +$/, "", $at); print $at }'
+}
+
+distinct() {
+  seat_column "$1" | sort -u | wc -l | tr -d ' '
+}
+
+test "$(seat_rows | wc -l | tr -d ' ')" -eq 2 ||
+  fail "/ket:review declares $(seat_rows | wc -l | tr -d ' ') of the two seats a pair needs"
+test "$(distinct 2)" -eq 2 ||
+  fail "/ket:review gives its two seats one label, so the join cannot tell them apart"
+test "$(distinct 3)" -eq 2 ||
+  fail "/ket:review runs its two seats on one model, so the pair is a self-review"
+test "$(distinct 4)" -eq 2 ||
+  fail "/ket:review gives its two seats one lens, so the pair looks at one thing twice"
 grep -q 'differ in model and in lens' harness/commands/review.md ||
   fail "/ket:review lets two seats share a model or a lens, so the pair is one opinion"
 grep -q 'maximum effort' harness/commands/review.md ||
