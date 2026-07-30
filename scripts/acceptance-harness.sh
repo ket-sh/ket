@@ -88,7 +88,7 @@ done
 for name in triage researcher decomposer adr solution-design ui-design gherkin implementer reviewer qa; do
   test -f "harness/agents/$name.md" || fail "the harness declares no $name agent"
 done
-for name in tdd clean-code mutation gates commit; do
+for name in tdd clean-code mutation gates commit research suppression verification generated; do
   test -f "harness/skills/$name/SKILL.md" || fail "the harness declares no /ket:$name skill"
   grep -q "^name: $name$" "harness/skills/$name/SKILL.md" ||
     fail "the $name skill does not name itself, so /ket:$name would not resolve"
