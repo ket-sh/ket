@@ -21,12 +21,14 @@ frontmatter
 fulfilment
 gitdir
 gitleaks
+gsub
 jscpd
 Karpathy
 ket
 knip
 lefthook
 lockfiles
+Mobbin
 nizos
 nofilter
 nonword
@@ -47,6 +49,7 @@ semgrep
 shellcheck
 steiger
 stryker
+subshell
 testcontainers
 titleAlignment
 truecolor

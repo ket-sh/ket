@@ -19,7 +19,7 @@ import {
 } from '../../shared/locate.ts';
 import { inFlightFrom } from '../../shared/read-item.ts';
 import { shellVerdict } from '../../shared/shell-gate.ts';
-import { verdictFor } from '../../shared/write-gate.ts';
+import { verdictFor, workingFrom } from '../../shared/write-gate.ts';
 import { commandFrom, pathFrom, verdictReply } from './envelope.ts';
 import { eventFor, record } from './journal.ts';
 import { argvFor, probeReply } from './ring.ts';
@@ -58,8 +58,8 @@ async function readStored(root: string): Promise<StoredItem[]> {
   );
 }
 
-function keyOf(inFlight: GovernedItem[]): string | undefined {
-  return inFlight.length === 1 ? inFlight[0]?.key : undefined;
+function keyOf(working: GovernedItem[]): string | undefined {
+  return working.length === 1 ? working[0]?.key : undefined;
 }
 
 // A repository reached through a symlink names its files one way and reports its
@@ -123,7 +123,7 @@ async function judgeWrite(): Promise<Denial | undefined> {
     }),
   );
 
-  await record(root, eventFor('write', path, denial, keyOf(inFlight)));
+  await record(root, eventFor('write', path, denial, keyOf(workingFrom(inFlight))));
 
   return denial;
 }

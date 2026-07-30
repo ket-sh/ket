@@ -4,6 +4,14 @@ export interface PresetFile {
   target: string;
 }
 
+// A preset offers what suits it. A tool that reads a screen has nothing to say
+// about a command line, so the preset that governs one never asks for it.
+export interface PresetIntegration {
+  name: string;
+  asks: string;
+  files: PresetFile[];
+}
+
 export interface PresetItem {
   $schema: string;
   name: string;
@@ -13,10 +21,15 @@ export interface PresetItem {
   dependencies: string[];
   devDependencies: string[];
   files: PresetFile[];
+  integrations: PresetIntegration[];
 }
 
 function writes(path: string, target: string): PresetFile {
   return { path: `files/${path}`, type: 'registry:file', target: `~/${target}` };
+}
+
+export function everyFileOf(item: PresetItem): PresetFile[] {
+  return [...item.files, ...item.integrations.flatMap((integration) => integration.files)];
 }
 
 export const CLI_PRESET: PresetItem = {
@@ -70,6 +83,7 @@ export const CLI_PRESET: PresetItem = {
     writes('vale-styles/WeakOpeners.yml', '.vale/styles/ket/WeakOpeners.yml'),
     writes('vale-vocabulary/accept.txt', '.vale/styles/config/vocabularies/ket/accept.txt'),
     writes('gitignore', '.gitignore'),
+    writes('github-ci.yml', '.github/workflows/ci.yml'),
     writes('source/run.ts', 'src/run.ts'),
     writes('source/main.ts', 'src/main.ts'),
     writes('source/commands/hello/command.ts', 'src/commands/hello/command.ts'),
@@ -79,5 +93,22 @@ export const CLI_PRESET: PresetItem = {
       'source/commands/hello/greeting.property.test.ts',
       'src/commands/hello/greeting.property.test.ts',
     ),
+  ],
+  integrations: [
+    {
+      name: 'codecov',
+      asks: 'codecov reports how much of the code the suite reaches. Free for a public repository. A private one is free to 250 uploads a month, then paid per user.',
+      files: [writes('github-coverage.yml', '.github/workflows/coverage.yml')],
+    },
+    {
+      name: 'codeql',
+      asks: 'codeql scans for security defects on every push. Free for a public repository. A private one needs GitHub Code Security, billed per committer.',
+      files: [writes('github-codeql.yml', '.github/workflows/codeql.yml')],
+    },
+    {
+      name: 'coderabbit',
+      asks: 'coderabbit reviews every pull request. Free for a public repository. A private one gets 200 reviews a month free, then paid per user.',
+      files: [writes('coderabbit.yaml', '.coderabbit.yaml')],
+    },
   ],
 };

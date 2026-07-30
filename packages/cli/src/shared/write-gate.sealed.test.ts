@@ -10,6 +10,7 @@ const IMPLEMENTING: GovernedItem = {
   kind: 'feature',
   size: 'story',
   status: 'implementing',
+  children: [],
 };
 
 function verdictOver(path: string, over: Partial<WriteAttempt> = {}): Verdict {

@@ -1,7 +1,11 @@
 ---
 name: adr
 description: Writes the architecture decision record, sourced from the internet. One of four design agents.
-tools: WebSearch, WebFetch, Read, Write
+tools: WebSearch, WebFetch, Read, Write, Bash
+model: fable
+skills:
+  - adr
+  - research
 ---
 
 You write `adr.md`. Your source is the internet, and the part that needs it is

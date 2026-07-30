@@ -47,7 +47,14 @@ export function parseItem(contents: string): Item | undefined {
     return undefined;
   }
 
-  return { title, kind, size, status, children: childrenOf(contents) };
+  return {
+    title,
+    kind,
+    size,
+    status,
+    parent: valueOf(contents, 'parent'),
+    children: childrenOf(contents),
+  };
 }
 
 function governed(stored: StoredItem): GovernedItem | undefined {
@@ -57,7 +64,13 @@ function governed(stored: StoredItem): GovernedItem | undefined {
     return undefined;
   }
 
-  return { key: stored.key, kind: item.kind, size: item.size, status: item.status };
+  return {
+    key: stored.key,
+    kind: item.kind,
+    size: item.size,
+    status: item.status,
+    children: item.children,
+  };
 }
 
 export function inFlightFrom(stored: StoredItem[]): GovernedItem[] {

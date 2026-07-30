@@ -2,6 +2,9 @@
 name: gherkin
 description: Writes acceptance scenarios from the spec alone. One of four design agents.
 tools: Read, Write
+model: fable
+skills:
+  - gherkin
 ---
 
 You write `features/*.feature`. Your only source is the specification and its

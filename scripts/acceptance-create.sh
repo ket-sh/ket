@@ -56,3 +56,33 @@ done
 "$PROJECT/dist/app" hello ada | grep -qx "hello ada" || fail "the example command ignores its argument"
 
 echo "acceptance: a created project passes its own gate chain"
+
+# Every project gets a pipeline. Only the integrations it asked for arrive with
+# it, and the config records the answer so the harness can read it later.
+echo "acceptance: what a project asked for, and nothing else"
+test -f "$PROJECT/.github/workflows/ci.yml" || fail "a created project has no pipeline"
+for absent in codeql.yml coverage.yml; do
+  test -f "$PROJECT/.github/workflows/$absent" &&
+    fail "$absent arrived in a project that asked for no integration"
+done
+test -f "$PROJECT/.coderabbit.yaml" &&
+  fail "a review config arrived in a project that asked for no integration"
+grep -q 'integrations: \[\]' "$PROJECT/.ket/config.ts" ||
+  fail "the config does not record that no integration was chosen"
+
+WITH="$SANDBOX/with-everything"
+(cd "$SANDBOX" && "$KET" create with-everything --with codecov,codeql,coderabbit >/dev/null) ||
+  fail "create refused the integrations the cli preset offers"
+for expected in ci.yml codeql.yml coverage.yml; do
+  test -f "$WITH/.github/workflows/$expected" || fail "$expected was asked for and never written"
+done
+test -f "$WITH/.coderabbit.yaml" || fail "the review config was asked for and never written"
+grep -q "integrations: \['codecov', 'codeql', 'coderabbit'\]" "$WITH/.ket/config.ts" ||
+  fail "the config does not record which integrations were chosen"
+
+(cd "$SANDBOX" && "$KET" create unoffered --with chromatic >/dev/null 2>&1) &&
+  fail "create accepted an integration the cli preset does not offer"
+
+echo "acceptance: every workflow a project gets is one github can run"
+mise exec -- actionlint "$WITH/.github/workflows/"*.yml ||
+  fail "a generated workflow does not parse"

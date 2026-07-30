@@ -1,0 +1,10 @@
+reviews:
+  request_changes_workflow: true
+  path_filters:
+    - '!bun.lock'
+    - '!**/*.generated.ts'
+  tools:
+    biome:
+      enabled: false
+    eslint:
+      enabled: false

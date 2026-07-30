@@ -9,6 +9,7 @@ const STORY: GovernedItem = {
   kind: 'feature',
   size: 'story',
   status: 'implementing',
+  children: [],
 };
 
 function attempt(over: Partial<WriteAttempt>): WriteAttempt {

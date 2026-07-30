@@ -8,12 +8,14 @@ const ARMED: GateSemantics = {
   script: 'lint',
   guards: 'It checks style and correctness.',
   commitJob: 'lint',
+  ciJob: 'check',
 };
 
 const ON_DEMAND: GateSemantics = {
   script: 'test:mutation',
   guards: 'It checks that the suite asserts.',
   commitJob: '',
+  ciJob: 'check',
 };
 
 const ANSI = /\[\d+m/gu;

@@ -8,6 +8,7 @@ const WRITTEN = renderItem({
   kind: 'feature',
   size: 'story',
   status: 'implementing',
+  parent: undefined,
   children: [],
 });
 
@@ -18,6 +19,7 @@ describe('reading back an item this repository wrote', () => {
       kind: 'feature',
       size: 'story',
       status: 'implementing',
+      parent: undefined,
       children: [],
     });
   });
@@ -28,10 +30,28 @@ describe('reading back an item this repository wrote', () => {
       kind: 'feature',
       size: 'epic',
       status: 'triaged',
+      parent: undefined,
       children: ['AUTH-2', 'AUTH-3'],
     });
 
     expect(parseItem(epic)?.children).toStrictEqual(['AUTH-2', 'AUTH-3']);
+  });
+
+  it('recovers the epic a child broke out of', () => {
+    const child = renderItem({
+      title: 'lock an account after five failures',
+      kind: 'feature',
+      size: 'story',
+      status: 'triaged',
+      parent: 'AUTH-1',
+      children: [],
+    });
+
+    expect(parseItem(child)?.parent).toBe('AUTH-1');
+  });
+
+  it('reads no parent for work that broke out of nothing', () => {
+    expect(parseItem(WRITTEN)?.parent).toBeUndefined();
   });
 
   it('keeps a title that contains a colon, since prose does', () => {
@@ -40,6 +60,7 @@ describe('reading back an item this repository wrote', () => {
       kind: 'feature',
       size: 'story',
       status: 'triaged',
+      parent: undefined,
       children: [],
     });
 
@@ -78,7 +99,7 @@ describe('refusing to guess at an item it cannot read', () => {
 describe('collecting what is in flight', () => {
   it('keeps an item the pipeline is working on', () => {
     expect(inFlightFrom([{ key: 'AUTH-1', contents: WRITTEN }])).toStrictEqual([
-      { key: 'AUTH-1', kind: 'feature', size: 'story', status: 'implementing' },
+      { key: 'AUTH-1', kind: 'feature', size: 'story', status: 'implementing', children: [] },
     ]);
   });
 
@@ -88,6 +109,7 @@ describe('collecting what is in flight', () => {
       kind: 'feature',
       size: 'story',
       status: 'shipped',
+      parent: undefined,
       children: [],
     });
 
@@ -100,6 +122,7 @@ describe('collecting what is in flight', () => {
       kind: 'feature',
       size: 'story',
       status: 'idea',
+      parent: undefined,
       children: [],
     });
 
@@ -117,6 +140,29 @@ describe('collecting what is in flight', () => {
 
   it('leaves out an item it cannot read rather than guessing at it', () => {
     expect(inFlightFrom([{ key: 'AUTH-1', contents: 'nonsense' }])).toStrictEqual([]);
+  });
+});
+
+describe('an epic that stands for the children it fanned out into', () => {
+  it('carries those children through, since a gate decides which item is the job', () => {
+    const epic = renderItem({
+      title: 'authentication',
+      kind: 'feature',
+      size: 'epic',
+      status: 'designing',
+      parent: undefined,
+      children: ['AUTH-2', 'AUTH-3'],
+    });
+
+    expect(inFlightFrom([{ key: 'AUTH-1', contents: epic }])).toStrictEqual([
+      {
+        key: 'AUTH-1',
+        kind: 'feature',
+        size: 'epic',
+        status: 'designing',
+        children: ['AUTH-2', 'AUTH-3'],
+      },
+    ]);
   });
 });
 

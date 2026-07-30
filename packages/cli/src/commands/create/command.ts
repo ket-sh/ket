@@ -10,6 +10,7 @@ import { initializeRepository } from '../../shared/git.ts';
 import { readTextIfPresent, writeFiles } from '../../shared/write-files.ts';
 import { announce, openCreate } from './announce.ts';
 import { filesToInstall, shippedContents } from './install.ts';
+import { chosenFrom, filesFor, namesOffered } from './integrations.ts';
 import { renderManifest } from './manifest.ts';
 import { planCreation } from './plan.ts';
 import { scaffoldFor } from './scaffold.ts';
@@ -38,9 +39,20 @@ async function settleDirectory(given: string | undefined): Promise<string> {
   return answered;
 }
 
-async function settleConfiguration(key: string | undefined): Promise<Configuration | undefined> {
+async function settleConfiguration(
+  key: string | undefined,
+  named: string | undefined,
+): Promise<Configuration | undefined> {
   if (!isInteractive()) {
-    return key === undefined ? undefined : { key, targets: { '.': 'cli' } };
+    const outcome = chosenFrom(named, namesOffered(['cli']));
+
+    if ('refused' in outcome) {
+      throw new Error(outcome.refused);
+    }
+
+    return key === undefined
+      ? undefined
+      : { key, targets: { '.': 'cli' }, integrations: outcome.chosen };
   }
 
   const outcome = await runWizard(key);
@@ -59,6 +71,11 @@ const create = defineCommand({
       description: 'Where the project goes',
       required: false,
     },
+    with: {
+      type: 'string',
+      description: 'Integrations to enable, separated by commas',
+      required: false,
+    },
   },
   async run({ args }) {
     if (isInteractive()) {
@@ -66,7 +83,7 @@ const create = defineCommand({
     }
 
     const plan = await planCreation(await settleDirectory(args.directory));
-    const configuration = await settleConfiguration(plan.key);
+    const configuration = await settleConfiguration(plan.key, args.with);
 
     if (configuration === undefined) {
       throw new Error(`nothing was configured for ${plan.root}`);
@@ -80,7 +97,10 @@ const create = defineCommand({
     const presets = Object.values(configuration.targets);
     const name = basename(plan.root);
 
-    const installed = filesToInstall(presets, name);
+    const installed = [
+      ...filesToInstall(presets, name),
+      ...filesFor(presets, configuration.integrations),
+    ];
 
     // A preset ignores what its own toolchain downloads and builds, and ket adds
     // the state it keeps. The scaffold writes last, so it appends to the file

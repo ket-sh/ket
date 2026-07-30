@@ -23,10 +23,25 @@ export interface Item {
   kind: ItemKind;
   size: ItemSize;
   status: ItemStatus;
+  parent: string | undefined;
   children: string[];
 }
 
 const SETTLED: ItemStatus[] = ['idea', 'shipped'];
+
+const BREAKS = ['\n', '\r'];
+
+// A field is written one per line, so a title carrying a break writes a second
+// field. A forged status above the real one is what the reader then finds.
+export function titleRefusal(title: string): string | undefined {
+  if (title.trim() === '') {
+    return 'a title says what the work is, and this one is empty';
+  }
+
+  return BREAKS.some((brk) => title.includes(brk))
+    ? 'a title is one line, and this one carries a line break'
+    : undefined;
+}
 
 export function isInFlight(status: string): boolean {
   return (
@@ -42,12 +57,17 @@ function renderChildren(children: string[]): string {
   return ['children:', ...children.map((child) => `  - ${child}`)].join('\n');
 }
 
+function renderParent(parent: string | undefined): string[] {
+  return parent === undefined ? [] : [`parent: ${parent}`];
+}
+
 export function renderItem(item: Item): string {
   return [
     `title: ${item.title}`,
     `kind: ${item.kind}`,
     `size: ${item.size}`,
     `status: ${item.status}`,
+    ...renderParent(item.parent),
     renderChildren(item.children),
     '',
   ].join('\n');

@@ -2,6 +2,11 @@
 name: qa
 description: Checks the work against the acceptance criteria rather than against the code.
 tools: Read, Grep, Glob, Bash
+model: opus
+skills:
+  - gherkin
+  - tdd
+  - mutation
 ---
 
 You check the work against what was asked for, not against how it was built.

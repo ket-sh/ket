@@ -50,6 +50,50 @@ only_item() {
   item "$@"
 }
 
+parent_item() {
+  local key=$1 kind=$2 size=$3 status=$4 title=$5
+  shift 5
+
+  mkdir -p "$PROJECT/.ket/items/$key"
+  {
+    printf 'title: %s\nkind: %s\nsize: %s\nstatus: %s\nchildren:\n' \
+      "$title" "$kind" "$size" "$status"
+    for child in "$@"; do
+      printf '  - %s\n' "$child"
+    done
+  } >"$PROJECT/.ket/items/$key/item.yaml"
+}
+
+child_item() {
+  local key=$1 kind=$2 size=$3 status=$4 title=$5 parent=$6
+
+  mkdir -p "$PROJECT/.ket/items/$key"
+  printf 'title: %s\nkind: %s\nsize: %s\nstatus: %s\nparent: %s\nchildren: []\n' \
+    "$title" "$kind" "$size" "$status" "$parent" >"$PROJECT/.ket/items/$key/item.yaml"
+}
+
+ket() {
+  (cd "$PROJECT" && "$KET" "$@")
+}
+
+# Kept out of a command substitution: a failure inside one is swallowed, and the
+# count of decisions would not survive the subshell.
+refuses_command() {
+  local expected=$1
+  local said
+  shift
+
+  said="$(ket "$@" 2>&1)" && fail "expected 'ket $*' to be refused, it printed: $said"
+  echo "$said" | grep -qF "$expected" ||
+    fail "expected 'ket $*' to be refused with '$expected', it said: ${said:-nothing}"
+  CHECKED=$((CHECKED + 1))
+}
+
+status_is() {
+  grep -q "^status: $2$" "$PROJECT/.ket/items/$1/item.yaml" ||
+    fail "expected $1 to be $2, it is: $(grep '^status:' "$PROJECT/.ket/items/$1/item.yaml")"
+}
+
 allows() {
   local answer
   answer="$(judge "$1")"
@@ -75,20 +119,20 @@ shell_envelope() {
   printf '{"hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"%s"}}' "$1"
 }
 
-runs() {
+shell_runs() {
   local answer
   answer="$(shell_envelope "$1" | (cd "$PROJECT" && "$KET" gate shell))"
 
-  test -z "$answer" || fail "expected '$1' to run, gate said: $answer"
+  test -z "$answer" || fail "expected the shell gate to allow '$1', gate said: $answer"
   CHECKED=$((CHECKED + 1))
 }
 
-refuses_command() {
+shell_refuses() {
   local answer
   answer="$(shell_envelope "$1" | (cd "$PROJECT" && "$KET" gate shell))"
 
   echo "$answer" | grep -q '"permissionDecision":"deny"' ||
-    fail "expected '$1' to be refused, gate said: ${answer:-nothing}"
+    fail "expected the shell gate to refuse '$1', gate said: ${answer:-nothing}"
   echo "$answer" | grep -qF -e "$2" ||
     fail "expected the refusal of '$1' to say '$2', gate said: $answer"
   CHECKED=$((CHECKED + 1))
@@ -107,23 +151,38 @@ grep -q '"repo": "ket-sh/ket"' "$PROJECT/.claude/settings.json" ||
   fail "create did not register the marketplace the harness ships from"
 
 echo "acceptance: the harness ships what it declares"
-for name in feature approve status continue; do
+for name in feature explore approve status continue review; do
   test -f "harness/commands/$name.md" || fail "the harness declares no /ket:$name command"
+  grep -q '^description:' "harness/commands/$name.md" ||
+    fail "/ket:$name has no description"
 done
 for name in triage researcher decomposer adr solution-design ui-design gherkin implementer reviewer qa; do
   test -f "harness/agents/$name.md" || fail "the harness declares no $name agent"
 done
-for name in tdd clean-code mutation gates commit; do
+for name in tdd clean-code mutation gates commit research suppression verification generated gherkin adr progress stages findings; do
   test -f "harness/skills/$name/SKILL.md" || fail "the harness declares no /ket:$name skill"
   grep -q "^name: $name$" "harness/skills/$name/SKILL.md" ||
     fail "the $name skill does not name itself, so /ket:$name would not resolve"
   grep -q '^description:' "harness/skills/$name/SKILL.md" ||
     fail "the $name skill has no description, so Claude cannot tell when it applies"
 done
-for name in feature approve status continue; do
-  grep -q '^description:' "harness/commands/$name.md" ||
-    fail "/ket:$name has no description"
+# A subagent's tools list has no Skill tool, so a skill named in prose alone
+# never reaches it. Pinning is what loads the content, and a pin that names a
+# skill the harness does not ship loads nothing and says nothing.
+pinned_skills() {
+  awk '/^---$/ { fence++; next } fence == 1 && /^  - / { print $2 }' "$1"
+}
+
+echo "acceptance: every agent pins a model, and pins only skills the harness ships"
+for agent in harness/agents/*.md; do
+  grep -q '^model: ' "$agent" ||
+    fail "$agent pins no model, so ket's model map is a claim nothing honours"
+  for pinned in $(pinned_skills "$agent"); do
+    test -f "harness/skills/$pinned/SKILL.md" ||
+      fail "$agent pins the $pinned skill, and the harness ships no such skill"
+  done
 done
+
 grep -q 'ket gate write' harness/hooks/hooks.json ||
   fail "the harness hooks call no write gate"
 grep -q 'ket gate shell' harness/hooks/hooks.json ||
@@ -133,37 +192,216 @@ grep -q '"matcher": "Bash"' harness/hooks/hooks.json ||
 grep -q '"source": "./harness"' .claude-plugin/marketplace.json ||
   fail "the marketplace does not point at the harness"
 
+echo "acceptance: the review runs as a pair with a judge, not as one seat"
+# A grep for the guard's wording proves only that the sentence survived. These
+# read the seat table itself, because the defect that matters is two seats
+# quietly landing on one model while the sentence about it still reads fine.
+seat_rows() {
+  awk '/^## 1\./ { inside = 1; next }
+       inside && /^## / { inside = 0 }
+       inside && /^\| / && $0 !~ /^\| *Seat/ && $0 !~ /^\| *-/ { print }' harness/commands/review.md
+}
+
+seat_column() {
+  seat_rows | awk -F'|' -v at="$1" '{ gsub(/^ +| +$/, "", $at); print $at }'
+}
+
+distinct() {
+  seat_column "$1" | sort -u | wc -l | tr -d ' '
+}
+
+test "$(seat_rows | wc -l | tr -d ' ')" -eq 2 ||
+  fail "/ket:review declares $(seat_rows | wc -l | tr -d ' ') of the two seats a pair needs"
+test "$(distinct 2)" -eq 2 ||
+  fail "/ket:review gives its two seats one label, so the join cannot tell them apart"
+test "$(distinct 3)" -eq 2 ||
+  fail "/ket:review runs its two seats on one model, so the pair is a self-review"
+test "$(distinct 4)" -eq 2 ||
+  fail "/ket:review gives its two seats one lens, so the pair looks at one thing twice"
+grep -q 'differ in model and in lens' harness/commands/review.md ||
+  fail "/ket:review lets two seats share a model or a lens, so the pair is one opinion"
+grep -q 'maximum effort' harness/commands/review.md ||
+  fail "/ket:review sends a dispute to no judge at maximum effort"
+grep -q 'They disagree' harness/commands/review.md ||
+  fail "/ket:review judges more than what the seats dispute, or nothing at all"
+grep -q 'location and its defect' harness/commands/review.md ||
+  fail "/ket:review names no key, so the two reports cannot join"
+grep -qi 'reproduce' harness/commands/review.md ||
+  fail "/ket:review drops nothing for failing to reproduce"
+grep -q 'one seat of a pair' harness/agents/reviewer.md ||
+  fail "the reviewer agent does not say it is one seat, so it reports as the whole review"
+grep -q 'findings' harness/agents/reviewer.md ||
+  fail "the reviewer agent follows no findings doctrine"
+grep -q 'Reproduce or drop' harness/skills/findings/SKILL.md ||
+  fail "the findings skill carries no reproduce-or-drop rule"
+grep -q '80' harness/skills/findings/SKILL.md ||
+  fail "the findings skill sets no confidence bar"
+
 echo "acceptance: the whole loop, through the binary only"
 (cd "$PROJECT" && rm -rf .ket/items && mkdir -p .ket/items)
-filed="$(cd "$PROJECT" && "$KET" item file --title 'login with lockout' --kind feature --size story)"
+filed="$(ket item file --title 'login with lockout' --kind feature --size story)"
 test "$filed" = "OS-1" || fail "expected the first item to be OS-1, got: $filed"
-grep -q 'status: triaged' "$PROJECT/.ket/items/OS-1/item.yaml" ||
-  fail "a filed item does not start triaged"
+status_is OS-1 triaged
 refuses src/auth.ts 'OS-1 is triaged, not implementing'
 refuses .ket/items/OS-1/item.yaml 'only a gate writes one'
-(cd "$PROJECT" && "$KET" item approve OS-1 >/dev/null) || fail "approve refused a triaged item"
-grep -q 'status: implementing' "$PROJECT/.ket/items/OS-1/item.yaml" ||
-  fail "approve did not move the status"
+refuses_command 'story work does not skip design' item approve OS-1
+status_is OS-1 triaged
+ket item design OS-1 >/dev/null || fail "design refused a triaged story"
+status_is OS-1 designing
+refuses src/auth.ts 'OS-1 is designing, not implementing'
+ket item submit OS-1 >/dev/null || fail "submit refused a designing item"
+status_is OS-1 awaiting-approval
+refuses src/auth.ts 'OS-1 is awaiting-approval, not implementing'
+ket item approve OS-1 >/dev/null || fail "approve refused a submitted item"
+status_is OS-1 implementing
 allows src/auth.ts
-(cd "$PROJECT" && "$KET" item approve OS-1 >/dev/null 2>&1) &&
-  fail "approve accepted an item already implementing"
-CHECKED=$((CHECKED + 1))
+refuses_command 'already implementing' item approve OS-1
 
 echo "acceptance: a second item takes the next key"
 second="$(cd "$PROJECT" && "$KET" item file --title 'logout' --kind chore --size trivial)"
 test "$second" = "OS-2" || fail "expected the second item to be OS-2, got: $second"
 
-echo "acceptance: a classification the command refuses outright"
-(cd "$PROJECT" && "$KET" item file --title 'x' --kind poem --size story >/dev/null 2>&1) &&
-  fail "file accepted a kind the pipeline does not name"
-(cd "$PROJECT" && "$KET" item file --title 'x' --kind feature --size huge >/dev/null 2>&1) &&
-  fail "file accepted a size the matrix does not name"
+echo "acceptance: a title that tries to write a field of its own"
+# A field is one per line, so a title carrying a break writes a second field. A
+# forged status above the real one would let source through with no approval.
+forged="$(printf 'authentication\nstatus: implementing')"
+(cd "$PROJECT" && "$KET" item file --title "$forged" --kind feature --size story >/dev/null 2>&1) &&
+  fail "file accepted a title carrying a line break, which forges a status"
+(cd "$PROJECT" && "$KET" item file --title '' --kind feature --size story >/dev/null 2>&1) &&
+  fail "file accepted an item nobody can name"
 CHECKED=$((CHECKED + 2))
 
+echo "acceptance: a classification the command refuses outright"
+refuses_command 'poem is not one of feature, bug, refactor, chore' \
+  item file --title 'x' --kind poem --size story
+refuses_command 'huge is not one of epic, story, subtask, trivial' \
+  item file --title 'x' --kind feature --size huge
+
 echo "acceptance: approving something that is not there"
-(cd "$PROJECT" && "$KET" item approve OS-99 >/dev/null 2>&1) &&
-  fail "approve accepted a key with no item"
+refuses_command 'OS-99 has no item this repository can read' item approve OS-99
+refuses_command 'OS-99 has no item this repository can read' item design OS-99
+refuses_command 'OS-99 has no item this repository can read' item submit OS-99
+
+echo "acceptance: work small enough that design would be ceremony"
+for size in trivial subtask; do
+  only_item OS-1 chore "$size" triaged 'rename a variable'
+  ket item approve OS-1 >/dev/null || fail "approve refused a triaged $size, which owes no design"
+  status_is OS-1 implementing
+  CHECKED=$((CHECKED + 1))
+done
+for size in story epic; do
+  only_item OS-1 feature "$size" triaged 'authentication'
+  refuses_command "$size work does not skip design" item approve OS-1
+  status_is OS-1 triaged
+done
+
+echo "acceptance: a stage that runs out of order"
+only_item OS-1 feature story triaged 'login with lockout'
+refuses_command 'not designed yet, so design runs first' item submit OS-1
+status_is OS-1 triaged
+only_item OS-1 feature story designing 'login with lockout'
+refuses_command 'already designing' item design OS-1
+only_item OS-1 feature story awaiting-approval 'login with lockout'
+refuses_command 'already designed, so approval comes next' item design OS-1
+refuses_command 'already awaiting approval' item submit OS-1
+only_item OS-1 feature story implementing 'login with lockout'
+refuses_command 'already implementing' item design OS-1
+only_item OS-1 feature story shipped 'login with lockout'
+refuses_command 'already shipped' item submit OS-1
+only_item OS-1 feature story idea 'login with lockout'
+refuses_command 'still an idea, so triage runs first' item design OS-1
+
+echo "acceptance: an epic breaks into the work it is made of"
+only_item OS-1 feature epic designing 'authentication'
+child="$(ket item file --parent OS-1 --title 'lock an account' --kind feature --size story)"
+test "$child" = "OS-2" || fail "expected the child to be OS-2, got: $child"
+grep -q '^parent: OS-1$' "$PROJECT/.ket/items/OS-2/item.yaml" ||
+  fail "the child names no epic it broke out of"
+grep -q '^  - OS-2$' "$PROJECT/.ket/items/OS-1/item.yaml" ||
+  fail "the epic lists no child it fanned out into"
+status_is OS-2 triaged
+status_is OS-1 designing
 CHECKED=$((CHECKED + 1))
+
+second="$(ket item file --parent OS-1 --title 'unlock it' --kind chore --size subtask)"
+test "$second" = "OS-3" || fail "expected the second child to be OS-3, got: $second"
+test "$(grep -c '^  - ' "$PROJECT/.ket/items/OS-1/item.yaml")" = "2" ||
+  fail "the epic dropped a child when it took another"
+grep -q '^  - OS-2$' "$PROJECT/.ket/items/OS-1/item.yaml" ||
+  fail "the epic lost the child it already had"
+CHECKED=$((CHECKED + 1))
+
+echo "acceptance: a story takes children of its own"
+only_item OS-1 feature story designing 'login with lockout'
+ket item file --parent OS-1 --title 'hash the password' --kind chore --size trivial >/dev/null ||
+  fail "a story refused a trivial child, and a story holds children"
+grep -q '^parent: OS-1$' "$PROJECT/.ket/items/OS-2/item.yaml" ||
+  fail "the child of a story names no parent"
+CHECKED=$((CHECKED + 1))
+
+echo "acceptance: the link survives every stage the child moves through"
+only_item OS-1 feature epic designing 'authentication'
+ket item file --parent OS-1 --title 'lock an account' --kind feature --size story >/dev/null
+for stage in design submit approve; do
+  ket item "$stage" OS-2 >/dev/null || fail "$stage refused the child of an epic"
+  grep -q '^parent: OS-1$' "$PROJECT/.ket/items/OS-2/item.yaml" ||
+    fail "$stage dropped the epic the child broke out of"
+  CHECKED=$((CHECKED + 1))
+done
+status_is OS-2 implementing
+
+echo "acceptance: a link that would make the tree meaningless"
+only_item OS-1 feature epic designing 'authentication'
+refuses_command 'OS-99 has no item this repository can read' \
+  item file --parent OS-99 --title x --kind feature --size story
+refuses_command 'a child of size epic is no smaller than the epic OS-1' \
+  item file --parent OS-1 --title x --kind feature --size epic
+only_item OS-1 feature story designing 'login with lockout'
+refuses_command 'a child of size story is no smaller than the story OS-1' \
+  item file --parent OS-1 --title x --kind feature --size story
+for size in subtask trivial; do
+  only_item OS-1 chore "$size" designing 'rename a variable'
+  refuses_command "OS-1 is sized $size, and only an epic or a story holds children" \
+    item file --parent OS-1 --title x --kind chore --size trivial
+done
+
+echo "acceptance: a link it refuses leaves nothing behind"
+only_item OS-1 feature epic designing 'authentication'
+refuses_command 'no smaller than' item file --parent OS-1 --title x --kind feature --size epic
+test ! -d "$PROJECT/.ket/items/OS-2" || fail "a refused link still wrote the child"
+grep -q 'children: \[\]' "$PROJECT/.ket/items/OS-1/item.yaml" ||
+  fail "a refused link still wrote the parent"
+CHECKED=$((CHECKED + 1))
+
+echo "acceptance: an epic does not block the child that carries it"
+rm -rf "$PROJECT/.ket/items"
+mkdir -p "$PROJECT/.ket/items"
+parent_item OS-1 feature epic designing 'authentication' OS-2
+child_item OS-2 feature story implementing 'lock an account' OS-1
+allows src/auth.ts
+child_item OS-2 feature story triaged 'lock an account' OS-1
+refuses src/auth.ts 'OS-2 is triaged, not implementing'
+child_item OS-2 feature story awaiting-approval 'lock an account' OS-1
+refuses src/auth.ts 'OS-2 is awaiting-approval, not implementing'
+child_item OS-2 feature trivial implementing 'lock an account' OS-1
+refuses src/commands/hello/command.ts 'OS-2 is trivial'
+
+echo "acceptance: the epic governs again once its child lands"
+child_item OS-2 feature story shipped 'lock an account' OS-1
+refuses src/auth.ts 'OS-1 is designing, not implementing'
+
+echo "acceptance: an item that lists itself as its own child"
+# An item naming itself delegates to nobody, so it has to keep governing.
+rm -rf "$PROJECT/.ket/items"
+mkdir -p "$PROJECT/.ket/items"
+parent_item OS-1 feature story triaged 'login with lockout' OS-1
+refuses src/auth.ts 'OS-1 is triaged, not implementing'
+
+echo "acceptance: two children at once is still two jobs"
+parent_item OS-1 feature epic designing 'authentication' OS-2 OS-3
+child_item OS-2 feature story implementing 'lock an account' OS-1
+child_item OS-3 feature story implementing 'unlock it' OS-1
+refuses src/auth.ts 'OS-2 and OS-3 are both in flight'
 
 echo "acceptance: nothing in flight"
 rm -rf "$PROJECT/.ket/items"
@@ -220,12 +458,12 @@ refuses .ssh/id_ed25519 'is key material'
 allows src/key.ts
 
 echo "acceptance: a command that would step around a gate"
-refuses_command 'git commit -m wip --no-verify' 'skips a gate'
-refuses_command 'git commit --no-gpg-sign -m wip' 'skips a gate'
-refuses_command 'git push --no-verify' '--no-verify skips a gate'
-runs 'git commit -m wip'
-runs 'bun run test'
-runs 'git verify-commit HEAD'
+shell_refuses 'git commit -m wip --no-verify' 'skips a gate'
+shell_refuses 'git commit --no-gpg-sign -m wip' 'skips a gate'
+shell_refuses 'git push --no-verify' '--no-verify skips a gate'
+shell_runs 'git commit -m wip'
+shell_runs 'bun run test'
+shell_runs 'git verify-commit HEAD'
 
 echo "acceptance: a command in a repository ket never touched"
 answer="$(shell_envelope 'git commit --no-verify' | (cd "$SANDBOX" && "$KET" gate shell))"
@@ -488,6 +726,8 @@ test -f "$PROJECT/.ket/events.jsonl" || fail "the gate recorded no events"
 grep -q '"outcome":"refused"' "$PROJECT/.ket/events.jsonl" || fail "no refusal was recorded"
 grep -q '"outcome":"allowed"' "$PROJECT/.ket/events.jsonl" || fail "no allowance was recorded"
 grep -q '"item":"OS-1"' "$PROJECT/.ket/events.jsonl" || fail "no event named the item"
+grep -q '"about":"src/auth.ts","item":"OS-2"' "$PROJECT/.ket/events.jsonl" ||
+  fail "no event named the child that governed a write under its epic"
 grep -q '"gate":"probe"' "$PROJECT/.ket/events.jsonl" || fail "the probe gate recorded nothing"
 grep -q '"gate":"shell"' "$PROJECT/.ket/events.jsonl" || fail "the shell gate recorded nothing"
 # Every gate names a file the way the repository names it, or the log reads as

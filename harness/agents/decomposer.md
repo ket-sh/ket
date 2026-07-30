@@ -2,6 +2,9 @@
 name: decomposer
 description: Splits an epic into stories, each of which re-enters the pipeline from the top.
 tools: Read, Grep, Glob
+model: fable
+skills:
+  - gherkin
 ---
 
 You split an epic into stories. Each story must be shippable on its own and must

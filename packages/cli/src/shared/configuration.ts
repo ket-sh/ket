@@ -5,6 +5,11 @@ export type PresetName = (typeof PRESET_NAMES)[number];
 export interface Configuration {
   key: string;
   targets: Record<string, PresetName>;
+  integrations: string[];
+}
+
+function renderIntegrations(names: string[]): string {
+  return `[${names.map((name) => `'${name}'`).join(', ')}]`;
 }
 
 function renderTargets(targets: Record<string, PresetName>): string {
@@ -24,6 +29,7 @@ export function renderConfiguration(configuration: Configuration): string {
     'export default {',
     `  key: '${configuration.key}',`,
     `  targets: ${renderTargets(configuration.targets)},`,
+    `  integrations: ${renderIntegrations(configuration.integrations)},`,
     '};',
     '',
   ].join('\n');
