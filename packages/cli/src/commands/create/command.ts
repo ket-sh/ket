@@ -9,7 +9,7 @@ import type { Configuration } from '../../shared/configuration.ts';
 import { initializeRepository } from '../../shared/git.ts';
 import { readTextIfPresent, writeFiles } from '../../shared/write-files.ts';
 import { announce, openCreate } from './announce.ts';
-import { filesToInstall } from './install.ts';
+import { filesToInstall, shippedContents } from './install.ts';
 import { renderManifest } from './manifest.ts';
 import { planCreation } from './plan.ts';
 import { scaffoldFor } from './scaffold.ts';
@@ -80,6 +80,13 @@ const create = defineCommand({
     const presets = Object.values(configuration.targets);
     const name = basename(plan.root);
 
+    const installed = filesToInstall(presets, name);
+
+    // A preset ignores what its own toolchain downloads and builds, and ket adds
+    // the state it keeps. The scaffold writes last, so it appends to the file
+    // the preset ships rather than to whatever the directory started with.
+    const ignored = shippedContents(installed, '.gitignore') ?? gitignore;
+
     const written = [
       {
         path: 'package.json',
@@ -90,8 +97,8 @@ const create = defineCommand({
         }),
       },
       { path: '.claude/settings.json', contents: withHarnessRegistered(settings) },
-      ...filesToInstall(presets, name),
-      ...scaffoldFor(configuration, gitignore),
+      ...installed,
+      ...scaffoldFor(configuration, ignored),
     ];
 
     await writeFiles(plan.root, written);

@@ -1,0 +1,14 @@
+node_modules/
+.stryker-tmp/
+reports/
+*.log
+.DS_Store
+.turbo
+dist/
+*.tsbuildinfo
+
+# Downloaded by `vale sync`
+.vale/styles/Microsoft
+
+# Bun build scratch
+*.bun-build
