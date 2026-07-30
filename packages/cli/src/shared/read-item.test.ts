@@ -99,7 +99,7 @@ describe('refusing to guess at an item it cannot read', () => {
 describe('collecting what is in flight', () => {
   it('keeps an item the pipeline is working on', () => {
     expect(inFlightFrom([{ key: 'AUTH-1', contents: WRITTEN }])).toStrictEqual([
-      { key: 'AUTH-1', kind: 'feature', size: 'story', status: 'implementing' },
+      { key: 'AUTH-1', kind: 'feature', size: 'story', status: 'implementing', children: [] },
     ]);
   });
 
@@ -140,6 +140,29 @@ describe('collecting what is in flight', () => {
 
   it('leaves out an item it cannot read rather than guessing at it', () => {
     expect(inFlightFrom([{ key: 'AUTH-1', contents: 'nonsense' }])).toStrictEqual([]);
+  });
+});
+
+describe('an epic that stands for the children it fanned out into', () => {
+  it('carries those children through, since a gate decides which item is the job', () => {
+    const epic = renderItem({
+      title: 'authentication',
+      kind: 'feature',
+      size: 'epic',
+      status: 'designing',
+      parent: undefined,
+      children: ['AUTH-2', 'AUTH-3'],
+    });
+
+    expect(inFlightFrom([{ key: 'AUTH-1', contents: epic }])).toStrictEqual([
+      {
+        key: 'AUTH-1',
+        kind: 'feature',
+        size: 'epic',
+        status: 'designing',
+        children: ['AUTH-2', 'AUTH-3'],
+      },
+    ]);
   });
 });
 

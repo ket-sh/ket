@@ -64,7 +64,13 @@ function governed(stored: StoredItem): GovernedItem | undefined {
     return undefined;
   }
 
-  return { key: stored.key, kind: item.kind, size: item.size, status: item.status };
+  return {
+    key: stored.key,
+    kind: item.kind,
+    size: item.size,
+    status: item.status,
+    children: item.children,
+  };
 }
 
 export function inFlightFrom(stored: StoredItem[]): GovernedItem[] {
