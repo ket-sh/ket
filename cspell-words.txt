@@ -21,6 +21,7 @@ frontmatter
 fulfilment
 gitdir
 gitleaks
+gsub
 jscpd
 Karpathy
 ket
