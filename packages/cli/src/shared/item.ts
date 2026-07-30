@@ -23,6 +23,7 @@ export interface Item {
   kind: ItemKind;
   size: ItemSize;
   status: ItemStatus;
+  parent: string | undefined;
   children: string[];
 }
 
@@ -42,12 +43,17 @@ function renderChildren(children: string[]): string {
   return ['children:', ...children.map((child) => `  - ${child}`)].join('\n');
 }
 
+function renderParent(parent: string | undefined): string[] {
+  return parent === undefined ? [] : [`parent: ${parent}`];
+}
+
 export function renderItem(item: Item): string {
   return [
     `title: ${item.title}`,
     `kind: ${item.kind}`,
     `size: ${item.size}`,
     `status: ${item.status}`,
+    ...renderParent(item.parent),
     renderChildren(item.children),
     '',
   ].join('\n');

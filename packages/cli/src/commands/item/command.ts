@@ -2,8 +2,10 @@ import { defineCommand, showUsage } from 'citty';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import type { Filing } from '../../shared/decompose.ts';
 import type { Item, ItemKind, ItemSize } from '../../shared/item.ts';
 
+import { decompositionOf } from '../../shared/decompose.ts';
 import { ITEM_KINDS, ITEM_SIZES, nextKey, renderItem } from '../../shared/item.ts';
 import { keyFrom, ketRootFrom } from '../../shared/locate.ts';
 import { parseItem } from '../../shared/read-item.ts';
@@ -59,28 +61,60 @@ async function write(root: string, key: string, item: Item): Promise<void> {
   await writeFile(join(directory, ITEM_FILE), renderItem(item), 'utf8');
 }
 
+async function read(root: string, key: string): Promise<Item> {
+  const path = join(root, KET_DIRECTORY, 'items', key, ITEM_FILE);
+  const item = parseItem(await readFile(path, 'utf8').catch(() => ''));
+
+  if (item === undefined) {
+    throw new Error(`${key} has no item this repository can read`);
+  }
+
+  return item;
+}
+
+async function fileAlone(root: string, filing: Filing): Promise<void> {
+  await write(root, filing.key, {
+    title: filing.title,
+    kind: filing.kind,
+    size: filing.size,
+    status: 'triaged',
+    parent: undefined,
+    children: [],
+  });
+}
+
+async function fileUnder(root: string, filing: Filing, parentKey: string): Promise<void> {
+  const outcome = decompositionOf({ key: parentKey, item: await read(root, parentKey) }, filing);
+
+  if ('refused' in outcome) {
+    throw new Error(outcome.refused);
+  }
+
+  await write(root, filing.key, outcome.child);
+  await write(root, parentKey, outcome.parent);
+}
+
 const file = defineCommand({
   meta: { name: 'file', description: 'File a triaged item' },
   args: {
     title: { type: 'string', required: true, description: 'What the work is' },
     kind: { type: 'string', required: true, description: 'feature, bug, refactor or chore' },
     size: { type: 'string', required: true, description: 'epic, story, subtask or trivial' },
+    parent: { type: 'string', description: 'The epic or story this breaks out of' },
   },
   async run({ args }) {
     const root = await rootOrThrow();
-    const key = await keyOf(root);
-    const allocated = nextKey(key, await itemsIn(root));
+    const allocated = nextKey(await keyOf(root), await itemsIn(root));
 
     const kind: ItemKind = oneOf(ITEM_KINDS, args.kind);
     const size: ItemSize = oneOf(ITEM_SIZES, args.size);
+    const filing: Filing = { key: allocated, title: args.title, kind, size };
 
-    await write(root, allocated, {
-      title: args.title,
-      kind,
-      size,
-      status: 'triaged',
-      children: [],
-    });
+    if (args.parent === undefined) {
+      await fileAlone(root, filing);
+    } else {
+      await fileUnder(root, filing, args.parent);
+    }
 
     process.stdout.write(`${allocated}\n`);
   },
@@ -93,14 +127,7 @@ const approve = defineCommand({
   },
   async run({ args }) {
     const root = await rootOrThrow();
-    const path = join(root, KET_DIRECTORY, 'items', args.key, ITEM_FILE);
-    const item = parseItem(await readFile(path, 'utf8').catch(() => ''));
-
-    if (item === undefined) {
-      throw new Error(`${args.key} has no item this repository can read`);
-    }
-
-    const outcome = approvalOf(item);
+    const outcome = approvalOf(await read(root, args.key));
 
     if ('refused' in outcome) {
       throw new Error(`${args.key} is ${outcome.refused}`);

@@ -9,6 +9,7 @@ const TRIAGED: Item = {
   kind: 'feature',
   size: 'story',
   status: 'triaged',
+  parent: undefined,
   children: [],
 };
 
@@ -34,6 +35,7 @@ describe('moving an item to implementing', () => {
         kind: 'feature',
         size: 'epic',
         status: 'implementing',
+        parent: undefined,
         children: ['AUTH-2'],
       },
     });

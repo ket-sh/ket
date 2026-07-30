@@ -9,6 +9,7 @@ const STORY: Item = {
   kind: 'feature',
   size: 'story',
   status: 'triaged',
+  parent: undefined,
   children: [],
 };
 
@@ -34,6 +35,14 @@ describe('rendering the item a repository owns', () => {
 
     expect(rendered).toContain('- AUTH-2');
     expect(rendered).toContain('- AUTH-3');
+  });
+
+  it('names the epic a child broke out of', () => {
+    expect(renderItem({ ...STORY, parent: 'AUTH-1' })).toContain('parent: AUTH-1');
+  });
+
+  it('names no parent for work that broke out of nothing', () => {
+    expect(renderItem(STORY)).not.toContain('parent:');
   });
 
   it('records no time, since git already says when', () => {
@@ -127,6 +136,18 @@ describe('the exact lines an item is written as', () => {
     const lines = renderItem({ ...STORY, children: ['AUTH-2', 'AUTH-3'] }).split('\n');
 
     expect(lines.slice(4)).toStrictEqual(['children:', '  - AUTH-2', '  - AUTH-3', '']);
+  });
+
+  it('writes the parent between the status and the children, so the shape reads down', () => {
+    expect(renderItem({ ...STORY, parent: 'AUTH-1' }).split('\n')).toStrictEqual([
+      'title: login with lockout',
+      'kind: feature',
+      'size: story',
+      'status: triaged',
+      'parent: AUTH-1',
+      'children: []',
+      '',
+    ]);
   });
 });
 

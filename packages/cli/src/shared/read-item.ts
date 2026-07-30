@@ -47,7 +47,14 @@ export function parseItem(contents: string): Item | undefined {
     return undefined;
   }
 
-  return { title, kind, size, status, children: childrenOf(contents) };
+  return {
+    title,
+    kind,
+    size,
+    status,
+    parent: valueOf(contents, 'parent'),
+    children: childrenOf(contents),
+  };
 }
 
 function governed(stored: StoredItem): GovernedItem | undefined {

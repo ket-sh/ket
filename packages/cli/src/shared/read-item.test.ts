@@ -8,6 +8,7 @@ const WRITTEN = renderItem({
   kind: 'feature',
   size: 'story',
   status: 'implementing',
+  parent: undefined,
   children: [],
 });
 
@@ -18,6 +19,7 @@ describe('reading back an item this repository wrote', () => {
       kind: 'feature',
       size: 'story',
       status: 'implementing',
+      parent: undefined,
       children: [],
     });
   });
@@ -28,10 +30,28 @@ describe('reading back an item this repository wrote', () => {
       kind: 'feature',
       size: 'epic',
       status: 'triaged',
+      parent: undefined,
       children: ['AUTH-2', 'AUTH-3'],
     });
 
     expect(parseItem(epic)?.children).toStrictEqual(['AUTH-2', 'AUTH-3']);
+  });
+
+  it('recovers the epic a child broke out of', () => {
+    const child = renderItem({
+      title: 'lock an account after five failures',
+      kind: 'feature',
+      size: 'story',
+      status: 'triaged',
+      parent: 'AUTH-1',
+      children: [],
+    });
+
+    expect(parseItem(child)?.parent).toBe('AUTH-1');
+  });
+
+  it('reads no parent for work that broke out of nothing', () => {
+    expect(parseItem(WRITTEN)?.parent).toBeUndefined();
   });
 
   it('keeps a title that contains a colon, since prose does', () => {
@@ -40,6 +60,7 @@ describe('reading back an item this repository wrote', () => {
       kind: 'feature',
       size: 'story',
       status: 'triaged',
+      parent: undefined,
       children: [],
     });
 
@@ -88,6 +109,7 @@ describe('collecting what is in flight', () => {
       kind: 'feature',
       size: 'story',
       status: 'shipped',
+      parent: undefined,
       children: [],
     });
 
@@ -100,6 +122,7 @@ describe('collecting what is in flight', () => {
       kind: 'feature',
       size: 'story',
       status: 'idea',
+      parent: undefined,
       children: [],
     });
 
