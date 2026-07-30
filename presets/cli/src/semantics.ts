@@ -93,6 +93,24 @@ export const CLI_SEMANTICS: PresetSemantics = {
   testRuntime: 'vitest',
 };
 
+const EXCLUSION = '!';
+
+function isExclusion(entry: string): boolean {
+  return entry.startsWith(EXCLUSION);
+}
+
+function isTestPattern(entry: string): boolean {
+  return entry.includes('test');
+}
+
+export function adapterPatternsOf(semantics: PresetSemantics): string[] {
+  const anySlice = semantics.slice.root.replace(SLICE_PLACEHOLDER, '*');
+
+  return semantics.slice.mutate
+    .filter((entry) => isExclusion(entry) && !isTestPattern(entry))
+    .map((entry) => `${anySlice}/${entry.slice(EXCLUSION.length)}`);
+}
+
 export function testFileFor(pattern: string, unit: string): string {
   if (!UNIT_NAME.test(unit)) {
     throw new Error(`${unit} is not a unit name. Use lowercase letters, digits and hyphens`);

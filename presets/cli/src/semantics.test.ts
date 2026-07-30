@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { repositoryRootFrom } from './repository-root.ts';
-import { CLI_SEMANTICS, sliceDirectoryOf, testFileFor } from './semantics.ts';
+import { adapterPatternsOf, CLI_SEMANTICS, sliceDirectoryOf, testFileFor } from './semantics.ts';
 
 const OUR_CLI = join(repositoryRootFrom(import.meta.dirname), 'packages', 'cli');
 
@@ -155,5 +155,29 @@ describe('the shape of what the cli preset declares', () => {
 
   it('refuses a unit name that only starts out well', () => {
     expect(() => testFileFor(CLI_SEMANTICS.tests.example, 'greeting TWO')).toThrow(/unit name/);
+  });
+});
+
+describe('the paths a preset calls an adapter', () => {
+  it('reads the adapter out of the slice it declares', () => {
+    expect(adapterPatternsOf(CLI_SEMANTICS)).toContain('src/commands/*/command.ts');
+  });
+
+  it('reads the edge directory the mutation list keeps out', () => {
+    expect(adapterPatternsOf(CLI_SEMANTICS)).toContain('src/commands/*/io/**');
+  });
+
+  it('names nothing the mutation list does not exclude', () => {
+    expect(adapterPatternsOf(CLI_SEMANTICS)).toHaveLength(2);
+  });
+
+  it('leaves the source glob out, since that is what mutation covers', () => {
+    expect(adapterPatternsOf(CLI_SEMANTICS)).not.toContain('src/commands/*/**/*.ts');
+  });
+
+  it('leaves tests out, since a test is not an adapter', () => {
+    for (const pattern of adapterPatternsOf(CLI_SEMANTICS)) {
+      expect(pattern).not.toContain('test');
+    }
   });
 });
