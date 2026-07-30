@@ -13,6 +13,7 @@ export interface GovernedItem {
   kind: ItemKind;
   size: ItemSize;
   status: ItemStatus;
+  children: string[];
 }
 
 export interface WriteAttempt {
@@ -72,8 +73,16 @@ function misclassified(item: GovernedItem, attempt: WriteAttempt): Verdict | und
   return undefined;
 }
 
-function governing(attempt: WriteAttempt): GovernedItem | undefined {
-  return underSource(attempt.path, attempt.sources) ? attempt.inFlight[0] : undefined;
+function delegates(item: GovernedItem, inFlight: GovernedItem[]): boolean {
+  return inFlight.some((other) => other.key !== item.key && item.children.includes(other.key));
+}
+
+export function workingFrom(inFlight: GovernedItem[]): GovernedItem[] {
+  return inFlight.filter((item) => !delegates(item, inFlight));
+}
+
+function governing(attempt: WriteAttempt, working: GovernedItem[]): GovernedItem | undefined {
+  return underSource(attempt.path, attempt.sources) ? working[0] : undefined;
 }
 
 function byHand(path: string): Verdict | undefined {
@@ -87,13 +96,14 @@ function byHand(path: string): Verdict | undefined {
 }
 
 function governed(attempt: WriteAttempt): Verdict {
-  const item = governing(attempt);
+  const working = workingFrom(attempt.inFlight);
+  const item = governing(attempt, working);
 
   if (item === undefined) {
     return ALLOWED;
   }
 
-  return crowded(attempt.inFlight) ?? unapproved(item) ?? misclassified(item, attempt) ?? ALLOWED;
+  return crowded(working) ?? unapproved(item) ?? misclassified(item, attempt) ?? ALLOWED;
 }
 
 export function verdictFor(attempt: WriteAttempt): Verdict {

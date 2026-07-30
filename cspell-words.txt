@@ -48,6 +48,7 @@ semgrep
 shellcheck
 steiger
 stryker
+subshell
 testcontainers
 titleAlignment
 truecolor

@@ -13,7 +13,7 @@ import type { ProbeReply, RingFailure } from './ring.ts';
 
 import { insideRepository, ketRootFrom, sourceRootsOf, targetsFrom } from '../../shared/locate.ts';
 import { inFlightFrom } from '../../shared/read-item.ts';
-import { verdictFor } from '../../shared/write-gate.ts';
+import { verdictFor, workingFrom } from '../../shared/write-gate.ts';
 import { pathFrom, verdictReply } from './envelope.ts';
 import { renderEvent } from './event.ts';
 import { argvFor, probeReply } from './ring.ts';
@@ -78,8 +78,8 @@ function eventFor(path: string, denial: Denial | undefined, item: string | undef
   };
 }
 
-function keyOf(inFlight: GovernedItem[]): string | undefined {
-  return inFlight.length === 1 ? inFlight[0]?.key : undefined;
+function keyOf(working: GovernedItem[]): string | undefined {
+  return working.length === 1 ? working[0]?.key : undefined;
 }
 
 // A repository reached through a symlink names its files one way and reports its
@@ -142,7 +142,7 @@ async function judgeWrite(): Promise<Denial | undefined> {
     }),
   );
 
-  await record(root, eventFor(path, denial, keyOf(inFlight)));
+  await record(root, eventFor(path, denial, keyOf(workingFrom(inFlight))));
 
   return denial;
 }
