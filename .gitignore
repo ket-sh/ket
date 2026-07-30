@@ -16,3 +16,6 @@ dist/
 # Bun build scratch
 *.bun-build
 .ket/events.jsonl
+
+# Scratch worktrees an agent opens, never committed
+.claude/worktrees/
