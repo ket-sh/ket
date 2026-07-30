@@ -53,13 +53,22 @@ argument to skip that question:
 ket create shop
 ```
 
-Next come the targets. A target pairs a directory with the preset that governs
-it. A single-package project takes the defaults:
+Then it asks two more questions:
 
 ```text
-Which directory does this target cover?   .
-Which preset governs it?                  cli
-What key should item IDs carry?           SHOP
+Which preset governs this project?                          cli
+Which of these should this project use? Space to pick.      codecov codeql coderabbit
+What key should item IDs carry?                             SHOP
+```
+
+The second question offers what the preset you chose supports, and nothing else.
+Each line says what the tool costs, because all three are free on a public
+repository and charge on a private one. Pick none and the project still gets a
+pipeline. Pick some and the files that run them arrive with it. To skip the
+question, name them on the command line:
+
+```sh
+ket create shop --with codecov,codeql
 ```
 
 Then `create` writes the project and tells you what to run:
@@ -88,6 +97,8 @@ Then `create` writes the project and tells you what to run:
    │ ▷ │ bun run lint:prose      │ It checks the prose in every markdown.     │
    │ ⚙ │ bun run fmt:check       │ It checks formatting, so diffs show why.   │
    │ ▷ │ bun run test            │ It checks the behavior the suite claims.   │
+   │ ⚙ │ bun run lint:secrets    │ It finds a secret before it ships.         │
+   │ ⚙ │ bun run lint:workflows  │ It checks the pipeline files for defects.  │
    │ ▷ │ bun run test:mutation   │ It checks that the suite asserts anything. │
    ├───┴─────────────────────────┴────────────────────────────────────────────┤
    │ ⚙ the commit hook runs it   ▷ you run it when you want                   │
@@ -110,6 +121,12 @@ The project arrives with a commit hook wired to the gates in that table. It also
 brings a Vitest suite and a Stryker configuration whose threshold breaks the
 build below a mutation score of 90. An example `hello` command ships with its
 own unit and property tests.
+
+It also gets `.github/workflows/ci.yml`, which runs the same gates GitHub side.
+Every gate the preset declares appears there, and a test holds the two lists
+together, so a gate can't pass on your machine and go missing in the pipeline.
+Each integration you picked brings its own file: Codecov adds `coverage.yml`,
+CodeQL adds `codeql.yml`, and CodeRabbit adds `.coderabbit.yaml`.
 
 ## Develop a feature
 
@@ -224,8 +241,18 @@ there, so enabling the plugin at user scope leaves your other projects alone.
 - `/ket:status` reads the item files. `create` writes `.ket/BOARD.md` once, and
   nothing rewrites it as an item moves.
 - `ket watch` renders sample data instead of the event log.
-- The optional integrations, among them Codecov, CodeQL, CodeRabbit, and
-  Chromatic, have no question at create time yet.
+- Chromatic and the Mobbin design reference arrive with the presets that have a
+  user interface. The `cli` preset offers neither, because neither has anything
+  to say about a command line.
 - One preset ships, `cli`. Web, API, Desktop, and Mobile are still to come.
+
+## On the list for the first release
+
+- **Monorepo.** One project, several packages, each with the preset that suits
+  it. Today `create` writes a single target that covers the whole repository.
+- **Set up ket in a repository that already exists.** Today `create` starts an
+  empty directory.
+- **Update a project ket already made.** A project keeps whatever `create` gave
+  it, and nothing refreshes that.
 
 Licensed under the MIT license.

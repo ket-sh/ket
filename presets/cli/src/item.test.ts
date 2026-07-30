@@ -49,8 +49,12 @@ async function versionsKetPins(): Promise<Record<string, string>> {
   return declared;
 }
 
+async function readsPresetFile(name: string): Promise<string> {
+  return readFile(join(import.meta.dirname, '..', 'files', name), 'utf8');
+}
+
 async function commitJobsItWrites(): Promise<string[]> {
-  const written = await readFile(join(import.meta.dirname, '..', 'files', 'lefthook.yml'), 'utf8');
+  const written = await readsPresetFile('lefthook.yml');
   const upToCommitMsg = written.slice(0, written.indexOf('commit-msg:'));
 
   return [...upToCommitMsg.matchAll(/- name: (\S+)/g)].map(([, job]) => job ?? '');

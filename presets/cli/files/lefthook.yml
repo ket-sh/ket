@@ -1,5 +1,8 @@
 pre-commit:
   jobs:
+    - name: gitleaks
+      priority: 0
+      run: mise install -q && mise exec -- gitleaks git --staged --redact --no-banner
     - name: protect-main
       priority: 0
       run: test "$(git branch --show-current)" != "main"
@@ -29,6 +32,9 @@ pre-commit:
       glob: '*.{ts,tsx,mts,js,jsx,mjs,cjs,json,md,yaml,yml}'
       run: ./node_modules/.bin/oxfmt --no-error-on-unmatched-pattern {staged_files}
       stage_fixed: true
+    - name: workflows
+      glob: '.github/workflows/*'
+      run: bun run lint:workflows
     - name: typecheck
       priority: 3
       run: ./node_modules/.bin/tsc --noEmit -p tsconfig.json

@@ -3,13 +3,13 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { contentOf, PRESET_CONTENTS } from './contents.generated.ts';
-import { CLI_PRESET } from './item.ts';
+import { CLI_PRESET, everyFileOf } from './item.ts';
 
 const FILES_ROOT = join(import.meta.dirname, '..');
 
 describe('the file contents the preset carries', () => {
   it('carries every file the item promises', () => {
-    for (const file of CLI_PRESET.files) {
+    for (const file of everyFileOf(CLI_PRESET)) {
       expect(contentOf(file.path)).toBeTypeOf('string');
     }
   });
@@ -21,7 +21,7 @@ describe('the file contents the preset carries', () => {
   });
 
   it('carries no file the item never promised', () => {
-    const promised = new Set(CLI_PRESET.files.map((file) => file.path));
+    const promised = new Set(everyFileOf(CLI_PRESET).map((file) => file.path));
 
     expect(Object.keys(PRESET_CONTENTS).filter((path) => !promised.has(path))).toStrictEqual([]);
   });

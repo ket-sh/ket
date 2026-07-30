@@ -1,7 +1,7 @@
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { CLI_PRESET } from '../src/item.ts';
+import { CLI_PRESET, everyFileOf } from '../src/item.ts';
 
 const PRESET_ROOT = join(import.meta.dirname, '..');
 const GENERATED = join(PRESET_ROOT, 'src', 'contents.generated.ts');
@@ -11,7 +11,7 @@ async function readShipped(): Promise<[string, string][]> {
     recursive: true,
     withFileTypes: true,
   });
-  const promised = new Set(CLI_PRESET.files.map((file) => file.path));
+  const promised = new Set(everyFileOf(CLI_PRESET).map((file) => file.path));
 
   const shipped = await Promise.all(
     entries

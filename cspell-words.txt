@@ -27,6 +27,7 @@ ket
 knip
 lefthook
 lockfiles
+Mobbin
 nizos
 nofilter
 nonword
