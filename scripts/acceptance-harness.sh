@@ -134,7 +134,7 @@ done
 for name in triage researcher decomposer adr solution-design ui-design gherkin implementer reviewer qa; do
   test -f "harness/agents/$name.md" || fail "the harness declares no $name agent"
 done
-for name in tdd clean-code mutation gates commit research suppression verification generated gherkin adr progress stages findings; do
+for name in tdd clean-code mutation gates commit research suppression verification generated gherkin adr progress stages findings mechanical-checks; do
   test -f "harness/skills/$name/SKILL.md" || fail "the harness declares no /ket:$name skill"
   grep -q "^name: $name$" "harness/skills/$name/SKILL.md" ||
     fail "the $name skill does not name itself, so /ket:$name would not resolve"
@@ -539,6 +539,97 @@ done <"$PROJECT/.ket/events.jsonl"
 echo "acceptance: the events file stays out of the diff"
 (cd "$PROJECT" && git check-ignore -q .ket/events.jsonl) ||
   fail "events.jsonl is not gitignored"
+
+echo "acceptance: what arrived since ket last looked"
+# Both streams, because a gate that governs nothing has to say nothing at all,
+# and a crash that leaves stdout empty would otherwise read as silence.
+LOOKED=""
+looks_at() {
+  local status=0
+
+  LOOKED="$( (cd "$1" && "$KET" gate toolchain) 2>&1 )" || status=$?
+  test "$status" -eq 0 ||
+    fail "the toolchain gate failed in $1: exit $status, said: ${LOOKED:-nothing}"
+}
+
+# The toolchain a created project starts with is the one ket installed, and ket
+# has nothing to propose about the gates it wrote itself.
+looks_at "$PROJECT"
+test -z "$LOOKED" ||
+  fail "the toolchain gate spoke about the toolchain it installed itself: $LOOKED"
+CHECKED=$((CHECKED + 1))
+
+# Adds a dependency the way a developer would, by declaring it in the manifest.
+declares() {
+  awk -v pin="    \"$1\": \"$2\"," '
+    /"dependencies": \{/ && !done { print; print pin; done = 1; next }
+    { print }
+  ' "$PROJECT/package.json" >"$PROJECT/package.json.next"
+  mv "$PROJECT/package.json.next" "$PROJECT/package.json"
+}
+
+declares drizzle-orm 0.44.0
+looks_at "$PROJECT"
+echo "$LOOKED" | grep -q '"hookEventName":"SessionStart"' ||
+  fail "the toolchain gate answered no session start, gate said: ${LOOKED:-nothing}"
+echo "$LOOKED" | grep -q 'drizzle-orm' ||
+  fail "the toolchain gate never named the dependency that arrived: ${LOOKED:-nothing}"
+echo "$LOOKED" | grep -q 'mechanical-checks' ||
+  fail "the toolchain gate named no skill to judge the dependency with"
+echo "$LOOKED" | grep -q 'permissionDecision' &&
+  fail "the toolchain gate carried a decision, and a session start refuses nothing"
+CHECKED=$((CHECKED + 3))
+
+# A dependency the preset installs is already checked by the gates the preset
+# wrote, so proposing a checker for it is noise on every project ket creates.
+for shipped in citty oxlint vitest typescript; do
+  echo "$LOOKED" | grep -q "\"$shipped" &&
+    fail "the toolchain gate proposed a checker for $shipped, which the preset already covers"
+done
+CHECKED=$((CHECKED + 1))
+
+echo "acceptance: it names a dependency once, not every session"
+grep -q 'drizzle-orm' "$PROJECT/.ket/toolchain.json" ||
+  fail "the toolchain gate recorded nothing about what it named"
+looks_at "$PROJECT"
+test -z "$LOOKED" ||
+  fail "the toolchain gate named the same dependency twice: $LOOKED"
+CHECKED=$((CHECKED + 2))
+
+echo "acceptance: the next dependency is named on its own"
+declares redis 5.9.0
+looks_at "$PROJECT"
+echo "$LOOKED" | grep -q 'redis' ||
+  fail "the toolchain gate never named the second dependency: ${LOOKED:-nothing}"
+echo "$LOOKED" | grep -q 'drizzle-orm' &&
+  fail "the toolchain gate named a dependency it had already answered about"
+CHECKED=$((CHECKED + 2))
+
+echo "acceptance: a manifest it cannot read"
+# An unreadable manifest is not a project without dependencies, and guessing
+# either way puts a proposal in front of a session that has no basis for it.
+cp "$PROJECT/package.json" "$SANDBOX/manifest.json"
+printf '{ not json\n' >"$PROJECT/package.json"
+looks_at "$PROJECT"
+test -z "$LOOKED" ||
+  fail "the toolchain gate spoke about a manifest it could not read: $LOOKED"
+cp "$SANDBOX/manifest.json" "$PROJECT/package.json"
+CHECKED=$((CHECKED + 1))
+
+echo "acceptance: a repository ket never touched hears nothing about its toolchain"
+printf '{"dependencies":{"drizzle-orm":"0.44.0"}}\n' >"$SANDBOX/package.json"
+looks_at "$SANDBOX"
+test -z "$LOOKED" ||
+  fail "the toolchain gate spoke in a directory with no ket directory: $LOOKED"
+test -f "$SANDBOX/.ket/toolchain.json" &&
+  fail "the toolchain gate wrote a record into a repository it does not govern"
+CHECKED=$((CHECKED + 2))
+
+echo "acceptance: the harness looks at the toolchain when a session starts"
+grep -q 'ket gate toolchain' harness/hooks/hooks.json ||
+  fail "the harness hooks never call the toolchain gate"
+grep -q '"SessionStart"' harness/hooks/hooks.json ||
+  fail "the toolchain gate is not wired to a session start event"
 
 echo "acceptance: the hidden command stays hidden"
 "$KET" --help 2>&1 | grep -q 'gate' && fail "gate is listed in the top level help"
