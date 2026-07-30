@@ -33,7 +33,8 @@ before it needs a tool.
 
 ## 2. Look for the checker before writing one
 
-Search in this order, and search the web every time, because this changes:
+Search in this order through the `research` skill, and search every time, because
+this changes:
 
 1. **What the dependency already ships.** The check is often not called a
    linter: `drizzle-kit check` validates the migration folder, `tsc --noEmit`
