@@ -10,8 +10,10 @@ clack
 codegen
 coderabbit
 COLORTERM
+conftest
 consola
 cucumberjs
+Datree
 dedup
 depcruise
 dorny
@@ -26,11 +28,13 @@ jscpd
 Karpathy
 ket
 knip
+kubeconform
 lefthook
 lockfiles
 Mobbin
 nizos
 nofilter
+nolint
 nonword
 openspec
 opentui
@@ -51,7 +55,9 @@ steiger
 stryker
 subshell
 testcontainers
+tflint
 titleAlignment
+Tricorder
 truecolor
 tsarch
 tsconfigs
