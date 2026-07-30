@@ -1,0 +1,11 @@
+{
+  "name": "ket",
+  "owner": { "name": "ket", "url": "https://github.com/ket-sh/ket" },
+  "plugins": [
+    {
+      "name": "ket",
+      "source": "./harness",
+      "description": "The pipeline ket drives, with the gates that keep a status honest"
+    }
+  ]
+}

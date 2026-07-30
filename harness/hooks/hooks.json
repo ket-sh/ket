@@ -1,0 +1,18 @@
+{
+  "description": "The gates ket runs while work happens",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ket gate write",
+            "timeout": 10,
+            "statusMessage": "asking the item whether this write is allowed"
+          }
+        ]
+      }
+    ]
+  }
+}
