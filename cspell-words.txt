@@ -33,6 +33,7 @@ nonword
 openspec
 opentui
 opentui-spinner
+ORDE
 oxfmt
 oxfmtrc
 oxlint

@@ -3,6 +3,7 @@ import { defineCommand } from 'citty';
 const load = {
   create: async () => import('./commands/create/command.ts'),
   watch: async () => import('./commands/watch/command.ts'),
+  gate: async () => import('./commands/gate/command.ts'),
 };
 
 export const commands = {
@@ -10,7 +11,11 @@ export const commands = {
   watch: async () => (await load.watch()).default,
 };
 
-export async function showUsageOf(name: keyof typeof load): Promise<void> {
+export const hidden = {
+  gate: async () => (await load.gate()).default,
+};
+
+export async function showUsageOf(name: keyof typeof commands): Promise<void> {
   await (await load[name]()).usage();
 }
 

@@ -1,10 +1,26 @@
 import { runCommand as runCittyCommand, showUsage } from 'citty';
 
-import { commands, main, showUsageOf } from './main.ts';
+import { commands, hidden, main, showUsageOf } from './main.ts';
 import { usageRequest } from './shared/usage.ts';
 
 function isKnownCommand(name: string): name is keyof typeof commands {
   return Object.hasOwn(commands, name);
+}
+
+function isHiddenCommand(name: string): name is keyof typeof hidden {
+  return Object.hasOwn(hidden, name);
+}
+
+async function runHidden(argv: string[]): Promise<boolean> {
+  const [name, ...rest] = argv;
+
+  if (name === undefined || !isHiddenCommand(name)) {
+    return false;
+  }
+
+  await runCittyCommand(await hidden[name](), { rawArgs: rest });
+
+  return true;
 }
 
 export async function runCommand(name: string, argv: string[] = []): Promise<unknown> {
@@ -49,6 +65,10 @@ function describeFailure(cause: unknown): string {
 
 export async function runMain(argv: string[] = process.argv.slice(2)): Promise<void> {
   try {
+    if (await runHidden(argv)) {
+      return;
+    }
+
     if (await showRequestedUsage(argv)) {
       return;
     }
