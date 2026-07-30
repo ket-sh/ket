@@ -1,12 +1,14 @@
 import { adapterPatternsOf, CLI_SEMANTICS } from '@ket/preset-cli';
 import { defineCommand, showUsage } from 'citty';
 import { spawn } from 'node:child_process';
-import { appendFile, readdir, readFile, realpath } from 'node:fs/promises';
+import { access, appendFile, readdir, readFile, realpath } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
 
+import type { Cited } from '../../shared/citations.ts';
 import type { PresetName } from '../../shared/configuration.ts';
 import type { StoredItem } from '../../shared/read-item.ts';
 import type { GovernedItem } from '../../shared/write-gate.ts';
+import type { CitationReply } from './citations.ts';
 import type { Denial } from './envelope.ts';
 import type { GateEvent } from './event.ts';
 import type { ProbeReply, RingFailure } from './ring.ts';
@@ -14,6 +16,7 @@ import type { ProbeReply, RingFailure } from './ring.ts';
 import { insideRepository, ketRootFrom, sourceRootsOf, targetsFrom } from '../../shared/locate.ts';
 import { inFlightFrom } from '../../shared/read-item.ts';
 import { verdictFor, workingFrom } from '../../shared/write-gate.ts';
+import { citationReply, pathsCitedIn, missingIn } from './citations.ts';
 import { pathFrom, verdictReply } from './envelope.ts';
 import { renderEvent } from './event.ts';
 import { argvFor, probeReply } from './ring.ts';
@@ -202,6 +205,67 @@ async function probeRing(): Promise<ProbeReply | undefined> {
   return probeReply(failures);
 }
 
+// A cited directory is not a missing citation. It exists, it just holds no
+// contents a symbol could live in.
+async function reads(root: string, path: string): Promise<Cited> {
+  const contents = await readFile(join(root, path), 'utf8').catch(() => undefined);
+
+  if (contents !== undefined) {
+    return { path, contents };
+  }
+
+  const reachable = await access(join(root, path)).then(
+    () => true,
+    () => false,
+  );
+
+  return reachable ? { path, contents: '' } : { path, missing: true };
+}
+
+// A design artifact names paths and symbols and claims the repository has them.
+// Only what an item wrote is checked, because a README naming a file ket has not
+// built yet is a plan, not a claim.
+const DESIGNS = '.ket/items/';
+
+async function checkCitations(): Promise<CitationReply | undefined> {
+  const governed = await governedFile();
+
+  if (
+    governed === undefined ||
+    !governed.path.startsWith(DESIGNS) ||
+    !governed.path.endsWith('.md')
+  ) {
+    return undefined;
+  }
+
+  const { root, path } = governed;
+  const markdown = await readFile(join(root, path), 'utf8').catch(() => '');
+  const read = await Promise.all(pathsCitedIn(markdown).map(async (cited) => reads(root, cited)));
+  const missing = missingIn(markdown, read);
+
+  await record(root, {
+    gate: 'citations',
+    outcome: missing.length === 0 ? 'allowed' : 'refused',
+    about: path,
+  });
+
+  return citationReply(missing);
+}
+
+const citations = defineCommand({
+  meta: {
+    name: 'citations',
+    description: 'Check what a design artifact claims the repository has',
+  },
+  async run() {
+    const reply = await checkCitations();
+
+    if (reply !== undefined) {
+      process.stdout.write(JSON.stringify(reply));
+    }
+  },
+});
+
 const probe = defineCommand({
   meta: { name: 'probe', description: 'Run ring one over the file that was written' },
   async run() {
@@ -226,7 +290,7 @@ const write = defineCommand({
 
 const gate = defineCommand({
   meta: { name: 'gate', description: 'Run a pipeline gate' },
-  subCommands: { write, probe },
+  subCommands: { write, probe, citations },
 });
 
 export async function usage(): Promise<void> {

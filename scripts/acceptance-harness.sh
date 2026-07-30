@@ -501,6 +501,33 @@ echo "$elsewhere" | grep -q 'oxlint' &&
 rm "$PROJECT/src/broken.ts"
 CHECKED=$((CHECKED + 4))
 
+echo "acceptance: a design that cites what nobody wrote"
+# Every design agent may write, and each says its source is this codebase. A
+# citation is the one part of that claim a machine can check.
+design="$PROJECT/.ket/items/OS-1/solution-design.md"
+mkdir -p "$(dirname "$design")"
+printf 'The counter lives in `src/commands/login/attempts.ts` and `lockedOut()` reads it.\n' >"$design"
+cited="$(envelope PostToolUse "$design" | (cd "$PROJECT" && "$KET" gate citations))"
+echo "$cited" | grep -q 'src/commands/login/attempts.ts is cited' ||
+  fail "the citations gate passed a design naming a file the repository has not got: ${cited:-nothing}"
+echo "$cited" | grep -q 'lockedOut is cited' ||
+  fail "the citations gate passed a design naming a symbol nothing defines"
+echo "$cited" | grep -q 'permissionDecision' &&
+  fail "the citations gate carried a decision, and a post-tool-use hook must never block"
+
+printf 'The greeting lives in `src/commands/hello/greeting.ts` and `greeting()` reads it.\n' >"$design"
+honest="$(envelope PostToolUse "$design" | (cd "$PROJECT" && "$KET" gate citations))"
+test -z "$honest" ||
+  fail "the citations gate reported a design whose citations all exist: $honest"
+
+# A README naming a file ket has not built yet is a plan. Only what an item
+# wrote is a claim about the repository.
+printf 'See `src/commands/login/attempts.ts` for the plan.\n' >"$PROJECT/PLAN.md"
+elsewhere="$(envelope PostToolUse "$PROJECT/PLAN.md" | (cd "$PROJECT" && "$KET" gate citations))"
+test -z "$elsewhere" || fail "the citations gate judged prose no item wrote: $elsewhere"
+rm -f "$PROJECT/PLAN.md"
+CHECKED=$((CHECKED + 4))
+
 echo "acceptance: a written path never reaches a tool as a flag"
 # The path comes from whatever asked for the write, so a file named --fix would
 # otherwise arrive at the linter as the flag it looks like. Sent relative on
