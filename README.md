@@ -191,10 +191,11 @@ item file by hand draws its own refusal.
 
 ### Write it, test first
 
-Ask again and the write goes through. probity still holds the order, so a
-production file waits for a failing test that covers it. After each write, ring
-one runs and hands its result back. It lints the file that changed, then checks
-types and import rules across the project.
+Ask again and the write goes through. The test-first gate still holds the order,
+so a production file waits for a failing test that covers it. After each write,
+ring one runs on that file alone and hands its result back: it formats it, lints
+it, and runs the test that covers it. The project-wide checks sit in ring two,
+which runs when a stage ends rather than after every keystroke.
 
 Every decision lands in `.ket/events.jsonl`:
 
@@ -224,6 +225,17 @@ stands or falls on the spot. Where they disagree, a single judge settles it on
 the highest tier at maximum effort. The report closes with what got dropped and
 why, because a dropped finding is evidence the review ran.
 
+### Think before you file
+
+An epic is work nobody can specify without breaking it apart, and it needs
+thinking rather than filing. `/ket:explore` is a stance, not a
+workflow: it reads, it reasons, and it writes nothing under a source path. It
+captures what it learns only when you ask.
+
+```text
+/ket:explore how should a lockout interact with a password reset
+```
+
 ### Ask where things stand
 
 ```text
@@ -233,23 +245,44 @@ why, because a dropped finding is evidence the review ran.
 It groups the items by status and names what each one waits on. `/ket:continue`
 picks up the single item in flight and carries it to the next stage.
 
-## What the write gate refuses
+## Every session, ket looks for a machine
 
-| The attempt                              | Why it stops                          |
-| ---------------------------------------- | ------------------------------------- |
-| Source under a target, before approval   | Approval comes before source          |
-| An edit to an item file                  | Only a gate writes a status           |
-| A `trivial` item touching an adapter     | It was never trivial                  |
-| A `refactor` that changes a scenario     | A changed scenario makes it a feature |
-| A write while a second item is in flight | One job means one branch              |
+A rule kept by discipline is a rule nobody keeps. When a session starts, ket
+reads the project manifest, compares it against what it has already seen, and
+names what arrived. Add Drizzle and it comes back with the migration linter that
+exists for it. When nothing exists, it proposes writing the check, a custom
+oxlint rule being the usual shape. It proposes and you decide, and it never adds
+a dependency on its own. It stays quiet when nothing is new.
+
+## What the gates refuse
+
+| The attempt                                 | Why it stops                          |
+| ------------------------------------------- | ------------------------------------- |
+| Source under a target, before approval      | Approval comes before source          |
+| An edit to an item file                     | Only a gate writes a status           |
+| A `trivial` item touching an adapter        | It was never trivial                  |
+| A `refactor` that changes a scenario        | A changed scenario makes it a feature |
+| A write while a second item is in flight    | One job means one branch              |
+| Production code no failing test covers      | The test comes first                  |
+| A lockfile, a `.env` file, or key material  | A tool owns it, or you do             |
+| `git commit --no-verify`                    | A gate you can skip isn't a gate      |
+| A shell command writing what a tool may not | The rule reads the path, not the tool |
+
+That last row matters more than it looks. A gate wired only to the editor is one
+that agents step around with a heredoc. `ket gate shell` reads the paths a command
+writes and asks the same rule, so a redirect, a heredoc, `tee`, `cp`, `mv` and
+`sed -i` all meet the refusal the editor would have given. Reading is never
+refused, and a command it can't read confidently gets refused by name rather
+than waved through.
 
 A repository with no `.ket` directory gets none of this. The gate stays quiet
 there, so enabling the plugin at user scope leaves your other projects alone.
 
 ## What ket doesn't do yet
 
-- The design stage ships as prompts for the design agents. No gate reads what
-  they produce, and the four design artifacts have no home on disk.
+- The design stage writes its artifacts beside the item, and `ket gate citations`
+  checks that what a design cites the repository can show. Nothing yet checks
+  that a design is complete, only that its claims hold.
 - Mutation runs as a script you invoke, and `/ket:review` runs when you ask for
   it. Neither one holds a status, so an item can ship without either.
 - Nothing bounds the loop yet. A `Stop` hook that keeps agents working until a
