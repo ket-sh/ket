@@ -4,12 +4,13 @@ import { join } from 'node:path';
 
 import type { Filing } from '../../shared/decompose.ts';
 import type { Item, ItemKind, ItemSize } from '../../shared/item.ts';
+import type { Transition } from '../../shared/transition.ts';
 
 import { decompositionOf } from '../../shared/decompose.ts';
 import { ITEM_KINDS, ITEM_SIZES, nextKey, renderItem } from '../../shared/item.ts';
 import { keyFrom, ketRootFrom } from '../../shared/locate.ts';
 import { parseItem } from '../../shared/read-item.ts';
-import { approvalOf } from '../../shared/transition.ts';
+import { approvalOf, designOf, submissionOf } from '../../shared/transition.ts';
 
 const KET_DIRECTORY = '.ket';
 
@@ -120,27 +121,39 @@ const file = defineCommand({
   },
 });
 
-const approve = defineCommand({
-  meta: { name: 'approve', description: 'Move an item to implementing' },
-  args: {
-    key: { type: 'positional', required: true, description: 'The item to approve' },
-  },
-  async run({ args }) {
-    const root = await rootOrThrow();
-    const outcome = approvalOf(await read(root, args.key));
+function stage(name: string, description: string, move: (item: Item) => Transition) {
+  return defineCommand({
+    meta: { name, description },
+    args: {
+      key: { type: 'positional', required: true, description: 'The item to move' },
+    },
+    async run({ args }) {
+      const root = await rootOrThrow();
+      const outcome = move(await read(root, args.key));
 
-    if ('refused' in outcome) {
-      throw new Error(`${args.key} is ${outcome.refused}`);
-    }
+      if ('refused' in outcome) {
+        throw new Error(`${args.key} is ${outcome.refused}`);
+      }
 
-    await write(root, args.key, outcome.approved);
-    process.stdout.write(`${args.key} implementing\n`);
-  },
-});
+      await write(root, args.key, outcome.moved);
+      process.stdout.write(`${args.key} ${outcome.moved.status}\n`);
+    },
+  });
+}
+
+const design = stage('design', 'Open the design stage on a triaged item', designOf);
+
+const submit = stage(
+  'submit',
+  'Hand a finished design to the person who approves it',
+  submissionOf,
+);
+
+const approve = stage('approve', 'Move an approved item to implementing', approvalOf);
 
 const item = defineCommand({
   meta: { name: 'item', description: 'Write the state a gate reads' },
-  subCommands: { file, approve },
+  subCommands: { file, design, submit, approve },
 });
 
 export async function usage(): Promise<void> {
