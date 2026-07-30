@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { pathFrom, verdictReply } from './envelope.ts';
+import { commandFrom, pathFrom, verdictReply } from './envelope.ts';
 
 describe('reading the path a hook event is about', () => {
   it('reads the file a write names', () => {
@@ -21,6 +21,24 @@ describe('reading the path a hook event is about', () => {
 
   it('reads nothing from a payload that is not an object', () => {
     expect(pathFrom('nonsense')).toBeUndefined();
+  });
+});
+
+describe('reading the command a hook event is about', () => {
+  it('reads the command a shell call names', () => {
+    expect(commandFrom({ tool_input: { command: 'bun test' } })).toBe('bun test');
+  });
+
+  it('reads nothing when the tool input names no command', () => {
+    expect(commandFrom({ tool_input: { file_path: 'src/auth.ts' } })).toBeUndefined();
+  });
+
+  it('reads nothing when the command is not a string', () => {
+    expect(commandFrom({ tool_input: { command: 7 } })).toBeUndefined();
+  });
+
+  it('reads nothing from a payload that is not an object', () => {
+    expect(commandFrom('nonsense')).toBeUndefined();
   });
 });
 

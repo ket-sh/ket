@@ -69,6 +69,31 @@ refuses() {
   CHECKED=$((CHECKED + 1))
 }
 
+# A bash envelope names a command rather than a file, and the shell gate reads it
+# out of the same tool input a write gets its path from.
+shell_envelope() {
+  printf '{"hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"%s"}}' "$1"
+}
+
+runs() {
+  local answer
+  answer="$(shell_envelope "$1" | (cd "$PROJECT" && "$KET" gate shell))"
+
+  test -z "$answer" || fail "expected '$1' to run, gate said: $answer"
+  CHECKED=$((CHECKED + 1))
+}
+
+refuses_command() {
+  local answer
+  answer="$(shell_envelope "$1" | (cd "$PROJECT" && "$KET" gate shell))"
+
+  echo "$answer" | grep -q '"permissionDecision":"deny"' ||
+    fail "expected '$1' to be refused, gate said: ${answer:-nothing}"
+  echo "$answer" | grep -qF -e "$2" ||
+    fail "expected the refusal of '$1' to say '$2', gate said: $answer"
+  CHECKED=$((CHECKED + 1))
+}
+
 bun run --cwd packages/cli build >/dev/null || fail "the binary does not build"
 
 (cd "$SANDBOX" && "$KET" create order-service >/dev/null) || fail "create did not finish"
@@ -101,6 +126,10 @@ for name in feature approve status continue; do
 done
 grep -q 'ket gate write' harness/hooks/hooks.json ||
   fail "the harness hooks call no write gate"
+grep -q 'ket gate shell' harness/hooks/hooks.json ||
+  fail "the harness hooks call no shell gate"
+grep -q '"matcher": "Bash"' harness/hooks/hooks.json ||
+  fail "the shell gate is wired to no bash tool call"
 grep -q '"source": "./harness"' .claude-plugin/marketplace.json ||
   fail "the marketplace does not point at the harness"
 
@@ -189,6 +218,25 @@ refuses certs/bundle.p12 'is key material'
 refuses .ssh/id_rsa 'is key material'
 refuses .ssh/id_ed25519 'is key material'
 allows src/key.ts
+
+echo "acceptance: a command that would step around a gate"
+refuses_command 'git commit -m wip --no-verify' 'skips a gate'
+refuses_command 'git commit --no-gpg-sign -m wip' 'skips a gate'
+refuses_command 'git push --no-verify' '--no-verify skips a gate'
+runs 'git commit -m wip'
+runs 'bun run test'
+runs 'git verify-commit HEAD'
+
+echo "acceptance: a command in a repository ket never touched"
+answer="$(shell_envelope 'git commit --no-verify' | (cd "$SANDBOX" && "$KET" gate shell))"
+test -z "$answer" ||
+  fail "the shell gate spoke where there is no ket directory: $answer"
+CHECKED=$((CHECKED + 1))
+
+echo "acceptance: an envelope about no command at all"
+answer="$(envelope PreToolUse "$PROJECT/src/auth.ts" | (cd "$PROJECT" && "$KET" gate shell))"
+test -z "$answer" || fail "expected a write envelope to be ignored by the shell gate: $answer"
+CHECKED=$((CHECKED + 1))
 
 echo "acceptance: paths no target governs"
 only_item OS-1 feature story triaged 'login with lockout'

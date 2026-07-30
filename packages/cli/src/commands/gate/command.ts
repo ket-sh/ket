@@ -13,8 +13,9 @@ import type { ProbeReply, RingFailure } from './ring.ts';
 
 import { insideRepository, ketRootFrom, sourceRootsOf, targetsFrom } from '../../shared/locate.ts';
 import { inFlightFrom } from '../../shared/read-item.ts';
+import { shellVerdict } from '../../shared/shell-gate.ts';
 import { verdictFor } from '../../shared/write-gate.ts';
-import { pathFrom, verdictReply } from './envelope.ts';
+import { commandFrom, pathFrom, verdictReply } from './envelope.ts';
 import { renderEvent } from './event.ts';
 import { argvFor, probeReply } from './ring.ts';
 
@@ -59,22 +60,18 @@ async function record(root: string, event: GateEvent): Promise<void> {
   await appendFile(join(root, KET_DIRECTORY, EVENTS), renderEvent(event), 'utf8');
 }
 
-function eventFor(path: string, denial: Denial | undefined, item: string | undefined): GateEvent {
-  if (denial === undefined) {
-    return {
-      gate: 'write',
-      outcome: 'allowed',
-      about: path,
-      ...(item === undefined ? {} : { item }),
-    };
-  }
-
+function eventFor(
+  gate: GateEvent['gate'],
+  about: string,
+  denial: Denial | undefined,
+  item?: string,
+): GateEvent {
   return {
-    gate: 'write',
-    outcome: 'refused',
-    about: path,
+    gate,
+    outcome: denial === undefined ? 'allowed' : 'refused',
+    about,
     ...(item === undefined ? {} : { item }),
-    reason: denial.hookSpecificOutput.permissionDecisionReason,
+    ...(denial === undefined ? {} : { reason: denial.hookSpecificOutput.permissionDecisionReason }),
   };
 }
 
@@ -143,7 +140,30 @@ async function judgeWrite(): Promise<Denial | undefined> {
     }),
   );
 
-  await record(root, eventFor(path, denial, keyOf(inFlight)));
+  await record(root, eventFor('write', path, denial, keyOf(inFlight)));
+
+  return denial;
+}
+
+// A command carries no path, so nothing about it is inside or outside the
+// repository. What decides is the same thing that decides for a write: ket
+// governs the repository it was told about, and nothing else.
+async function judgeCommand(): Promise<Denial | undefined> {
+  const command = commandFrom(await readEnvelope());
+
+  if (command === undefined) {
+    return undefined;
+  }
+
+  const root = await ketRootFrom(process.cwd());
+
+  if (root === undefined) {
+    return undefined;
+  }
+
+  const denial = verdictReply(shellVerdict(command));
+
+  await record(root, eventFor('shell', command, denial));
 
   return denial;
 }
@@ -225,9 +245,20 @@ const write = defineCommand({
   },
 });
 
+const shell = defineCommand({
+  meta: { name: 'shell', description: 'Decide whether a command may skip a gate' },
+  async run() {
+    const denial = await judgeCommand();
+
+    if (denial !== undefined) {
+      process.stdout.write(JSON.stringify(denial));
+    }
+  },
+});
+
 const gate = defineCommand({
   meta: { name: 'gate', description: 'Run a pipeline gate' },
-  subCommands: { write, probe },
+  subCommands: { write, probe, shell },
 });
 
 export async function usage(): Promise<void> {

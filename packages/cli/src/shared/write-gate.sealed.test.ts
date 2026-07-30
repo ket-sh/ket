@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { GovernedItem, Verdict, WriteAttempt } from './write-gate.ts';
+import type { Verdict } from './verdict.ts';
+import type { GovernedItem, WriteAttempt } from './write-gate.ts';
 
 import { verdictFor } from './write-gate.ts';
 

@@ -1,6 +1,8 @@
 import type { ItemKind, ItemSize, ItemStatus } from './item.ts';
+import type { Verdict } from './verdict.ts';
 
 import { matchesGlob } from './glob.ts';
+import { ALLOWED } from './verdict.ts';
 
 const SCENARIO = '.feature';
 
@@ -30,10 +32,6 @@ export interface WriteAttempt {
   lockfile: string;
   inFlight: GovernedItem[];
 }
-
-export type Verdict = { allowed: true } | { refused: string };
-
-const ALLOWED: Verdict = { allowed: true };
 
 function underSource(path: string, sources: string[]): boolean {
   return sources.some((source) => path === source || path.startsWith(`${source}/`));
