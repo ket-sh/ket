@@ -208,6 +208,22 @@ Every decision lands in `.ket/events.jsonl`:
 The refused probe is the red step. Ring one ran while the test still had nothing
 to call.
 
+### Review it
+
+```text
+/ket:review
+```
+
+Two seats read the change at once, on different models with different lenses:
+one for correctness and regression, one for security and failure modes. Each
+seat reproduces every defect it claims by running the commands that show the
+break, then drops whatever failed to reproduce or scored under 80.
+
+The two reports join on location and defect. Where both seats agree, the finding
+stands or falls on the spot. Where they disagree, a single judge settles it on
+the highest tier at maximum effort. The report closes with what got dropped and
+why, because a dropped finding is evidence the review ran.
+
 ### Ask where things stand
 
 ```text
@@ -234,8 +250,8 @@ there, so enabling the plugin at user scope leaves your other projects alone.
 
 - The design stage ships as prompts for the design agents. No gate reads what
   they produce, and the four design artifacts have no home on disk.
-- Mutation and review run as scripts you invoke, not as gates that hold a
-  status.
+- Mutation runs as a script you invoke, and `/ket:review` runs when you ask for
+  it. Neither one holds a status, so an item can ship without either.
 - Nothing bounds the loop yet. A `Stop` hook that keeps agents working until a
   stage finishes comes in a later slice.
 - `/ket:status` reads the item files. `create` writes `.ket/BOARD.md` once, and
