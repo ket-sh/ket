@@ -1,0 +1,32 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreBinaries": ["mise"],
+  "workspaces": {
+    ".": {
+      "entry": [
+        ".claude/workflows/**/*.{mts,mjs}",
+        "probity.config.ts",
+        "commitlint.config.ts",
+        "steiger.config.ts"
+      ],
+      "project": [
+        ".claude/workflows/**/*.{mts,mjs}",
+        "probity.config.ts",
+        "commitlint.config.ts",
+        "steiger.config.ts"
+      ]
+    },
+    "packages/cli": {
+      "project": ["src/**/*.ts"]
+    },
+    "packages/tui": {
+      "entry": ["src/index.ts", "src/app/dev.ts", "src/**/*.test.tsx"],
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "presets/*": {
+      "entry": ["src/**/*.ts"],
+      "project": ["src/**/*.ts"]
+    }
+  },
+  "ignoreDependencies": ["@steiger/toolkit", "pilotty"]
+}

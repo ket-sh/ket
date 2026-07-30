@@ -116,3 +116,12 @@ Turborepo
 Bun
 Zed
 MIT
+Glob
+Grep
+tdd-bdd
+tdd-implementer
+citty
+clack
+OpenTUI
+PreToolUse
+PostToolUse

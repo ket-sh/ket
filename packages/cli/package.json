@@ -1,0 +1,26 @@
+{
+  "name": "@ket/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/run.ts"
+  },
+  "scripts": {
+    "build": "bun build src/run.ts --compile --outfile dist/ket",
+    "test": "vitest run",
+    "lint": "oxlint --config ../../.oxlintrc.json .",
+    "fmt": "oxfmt --config ../../.oxfmtrc.json .",
+    "fmt:check": "oxfmt --config ../../.oxfmtrc.json --check .",
+    "check-types": "tsc --noEmit -p tsconfig.json",
+    "test:mutation": "stryker run"
+  },
+  "dependencies": {
+    "@clack/prompts": "1.7.0",
+    "@ket/preset-cli": "workspace:*",
+    "@ket/tui": "workspace:*",
+    "citty": "0.2.2",
+    "cli-table3": "0.6.5",
+    "picocolors": "1.1.1"
+  }
+}

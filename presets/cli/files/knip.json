@@ -1,0 +1,6 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreBinaries": ["mise"],
+  "entry": ["src/run.ts", "probity.config.ts", "commitlint.config.ts"],
+  "project": ["src/**/*.ts", "probity.config.ts", "commitlint.config.ts"]
+}

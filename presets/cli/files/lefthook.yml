@@ -1,0 +1,39 @@
+pre-commit:
+  jobs:
+    - name: protect-main
+      priority: 0
+      run: test "$(git branch --show-current)" != "main"
+      fail_text: main is protected. Create a branch (one job = one worktree/branch + PR)
+    - name: lint
+      priority: 1
+      glob: '*.{ts,tsx,mts,js,jsx,mjs,cjs}'
+      run: ./node_modules/.bin/oxlint --fix --deny-warnings --no-error-on-unmatched-pattern {staged_files}
+      stage_fixed: true
+    - name: dup
+      priority: 1
+      glob: '*.{ts,tsx,mts}'
+      run: ./node_modules/.bin/jscpd -c .jscpd.json {staged_files}
+    - name: spell
+      priority: 1
+      run: ./node_modules/.bin/cspell --no-progress --no-must-find-files {staged_files}
+    - name: dead
+      priority: 1
+      glob: '*.{ts,tsx,mts}'
+      run: ./node_modules/.bin/knip
+    - name: boundaries
+      priority: 1
+      glob: 'src/**/*.ts'
+      run: ./node_modules/.bin/depcruise src --config .dependency-cruiser.cjs
+    - name: fmt
+      priority: 2
+      glob: '*.{ts,tsx,mts,js,jsx,mjs,cjs,json,md,yaml,yml}'
+      run: ./node_modules/.bin/oxfmt --no-error-on-unmatched-pattern {staged_files}
+      stage_fixed: true
+    - name: typecheck
+      priority: 3
+      run: ./node_modules/.bin/tsc --noEmit -p tsconfig.json
+
+commit-msg:
+  jobs:
+    - name: commitlint
+      run: ./node_modules/.bin/commitlint --edit {1}

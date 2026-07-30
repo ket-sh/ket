@@ -12,3 +12,7 @@ dist/
 
 # Downloaded by `vale sync`
 .vale/styles/Microsoft
+
+# Bun build scratch
+*.bun-build
+.ket/events.jsonl

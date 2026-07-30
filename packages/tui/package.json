@@ -1,0 +1,28 @@
+{
+  "name": "@ket/tui",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "dev": "bun src/app/dev.ts",
+    "test": "vitest run && bun test .test.tsx",
+    "test:components": "bun test .test.tsx",
+    "lint": "oxlint --config ../../.oxlintrc.json .",
+    "fmt": "oxfmt --config ../../.oxfmtrc.json .",
+    "fmt:check": "oxfmt --config ../../.oxfmtrc.json --check .",
+    "check-types": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@opentui/core": "0.4.5",
+    "@opentui/react": "0.4.5",
+    "opentui-spinner": "^0.0.7",
+    "react": "19.2.8"
+  },
+  "devDependencies": {
+    "@anscribe/opentui": "1.0.1",
+    "@types/react": "19.2.17"
+  }
+}

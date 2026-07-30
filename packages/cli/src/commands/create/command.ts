@@ -1,0 +1,106 @@
+import { isCancel } from '@clack/prompts';
+import { CLI_PRESET, CLI_SEMANTICS } from '@ket/preset-cli';
+import { defineCommand, showUsage } from 'citty';
+import { mkdir } from 'node:fs/promises';
+import { basename, relative } from 'node:path';
+
+import type { Configuration } from '../../shared/configuration.ts';
+
+import { initializeRepository } from '../../shared/git.ts';
+import { readTextIfPresent, writeFiles } from '../../shared/write-files.ts';
+import { announce, openCreate } from './announce.ts';
+import { filesToInstall } from './install.ts';
+import { renderManifest } from './manifest.ts';
+import { planCreation } from './plan.ts';
+import { scaffoldFor } from './scaffold.ts';
+import { askName, runWizard } from './wizard.ts';
+
+function isInteractive(): boolean {
+  return process.stdin.isTTY;
+}
+
+async function settleDirectory(given: string | undefined): Promise<string> {
+  if (given !== undefined) {
+    return given;
+  }
+
+  if (!isInteractive()) {
+    throw new Error('ket create needs a directory, as in: ket create my-app');
+  }
+
+  const answered = await askName(process.cwd());
+
+  if (isCancel(answered)) {
+    throw new Error('nothing was created');
+  }
+
+  return answered;
+}
+
+async function settleConfiguration(key: string | undefined): Promise<Configuration | undefined> {
+  if (!isInteractive()) {
+    return key === undefined ? undefined : { key, targets: { '.': 'cli' } };
+  }
+
+  const outcome = await runWizard(key);
+
+  return 'configured' in outcome ? outcome.configured : undefined;
+}
+
+const create = defineCommand({
+  meta: {
+    name: 'create',
+    description: 'Create a project under ket',
+  },
+  args: {
+    directory: {
+      type: 'positional',
+      description: 'Where the project goes',
+      required: false,
+    },
+  },
+  async run({ args }) {
+    if (isInteractive()) {
+      openCreate();
+    }
+
+    const plan = await planCreation(await settleDirectory(args.directory));
+    const configuration = await settleConfiguration(plan.key);
+
+    if (configuration === undefined) {
+      throw new Error(`nothing was configured for ${plan.root}`);
+    }
+
+    await mkdir(plan.root, { recursive: true });
+    await initializeRepository(plan.root);
+
+    const gitignore = await readTextIfPresent(plan.root, '.gitignore');
+    const presets = Object.values(configuration.targets);
+    const name = basename(plan.root);
+
+    const written = [
+      {
+        path: 'package.json',
+        contents: renderManifest(name, {
+          dependencies: CLI_PRESET.dependencies,
+          devDependencies: CLI_PRESET.devDependencies,
+          scripts: CLI_SEMANTICS.scripts,
+        }),
+      },
+      ...filesToInstall(presets, name),
+      ...scaffoldFor(configuration, gitignore),
+    ];
+
+    await writeFiles(plan.root, written);
+
+    announce(relative(process.cwd(), plan.root) || '.', CLI_SEMANTICS.scripts, CLI_SEMANTICS.gates);
+
+    return plan;
+  },
+});
+
+export async function usage(): Promise<void> {
+  await showUsage(create);
+}
+
+export default create;

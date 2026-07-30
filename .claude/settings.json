@@ -1,0 +1,63 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path // empty'); case \"$f\" in *bun.lock|*bun.lockb) echo 'bun.lock is generated - run bun commands instead of editing it' >&2; exit 2;; *.env.example) ;; *.env|*.env.*) echo '.env files hold secrets - the user edits these by hand' >&2; exit 2;; *.pem|*.key|*.p12|*/id_rsa*|*/id_ed25519*) echo 'key material is never edited by Claude' >&2; exit 2;; esac"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "c=$(jq -r '.tool_input.command // empty'); case \"$c\" in *--no-verify*|*--no-gpg-sign*) echo 'hook bypass flags are blocked - fix the failing gate instead of skipping it' >&2; exit 2;; esac"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./node_modules/.bin/probity",
+            "args": ["--agent", "claude-code"],
+            "timeout": 120,
+            "statusMessage": "test-first gate"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun",
+            "args": ["${CLAUDE_PROJECT_DIR}/.claude/workflows/hooks/format-edit.mts"],
+            "timeout": 60,
+            "statusMessage": "oxfmt + oxlint"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "agent",
+            "prompt": "You are a STRICT rules-compliance reviewer running as a Stop hook for ket. Determine what changed since the last review: run `git diff HEAD` plus `git ls-files --others --exclude-standard` for uncommitted work, and read the marker `cat .git/claude-reviewed 2>/dev/null`; if the marker exists and differs from `git rev-parse HEAD`, also run `git diff $(cat .git/claude-reviewed)..HEAD`. If the marker is missing, treat HEAD as the baseline (write it with `git rev-parse HEAD > .git/claude-reviewed`) and review only uncommitted work. If the combined diff is empty, or you cannot run git, respond exactly {\"ok\": true}. Otherwise review ONLY that diff against this repo's CLAUDE.md and every .claude/rules/*.md file (read them - they are the law). Scrutinize COMMENTS hardest: any comment that describes WHAT the code does, restates a well-named identifier, or narrates the change is a violation, and only a constraint the code cannot express is allowed. Also check: tests couple to behavior only (no private state, no internal call-order/count assertions, no non-public imports - a pure refactor must never break a test); test doubles only at process boundaries (network, fs, clock, child processes); BDD naming in domain language; intent-revealing domain names (slice/manifest/preset/adapter/gate/ring/item/stage - no manager/helper/util/data/info); DRY for knowledge not lines; YAGNI (interfaces with one implementation, config for constants, scaffolding for later); errors (no swallowed errors, expected failures as typed results not thrown surprises, messages carry context); TypeScript (no any, no silencing as casts, no unexplained @ts-ignore/@ts-expect-error); boundaries (packages/cli imports no @opentui/* and no renderer; the TUI parses no arguments; no cross-package deep imports). Ignore pure formatting and anything oxlint/oxfmt owns; skip generated files and lockfiles. If there is at least one violation respond {\"ok\": false, \"reason\": \"<numbered list, each: file:line - rule - fix>\"} and do NOT update the marker; otherwise run `git rev-parse HEAD > .git/claude-reviewed` and respond {\"ok\": true}.",
+            "timeout": 240,
+            "model": "claude-opus-5",
+            "statusMessage": "Rules-compliance review"
+          }
+        ]
+      }
+    ]
+  }
+}
