@@ -1,5 +1,5 @@
 export interface GateEvent {
-  gate: 'write' | 'probe' | 'shell' | 'transition';
+  gate: 'write' | 'probe' | 'shell' | 'test-first' | 'transition';
   outcome: 'allowed' | 'refused';
   about: string;
   item?: string;

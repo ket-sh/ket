@@ -14,6 +14,17 @@
         ]
       },
       {
+        "matcher": "Write|Edit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ket gate test-first",
+            "timeout": 120,
+            "statusMessage": "asking the test-first gate whether a failing test covers this"
+          }
+        ]
+      },
+      {
         "matcher": "Bash",
         "hooks": [
           {

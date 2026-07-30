@@ -1,27 +1,29 @@
 import { adapterPatternsOf, CLI_SEMANTICS, ringOneOf } from '@ket/preset-cli';
 import { defineCommand, showUsage } from 'citty';
 import { spawn } from 'node:child_process';
-import { appendFile, readdir, readFile, realpath } from 'node:fs/promises';
+import { readdir, readFile, realpath } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
 
 import type { PresetName } from '../../shared/configuration.ts';
 import type { StoredItem } from '../../shared/read-item.ts';
 import type { GovernedItem } from '../../shared/write-gate.ts';
 import type { Denial } from './envelope.ts';
-import type { GateEvent } from './event.ts';
 import type { ProbeReply, RingFailure } from './ring.ts';
 
-import { insideRepository, ketRootFrom, sourceRootsOf, targetsFrom } from '../../shared/locate.ts';
+import {
+  insideRepository,
+  KET_DIRECTORY,
+  ketRootFrom,
+  sourceRootsOf,
+  targetsFrom,
+} from '../../shared/locate.ts';
 import { inFlightFrom } from '../../shared/read-item.ts';
 import { shellVerdict } from '../../shared/shell-gate.ts';
 import { verdictFor } from '../../shared/write-gate.ts';
 import { commandFrom, pathFrom, verdictReply } from './envelope.ts';
-import { renderEvent } from './event.ts';
+import { eventFor, record } from './journal.ts';
 import { argvFor, probeReply } from './ring.ts';
-
-const KET_DIRECTORY = '.ket';
-
-const EVENTS = 'events.jsonl';
+import { askTestFirst } from './test-first.ts';
 
 const ITEM_FILE = 'item.yaml';
 
@@ -54,25 +56,6 @@ async function readStored(root: string): Promise<StoredItem[]> {
       contents: await readFile(join(items, entry.name, ITEM_FILE), 'utf8').catch(() => ''),
     })),
   );
-}
-
-async function record(root: string, event: GateEvent): Promise<void> {
-  await appendFile(join(root, KET_DIRECTORY, EVENTS), renderEvent(event), 'utf8');
-}
-
-function eventFor(
-  gate: GateEvent['gate'],
-  about: string,
-  denial: Denial | undefined,
-  item?: string,
-): GateEvent {
-  return {
-    gate,
-    outcome: denial === undefined ? 'allowed' : 'refused',
-    about,
-    ...(item === undefined ? {} : { item }),
-    ...(denial === undefined ? {} : { reason: denial.hookSpecificOutput.permissionDecisionReason }),
-  };
 }
 
 function keyOf(inFlight: GovernedItem[]): string | undefined {
@@ -245,6 +228,17 @@ const write = defineCommand({
   },
 });
 
+const testFirst = defineCommand({
+  meta: { name: 'test-first', description: 'Ask the test-first gate whether this write is earned' },
+  async run() {
+    const said = await askTestFirst(await readEnvelope());
+
+    if (said !== undefined) {
+      process.stdout.write(said);
+    }
+  },
+});
+
 const shell = defineCommand({
   meta: { name: 'shell', description: 'Decide whether a command may skip a gate' },
   async run() {
@@ -258,7 +252,7 @@ const shell = defineCommand({
 
 const gate = defineCommand({
   meta: { name: 'gate', description: 'Run a pipeline gate' },
-  subCommands: { write, probe, shell },
+  subCommands: { write, probe, shell, 'test-first': testFirst },
 });
 
 export async function usage(): Promise<void> {

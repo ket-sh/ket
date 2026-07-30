@@ -5,7 +5,7 @@ import type { PresetName } from './configuration.ts';
 
 import { PRESET_NAMES } from './configuration.ts';
 
-const KET_DIRECTORY = '.ket';
+export const KET_DIRECTORY = '.ket';
 
 const SOURCE_DIRECTORY = 'src';
 

@@ -186,6 +186,31 @@ describe('the paths a preset calls an adapter', () => {
   });
 });
 
+describe('the test-first gate against the config the preset writes', () => {
+  it('guards the source a slice lands in, not the layout of some other repository', async () => {
+    const configuration = await readFile(
+      join(import.meta.dirname, '..', 'files', 'probity.config.ts'),
+      'utf8',
+    );
+    const quoted = [...configuration.matchAll(/'(?<glob>[^']+)'/gu)]
+      .map((found) => found.groups?.['glob'] ?? '')
+      .filter((glob) => glob.includes('*') && !glob.startsWith('!'));
+    const roots = quoted.map((glob) => glob.split('/')[0]);
+
+    expect(roots.length).toBeGreaterThan(0);
+    expect(new Set(roots)).toStrictEqual(new Set([CLI_SEMANTICS.slice.root.split('/')[0]]));
+  });
+
+  it('leaves the tests it drives out, since a test is what unlocks the source', async () => {
+    const configuration = await readFile(
+      join(import.meta.dirname, '..', 'files', 'probity.config.ts'),
+      'utf8',
+    );
+
+    expect(configuration).toContain('!**/*.test.*');
+  });
+});
+
 describe('the prose gate against the config the preset writes', () => {
   it('syncs the very package its prose config declares, so a fresh checkout finds it', async () => {
     const configuration = await readFile(

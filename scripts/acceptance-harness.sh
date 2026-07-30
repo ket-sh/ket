@@ -373,6 +373,77 @@ grep -q 'ket gate probe' harness/hooks/hooks.json ||
 grep -q '"PostToolUse"' harness/hooks/hooks.json ||
   fail "the probe gate is not wired to a post-tool-use event"
 
+echo "acceptance: the test-first gate reads the conversation that acted"
+# Claude Code sends the parent session's transcript even when a subagent made the
+# call. A gate reading it judges work the acting agent never did, so ket resolves
+# the acting transcript and refuses rather than fall back to the parent.
+transcripts="$SANDBOX/transcripts"
+mkdir -p "$transcripts/session/subagents"
+printf '{"type":"user","message":{"content":[{"type":"text","text":"hello"}]}}\n' \
+  >"$transcripts/session.jsonl"
+cp "$transcripts/session.jsonl" "$transcripts/session/subagents/agent-a1.jsonl"
+
+# The written file is one the project's own test-first config does not cover, so
+# a gate that resolved the wrong transcript answers instead of refusing, and the
+# difference between refusing and falling back is visible without asking an
+# oracle anything.
+test_first() {
+  printf '{"hook_event_name":"PreToolUse","tool_name":"Write","transcript_path":"%s","cwd":"%s"%s,"tool_input":{"file_path":"%s","content":"nothing\\n"}}' \
+    "$1" "$PROJECT" "$2" "$PROJECT/README.md" |
+    (cd "$PROJECT" && "$KET" gate test-first)
+}
+
+answer="$(test_first "$transcripts/session.jsonl" ',"agent_id":"a404"')"
+echo "$answer" | grep -q 'could not tell which conversation' ||
+  fail "the gate read a transcript that is not the acting agent's, gate said: ${answer:-nothing}"
+CHECKED=$((CHECKED + 1))
+
+# The parent transcript is right there and readable. A gate that falls back to it
+# when it cannot name the acting agent reads a conversation this agent never had.
+answer="$(test_first "$transcripts/session.jsonl" ',"agent_id":"../elsewhere"')"
+echo "$answer" | grep -q 'could not tell which conversation' ||
+  fail "the gate fell back to the parent transcript, gate said: ${answer:-nothing}"
+CHECKED=$((CHECKED + 1))
+
+answer="$(test_first "$transcripts/session" ',"agent_id":"a1"')"
+echo "$answer" | grep -q 'could not tell which conversation' ||
+  fail "the gate derived an agent transcript from a session it cannot name, gate said: ${answer:-nothing}"
+CHECKED=$((CHECKED + 1))
+
+answer="$(test_first "$transcripts/nowhere.jsonl" '')"
+echo "$answer" | grep -q 'could not tell which conversation' ||
+  fail "the gate accepted a transcript that is not there, gate said: ${answer:-nothing}"
+CHECKED=$((CHECKED + 1))
+
+echo "acceptance: a gate that cannot start refuses the write"
+# Every exit but a refusal lets the write through, so a project that never
+# installed the gate it declares would silently lose it.
+mv "$PROJECT/node_modules/.bin/probity" "$SANDBOX/probity.moved"
+answer="$(test_first "$transcripts/session.jsonl" ',"agent_id":"a1"')"
+echo "$answer" | grep -q 'could not start' ||
+  fail "a missing test-first gate let the write through, gate said: ${answer:-nothing}"
+echo "$answer" | grep -q '"permissionDecision":"deny"' ||
+  fail "the gate reported it could not start without refusing"
+mv "$SANDBOX/probity.moved" "$PROJECT/node_modules/.bin/probity"
+CHECKED=$((CHECKED + 1))
+
+echo "acceptance: the gate governs only a repository ket was told about"
+answer="$(printf '{"hook_event_name":"PreToolUse","tool_name":"Write","transcript_path":"%s","tool_input":{"file_path":"a.ts","content":""}}' \
+  "$transcripts/session.jsonl" | (cd "$SANDBOX" && "$KET" gate test-first))"
+test -z "$answer" ||
+  fail "the test-first gate spoke where there is no ket directory: $answer"
+CHECKED=$((CHECKED + 1))
+
+echo "acceptance: the project ships the gate it declares"
+test -x "$PROJECT/node_modules/.bin/probity" ||
+  fail "a created project installs no test-first gate"
+grep -q "'src/\*\*'" "$PROJECT/probity.config.ts" ||
+  fail "the test-first config guards a source directory the project does not have"
+grep -q 'ket gate test-first' harness/hooks/hooks.json ||
+  fail "the harness hooks call no test-first gate"
+grep -q 'NotebookEdit' harness/hooks/hooks.json ||
+  fail "the test-first gate misses the notebook tool it also guards"
+
 echo "acceptance: every decision was recorded"
 test -f "$PROJECT/.ket/events.jsonl" || fail "the gate recorded no events"
 grep -q '"outcome":"refused"' "$PROJECT/.ket/events.jsonl" || fail "no refusal was recorded"
