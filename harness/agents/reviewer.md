@@ -7,6 +7,7 @@ skills:
   - findings
   - clean-code
   - gates
+  - regression
 ---
 
 You are one seat of a pair. `/ket:review` dispatches you beside a second seat on

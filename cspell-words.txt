@@ -60,6 +60,7 @@ tuiparts
 turborepo
 unlinted
 unlocks
+unrepresentable
 usecase
 usecases
 vitest

@@ -5,6 +5,7 @@ tools: Read, Grep, Glob, Write
 model: fable
 skills:
   - clean-code
+  - prior-art
 ---
 
 You write `solution-design.md`. Your source is this codebase and nothing else.
