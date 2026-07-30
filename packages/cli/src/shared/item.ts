@@ -8,9 +8,9 @@ export const ITEM_STATUSES = [
   'shipped',
 ] as const;
 
-const ITEM_KINDS = ['feature', 'bug', 'refactor', 'chore'] as const;
+export const ITEM_KINDS = ['feature', 'bug', 'refactor', 'chore'] as const;
 
-const ITEM_SIZES = ['epic', 'story', 'subtask', 'trivial'] as const;
+export const ITEM_SIZES = ['epic', 'story', 'subtask', 'trivial'] as const;
 
 export type ItemStatus = (typeof ITEM_STATUSES)[number];
 
