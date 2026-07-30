@@ -94,6 +94,22 @@ now moves whenever the constant moves, so it cannot catch the constant moving.
 The literal **is** the assertion. Do not import the constants module into a test
 to source what the test is checking.
 
+## The scope of a change
+
+Every line in the diff traces to the item that asked for it. A fix that also
+reformats the file, renames the function beside it or tidies a comment on the
+way past costs more than it looks. The reviewer can no longer see which lines
+were the fix, and the refactor ratchet cannot tell whether a score moved
+because behavior moved or because something unrelated came along for the ride.
+
+Match the surrounding style even where you would have chosen differently. The
+thing you wanted to clean up is a real finding, so file it as its own item
+rather than folding it into this one.
+
+The exception is what your own edit orphaned. An import nothing reaches now, a
+function the change left unreachable: those arrived with the change and they
+leave with it.
+
 ## Errors
 
 No silent failures. Never swallow an error without handling it or passing it on.

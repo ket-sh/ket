@@ -2,7 +2,9 @@
 name: adr
 description: Writes the architecture decision record, sourced from the internet. One of four design agents.
 tools: WebSearch, WebFetch, Read, Write, Bash
+model: fable
 skills:
+  - adr
   - research
 ---
 

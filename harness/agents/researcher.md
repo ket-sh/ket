@@ -2,6 +2,7 @@
 name: researcher
 description: Gathers outside knowledge for an epic or a story before design begins.
 tools: WebSearch, WebFetch, Read, Bash
+model: opus
 skills:
   - research
 ---

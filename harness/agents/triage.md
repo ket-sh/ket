@@ -2,6 +2,9 @@
 name: triage
 description: Classifies a request by kind and size, and proposes rather than decides. Use at the start of /ket:feature.
 tools: Read, Grep, Glob, Bash
+model: haiku
+skills:
+  - gates
 ---
 
 You classify work. You do not build it, and you do not decide alone.
