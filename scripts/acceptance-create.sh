@@ -38,7 +38,17 @@ grep -q '"name": "order-service"' "$PROJECT/package.json" ||
   fail "the manifest does not resolve"
 }
 
-for name in check-types lint fmt:check lint:dead lint:dup lint:boundaries test test:mutation build; do
+# The preset declares its gates, so the list lives there rather than here. A gate
+# typed into this script is a gate that can go missing from a created project
+# without anything noticing, and the declared order is the order that catches a
+# tool whose output another tool then reads.
+declared_gates() {
+  bun --cwd presets/cli --eval \
+    'import { CLI_SEMANTICS } from "./src/semantics.ts";
+     console.log(CLI_SEMANTICS.gates.map((declared) => declared.script).join(" "));'
+}
+
+for name in $(declared_gates) build; do
   gate "$name"
 done
 
