@@ -116,7 +116,11 @@ refuses() {
 # A bash envelope names a command rather than a file, and the shell gate reads it
 # out of the same tool input a write gets its path from.
 shell_envelope() {
-  printf '{"hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"%s"}}' "$1"
+  local escaped
+  escaped=${1//\\/\\\\}
+  escaped=${escaped//\"/\\\"}
+  printf '{"hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"%s"}}' \
+    "$escaped"
 }
 
 shell_runs() {
@@ -465,6 +469,40 @@ shell_runs 'git commit -m wip'
 shell_runs 'bun run test'
 shell_runs 'git verify-commit HEAD'
 
+echo "acceptance: a shell writes the same files the write tool does"
+# A gate that reads only the Write tool is a gate an agent steps around with a
+# redirect, so the shell asks the same rule about the same paths.
+only_item OS-1 feature story triaged 'login with lockout'
+shell_refuses 'printf x > src/auth.ts' 'OS-1 is triaged, not implementing'
+shell_refuses 'echo x >> src/auth.ts' 'OS-1 is triaged, not implementing'
+shell_refuses 'echo x | tee src/auth.ts' 'OS-1 is triaged, not implementing'
+shell_refuses 'cp /tmp/draft.ts src/auth.ts' 'OS-1 is triaged, not implementing'
+shell_refuses 'mv src/auth.ts src/other.ts' 'OS-1 is triaged, not implementing'
+shell_refuses 'touch src/auth.ts' 'OS-1 is triaged, not implementing'
+shell_refuses 'rm src/auth.ts' 'OS-1 is triaged, not implementing'
+shell_refuses "sed -i 's/a/b/' src/auth.ts" 'OS-1 is triaged, not implementing'
+shell_refuses 'install -m 644 /tmp/draft.ts src/auth.ts' 'OS-1 is triaged, not implementing'
+# A command may name a file any way a shell would, and a temporary directory on
+# a mac is reached through a symlink, so an absolute path has to settle the same
+# way a written one does before anything compares it to the repository.
+shell_refuses "printf x > $PROJECT/src/auth.ts" 'OS-1 is triaged, not implementing'
+shell_refuses 'printf x > bun.lock' 'bun.lock is a lockfile'
+shell_refuses 'printf x > .env' 'holds secrets'
+shell_refuses 'printf x > .ket/items/OS-1/item.yaml' 'only a gate writes one'
+
+echo "acceptance: reading is never refused, or the gate gets turned off"
+shell_runs 'cat src/auth.ts'
+shell_runs 'grep -rn hello src'
+shell_runs 'ls -la src'
+shell_runs 'bun run test'
+shell_runs 'git status'
+shell_runs 'printf x > README.md'
+
+echo "acceptance: a command ket cannot read confidently"
+shell_refuses 'python -c "open(1)"' 'cannot read what this command writes'
+shell_refuses 'node -e "x"' 'because of node -e'
+shell_refuses 'cd src && printf x > auth.ts' 'because of cd'
+
 echo "acceptance: a command in a repository ket never touched"
 answer="$(shell_envelope 'git commit --no-verify' | (cd "$SANDBOX" && "$KET" gate shell))"
 test -z "$answer" ||
@@ -670,9 +708,13 @@ test_first() {
     (cd "$PROJECT" && "$KET" gate test-first)
 }
 
+# A refusal has to name the conversation behind it, or the next wrong one costs
+# another session to diagnose.
 answer="$(test_first "$transcripts/session.jsonl" ',"agent_id":"a404"')"
-echo "$answer" | grep -q 'could not tell which conversation' ||
+echo "$answer" | grep -q 'found no transcript for the agent that acted' ||
   fail "the gate read a transcript that is not the acting agent's, gate said: ${answer:-nothing}"
+echo "$answer" | grep -qF 'subagents/agent-a404.jsonl' ||
+  fail "the refusal does not name the transcript it looked for, gate said: $answer"
 CHECKED=$((CHECKED + 1))
 
 # The parent transcript is right there and readable. A gate that falls back to it
@@ -688,7 +730,7 @@ echo "$answer" | grep -q 'could not tell which conversation' ||
 CHECKED=$((CHECKED + 1))
 
 answer="$(test_first "$transcripts/nowhere.jsonl" '')"
-echo "$answer" | grep -q 'could not tell which conversation' ||
+echo "$answer" | grep -q 'found no transcript' ||
   fail "the gate accepted a transcript that is not there, gate said: ${answer:-nothing}"
 CHECKED=$((CHECKED + 1))
 

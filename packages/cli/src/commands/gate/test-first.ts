@@ -1,6 +1,8 @@
 import { spawn } from 'node:child_process';
 import { access } from 'node:fs/promises';
 
+import type { Denial } from './envelope.ts';
+
 import { ketRootFrom } from '../../shared/locate.ts';
 import { actingTranscript, pointedAt, refusal } from './envelope.ts';
 import { eventFor, record } from './journal.ts';
@@ -12,7 +14,11 @@ const TEST_FIRST_ARGV = ['--agent', 'claude-code'];
 const UNRESOLVED =
   'the test-first gate could not tell which conversation this write came from, so it refused rather than judge it against another one.';
 
+const UNREADABLE = 'the test-first gate found no transcript for the agent that acted, at';
+
 const UNAVAILABLE = 'the test-first gate could not start';
+
+const JUDGED = 'the test-first gate refused, judged against';
 
 interface GateAnswer {
   started: boolean;
@@ -46,16 +52,16 @@ async function asked(root: string, envelope: string): Promise<GateAnswer> {
   });
 }
 
-async function reachable(envelope: unknown): Promise<string | undefined> {
-  const acting = actingTranscript(envelope);
-
+// A gate that reads the wrong conversation answers confidently about work
+// nobody did, so what it could not resolve is what the refusal has to name.
+async function reachable(acting: string | undefined): Promise<string | { missing: string }> {
   if (acting === undefined) {
-    return undefined;
+    return { missing: UNRESOLVED };
   }
 
   return access(acting).then(
     () => acting,
-    () => undefined,
+    () => ({ missing: `${UNREADABLE} ${acting}.` }),
   );
 }
 
@@ -67,14 +73,18 @@ interface Refused {
   reason: string;
 }
 
-async function refusedHere(refused: Refused): Promise<string> {
+async function recorded(refused: Refused): Promise<Denial> {
   const denial = refusal(refused.reason);
 
   if (refused.about !== undefined) {
     await record(refused.root, eventFor('test-first', refused.about, denial));
   }
 
-  return JSON.stringify(denial);
+  return denial;
+}
+
+async function refusedHere(refused: Refused): Promise<string> {
+  return JSON.stringify(await recorded(refused));
 }
 
 // A gate that cannot run has to refuse. Any other answer lets the write through,
@@ -89,17 +99,25 @@ export async function askTestFirst(
     return undefined;
   }
 
-  const transcript = await reachable(envelope);
+  const transcript = await reachable(actingTranscript(envelope));
 
-  if (transcript === undefined) {
-    return refusedHere({ root, about, reason: UNRESOLVED });
+  if (typeof transcript !== 'string') {
+    return refusedHere({ root, about, reason: transcript.missing });
   }
 
   const answer = await asked(root, pointedAt(envelope, transcript));
 
-  if (answer.started) {
-    return answer.said === '' ? undefined : answer.said;
+  if (!answer.started) {
+    return refusedHere({ root, about, reason: `${UNAVAILABLE}: ${answer.said}` });
   }
 
-  return refusedHere({ root, about, reason: `${UNAVAILABLE}: ${answer.said}` });
+  if (answer.said === '') {
+    return undefined;
+  }
+
+  // The refusal reaching the agent is the gate's own words. What ket records is
+  // ket's part in it: which conversation it handed the gate to judge.
+  await recorded({ root, about, reason: `${JUDGED} ${transcript}.` });
+
+  return answer.said;
 }

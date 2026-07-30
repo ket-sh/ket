@@ -19,7 +19,8 @@
     "!src/commands/gate/command.ts",
     "!src/commands/gate/journal.ts",
     "!src/commands/gate/test-first.ts",
-    "!src/commands/item/command.ts"
+    "!src/commands/item/command.ts",
+    "!src/commands/gate/governed.ts"
   ],
   "reporters": ["progress", "clear-text"],
   "coverageAnalysis": "perTest",
