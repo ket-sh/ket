@@ -126,7 +126,7 @@ grep -q '"repo": "ket-sh/ket"' "$PROJECT/.claude/settings.json" ||
   fail "create did not register the marketplace the harness ships from"
 
 echo "acceptance: the harness ships what it declares"
-for name in feature explore approve status continue; do
+for name in feature explore approve status continue review; do
   test -f "harness/commands/$name.md" || fail "the harness declares no /ket:$name command"
   grep -q '^description:' "harness/commands/$name.md" ||
     fail "/ket:$name has no description"
@@ -134,7 +134,7 @@ done
 for name in triage researcher decomposer adr solution-design ui-design gherkin implementer reviewer qa; do
   test -f "harness/agents/$name.md" || fail "the harness declares no $name agent"
 done
-for name in tdd clean-code mutation gates commit research suppression verification generated gherkin adr progress stages; do
+for name in tdd clean-code mutation gates commit research suppression verification generated gherkin adr progress stages findings; do
   test -f "harness/skills/$name/SKILL.md" || fail "the harness declares no /ket:$name skill"
   grep -q "^name: $name$" "harness/skills/$name/SKILL.md" ||
     fail "the $name skill does not name itself, so /ket:$name would not resolve"
@@ -162,6 +162,51 @@ grep -q 'ket gate write' harness/hooks/hooks.json ||
   fail "the harness hooks call no write gate"
 grep -q '"source": "./harness"' .claude-plugin/marketplace.json ||
   fail "the marketplace does not point at the harness"
+
+echo "acceptance: the review runs as a pair with a judge, not as one seat"
+# A grep for the guard's wording proves only that the sentence survived. These
+# read the seat table itself, because the defect that matters is two seats
+# quietly landing on one model while the sentence about it still reads fine.
+seat_rows() {
+  awk '/^## 1\./ { inside = 1; next }
+       inside && /^## / { inside = 0 }
+       inside && /^\| / && $0 !~ /^\| *Seat/ && $0 !~ /^\| *-/ { print }' harness/commands/review.md
+}
+
+seat_column() {
+  seat_rows | awk -F'|' -v at="$1" '{ gsub(/^ +| +$/, "", $at); print $at }'
+}
+
+distinct() {
+  seat_column "$1" | sort -u | wc -l | tr -d ' '
+}
+
+test "$(seat_rows | wc -l | tr -d ' ')" -eq 2 ||
+  fail "/ket:review declares $(seat_rows | wc -l | tr -d ' ') of the two seats a pair needs"
+test "$(distinct 2)" -eq 2 ||
+  fail "/ket:review gives its two seats one label, so the join cannot tell them apart"
+test "$(distinct 3)" -eq 2 ||
+  fail "/ket:review runs its two seats on one model, so the pair is a self-review"
+test "$(distinct 4)" -eq 2 ||
+  fail "/ket:review gives its two seats one lens, so the pair looks at one thing twice"
+grep -q 'differ in model and in lens' harness/commands/review.md ||
+  fail "/ket:review lets two seats share a model or a lens, so the pair is one opinion"
+grep -q 'maximum effort' harness/commands/review.md ||
+  fail "/ket:review sends a dispute to no judge at maximum effort"
+grep -q 'They disagree' harness/commands/review.md ||
+  fail "/ket:review judges more than what the seats dispute, or nothing at all"
+grep -q 'location and its defect' harness/commands/review.md ||
+  fail "/ket:review names no key, so the two reports cannot join"
+grep -qi 'reproduce' harness/commands/review.md ||
+  fail "/ket:review drops nothing for failing to reproduce"
+grep -q 'one seat of a pair' harness/agents/reviewer.md ||
+  fail "the reviewer agent does not say it is one seat, so it reports as the whole review"
+grep -q 'findings' harness/agents/reviewer.md ||
+  fail "the reviewer agent follows no findings doctrine"
+grep -q 'Reproduce or drop' harness/skills/findings/SKILL.md ||
+  fail "the findings skill carries no reproduce-or-drop rule"
+grep -q '80' harness/skills/findings/SKILL.md ||
+  fail "the findings skill sets no confidence bar"
 
 echo "acceptance: the whole loop, through the binary only"
 (cd "$PROJECT" && rm -rf .ket/items && mkdir -p .ket/items)
