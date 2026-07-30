@@ -11,7 +11,9 @@ class of defect, closed.
 ## Reproduce, then the missing test, then the fix
 
 The `tdd` skill owns red, green and refactor. A defect changes what the red step
-means rather than whether it happens.
+means rather than whether it happens. The `findings` skill owns what a review
+finding has to prove before anybody acts on it, so this skill starts one step
+later, from a defect somebody already confirmed.
 
 **A defect found in review or in a run is a test that was missing.** The code
 already proved itself wrong, so the failing test is not a design step, it is
@@ -86,7 +88,9 @@ so the checker can be proved rather than argued for.
 
 ## What a mistake report says
 
-Four parts, and nothing else:
+This is the report you write about a defect of your own, and the `findings`
+skill owns the other one, where a reviewer raises a defect in somebody else's
+work. Four parts, and nothing else:
 
 1. **What broke**, as observable behavior. Say that every source write was
    allowed, rather than that the path comparison was wrong.
