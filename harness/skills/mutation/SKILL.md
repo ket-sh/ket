@@ -33,6 +33,10 @@ have:
   content has to be.
 - One element in a collection under test. `some` and `every` behave identically
   on a single item, so mutating one into the other survives. Use two.
+- A snapshot the runner can rewrite. `toMatchSnapshot` asserts that the output
+  equals whatever it last saw, so the fix for a failure is a keystroke and the
+  changed bytes never reach a reviewer. Pin the value inline instead, and the
+  mutant's output lands in the same diff as the change that caused it.
 
 ## Equivalent mutants
 
