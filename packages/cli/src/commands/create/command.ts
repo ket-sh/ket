@@ -13,6 +13,7 @@ import { filesToInstall } from './install.ts';
 import { renderManifest } from './manifest.ts';
 import { planCreation } from './plan.ts';
 import { scaffoldFor } from './scaffold.ts';
+import { withHarnessRegistered } from './settings.ts';
 import { askName, runWizard } from './wizard.ts';
 
 function isInteractive(): boolean {
@@ -75,6 +76,7 @@ const create = defineCommand({
     await initializeRepository(plan.root);
 
     const gitignore = await readTextIfPresent(plan.root, '.gitignore');
+    const settings = await readTextIfPresent(plan.root, '.claude/settings.json');
     const presets = Object.values(configuration.targets);
     const name = basename(plan.root);
 
@@ -87,6 +89,7 @@ const create = defineCommand({
           scripts: CLI_SEMANTICS.scripts,
         }),
       },
+      { path: '.claude/settings.json', contents: withHarnessRegistered(settings) },
       ...filesToInstall(presets, name),
       ...scaffoldFor(configuration, gitignore),
     ];
