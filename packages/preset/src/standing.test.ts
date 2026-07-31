@@ -26,6 +26,18 @@ describe('the integrations every preset offers', () => {
     ]);
   });
 
+  it('writes each offered file where the service that reads it looks', () => {
+    const offered = STANDING_INTEGRATIONS.flatMap((integration) =>
+      'files' in integration ? integration.files : [],
+    );
+
+    expect(offered.map((file) => [file.path, file.target])).toStrictEqual([
+      ['files/github-coverage.yml', '~/.github/workflows/coverage.yml'],
+      ['files/github-codeql.yml', '~/.github/workflows/codeql.yml'],
+      ['files/coderabbit.yaml', '~/.coderabbit.yaml'],
+    ]);
+  });
+
   it('breaks none of the invariants an integration has to satisfy', () => {
     expect(integrationInvariantsOf(OFFERING)).toStrictEqual([]);
   });
@@ -36,6 +48,68 @@ describe('the files every preset writes', () => {
     const targets = STANDING_FILES.map((file) => file.target);
 
     expect(new Set(targets).size).toBe(targets.length);
+  });
+
+  it('gives every project the same files, whatever preset governs it', () => {
+    expect(STANDING_FILES.map((file) => file.target)).toStrictEqual([
+      '~/.oxlintrc.json',
+      '~/.oxfmtrc.json',
+      '~/tsconfig.json',
+      '~/vitest.config.ts',
+      '~/stryker.conf.json',
+      '~/vitest.mutation.config.ts',
+      '~/knip.json',
+      '~/.jscpd.json',
+      '~/cspell.json',
+      '~/cspell-words.txt',
+      '~/lefthook.yml',
+      '~/commitlint.config.ts',
+      '~/probity.config.ts',
+      '~/mise.toml',
+      '~/.gitleaks.toml',
+      '~/.vale.ini',
+      '~/.vale/styles/ket/NoEmDash.yml',
+      '~/.vale/styles/ket/Terminology.yml',
+      '~/.vale/styles/ket/Intensifiers.yml',
+      '~/.vale/styles/ket/WeakOpeners.yml',
+      '~/.vale/styles/config/vocabularies/ket/accept.txt',
+      '~/.gitignore',
+      '~/CLAUDE.md',
+      '~/skills-lock.json',
+      '~/.github/workflows/ci.yml',
+    ]);
+  });
+});
+
+describe('where every preset reads the files it writes', () => {
+  it('reads each of them out of the file that carries its bytes', () => {
+    expect(STANDING_FILES.map((file) => file.path)).toStrictEqual([
+      'files/oxlintrc.json',
+      'files/oxfmtrc.json',
+      'files/tsconfig.json',
+      'files/vitest.config.ts',
+      'files/stryker.conf.json',
+      'files/vitest.mutation.config.ts',
+      'files/knip.json',
+      'files/jscpd.json',
+      'files/cspell.json',
+      'files/cspell-words.txt',
+      'files/lefthook.yml',
+      'files/commitlint.config.ts',
+      'files/probity.config.ts',
+      'files/mise.toml',
+      'files/gitleaks.toml',
+      'files/vale.ini',
+      'files/vale-styles/NoEmDash.yml',
+      'files/vale-styles/Terminology.yml',
+      'files/vale-styles/Intensifiers.yml',
+      'files/vale-styles/WeakOpeners.yml',
+      'files/vale-vocabulary/accept.txt',
+      'files/gitignore',
+      'files/CLAUDE.md',
+      'files/skills-lock.json',
+      'files/github-ci.yml',
+    ]);
   });
 
   it('reads every one of them out of the directory a preset ships', () => {

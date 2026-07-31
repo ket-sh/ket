@@ -17,8 +17,8 @@
   "reporters": ["progress", "clear-text"],
   "coverageAnalysis": "perTest",
   "thresholds": {
-    "high": 90,
-    "low": 90,
-    "break": 90
+    "high": 100,
+    "low": 100,
+    "break": 100
   }
 }
