@@ -7,7 +7,12 @@ import { writes } from './item.ts';
 
 const WORKFLOW = 'name: ci\n\njobs:\n  check:\n    runs-on: ubuntu-latest\n';
 
+const LAW = 'Read the `tdd` skill before a test, and the `vitest` skill for the runner.\n';
+
+const LOCKFILE = JSON.stringify({ version: 1, skills: { vitest: { source: 'antfu/skills' } } });
+
 const SOUND: PresetSubject = {
+  harnessSkills: ['tdd', 'gates'],
   item: {
     $schema: 'https://ui.shadcn.com/schema/registry-item.json',
     name: 'ket-example',
@@ -16,7 +21,12 @@ const SOUND: PresetSubject = {
     description: 'A preset written to be read by a test.',
     dependencies: [],
     devDependencies: [],
-    files: [writes('knip.json', 'knip.json'), writes('github-ci.yml', '.github/workflows/ci.yml')],
+    files: [
+      writes('knip.json', 'knip.json'),
+      writes('github-ci.yml', '.github/workflows/ci.yml'),
+      writes('CLAUDE.md', 'CLAUDE.md'),
+      writes('skills-lock.json', 'skills-lock.json'),
+    ],
     integrations: [
       {
         name: 'codecov',
@@ -44,11 +54,15 @@ const SOUND: PresetSubject = {
     'files/knip.json': '{}\n',
     'files/github-ci.yml': WORKFLOW,
     'files/github-coverage.yml': 'name: coverage\n',
+    'files/CLAUDE.md': LAW,
+    'files/skills-lock.json': LOCKFILE,
   },
   shipped: {
     'files/knip.json': '{}\n',
     'files/github-ci.yml': WORKFLOW,
     'files/github-coverage.yml': 'name: coverage\n',
+    'files/CLAUDE.md': LAW,
+    'files/skills-lock.json': LOCKFILE,
   },
 };
 
@@ -60,7 +74,12 @@ describe('a preset against everything a preset must be', () => {
   it('names what broke in every family at once, not the first family that broke', () => {
     const broken: PresetSubject = {
       ...SOUND,
-      carried: { 'files/github-ci.yml': WORKFLOW, 'files/github-coverage.yml': 'name: coverage\n' },
+      carried: {
+        'files/github-ci.yml': WORKFLOW,
+        'files/github-coverage.yml': 'name: coverage\n',
+        'files/CLAUDE.md': LAW,
+        'files/skills-lock.json': LOCKFILE,
+      },
       semantics: { ...SOUND.semantics, rings: { ...SOUND.semantics.rings, two: [] } },
       item: {
         ...SOUND.item,
@@ -81,6 +100,21 @@ describe('a preset against everything a preset must be', () => {
     ]);
   });
 
+  it('names the standing law it points nowhere with, alongside what else broke', () => {
+    const broken: PresetSubject = {
+      ...SOUND,
+      harnessSkills: [],
+      carried: { ...SOUND.carried, 'files/CLAUDE.md': 'Use the `turborepo` skill.\n' },
+      shipped: { ...SOUND.shipped, 'files/CLAUDE.md': 'Use the `turborepo` skill.\n' },
+    };
+
+    expect(brokenInvariantsOf(broken)).toStrictEqual([
+      'the standing law names the turborepo skill, which neither the harness nor the lockfile the preset writes ships',
+    ]);
+  });
+});
+
+describe('a preset against the pipeline and the configs it writes', () => {
   it('names what the pipeline and the configs break, not only the item and the rings', () => {
     const broken: PresetSubject = {
       ...SOUND,
