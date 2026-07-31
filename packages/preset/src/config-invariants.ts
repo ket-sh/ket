@@ -14,6 +14,19 @@ const MUTATION_CONFIG = '~/stryker.conf.json';
 
 const TYPES_SCOPE = '@types/';
 
+const SCOPE_MARK = '@';
+
+const SUBPATH_SEPARATOR = '/';
+
+// A config reaches into a package as often as it names one, and `vite/client`
+// installs nothing of its own. A scope carries a segment of its own, so the
+// package behind `@tanstack/react-start/config` is the first two.
+function packageBehind(reference: string): string {
+  const held = reference.startsWith(SCOPE_MARK) ? 2 : 1;
+
+  return reference.split(SUBPATH_SEPARATOR).slice(0, held).join(SUBPATH_SEPARATOR);
+}
+
 // The prose tool supplies its own style and downloads Microsoft. Every other
 // name in BasedOnStyles has to arrive as a file the preset writes.
 const PROSE_TOOL_SUPPLIES = new Set(['Vale', 'Microsoft']);
@@ -46,7 +59,11 @@ function typeInvariants(item: PresetItem, shipped: PresetContents): string[] {
   const installed = new Set(dependencyNamesOf(item));
 
   return packagesNamedIn(written)
-    .filter((named) => !installed.has(named) && !installed.has(`${TYPES_SCOPE}${named}`))
+    .filter((named) => {
+      const behind = packageBehind(named);
+
+      return !installed.has(behind) && !installed.has(`${TYPES_SCOPE}${behind}`);
+    })
     .map(
       (named) => `the tsconfig the preset writes names ${named}, which the preset installs nowhere`,
     );

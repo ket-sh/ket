@@ -111,6 +111,44 @@ describe('the packages a preset installs against the configs it writes', () => {
   });
 });
 
+describe('a config that reaches into a package rather than naming it', () => {
+  function invariantsWhenInstalling(installed: string[], written: string): string[] {
+    const item = { ...ITEM, devDependencies: [...ITEM.devDependencies, ...installed] };
+
+    return configInvariantsOf(item, { ...SHIPPED, 'files/tsconfig.json': written });
+  }
+
+  it('counts a package the tsconfig reaches into by subpath as installed', () => {
+    const written = JSON.stringify({ compilerOptions: { types: ['vite/client'] } });
+
+    expect(invariantsWhenInstalling(['vite@8.2.0'], written)).toStrictEqual([]);
+  });
+
+  it('names the whole subpath when the package behind it is installed nowhere', () => {
+    const written = JSON.stringify({ compilerOptions: { types: ['vite/client'] } });
+
+    expect(invariantsWhenInstalling([], written)).toStrictEqual([
+      'the tsconfig the preset writes names vite/client, which the preset installs nowhere',
+    ]);
+  });
+
+  it('counts a scoped package reached into by subpath as installed', () => {
+    const written = JSON.stringify({
+      compilerOptions: { jsxImportSource: '@tanstack/react-start/config' },
+    });
+
+    expect(invariantsWhenInstalling(['@tanstack/react-start@1.168.34'], written)).toStrictEqual([]);
+  });
+
+  it('reads a scope as no package at all, since a scope installs nothing', () => {
+    const written = JSON.stringify({ compilerOptions: { types: ['@tanstack'] } });
+
+    expect(invariantsWhenInstalling(['@tanstack/react-start@1.168.34'], written)).toStrictEqual([
+      'the tsconfig the preset writes names @tanstack, which the preset installs nowhere',
+    ]);
+  });
+});
+
 describe('the prose config a preset writes against the styles it ships', () => {
   it('names a style the prose config asks for and the preset ships nowhere', () => {
     const written = PROSE.replace('Microsoft, ket', 'Microsoft, ket, house');
