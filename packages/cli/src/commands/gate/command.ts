@@ -36,6 +36,7 @@ import { proposalReply } from './proposal.ts';
 import { probeReply } from './ring.ts';
 import { judgeCommand } from './shell.ts';
 import { askTestFirst } from './test-first.ts';
+import { judgeStop } from './turn.ts';
 
 async function judgeWrite(): Promise<Denial | undefined> {
   const governed = await governedFile(await readEnvelope());
@@ -253,9 +254,23 @@ const testFirst = defineCommand({
   },
 });
 
+// Exit 2 is what keeps the agent working and stderr is what reaches it. The
+// code is set rather than the process ended, so nothing written here is lost.
+const turn = defineCommand({
+  meta: { name: 'turn', description: 'Decide whether the session may stop here' },
+  async run() {
+    const refusal = await judgeStop();
+
+    if (refusal !== undefined) {
+      process.stderr.write(`${refusal}\n`);
+      process.exitCode = 2;
+    }
+  },
+});
+
 const gate = defineCommand({
   meta: { name: 'gate', description: 'Run a pipeline gate' },
-  subCommands: { write, probe, shell, citations, toolchain, 'test-first': testFirst },
+  subCommands: { write, probe, shell, citations, toolchain, turn, 'test-first': testFirst },
 });
 
 export async function usage(): Promise<void> {
