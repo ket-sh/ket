@@ -1,12 +1,9 @@
 import type { Configuration } from '../../shared/configuration.ts';
 import type { ScaffoldFile } from '../../shared/write-files.ts';
 
+import { renderBoard } from '../../shared/board.ts';
 import { renderConfiguration } from '../../shared/configuration.ts';
 import { KET_DIRECTORY } from './plan.ts';
-
-function boardContents(configuration: Configuration): string {
-  return `# ${configuration.key} board\n\nNo items yet. Run /ket:feature to file the first one.\n`;
-}
 
 const EVENTS_IGNORE_RULE = `${KET_DIRECTORY}/events.jsonl`;
 
@@ -25,7 +22,7 @@ export function withEventsIgnored(gitignore: string): string | undefined {
 export function scaffoldFiles(configuration: Configuration): ScaffoldFile[] {
   return [
     { path: `${KET_DIRECTORY}/config.ts`, contents: renderConfiguration(configuration) },
-    { path: `${KET_DIRECTORY}/BOARD.md`, contents: boardContents(configuration) },
+    { path: `${KET_DIRECTORY}/BOARD.md`, contents: renderBoard(configuration.key, []) },
     { path: `${KET_DIRECTORY}/items/.gitkeep`, contents: '' },
   ];
 }

@@ -243,11 +243,22 @@ describe('a status written by hand rather than by a gate', () => {
     });
   });
 
-  it('allows the board, since it is generated from the items', () => {
-    expect(verdictFor(attempt({ path: '.ket/BOARD.md' }))).toStrictEqual({ allowed: true });
-  });
-
   it('allows a file merely named like an item file elsewhere', () => {
     expect(verdictFor(attempt({ path: 'docs/item.yaml' }))).toStrictEqual({ allowed: true });
+  });
+});
+
+describe('a file a gate writes, edited by hand', () => {
+  it('refuses the board, since a command renders it from the items', () => {
+    expect(verdictFor(attempt({ path: '.ket/BOARD.md' }))).toStrictEqual({
+      refused:
+        '.ket/BOARD.md is rendered from the items, and a command writes it. Change an item instead.',
+    });
+  });
+
+  it('allows a markdown file beside an item, since a design stage writes those', () => {
+    expect(verdictFor(attempt({ path: '.ket/items/OS-1/solution-design.md' }))).toStrictEqual({
+      allowed: true,
+    });
   });
 });

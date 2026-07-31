@@ -287,8 +287,6 @@ there, so enabling the plugin at user scope leaves your other projects alone.
   it. Neither one holds a status, so an item can ship without either.
 - Nothing bounds the loop yet. A `Stop` hook that keeps agents working until a
   stage finishes comes in a later slice.
-- `/ket:status` reads the item files. `create` writes `.ket/BOARD.md` once, and
-  nothing rewrites it as an item moves.
 - `ket watch` renders sample data instead of the event log.
 - Chromatic and the Mobbin design reference arrive with the presets that have a
   user interface. The `cli` preset offers neither, because neither has anything

@@ -107,17 +107,17 @@ export const CLI_PRESET: PresetItem = {
   integrations: [
     {
       name: 'codecov',
-      asks: 'codecov reports how much of the code the suite reaches. Free for a public repository. A private one is free to 250 uploads a month, then paid per user.',
+      asks: 'codecov, coverage on each pull request. Free on a public repo, paid on a private one past 250 uploads a month.',
       files: [writes('github-coverage.yml', '.github/workflows/coverage.yml')],
     },
     {
       name: 'codeql',
-      asks: 'codeql scans for security defects on every push. Free for a public repository. A private one needs GitHub Code Security, billed per committer.',
+      asks: 'codeql, security scanning on each push. Free on a public repo, paid on a private one per committer.',
       files: [writes('github-codeql.yml', '.github/workflows/codeql.yml')],
     },
     {
       name: 'coderabbit',
-      asks: 'coderabbit reviews every pull request. Free for a public repository. A private one gets 200 reviews a month free, then paid per user.',
+      asks: 'coderabbit, a review on each pull request. Free on a public repo, 200 private reviews a month, then paid.',
       files: [writes('coderabbit.yaml', '.coderabbit.yaml')],
     },
   ],

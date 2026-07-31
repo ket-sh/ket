@@ -29,7 +29,7 @@ more, and wait for one word. They may override. This is deliberate: the machine
 proposes and the person decides, and the gates check the decision against what
 the change actually touches later.
 
-This is the first of the two human gates. Stop here and wait.
+This is the first of the three human gates. Stop here and wait.
 
 ## 3. File
 
@@ -46,8 +46,10 @@ the status and size you just filed, and do what it says. Keep moving through the
 table without asking, until you reach a row that names a human gate.
 
 For most work that means opening design, writing the artifacts, and submitting
-for approval. For an epic it means decomposing into children and then working
-the first child. For `subtask` and `trivial` work the next row is already the
+for approval. For an epic it means researching how the work is usually
+broken down, proposing the children, and stopping for the user to pick which
+ones to file. That is the second gate, and the children are the scope of the
+work, so it is not a choice to make alone. For `subtask` and `trivial` work the next row is already the
 approval gate, so filing ends the turn.
 
 When you stop, say which item is in flight, what status it holds, and what you

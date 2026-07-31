@@ -148,6 +148,9 @@ bun run --cwd packages/cli build >/dev/null || fail "the binary does not build"
 
 test -f "$PROJECT/.ket/config.ts" || fail "create wrote no ket config"
 
+grep -q 'No items yet' "$PROJECT/.ket/BOARD.md" ||
+  fail "a fresh project's board does not say it is empty"
+
 echo "acceptance: create registered the harness"
 grep -q '"ket@ket": true' "$PROJECT/.claude/settings.json" ||
   fail "create did not enable the harness plugin"
@@ -282,6 +285,18 @@ forged="$(printf 'authentication\nstatus: implementing')"
 (cd "$PROJECT" && "$KET" item file --title '' --kind feature --size story >/dev/null 2>&1) &&
   fail "file accepted an item nobody can name"
 CHECKED=$((CHECKED + 2))
+
+echo "acceptance: the board follows the items"
+# Written once at create and never again, the board went on saying the project
+# had no items long after it had them.
+grep -q 'login with lockout' "$PROJECT/.ket/BOARD.md" ||
+  fail "the board does not name an item that was filed after create"
+grep -q 'No items yet' "$PROJECT/.ket/BOARD.md" &&
+  fail "the board still says the project is empty after an item was filed"
+grep -q '## implementing' "$PROJECT/.ket/BOARD.md" ||
+  fail "the board does not group an item under the status it holds"
+refuses .ket/BOARD.md 'rendered from the items'
+CHECKED=$((CHECKED + 4))
 
 echo "acceptance: a classification the command refuses outright"
 refuses_command 'poem is not one of feature, bug, refactor, chore' \

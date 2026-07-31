@@ -24,12 +24,12 @@ Read the `ket:stages` skill. Find the row for the status and size of the item
 you found, run what that row names, and then find the next row. Keep going.
 
 Do not stop between rows to report progress or ask permission. The pipeline is
-built to run on its own, and the two human gates are the only places it waits.
+built to run on its own, and the three human gates are the only places it waits.
 
 ## 3. Stop at a gate
 
-The two human gates are the triage confirmation and `/ket:approve`. Stop at
-either one, and only there.
+The three human gates are the triage confirmation, the decomposition
+confirmation, and `/ket:approve`. Stop at one of those, and only there.
 
 When you stop, say which item is in flight, what status it holds, and what you
 need from the user. If the item is waiting on approval, tell them the exact

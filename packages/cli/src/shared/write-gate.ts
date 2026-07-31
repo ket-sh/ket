@@ -8,6 +8,8 @@ const SCENARIO = '.feature';
 
 const ITEM_FILE = '.ket/items/*/item.yaml';
 
+const BOARD = '.ket/BOARD.md';
+
 const WRITEABLE: ItemStatus = 'implementing';
 
 const ENVIRONMENT = '.env';
@@ -133,6 +135,12 @@ function keyMaterial(path: string): Verdict | undefined {
 }
 
 function byHand(path: string): Verdict | undefined {
+  if (path === BOARD) {
+    return {
+      refused: `${path} is rendered from the items, and a command writes it. Change an item instead.`,
+    };
+  }
+
   if (!matchesGlob(ITEM_FILE, path)) {
     return undefined;
   }
