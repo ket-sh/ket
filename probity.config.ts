@@ -10,7 +10,7 @@ export default defineConfig({
         '!**/*.test-d.*',
         '!**/*.gen.*',
       ],
-      rules: [enforceTdd()],
+      rules: [enforceTdd({ maxEvents: 30 })],
     },
   ],
 });
