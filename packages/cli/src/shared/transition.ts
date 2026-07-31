@@ -150,16 +150,12 @@ function approvalMoves(stage: Stage): boolean {
   return designOwedBy(stage) === undefined && WHY_NOT_APPROVE[stage.status] === undefined;
 }
 
-function shipmentMoves(stage: Stage): boolean {
-  return WHY_NOT_SHIP[stage.status] === undefined;
-}
-
 function picksItsChildren(stage: Stage): boolean {
   return stage.status === 'designing' && stage.size === DECOMPOSES;
 }
 
 function waitsForAPerson(stage: Stage): boolean {
-  return approvalMoves(stage) || shipmentMoves(stage) || picksItsChildren(stage);
+  return approvalMoves(stage) || picksItsChildren(stage);
 }
 
 export function machineStepOf(stage: Stage): string | undefined {

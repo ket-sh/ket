@@ -108,3 +108,16 @@ describe('whether a person has already said to stop here', () => {
     expect(turnHistoryIn(log, STANDING).refusals).toBe(0);
   });
 });
+
+describe('a rest that is the last thing the gate let go on', () => {
+  it('counts only the refusals since that rest, not the ones before it', () => {
+    const log = logOf([
+      turned('refused', STANDING),
+      turned('refused', STANDING),
+      turned('skipped', STANDING, 'end of the day'),
+      turned('refused', STANDING),
+    ]);
+
+    expect(turnHistoryIn(log, STANDING)).toStrictEqual({ refusals: 1, rested: true });
+  });
+});

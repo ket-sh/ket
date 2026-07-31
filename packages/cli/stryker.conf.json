@@ -18,6 +18,8 @@
     "!src/shared/checks.ts",
     "!src/commands/*/announce.ts",
     "!src/commands/gate/command.ts",
+    "!src/commands/gate/turn.ts",
+    "!src/shared/event-log.ts",
     "!src/commands/*/context.ts",
     "!src/commands/gate/test-first.ts",
     "!src/commands/item/command.ts",
