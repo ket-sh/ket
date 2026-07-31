@@ -32,7 +32,7 @@ outside version control, and it carries the reasoning behind every rule below.
 
 - Follow @.claude/rules/tdd-bdd.md. Test code changes if and only if behavior changes.
 - probity enforces the order at the edit itself. It blocks any write to a production file under `packages/*/src` until a failing test covers it, so the gate fires while you type rather than at review time.
-- Property-based tests use fast-check, one per declared invariant. Use the `javascript-testing-patterns` skill for unit and integration work, and the `vitest` skill for anything touching the runner, its config, or coverage.
+- Property-based tests use fast-check, one per declared invariant. The harness `tdd` skill carries how to write one here, and the `vitest` skill covers anything touching the runner, its config, or coverage.
 - Mutation score is the gate that catches a suite asserting nothing. `bun run test:mutation` inside a package runs Stryker over its domain, and the threshold breaks the build below 90.
 - Never clear a surviving mutant by lowering the threshold. Kill it with a better test. When the mutant turns out to be equivalent, meaning the mutated code behaves identically, restructure the code so the ambiguity disappears rather than accepting the survivor.
 
