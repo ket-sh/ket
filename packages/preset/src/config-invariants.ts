@@ -1,6 +1,7 @@
 import type { PresetContents } from './contents.ts';
 import type { PresetItem } from './item.ts';
 
+import { writtenTo } from './contents.ts';
 import { dependencyNamesOf } from './item.ts';
 
 const TSCONFIG = '~/tsconfig.json';
@@ -25,16 +26,6 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((entry) => typeof entry === 'string');
 }
 
-function configWritten(
-  item: PresetItem,
-  shipped: PresetContents,
-  target: string,
-): string | undefined {
-  const file = item.files.find((candidate) => candidate.target === target);
-
-  return file === undefined ? undefined : shipped[file.path];
-}
-
 function packagesNamedIn(written: string): string[] {
   const parsed: unknown = JSON.parse(written);
   const declared = isRecord(parsed) ? parsed['compilerOptions'] : undefined;
@@ -46,7 +37,7 @@ function packagesNamedIn(written: string): string[] {
 }
 
 function typeInvariants(item: PresetItem, shipped: PresetContents): string[] {
-  const written = configWritten(item, shipped, TSCONFIG);
+  const written = writtenTo(item, shipped, TSCONFIG);
 
   if (written === undefined) {
     return [];
@@ -75,7 +66,7 @@ function pluginsNamedIn(written: string): string[] {
 }
 
 function lintInvariants(item: PresetItem, shipped: PresetContents): string[] {
-  const written = configWritten(item, shipped, LINT_CONFIG);
+  const written = writtenTo(item, shipped, LINT_CONFIG);
 
   if (written === undefined) {
     return [];
@@ -130,7 +121,7 @@ function vocabularyInvariants(item: PresetItem, written: string): string[] {
 }
 
 function proseInvariants(item: PresetItem, shipped: PresetContents): string[] {
-  const written = configWritten(item, shipped, PROSE_CONFIG);
+  const written = writtenTo(item, shipped, PROSE_CONFIG);
 
   return written === undefined
     ? []
@@ -146,7 +137,7 @@ function testConfigNamedIn(written: string): string | undefined {
 }
 
 function mutationInvariants(item: PresetItem, shipped: PresetContents): string[] {
-  const written = configWritten(item, shipped, MUTATION_CONFIG);
+  const written = writtenTo(item, shipped, MUTATION_CONFIG);
 
   if (written === undefined) {
     return [];

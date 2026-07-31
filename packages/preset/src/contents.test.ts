@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { PresetItem } from './item.ts';
 
-import { contentReaderFor } from './contents.ts';
+import { contentReaderFor, writtenTo } from './contents.ts';
 import { writes } from './item.ts';
 
 const ITEM: PresetItem = {
@@ -36,5 +36,19 @@ describe('reading a file the preset carries', () => {
     expect(() => contentOf('files/nowhere.json')).toThrow(
       'the ket-example preset promises files/nowhere.json but ships no such file',
     );
+  });
+});
+
+describe('what the preset writes to a place in a project', () => {
+  it('answers the bytes that land at the target the preset writes them to', () => {
+    expect(writtenTo(ITEM, { 'files/knip.json': '{}\n' }, '~/knip.json')).toBe('{}\n');
+  });
+
+  it('answers nothing for a target the preset writes to no file', () => {
+    expect(writtenTo(ITEM, { 'files/knip.json': '{}\n' }, '~/CLAUDE.md')).toBeUndefined();
+  });
+
+  it('answers nothing when the file the target names never shipped', () => {
+    expect(writtenTo(ITEM, {}, '~/knip.json')).toBeUndefined();
   });
 });
