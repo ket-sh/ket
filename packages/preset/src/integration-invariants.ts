@@ -6,6 +6,8 @@ const PUBLIC_REPOSITORY = 'public';
 
 const PRIVATE_REPOSITORY = 'private';
 
+const LANDS_NOWHERE = '~/';
+
 function fileInvariants(integration: PresetIntegration, unasked: Set<string>): string[] {
   const written = filesOf(integration)
     .filter((file) => unasked.has(file.target))
@@ -37,10 +39,33 @@ function sentenceInvariants(integration: PresetIntegration): string[] {
   ];
 }
 
+function shapeInvariants(integration: PresetIntegration): string[] {
+  if (integration.name === '') {
+    return ['an integration goes by no name, and a person picks one by name'];
+  }
+
+  if (!('reaches' in integration)) {
+    return filesOf(integration)
+      .filter((file) => file.target === '' || file.target === LANDS_NOWHERE)
+      .map(() => `the integration ${integration.name} writes a file that lands nowhere`);
+  }
+
+  if (integration.reaches.stage.trim() === '') {
+    return [`the integration ${integration.name} reaches for nothing at any named stage`];
+  }
+
+  return integration.reaches.reference.trim() === ''
+    ? [
+        `the integration ${integration.name} names the stage ${integration.reaches.stage} and nothing to reach for`,
+      ]
+    : [];
+}
+
 export function integrationInvariantsOf(item: PresetItem): string[] {
   const unasked = new Set(item.files.map((file) => file.target));
 
   return item.integrations.flatMap((integration) => [
+    ...shapeInvariants(integration),
     ...fileInvariants(integration, unasked),
     ...sentenceInvariants(integration),
   ]);

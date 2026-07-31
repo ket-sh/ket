@@ -36,13 +36,24 @@ const SOUND: PresetSubject = {
     ],
   },
   semantics: {
-    scripts: { fmt: 'oxfmt .' },
+    scripts: {
+      fmt: 'oxfmt .',
+      lint: 'oxlint .',
+      'check-types': 'tsc --noEmit',
+      test: 'vitest run',
+      'test:mutation': 'stryker run',
+    },
     slice: { roots: ['src/commands/{slice}'], adapters: ['command.ts', 'io/**'] },
     tests: { example: '{unit}.test.ts', property: '{unit}.property.test.ts' },
     acceptance: { runner: 'cucumber', drives: 'binary' },
     substrate: 'temporary-directories',
     lockfile: 'bun.lock',
-    gates: [{ script: 'lint', guards: 'It checks style.', commitJob: 'lint', ciJob: 'check' }],
+    gates: [
+      { script: 'lint', guards: 'It checks style.', commitJob: '', ciJob: 'check' },
+      { script: 'check-types', guards: 'It checks types.', commitJob: '', ciJob: 'check' },
+      { script: 'test', guards: 'It checks behavior.', commitJob: '', ciJob: 'check' },
+      { script: 'test:mutation', guards: 'It checks the suite.', commitJob: '', ciJob: 'check' },
+    ],
     rings: {
       formats: [{ runs: 'oxfmt', scope: 'file' }],
       one: [{ runs: 'oxlint', scope: 'file' }],
@@ -131,6 +142,9 @@ describe('a preset against the pipeline and the configs it writes', () => {
     };
 
     expect(brokenInvariantsOf(broken)).toStrictEqual([
+      'the preset declares no check-types gate, and that is the gate this product is for',
+      'the preset declares no test gate, and that is the gate this product is for',
+      'the preset declares no test:mutation gate, and that is the gate this product is for',
       'the gate lint names the pipeline job prose, which no workflow the preset writes declares',
       'the pipeline job check belongs to no gate the preset declares',
       'the mutation config the preset writes names no test config',

@@ -91,3 +91,123 @@ describe('what an integration tells a person before they pick it', () => {
     ]);
   });
 });
+
+describe('what an integration has to say about itself', () => {
+  it('names an integration that goes by no name at all', () => {
+    expect(
+      integrationInvariantsOf(
+        itemOffering([
+          {
+            name: '',
+            asks: 'a tool, free on a public repository and paid on a private one.',
+            files: [writes('github-coverage.yml', '.github/workflows/coverage.yml')],
+          },
+        ]),
+      ),
+    ).toContain('an integration goes by no name, and a person picks one by name');
+  });
+
+  it('names an integration whose file lands nowhere', () => {
+    expect(
+      integrationInvariantsOf(
+        itemOffering([
+          {
+            name: 'codecov',
+            asks: 'codecov, free on a public repository and paid on a private one.',
+            files: [{ path: 'files/github-coverage.yml', type: 'registry:file', target: '' }],
+          },
+        ]),
+      ),
+    ).toContain('the integration codecov writes a file that lands nowhere');
+  });
+
+  it('breaks nothing for a reaching integration that names both a stage and a reference', () => {
+    expect(
+      integrationInvariantsOf(
+        itemOffering([
+          {
+            name: 'mobbin',
+            asks: 'mobbin, free on a public repository and paid on a private one.',
+            reaches: { stage: 'designing', reference: 'https://mobbin.com' },
+          },
+        ]),
+      ),
+    ).toStrictEqual([]);
+  });
+});
+
+describe('where an integration lands what it writes', () => {
+  it('names an integration whose file targets the repository itself', () => {
+    expect(
+      integrationInvariantsOf(
+        itemOffering([
+          {
+            name: 'codecov',
+            asks: 'codecov, free on a public repository and paid on a private one.',
+            files: [writes('github-coverage.yml', '')],
+          },
+        ]),
+      ),
+    ).toContain('the integration codecov writes a file that lands nowhere');
+  });
+});
+
+describe('what a reaching integration has to name', () => {
+  it('names a reaching integration that points at no stage', () => {
+    expect(
+      integrationInvariantsOf(
+        itemOffering([
+          {
+            name: 'mobbin',
+            asks: 'mobbin, free on a public repository and paid on a private one.',
+            reaches: { stage: '', reference: 'https://mobbin.com' },
+          },
+        ]),
+      ),
+    ).toContain('the integration mobbin reaches for nothing at any named stage');
+  });
+
+  it('names a reaching integration whose stage is nothing but spaces', () => {
+    expect(
+      integrationInvariantsOf(
+        itemOffering([
+          {
+            name: 'mobbin',
+            asks: 'mobbin, free on a public repository and paid on a private one.',
+            reaches: { stage: '   ', reference: 'https://mobbin.com' },
+          },
+        ]),
+      ),
+    ).toContain('the integration mobbin reaches for nothing at any named stage');
+  });
+});
+
+describe('what a reaching integration points at', () => {
+  it('names a reaching integration whose reference is nothing but spaces', () => {
+    expect(
+      integrationInvariantsOf(
+        itemOffering([
+          {
+            name: 'mobbin',
+            asks: 'mobbin, free on a public repository and paid on a private one.',
+            reaches: { stage: 'designing', reference: '  ' },
+          },
+        ]),
+      ),
+    ).toContain('the integration mobbin names the stage designing and nothing to reach for');
+  });
+
+  it('names a reaching integration that points at nothing', () => {
+    expect(
+      integrationInvariantsOf(
+        itemOffering([
+          {
+            name: 'mobbin',
+            asks: 'mobbin, free on a public repository and paid on a private one.',
+            reaches: { stage: 'designing', reference: '' },
+          },
+        ]),
+      ),
+    ).toContain('the integration mobbin names the stage designing and nothing to reach for');
+  });
+});

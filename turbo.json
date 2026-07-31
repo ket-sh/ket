@@ -19,6 +19,9 @@
     },
     "gate": {
       "dependsOn": ["lint", "fmt:check", "check-types", "test"]
+    },
+    "test:mutation": {
+      "dependsOn": ["^build"]
     }
   }
 }
