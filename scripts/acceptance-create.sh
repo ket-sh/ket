@@ -59,7 +59,8 @@ test -z "$(cd "$PROJECT" && git status --porcelain)" ||
 # A skill installed after the scaffold commit is a skill the user has to commit
 # themselves, and the point of the commit is that they inherit nothing untracked.
 committed() {
-  (cd "$PROJECT" && git ls-tree -r HEAD --name-only) | grep -qx "$1"
+  (cd "$PROJECT" && git ls-tree -r "$(git rev-list --max-parents=0 HEAD)" --name-only) |
+    grep -qx "$1"
 }
 for tracked in CLAUDE.md skills-lock.json .claude/skills/vitest/SKILL.md \
   .claude/skills/find-skills/SKILL.md; do
