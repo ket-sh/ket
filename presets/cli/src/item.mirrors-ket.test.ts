@@ -14,7 +14,6 @@ const MONOREPO_ONLY = new Set([
   'steiger.config.ts',
   'tsconfig.base.json',
   'tsconfig.root-configs.json',
-  'skills-lock.json',
   'coderabbit.yaml',
   '.coderabbit.yaml',
 ]);

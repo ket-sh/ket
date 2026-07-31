@@ -1,4 +1,9 @@
-import { brokenInvariantsOf, shippedFilesOf } from '@ket/preset';
+import {
+  brokenInvariantsOf,
+  harnessSkillsOf,
+  repositoryRootFrom,
+  shippedFilesOf,
+} from '@ket/preset';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -8,6 +13,8 @@ import { CLI_SEMANTICS } from './semantics.ts';
 
 const PRESET_ROOT = join(import.meta.dirname, '..');
 
+const REPOSITORY_ROOT = repositoryRootFrom(import.meta.dirname);
+
 describe('the cli preset against what a preset must be', () => {
   it('breaks none of the invariants every preset has to satisfy', async () => {
     expect(
@@ -16,6 +23,7 @@ describe('the cli preset against what a preset must be', () => {
         semantics: CLI_SEMANTICS,
         carried: PRESET_CONTENTS,
         shipped: await shippedFilesOf(CLI_PRESET, PRESET_ROOT),
+        harnessSkills: await harnessSkillsOf(REPOSITORY_ROOT),
       }),
     ).toStrictEqual([]);
   });

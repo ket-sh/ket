@@ -53,6 +53,8 @@ export const CLI_PRESET: PresetItem = {
     writes('vale-styles/WeakOpeners.yml', '.vale/styles/ket/WeakOpeners.yml'),
     writes('vale-vocabulary/accept.txt', '.vale/styles/config/vocabularies/ket/accept.txt'),
     writes('gitignore', '.gitignore'),
+    writes('CLAUDE.md', 'CLAUDE.md'),
+    writes('skills-lock.json', 'skills-lock.json'),
     writes('github-ci.yml', '.github/workflows/ci.yml'),
     writes('source/run.ts', 'src/run.ts'),
     writes('source/main.ts', 'src/main.ts'),
