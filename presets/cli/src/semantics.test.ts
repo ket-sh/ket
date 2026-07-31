@@ -1,9 +1,9 @@
+import { repositoryRootFrom } from '@ket/preset';
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { repositoryRootFrom } from './repository-root.ts';
-import { adapterPatternsOf, CLI_SEMANTICS, sliceDirectoryOf, testFileFor } from './semantics.ts';
+import { CLI_SEMANTICS } from './semantics.ts';
 
 const OUR_CLI = join(repositoryRootFrom(import.meta.dirname), 'packages', 'cli');
 
@@ -46,15 +46,9 @@ describe('what the cli preset declares about tests', () => {
     expect(CLI_SEMANTICS.tests.example).not.toBe(CLI_SEMANTICS.tests.property);
   });
 
-  it('names both suites after the unit they cover', () => {
-    expect(testFileFor(CLI_SEMANTICS.tests.example, 'greeting')).toBe('greeting.test.ts');
-    expect(testFileFor(CLI_SEMANTICS.tests.property, 'greeting')).toBe('greeting.property.test.ts');
-  });
-
-  it('refuses a unit name a file system would not hold', () => {
-    expect(() => testFileFor(CLI_SEMANTICS.tests.property, 'Greeting Two')).toThrow(
-      'Greeting Two is not a unit name',
-    );
+  it('marks where a unit name goes in each test pattern', () => {
+    expect(CLI_SEMANTICS.tests.example).toBe('{unit}.test.ts');
+    expect(CLI_SEMANTICS.tests.property).toBe('{unit}.property.test.ts');
   });
 });
 
@@ -114,16 +108,6 @@ describe('what the cli preset declares about gates', () => {
   });
 });
 
-describe('resolving a slice directory', () => {
-  it('fills the slice name into the root the preset declares', () => {
-    expect(sliceDirectoryOf(CLI_SEMANTICS, 'auth-login')).toBe('src/commands/auth-login');
-  });
-
-  it('refuses a slice name that would escape the root', () => {
-    expect(() => sliceDirectoryOf(CLI_SEMANTICS, '../elsewhere')).toThrow(/slice name/);
-  });
-});
-
 describe('the shape of what the cli preset declares', () => {
   it('gives every script a command to run', () => {
     for (const [name, command] of Object.entries(CLI_SEMANTICS.scripts)) {
@@ -147,46 +131,9 @@ describe('the shape of what the cli preset declares', () => {
       '!io/**',
     ]);
   });
-
-  it('marks where a unit name goes in each test pattern', () => {
-    expect(CLI_SEMANTICS.tests.example).toBe('{unit}.test.ts');
-    expect(CLI_SEMANTICS.tests.property).toBe('{unit}.property.test.ts');
-  });
-
-  it('refuses a slice name that only starts out well', () => {
-    expect(() => sliceDirectoryOf(CLI_SEMANTICS, 'auth login')).toThrow(/slice name/);
-  });
-
-  it('refuses a unit name that only starts out well', () => {
-    expect(() => testFileFor(CLI_SEMANTICS.tests.example, 'greeting TWO')).toThrow(/unit name/);
-  });
 });
 
-describe('the paths a preset calls an adapter', () => {
-  it('reads the adapter out of the slice it declares', () => {
-    expect(adapterPatternsOf(CLI_SEMANTICS)).toContain('src/commands/*/command.ts');
-  });
-
-  it('reads the edge directory the mutation list keeps out', () => {
-    expect(adapterPatternsOf(CLI_SEMANTICS)).toContain('src/commands/*/io/**');
-  });
-
-  it('names nothing the mutation list does not exclude', () => {
-    expect(adapterPatternsOf(CLI_SEMANTICS)).toHaveLength(2);
-  });
-
-  it('leaves the source glob out, since that is what mutation covers', () => {
-    expect(adapterPatternsOf(CLI_SEMANTICS)).not.toContain('src/commands/*/**/*.ts');
-  });
-
-  it('leaves tests out, since a test is not an adapter', () => {
-    for (const pattern of adapterPatternsOf(CLI_SEMANTICS)) {
-      expect(pattern).not.toContain('test');
-    }
-  });
-});
-
-describe('the test-first gate against the config the preset writes', () => {
+describe('the test-first gate against the config the cli preset writes', () => {
   it('guards the source a slice lands in, not the layout of some other repository', async () => {
     const configuration = await readFile(
       join(import.meta.dirname, '..', 'files', 'probity.config.ts'),
@@ -211,7 +158,7 @@ describe('the test-first gate against the config the preset writes', () => {
   });
 });
 
-describe('the prose gate against the config the preset writes', () => {
+describe('the prose gate against the config the cli preset writes', () => {
   it('syncs the very package its prose config declares, so a fresh checkout finds it', async () => {
     const configuration = await readFile(
       join(import.meta.dirname, '..', 'files', 'vale.ini'),

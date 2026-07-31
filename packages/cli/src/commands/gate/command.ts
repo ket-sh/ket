@@ -1,11 +1,5 @@
-import {
-  adapterPatternsOf,
-  CLI_PRESET,
-  CLI_SEMANTICS,
-  coveringTestsOf,
-  dependencyNamesOf,
-  ringOneOf,
-} from '@ket/preset-cli';
+import { adapterPatternsOf, coveringTestsOf, dependencyNamesOf, ringOneOf } from '@ket/preset';
+import { CLI_PRESET, CLI_SEMANTICS } from '@ket/preset-cli';
 import { defineCommand, showUsage } from 'citty';
 import { spawn } from 'node:child_process';
 import { access, readFile, writeFile } from 'node:fs/promises';

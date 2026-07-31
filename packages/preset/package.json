@@ -1,5 +1,5 @@
 {
-  "name": "@ket/preset-cli",
+  "name": "@ket/preset",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -7,16 +7,12 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "generate": "bun scripts/generate-contents.ts && oxfmt --config ../../.oxfmtrc.json src/contents.generated.ts",
     "test": "vitest run",
     "lint": "oxlint --config ../../.oxlintrc.json .",
     "fmt": "oxfmt --config ../../.oxfmtrc.json .",
     "fmt:check": "oxfmt --config ../../.oxfmtrc.json --check .",
     "check-types": "tsc --noEmit -p tsconfig.json",
     "test:mutation": "stryker run"
-  },
-  "dependencies": {
-    "@ket/preset": "workspace:*"
   },
   "devDependencies": {
     "@stryker-mutator/core": "9.6.1",

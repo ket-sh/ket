@@ -1,4 +1,4 @@
-import type { RingCheck } from '@ket/preset-cli';
+import type { RingCheck } from '@ket/preset';
 
 const LOCAL_BIN = './node_modules/.bin/';
 

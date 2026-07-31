@@ -36,11 +36,20 @@
       "version": "0.0.0",
       "dependencies": {
         "@clack/prompts": "1.7.0",
+        "@ket/preset": "workspace:*",
         "@ket/preset-cli": "workspace:*",
         "@ket/tui": "workspace:*",
         "citty": "0.2.2",
         "cli-table3": "0.6.5",
         "picocolors": "1.1.1",
+      },
+    },
+    "packages/preset": {
+      "name": "@ket/preset",
+      "version": "0.0.0",
+      "devDependencies": {
+        "@stryker-mutator/core": "9.6.1",
+        "@stryker-mutator/vitest-runner": "9.6.1",
       },
     },
     "packages/tui": {
@@ -60,6 +69,9 @@
     "presets/cli": {
       "name": "@ket/preset-cli",
       "version": "0.0.0",
+      "dependencies": {
+        "@ket/preset": "workspace:*",
+      },
       "devDependencies": {
         "@stryker-mutator/core": "9.6.1",
         "@stryker-mutator/vitest-runner": "9.6.1",
@@ -466,6 +478,8 @@
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.31", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.1.0", "@jridgewell/sourcemap-codec": "^1.4.14" } }, "sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw=="],
 
     "@ket/cli": ["@ket/cli@workspace:packages/cli"],
+
+    "@ket/preset": ["@ket/preset@workspace:packages/preset"],
 
     "@ket/preset-cli": ["@ket/preset-cli@workspace:presets/cli"],
 

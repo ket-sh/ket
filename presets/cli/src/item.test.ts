@@ -1,9 +1,10 @@
+import { dependencyNamesOf, repositoryRootFrom, testFileFor } from '@ket/preset';
 import { access, readFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { CLI_PRESET, dependencyNamesOf } from './item.ts';
-import { CLI_SEMANTICS, testFileFor } from './semantics.ts';
+import { CLI_PRESET } from './item.ts';
+import { CLI_SEMANTICS } from './semantics.ts';
 
 const CONFIGURED_BY: Record<string, string> = {
   oxlint: '~/.oxlintrc.json',
@@ -20,7 +21,7 @@ const CONFIGURED_BY: Record<string, string> = {
   typescript: '~/tsconfig.json',
 };
 
-const REPOSITORY_ROOT = join(import.meta.dirname, '..', '..', '..');
+const REPOSITORY_ROOT = repositoryRootFrom(import.meta.dirname);
 
 function isVersionMap(value: unknown): value is Record<string, string> {
   return (
