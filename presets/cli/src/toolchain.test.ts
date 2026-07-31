@@ -34,3 +34,25 @@ describe('the toolchain the cli preset declares', () => {
     }
   });
 });
+
+describe('what the law says about the toolchain', () => {
+  it('names the tool the scripts reach for, so a missing command is not a surprise', async () => {
+    const law = await readsPresetFile('CLAUDE.md');
+    const reaching = Object.entries(CLI_SEMANTICS.scripts).filter(([, script]) =>
+      script.includes('mise'),
+    );
+
+    expect(reaching.length).toBeGreaterThan(0);
+    expect(law).toContain('mise');
+  });
+
+  it('names every script that needs it, since a reader has to know which ones', async () => {
+    const law = await readsPresetFile('CLAUDE.md');
+
+    for (const [name, script] of Object.entries(CLI_SEMANTICS.scripts)) {
+      if (script.includes('mise')) {
+        expect({ name, named: law.includes(name) }).toStrictEqual({ name, named: true });
+      }
+    }
+  });
+});

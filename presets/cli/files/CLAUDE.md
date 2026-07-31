@@ -36,6 +36,11 @@ the plugin arms the rest at each edit. The `gates` skill says what a failure
 tells you, the `mutation` skill says how to kill a survivor, and the
 `suppression` skill says what to reach for instead of turning a gate off.
 
+Bun runs most of the chain. `mise.toml` pins the four tools that aren't
+JavaScript, so `lint:prose`, `lint:secrets` and `lint:workflows` need
+[mise](https://mise.jdx.dev) on the machine. Without it those three report a
+missing command rather than a finding.
+
 No gate here gets switched off to reach green.
 
 ## When no skill covers the question
