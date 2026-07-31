@@ -9,9 +9,9 @@ An item carries one status, written in `.ket/items/<key>/item.yaml`. Only a
 command moves it. Editing that file by hand is refused by the write gate,
 because a status anything can write is a status that means nothing.
 
-## The three human gates
+## The four human gates
 
-The whole pipeline stops for a person exactly three times, and each one is a
+The whole pipeline stops for a person exactly four times, and each one is a
 decision the machine has no standing to make alone:
 
 1. **The triage confirmation.** Before anything is filed, the user confirms the
@@ -20,8 +20,10 @@ decision the machine has no standing to make alone:
    picks which of them to file. That list is the scope of the work, and scope
    belongs to the person paying for it.
 3. **`/ket:approve <key>`.** Before any source is written, the user approves.
+4. **`/ket:ship <key>`.** After the pull request merges, the user says so. A
+   machine can read a green pipeline, and only a person knows the work landed.
 
-Stop at those three and wait. Between them, keep going without asking. An agent
+Stop at those four and wait. Between them, keep going without asking. An agent
 that files an item and then reports back has left the job half done, and an
 agent that decides an epic's children alone has decided what the product is.
 
@@ -35,7 +37,29 @@ agent that decides an epic's children alone has decided what the product is.
 | `designing`         | `epic`                 | research the breakdown, propose it, the user picks | the chosen children, then the first of them |
 | `designing`         | `story`                | the design artifacts                               | `ket item submit <key>`                     |
 | `awaiting-approval` | any                    | nothing                                            | `/ket:approve <key>`, a human gate          |
-| `implementing`      | any                    | the failing test, then the code that answers it    | not built yet                               |
+| `implementing`      | any                    | the failing test, then the code that answers it    | `ket item verify <key>`                     |
+| `verifying`         | any                    | `/ket:review`, then whatever it found              | `ket item deliver <key>`                    |
+| `awaiting-merge`    | any                    | the pull request, and waiting on it                | `/ket:ship <key>`, a human gate             |
+
+## What each of the last three commands measures
+
+Entering verification does not require verification to be done. It requires the
+implementation to be plausibly complete, so `ket item verify` runs ring two: the
+project-wide checks a single write never waited for, and the whole suite. That
+is what the ring split always meant, and this boundary is the only caller ring
+two has.
+
+Leaving verification is what requires verification to have happened, so
+`ket item deliver` runs the preset's mutation gate at the preset's threshold. A
+surviving mutant is a defect in the test. Read the `mutation` skill and kill it
+rather than moving the item on.
+
+Either command refuses by naming the check that failed and repeating what it
+said. Fix that, then run the same command again.
+
+`/ket:ship` records a merge. The cycle ends there rather than at the opened pull
+request, because `shipped` has to mean it landed rather than somebody thought it
+was done.
 
 ## Decomposing an epic
 

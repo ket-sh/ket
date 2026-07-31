@@ -9,5 +9,6 @@ export const PIPELINE_COMMANDS: PipelineCommand[] = [
   { name: 'approve', says: 'Pass the human gate so implementation may begin' },
   { name: 'continue', says: 'Pick up the item in flight and carry it onward' },
   { name: 'review', says: 'Review with two seats and a judge that settles them' },
+  { name: 'ship', says: 'Close an item once its pull request has merged' },
   { name: 'status', says: 'Show what is in flight and what each item is waiting on' },
 ];

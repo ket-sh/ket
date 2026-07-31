@@ -158,7 +158,7 @@ grep -q '"repo": "ket-sh/ket"' "$PROJECT/.claude/settings.json" ||
   fail "create did not register the marketplace the harness ships from"
 
 echo "acceptance: the harness ships what it declares"
-for name in feature explore approve status continue review; do
+for name in feature explore approve status continue review ship; do
   test -f "harness/commands/$name.md" || fail "the harness declares no /ket:$name command"
   grep -q '^description:' "harness/commands/$name.md" ||
     fail "/ket:$name has no description"
@@ -338,6 +338,38 @@ refuses_command 'already shipped' item submit OS-1
 only_item OS-1 feature story idea 'login with lockout'
 refuses_command 'still an idea, so triage runs first' item design OS-1
 
+echo "acceptance: the three stages that finish an item run in order"
+# The status is answered before any check is, so these refusals cost nothing and
+# say what the item is waiting on rather than what a tool said.
+only_item OS-1 feature story implementing 'login with lockout'
+refuses_command 'still implementing, so verification runs first' item deliver OS-1
+refuses_command 'still implementing, so verification runs first' item ship OS-1
+only_item OS-1 feature story verifying 'login with lockout'
+refuses_command 'already verifying' item verify OS-1
+refuses_command 'still verifying, so the mutation gate runs first' item ship OS-1
+refuses_command 'already verifying' item design OS-1
+only_item OS-1 feature story awaiting-merge 'login with lockout'
+refuses_command 'already verified, so the merge comes next' item verify OS-1
+refuses_command 'already awaiting merge' item deliver OS-1
+refuses_command 'already awaiting merge' item approve OS-1
+refuses_command 'already awaiting merge' item submit OS-1
+only_item OS-1 feature story triaged 'login with lockout'
+refuses_command 'not implementing yet, so approval runs first' item verify OS-1
+refuses_command 'not verified yet, so implementation runs first' item deliver OS-1
+refuses_command 'not implemented yet, so nothing has merged' item ship OS-1
+only_item OS-1 feature story awaiting-approval 'login with lockout'
+refuses_command 'awaiting approval, so there is nothing to verify' item verify OS-1
+only_item OS-1 feature story designing 'login with lockout'
+refuses_command 'still designing, so there is nothing to verify' item verify OS-1
+refuses_command 'still designing, so nothing has merged' item ship OS-1
+only_item OS-1 feature story shipped 'login with lockout'
+refuses_command 'already shipped' item verify OS-1
+refuses_command 'already shipped' item deliver OS-1
+refuses_command 'already shipped' item ship OS-1
+only_item OS-1 feature story idea 'login with lockout'
+refuses_command 'still an idea, so triage runs first' item verify OS-1
+refuses_command 'still an idea, so triage runs first' item ship OS-1
+
 echo "acceptance: an epic breaks into the work it is made of"
 only_item OS-1 feature epic designing 'authentication'
 child="$(ket item file --parent OS-1 --title 'lock an account' --kind feature --size story)"
@@ -439,7 +471,7 @@ allows src/commands/hello/command.ts
 echo "acceptance: the approve gate"
 only_item OS-1 feature story triaged 'login with lockout'
 refuses src/auth.ts 'OS-1 is triaged, not implementing'
-for status in designing awaiting-approval verifying; do
+for status in designing awaiting-approval verifying awaiting-merge; do
   only_item OS-1 feature story "$status" 'login with lockout'
   refuses src/auth.ts "OS-1 is $status, not implementing"
 done
@@ -673,6 +705,73 @@ echo "$uncovered" | grep -q 'vitest' &&
 rm "$PROJECT/src/uncovered.ts"
 cp "$SANDBOX/greeting.intact" "$PROJECT/src/commands/hello/greeting.ts"
 CHECKED=$((CHECKED + 1))
+
+echo "acceptance: ring two has a caller, and it is the end of a stage"
+# The two project-wide checks a write no longer waits for, plus the whole suite:
+# ring one only ever ran what covered one file, so this is where the rest lands.
+only_item OS-1 feature story implementing 'login with lockout'
+printf 'export const broken: number = "not a number";\n' >"$PROJECT/src/mistyped.ts"
+refuses_command 'not ready to verify' item verify OS-1
+status_is OS-1 implementing
+rm "$PROJECT/src/mistyped.ts"
+
+cp "$PROJECT/src/commands/hello/greeting.ts" "$SANDBOX/greeting.whole"
+printf 'export function greeting(name: string): string {\n  return `goodbye ${name}`;\n}\n' \
+  >"$PROJECT/src/commands/hello/greeting.ts"
+refuses_command 'vitest run' item verify OS-1
+status_is OS-1 implementing
+cp "$SANDBOX/greeting.whole" "$PROJECT/src/commands/hello/greeting.ts"
+
+echo "acceptance: an item finishes, so the pipeline has an end"
+ket item verify OS-1 >/dev/null || fail "verify refused an item whose project checks all pass"
+status_is OS-1 verifying
+CHECKED=$((CHECKED + 1))
+
+# A file nothing asserts about is what the mutation gate exists to find, and
+# leaving verification is the boundary that requires verification to have run.
+printf 'export function lockedOut(attempts: number): boolean {\n  return attempts >= 3;\n}\n' \
+  >"$PROJECT/src/lockout.ts"
+refuses_command 'under breaking threshold 90' item deliver OS-1
+status_is OS-1 verifying
+rm "$PROJECT/src/lockout.ts"
+
+ket item deliver OS-1 >/dev/null || fail "deliver refused an item whose mutation gate passes"
+status_is OS-1 awaiting-merge
+CHECKED=$((CHECKED + 1))
+
+# An item waiting on a merge has not landed, so it still holds the branch.
+refuses src/auth.ts 'OS-1 is awaiting-merge, not implementing'
+
+ket item ship OS-1 >/dev/null || fail "ship refused an item waiting on its merge"
+status_is OS-1 shipped
+allows src/auth.ts
+grep -q '## shipped' "$PROJECT/.ket/BOARD.md" ||
+  fail "the board does not group the item under the status it reached"
+CHECKED=$((CHECKED + 2))
+
+echo "acceptance: the harness says how an item finishes"
+# A grep of the whole skill proves only that the words survived somewhere in it.
+# The row is what an agent reads to know what ends a status, so the row is what
+# this asserts: prose about a command elsewhere on the page ends nothing.
+ends_status() {
+  awk -F'|' -v wanted="\`$1\`" '
+    { gsub(/^ +| +$/, "", $2); gsub(/^ +| +$/, "", $5) }
+    $2 == wanted { print $5 }
+  ' harness/skills/stages/SKILL.md
+}
+
+ends_status implementing | grep -qF 'ket item verify' ||
+  fail "the stages table ends implementing with $(ends_status implementing), not ket item verify"
+ends_status verifying | grep -qF 'ket item deliver' ||
+  fail "the stages table ends verifying with $(ends_status verifying), not ket item deliver"
+ends_status awaiting-merge | grep -qF '/ket:ship' ||
+  fail "the stages table ends awaiting-merge with $(ends_status awaiting-merge), not /ket:ship"
+grep -qF 'four human gates' harness/skills/stages/SKILL.md ||
+  fail "the stages skill still counts three human gates, so nobody is asked about the merge"
+grep -qF 'awaiting-merge' harness/commands/status.md ||
+  fail "/ket:status calls an item waiting on a merge settled, and it is in flight"
+grep -qF '/ket:ship' harness/commands/continue.md ||
+  fail "/ket:continue never hands an item waiting on a merge to the person who merges it"
 
 echo "acceptance: a design that cites what nobody wrote"
 # Every design agent may write, and each says its source is this codebase. A
