@@ -24,7 +24,9 @@
     "!src/commands/gate/test-first.ts",
     "!src/commands/item/command.ts",
     "!src/commands/gate/shell.ts",
-    "!src/commands/create/skills-install.ts"
+    "!src/commands/create/skills-install.ts",
+    "!src/commands/gate/toolchain.ts",
+    "!src/shared/governing.ts"
   ],
   "reporters": ["progress", "clear-text"],
   "coverageAnalysis": "perTest",

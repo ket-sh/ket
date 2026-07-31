@@ -1,6 +1,5 @@
-import type { RingCheck } from '@ket/preset';
+import type { PresetSemantics, RingCheck } from '@ket/preset';
 
-import { CLI_SEMANTICS } from '@ket/preset-cli';
 import { defineCommand, showUsage } from 'citty';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -14,6 +13,7 @@ import type { Transition } from '../../shared/transition.ts';
 import { renderBoard } from '../../shared/board.ts';
 import { failuresAmong } from '../../shared/checks.ts';
 import { decompositionOf } from '../../shared/decompose.ts';
+import { semanticsOf } from '../../shared/governing.ts';
 import { readStored } from '../../shared/item-store.ts';
 import { ITEM_KINDS, ITEM_SIZES, nextKey, renderItem, titleRefusal } from '../../shared/item.ts';
 import { keyFrom, ketRootOrThrow } from '../../shared/locate.ts';
@@ -177,17 +177,28 @@ function plannedOnProject(checks: RingCheck[]): PlannedCheck[] {
   return checks.map((check) => ({ runs: check.runs, argv: argvOf(check.runs) }));
 }
 
+// The checks a stage ends on belong to the preset that governs the project, so
+// they are read where the project is known rather than where the stage is
+// declared.
 function afterRunning(
-  checks: () => RingCheck[],
+  checks: (semantics: PresetSemantics) => RingCheck[],
   move: (item: Item, failures: RingFailure[]) => Transition,
 ): Decision {
-  return async (item, root) => move(item, await failuresAmong(root, plannedOnProject(checks())));
+  return async (item, root) => {
+    const semantics = await semanticsOf(root);
+
+    if (semantics === undefined) {
+      throw new Error(`no preset ket writes governs ${root}, so nothing says what to run`);
+    }
+
+    return move(item, await failuresAmong(root, plannedOnProject(checks(semantics))));
+  };
 }
 
 const MUTATION_SCRIPT = 'test:mutation';
 
-function mutationChecks(): RingCheck[] {
-  const runs = CLI_SEMANTICS.scripts[MUTATION_SCRIPT];
+function mutationChecks(semantics: PresetSemantics): RingCheck[] {
+  const runs = semantics.scripts[MUTATION_SCRIPT];
 
   if (runs === undefined) {
     throw new Error(
@@ -211,7 +222,7 @@ const approve = stage('approve', 'Move an approved item to implementing', byStat
 const verify = stage(
   'verify',
   'Open verification once the project checks pass',
-  afterRunning(() => CLI_SEMANTICS.rings.two, verificationOf),
+  afterRunning((semantics) => semantics.rings.two, verificationOf),
 );
 
 const deliver = stage(

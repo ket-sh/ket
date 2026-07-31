@@ -1,7 +1,8 @@
-import { adapterPatternsOf, coveringTestsOf, dependencyNamesOf, ringOneOf } from '@ket/preset';
-import { CLI_PRESET, CLI_SEMANTICS } from '@ket/preset-cli';
+import type { PresetSemantics } from '@ket/preset';
+
+import { adapterPatternsOf, coveringTestsOf, ringOneOf } from '@ket/preset';
 import { defineCommand, showUsage } from 'citty';
-import { access, readFile, writeFile } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type { PlannedCheck } from '../../shared/checks.ts';
@@ -9,50 +10,39 @@ import type { Cited } from '../../shared/citations.ts';
 import type { RingFailure } from '../../shared/ring.ts';
 import type { CitationReply } from './citations.ts';
 import type { Denial } from './envelope.ts';
-import type { ProposalReply } from './proposal.ts';
 import type { ProbeReply } from './ring.ts';
 
 import { failuresAmong } from '../../shared/checks.ts';
 import { record } from '../../shared/event-log.ts';
 import { readStored } from '../../shared/item-store.ts';
-import { ketRootFrom } from '../../shared/locate.ts';
 import { inFlightFrom } from '../../shared/read-item.ts';
 import { argvFor } from '../../shared/ring.ts';
-import { arrivalsIn, declaredIn, recordToolchain, seenIn } from '../../shared/toolchain.ts';
 import { jobIn, verdictFor } from '../../shared/write-gate.ts';
 import { citationReply, pathsCitedIn, missingIn } from './citations.ts';
-import {
-  eventFor,
-  governedFile,
-  KET_DIRECTORY,
-  MANIFEST,
-  readEnvelope,
-  readJson,
-  sourcesOf,
-  TOOLCHAIN,
-} from './context.ts';
+import { eventFor, governedFile, governedWrite, readEnvelope, sourcesOf } from './context.ts';
 import { verdictReply } from './envelope.ts';
-import { proposalReply } from './proposal.ts';
 import { probeReply } from './ring.ts';
 import { judgeCommand } from './shell.ts';
 import { askTestFirst } from './test-first.ts';
+import { toolchain } from './toolchain.ts';
 import { judgeStop } from './turn.ts';
 
 async function judgeWrite(): Promise<Denial | undefined> {
-  const governed = await governedFile(await readEnvelope());
+  const governed = await governedWrite();
 
   if (governed === undefined) {
     return undefined;
   }
 
-  const { root, path } = governed;
+  const { root, path, semantics } = governed;
+
   const inFlight = inFlightFrom(await readStored(root));
   const denial = verdictReply(
     verdictFor({
       path,
       sources: await sourcesOf(root),
-      adapters: adapterPatternsOf(CLI_SEMANTICS),
-      lockfile: CLI_SEMANTICS.lockfile,
+      adapters: adapterPatternsOf(semantics),
+      lockfile: semantics.lockfile,
       inFlight,
     }),
   );
@@ -65,8 +55,12 @@ async function judgeWrite(): Promise<Denial | undefined> {
 // The tests a preset names after a unit are the ones that cover it, and the ones
 // that are not there yet are the test-first gate's business rather than ring
 // one's. Absolute, so the runner matches the file rather than a pattern.
-async function coveringOn(root: string, path: string): Promise<string[]> {
-  const named = coveringTestsOf(CLI_SEMANTICS, path).map((test) => join(root, test));
+async function coveringOn(
+  root: string,
+  path: string,
+  semantics: PresetSemantics,
+): Promise<string[]> {
+  const named = coveringTestsOf(semantics, path).map((test) => join(root, test));
   const found = await Promise.all(
     named.map(async (test) =>
       access(test).then(
@@ -79,9 +73,13 @@ async function coveringOn(root: string, path: string): Promise<string[]> {
   return found.filter((test): test is string => test !== undefined);
 }
 
-async function ringOne(root: string, path: string): Promise<RingFailure[]> {
-  const covering = await coveringOn(root, path);
-  const planned = ringOneOf(CLI_SEMANTICS).flatMap((check): PlannedCheck[] => {
+async function ringOne(
+  root: string,
+  path: string,
+  semantics: PresetSemantics,
+): Promise<RingFailure[]> {
+  const covering = await coveringOn(root, path, semantics);
+  const planned = ringOneOf(semantics).flatMap((check): PlannedCheck[] => {
     const argv = argvFor(check, covering, path);
 
     return argv === undefined ? [] : [{ runs: check.runs, argv }];
@@ -91,14 +89,15 @@ async function ringOne(root: string, path: string): Promise<RingFailure[]> {
 }
 
 async function probeRing(): Promise<ProbeReply | undefined> {
-  const governed = await governedFile(await readEnvelope());
+  const governed = await governedWrite();
 
   if (governed === undefined) {
     return undefined;
   }
 
-  const { root, path } = governed;
-  const failures = await ringOne(root, path);
+  const { root, path, semantics } = governed;
+
+  const failures = await ringOne(root, path, semantics);
 
   await record(root, {
     gate: 'probe',
@@ -163,45 +162,6 @@ const citations = defineCommand({
   },
   async run() {
     const reply = await checkCitations();
-
-    if (reply !== undefined) {
-      process.stdout.write(JSON.stringify(reply));
-    }
-  },
-});
-
-// A dependency ket installed carries the checks ket already runs, so only what
-// arrived after it is worth a proposal. The record is written when the gate
-// answers, and never otherwise, so a name is put to a session once.
-async function lookAtToolchain(): Promise<ProposalReply | undefined> {
-  const root = await ketRootFrom(process.cwd());
-
-  if (root === undefined) {
-    return undefined;
-  }
-
-  const record = join(root, KET_DIRECTORY, TOOLCHAIN);
-  const seen = seenIn(await readJson(record));
-  const arrivals = arrivalsIn({
-    declared: declaredIn(await readJson(join(root, MANIFEST))),
-    shipped: dependencyNamesOf(CLI_PRESET),
-    seen,
-  });
-  const reply = proposalReply(arrivals);
-
-  if (reply === undefined) {
-    return undefined;
-  }
-
-  await writeFile(record, recordToolchain([...seen, ...arrivals]), 'utf8');
-
-  return reply;
-}
-
-const toolchain = defineCommand({
-  meta: { name: 'toolchain', description: 'Name what arrived since ket last looked' },
-  async run() {
-    const reply = await lookAtToolchain();
 
     if (reply !== undefined) {
       process.stdout.write(JSON.stringify(reply));

@@ -1,11 +1,13 @@
+import type { PresetSemantics } from '@ket/preset';
+
 import { adapterPatternsOf } from '@ket/preset';
-import { CLI_SEMANTICS } from '@ket/preset-cli';
 
 import type { Verdict } from '../../shared/verdict.ts';
 import type { Denial } from './envelope.ts';
 
 import { writesOf } from '../../shared/command-writes.ts';
 import { readLog, record } from '../../shared/event-log.ts';
+import { semanticsOf } from '../../shared/governing.ts';
 import { readStored } from '../../shared/item-store.ts';
 import { ketRootFrom } from '../../shared/locate.ts';
 import { inFlightFrom } from '../../shared/read-item.ts';
@@ -14,7 +16,11 @@ import { shellVerdict, unreadableVerdict } from '../../shared/shell-gate.ts';
 import { eventFor, governedPaths, readEnvelope, sourcesOf } from './context.ts';
 import { commandFrom, verdictReply } from './envelope.ts';
 
-async function commandVerdict(root: string, command: string): Promise<Verdict> {
+async function commandVerdict(
+  root: string,
+  command: string,
+  semantics: PresetSemantics,
+): Promise<Verdict> {
   const writes = writesOf(command);
 
   if ('unreadable' in writes) {
@@ -25,8 +31,8 @@ async function commandVerdict(root: string, command: string): Promise<Verdict> {
     command,
     written: await governedPaths(root, writes.paths),
     sources: await sourcesOf(root),
-    adapters: adapterPatternsOf(CLI_SEMANTICS),
-    lockfile: CLI_SEMANTICS.lockfile,
+    adapters: adapterPatternsOf(semantics),
+    lockfile: semantics.lockfile,
     inFlight: inFlightFrom(await readStored(root)),
     reviewed: reviewedIn(await readLog(root)),
   });
@@ -47,7 +53,13 @@ export async function judgeCommand(): Promise<Denial | undefined> {
     return undefined;
   }
 
-  const denial = verdictReply(await commandVerdict(root, command));
+  const semantics = await semanticsOf(root);
+
+  if (semantics === undefined) {
+    return undefined;
+  }
+
+  const denial = verdictReply(await commandVerdict(root, command, semantics));
 
   await record(root, eventFor('shell', command, denial));
 
