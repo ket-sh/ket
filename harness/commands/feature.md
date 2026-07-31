@@ -1,5 +1,5 @@
 ---
-description: File a piece of work, classified and confirmed, then carry it to the next human gate
+description: File a piece of work and carry it to the first gate
 argument-hint: what the work is
 ---
 
@@ -15,16 +15,9 @@ answer two questions.
 
 **Kind** is `feature`, `bug`, `refactor` or `chore`.
 
-**Size** is decided by the test layers the change requires, never by how big it
-feels:
-
-| Requirement triggered                              | Minimum size |
-| -------------------------------------------------- | ------------ |
-| Nothing beyond a unit test                         | `trivial`    |
-| Touches an adapter, so an integration test is owed | `subtask`    |
-| Adds an acceptance criterion or an invariant       | `subtask`    |
-| Spans more than one slice                          | `story`      |
-| Cannot be specified without being broken down      | `epic`       |
+**Size** comes from the `ket:sizing` skill. Read it rather than guessing: it asks
+whether the request is an epic before it sizes anything, because a request that
+names a capability rather than a behavior is an epic however small it sounds.
 
 Use the `ket:triage` agent for this. It proposes; it does not decide.
 

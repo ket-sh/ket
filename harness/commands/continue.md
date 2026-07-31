@@ -1,5 +1,5 @@
 ---
-description: Pick up the item in flight and carry it to the next human gate
+description: Pick up the item in flight and carry it onward
 ---
 
 Find the item in flight and carry it as far as it goes.
