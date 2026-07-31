@@ -22,9 +22,26 @@ gate() {
   }
 }
 
+# A runner has no git identity and its hostname carries no domain, so git will
+# not guess one. The committed path is the normal one and it needs an identity
+# to be the path under test; the case without one is asserted further down.
+export GIT_AUTHOR_NAME='ket acceptance'
+export GIT_AUTHOR_EMAIL='acceptance@ket.invalid'
+export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
+export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+
 bun run --cwd packages/cli build >/dev/null || fail "the binary does not build"
 
-(cd "$SANDBOX" && "$KET" create order-service >/dev/null) || fail "create did not finish"
+# Keeping what create said is what turns a failed assertion into a diagnosis.
+(cd "$SANDBOX" && "$KET" create order-service >"$SANDBOX/create.log" 2>&1) || {
+  tail -20 "$SANDBOX/create.log" >&2
+  fail "create did not finish"
+}
+
+said() {
+  tail -30 "$SANDBOX/create.log" >&2
+  fail "$1"
+}
 
 test -f "$PROJECT/package.json" || fail "no manifest was written"
 test -f "$PROJECT/src/run.ts" || fail "no source was written"
@@ -52,9 +69,9 @@ done
 echo "acceptance: the scaffold arrives as its own commit"
 # Without one, the user's first diff is ket's output tangled with their own.
 test -z "$(cd "$PROJECT" && git status --porcelain)" ||
-  fail "create left the scaffold uncommitted"
+  said "create left the scaffold uncommitted"
 (cd "$PROJECT" && git log -1 --pretty=%s) | grep -qx 'chore: scaffold with ket' ||
-  fail "the first commit does not say what it is, in the form the project lints for"
+  said "the first commit does not say what it is, in the form the project lints for"
 
 # A skill installed after the scaffold commit is a skill the user has to commit
 # themselves, and the point of the commit is that they inherit nothing untracked.
@@ -98,6 +115,24 @@ echo "acceptance: a created project passes its own gate chain"
 
 # Every project gets a pipeline. Only the integrations it asked for arrive with
 # it, and the config records the answer so the harness can read it later.
+echo "acceptance: a machine with no git identity still gets its project"
+# A runner has no identity and its hostname carries no domain, so git refuses to
+# guess one. The project is written either way, and the outro says why it stayed
+# uncommitted rather than leaving the user to notice.
+NAMELESS="$SANDBOX/nameless"
+mkdir -p "$NAMELESS"
+printf '[user]\n\tuseConfigOnly = true\n' >"$NAMELESS/gitconfig"
+(cd "$NAMELESS" && env -u GIT_AUTHOR_NAME -u GIT_AUTHOR_EMAIL -u GIT_COMMITTER_NAME \
+  -u GIT_COMMITTER_EMAIL GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL="$NAMELESS/gitconfig" \
+  "$KET" create anonymous >"$SANDBOX/nameless.log" 2>&1) ||
+  fail "create gave up when git would not commit, instead of writing the project"
+test -f "$NAMELESS/anonymous/package.json" ||
+  fail "create wrote no project when git would not commit"
+grep -q 'would not commit' "$SANDBOX/nameless.log" ||
+  fail "create stayed silent about the commit it could not make"
+grep -q 'Author identity unknown' "$SANDBOX/nameless.log" ||
+  fail "create did not say why git refused, so the user cannot fix it"
+
 echo "acceptance: what a project asked for, and nothing else"
 test -f "$PROJECT/.github/workflows/ci.yml" || fail "a created project has no pipeline"
 for absent in codeql.yml coverage.yml; do

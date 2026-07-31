@@ -36,6 +36,7 @@ nizos
 nofilter
 nolint
 nonword
+NOSYSTEM
 openspec
 opentui
 opentui-spinner
