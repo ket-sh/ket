@@ -43,6 +43,7 @@ export const CLI_SEMANTICS: PresetSemantics = {
     two: [
       { runs: 'tsc --noEmit -p tsconfig.json', scope: 'project' },
       { runs: 'depcruise src --config .dependency-cruiser.cjs', scope: 'project' },
+      { runs: 'vitest run', scope: 'project' },
     ],
   },
   gates: [

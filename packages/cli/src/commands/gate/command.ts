@@ -1,18 +1,21 @@
 import { adapterPatternsOf, coveringTestsOf, dependencyNamesOf, ringOneOf } from '@ket/preset';
 import { CLI_PRESET, CLI_SEMANTICS } from '@ket/preset-cli';
 import { defineCommand, showUsage } from 'citty';
-import { spawn } from 'node:child_process';
 import { access, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import type { PlannedCheck } from '../../shared/checks.ts';
 import type { Cited } from '../../shared/citations.ts';
+import type { RingFailure } from '../../shared/ring.ts';
 import type { CitationReply } from './citations.ts';
 import type { Denial } from './envelope.ts';
 import type { ProposalReply } from './proposal.ts';
-import type { ProbeReply, RingFailure } from './ring.ts';
+import type { ProbeReply } from './ring.ts';
 
+import { failuresAmong } from '../../shared/checks.ts';
 import { ketRootFrom } from '../../shared/locate.ts';
 import { inFlightFrom } from '../../shared/read-item.ts';
+import { argvFor } from '../../shared/ring.ts';
 import { arrivalsIn, declaredIn, recordToolchain, seenIn } from '../../shared/toolchain.ts';
 import { verdictFor, workingFrom } from '../../shared/write-gate.ts';
 import { citationReply, pathsCitedIn, missingIn } from './citations.ts';
@@ -31,7 +34,7 @@ import {
 } from './context.ts';
 import { verdictReply } from './envelope.ts';
 import { proposalReply } from './proposal.ts';
-import { argvFor, probeReply } from './ring.ts';
+import { probeReply } from './ring.ts';
 import { judgeCommand } from './shell.ts';
 import { askTestFirst } from './test-first.ts';
 
@@ -59,28 +62,6 @@ async function judgeWrite(): Promise<Denial | undefined> {
   return denial;
 }
 
-async function ran(argv: string[], root: string): Promise<string | undefined> {
-  return new Promise((settle) => {
-    const [binary, ...rest] = argv;
-    const child = spawn(binary ?? '', rest, { cwd: root });
-    let said = '';
-
-    const gather = (chunk: Buffer): void => {
-      said += chunk.toString();
-    };
-
-    child.stdout.on('data', gather);
-    child.stderr.on('data', gather);
-    child.on('error', (cause: Error) => {
-      settle(cause.message);
-    });
-
-    child.on('close', (code) => {
-      settle(code === 0 ? undefined : said.trim());
-    });
-  });
-}
-
 // The tests a preset names after a unit are the ones that cover it, and the ones
 // that are not there yet are the test-first gate's business rather than ring
 // one's. Absolute, so the runner matches the file rather than a pattern.
@@ -100,18 +81,13 @@ async function coveringOn(root: string, path: string): Promise<string[]> {
 
 async function ringOne(root: string, path: string): Promise<RingFailure[]> {
   const covering = await coveringOn(root, path);
-  const failures: RingFailure[] = [];
-
-  for (const check of ringOneOf(CLI_SEMANTICS)) {
+  const planned = ringOneOf(CLI_SEMANTICS).flatMap((check): PlannedCheck[] => {
     const argv = argvFor(check, covering, path);
-    const said = argv === undefined ? undefined : await ran(argv, root);
 
-    if (said !== undefined) {
-      failures.push({ runs: check.runs, said });
-    }
-  }
+    return argv === undefined ? [] : [{ runs: check.runs, argv }];
+  });
 
-  return failures;
+  return failuresAmong(root, planned);
 }
 
 async function probeRing(): Promise<ProbeReply | undefined> {

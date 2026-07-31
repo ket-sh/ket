@@ -36,4 +36,16 @@ describe('what the cli preset runs when a stage ends', () => {
     expect(commands).toContain('tsc');
     expect(commands).toContain('depcruise');
   });
+
+  it('runs the whole suite, since ring one only ran what covered one file', () => {
+    expect(CLI_SEMANTICS.rings.two.map((check) => check.runs)).toContain(
+      CLI_SEMANTICS.scripts['test'],
+    );
+  });
+
+  it('sweeps the project with every one of them, since a stage ends on all of it', () => {
+    const scopes = CLI_SEMANTICS.rings.two.map((check) => check.scope);
+
+    expect(new Set(scopes)).toStrictEqual(new Set(['project']));
+  });
 });

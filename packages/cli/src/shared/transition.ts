@@ -1,4 +1,5 @@
 import type { Item, ItemSize, ItemStatus } from './item.ts';
+import type { RingFailure } from './ring.ts';
 
 export type Transition = { moved: Item } | { refused: string };
 
@@ -13,6 +14,7 @@ const WHY_NOT_DESIGN: Refusals = {
   'awaiting-approval': 'already designed, so approval comes next',
   implementing: 'already implementing',
   verifying: 'already verifying',
+  'awaiting-merge': 'already awaiting merge',
   shipped: 'already shipped',
 };
 
@@ -23,6 +25,7 @@ const WHY_NOT_SUBMIT: Refusals = {
   'awaiting-approval': 'already awaiting approval',
   implementing: 'already implementing',
   verifying: 'already verifying',
+  'awaiting-merge': 'already awaiting merge',
   shipped: 'already shipped',
 };
 
@@ -33,6 +36,40 @@ const WHY_NOT_APPROVE: Refusals = {
   'awaiting-approval': undefined,
   implementing: 'already implementing',
   verifying: 'already verifying',
+  'awaiting-merge': 'already awaiting merge',
+  shipped: 'already shipped',
+};
+
+const WHY_NOT_VERIFY: Refusals = {
+  idea: 'still an idea, so triage runs first',
+  triaged: 'not implementing yet, so approval runs first',
+  designing: 'still designing, so there is nothing to verify',
+  'awaiting-approval': 'awaiting approval, so there is nothing to verify',
+  implementing: undefined,
+  verifying: 'already verifying',
+  'awaiting-merge': 'already verified, so the merge comes next',
+  shipped: 'already shipped',
+};
+
+const WHY_NOT_DELIVER: Refusals = {
+  idea: 'still an idea, so triage runs first',
+  triaged: 'not verified yet, so implementation runs first',
+  designing: 'still designing, so nothing is verified',
+  'awaiting-approval': 'awaiting approval, so nothing is verified',
+  implementing: 'still implementing, so verification runs first',
+  verifying: undefined,
+  'awaiting-merge': 'already awaiting merge',
+  shipped: 'already shipped',
+};
+
+const WHY_NOT_SHIP: Refusals = {
+  idea: 'still an idea, so triage runs first',
+  triaged: 'not implemented yet, so nothing has merged',
+  designing: 'still designing, so nothing has merged',
+  'awaiting-approval': 'awaiting approval, so nothing has merged',
+  implementing: 'still implementing, so verification runs first',
+  verifying: 'still verifying, so the mutation gate runs first',
+  'awaiting-merge': undefined,
   shipped: 'already shipped',
 };
 
@@ -64,4 +101,28 @@ export function approvalOf(item: Item): Transition {
   const owed = designOwedBy(item);
 
   return owed === undefined ? moveTo(item, 'implementing', WHY_NOT_APPROVE) : { refused: owed };
+}
+
+function toldBy(failures: RingFailure[]): string {
+  return failures.map((failure) => `${failure.runs}\n${failure.said}`).join('\n\n');
+}
+
+function checked(moved: Transition, failures: RingFailure[], owing: string): Transition {
+  if ('refused' in moved || failures.length === 0) {
+    return moved;
+  }
+
+  return { refused: `${owing}\n\n${toldBy(failures)}` };
+}
+
+export function verificationOf(item: Item, failures: RingFailure[]): Transition {
+  return checked(moveTo(item, 'verifying', WHY_NOT_VERIFY), failures, 'not ready to verify.');
+}
+
+export function deliveryOf(item: Item, failures: RingFailure[]): Transition {
+  return checked(moveTo(item, 'awaiting-merge', WHY_NOT_DELIVER), failures, 'not verified yet.');
+}
+
+export function shipmentOf(item: Item): Transition {
+  return moveTo(item, 'shipped', WHY_NOT_SHIP);
 }

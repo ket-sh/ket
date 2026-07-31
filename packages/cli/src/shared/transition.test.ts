@@ -78,6 +78,12 @@ describe('refusing to open a design stage twice', () => {
       refused: 'already shipped',
     });
   });
+
+  it('refuses an item waiting on a merge', () => {
+    expect(designOf({ ...TRIAGED, status: 'awaiting-merge' })).toStrictEqual({
+      refused: 'already awaiting merge',
+    });
+  });
 });
 
 describe('handing a finished design to the person who approves it', () => {
@@ -124,6 +130,12 @@ describe('refusing to submit what was never designed', () => {
   it('refuses an item that shipped', () => {
     expect(submissionOf({ ...TRIAGED, status: 'shipped' })).toStrictEqual({
       refused: 'already shipped',
+    });
+  });
+
+  it('refuses an item waiting on a merge', () => {
+    expect(submissionOf({ ...TRIAGED, status: 'awaiting-merge' })).toStrictEqual({
+      refused: 'already awaiting merge',
     });
   });
 });
@@ -215,6 +227,12 @@ describe('refusing an approval that would not be one', () => {
   it('refuses an idea no matter how small it is, since triage names the size', () => {
     expect(approvalOf({ ...TRIAGED, status: 'idea', size: 'trivial' })).toStrictEqual({
       refused: 'still an idea, so triage runs first',
+    });
+  });
+
+  it('refuses an item waiting on a merge, since its work is already done', () => {
+    expect(approvalOf({ ...TRIAGED, status: 'awaiting-merge' })).toStrictEqual({
+      refused: 'already awaiting merge',
     });
   });
 });

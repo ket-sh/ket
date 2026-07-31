@@ -15,6 +15,7 @@
     "!src/shared/write-files.ts",
     "!src/commands/*/wizard.ts",
     "!src/shared/git.ts",
+    "!src/shared/checks.ts",
     "!src/commands/*/announce.ts",
     "!src/commands/gate/command.ts",
     "!src/commands/*/context.ts",
