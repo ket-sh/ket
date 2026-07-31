@@ -44,23 +44,47 @@ describe('an integration that changes nothing when it is asked for', () => {
     ]);
   });
 
-  it('names an integration whose file the preset already writes unasked', () => {
-    expect(invariantsBrokenBy({ files: [writes('knip.json', 'knip.json')] })).toStrictEqual([
-      'the integration codecov writes ~/knip.json, which the preset already writes unasked',
+  it('lets an integration replace a file the preset writes unasked', () => {
+    expect(invariantsBrokenBy({ files: [writes('knip.json', 'knip.json')] })).toStrictEqual([]);
+  });
+});
+
+describe('two integrations reaching for one file', () => {
+  it('names the target, since which of them lands is whichever ran last', () => {
+    const chromatic: PresetIntegration = {
+      name: 'chromatic',
+      asks: 'chromatic, on a public repository and a private one.',
+      files: [writes('github-chromatic.yml', '.github/workflows/coverage.yml')],
+    };
+
+    expect(integrationInvariantsOf(itemOffering([CODECOV, chromatic]))).toStrictEqual([
+      '~/.github/workflows/coverage.yml is claimed by codecov and by chromatic, so one of them never arrives',
     ]);
   });
 
-  it('reads every file an integration writes, not only the first', () => {
-    expect(
-      invariantsBrokenBy({
-        files: [
-          writes('github-coverage.yml', '.github/workflows/coverage.yml'),
-          writes('knip.json', 'knip.json'),
-        ],
-      }),
-    ).toStrictEqual([
-      'the integration codecov writes ~/knip.json, which the preset already writes unasked',
+  it('names a target one integration claims twice, since it wrote itself over', () => {
+    const twice: PresetIntegration = {
+      name: 'chromatic',
+      asks: 'chromatic, on a public repository and a private one.',
+      files: [
+        writes('github-chromatic.yml', '.github/workflows/chromatic.yml'),
+        writes('chromatic.yml', '.github/workflows/chromatic.yml'),
+      ],
+    };
+
+    expect(integrationInvariantsOf(itemOffering([twice]))).toStrictEqual([
+      '~/.github/workflows/chromatic.yml is claimed by chromatic and by chromatic, so one of them never arrives',
     ]);
+  });
+
+  it('breaks nothing when two integrations write different files', () => {
+    const chromatic: PresetIntegration = {
+      name: 'chromatic',
+      asks: 'chromatic, on a public repository and a private one.',
+      files: [writes('github-chromatic.yml', '.github/workflows/chromatic.yml')],
+    };
+
+    expect(integrationInvariantsOf(itemOffering([CODECOV, chromatic]))).toStrictEqual([]);
   });
 });
 

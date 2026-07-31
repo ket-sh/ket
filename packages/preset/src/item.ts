@@ -14,6 +14,7 @@ export interface StageReference {
 interface OfferedIntegration {
   name: string;
   asks: string;
+  installs?: string[];
 }
 
 // An integration either puts files in a project or changes what an agent
@@ -22,6 +23,10 @@ interface OfferedIntegration {
 export type PresetIntegration =
   | (OfferedIntegration & { files: PresetFile[] })
   | (OfferedIntegration & { reaches: StageReference });
+
+export function installsOf(integration: PresetIntegration): string[] {
+  return integration.installs ?? [];
+}
 
 export function filesOf(integration: PresetIntegration): PresetFile[] {
   return 'files' in integration ? integration.files : [];

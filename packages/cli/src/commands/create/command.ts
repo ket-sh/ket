@@ -11,7 +11,7 @@ import { governingPresets } from '../../shared/registry.ts';
 import { readTextIfPresent, writeFiles } from '../../shared/write-files.ts';
 import { announce, openCreate } from './announce.ts';
 import { filesToInstall, shippedContents } from './install.ts';
-import { chosenFrom, filesFor, namesOffered } from './integrations.ts';
+import { chosenFrom, filesFor, installsFor, namesOffered } from './integrations.ts';
 import { renderManifest } from './manifest.ts';
 import { planCreation } from './plan.ts';
 import { presetFrom } from './preset.ts';
@@ -151,7 +151,10 @@ const create = defineCommand({
         path: 'package.json',
         contents: renderManifest(project.name, {
           dependencies: governing.item.dependencies,
-          devDependencies: governing.item.devDependencies,
+          devDependencies: [
+            ...governing.item.devDependencies,
+            ...installsFor(targets, configuration.integrations),
+          ],
           scripts: governing.semantics.scripts,
         }),
       },

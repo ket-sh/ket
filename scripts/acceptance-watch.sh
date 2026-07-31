@@ -14,21 +14,28 @@ fail() {
   exit 1
 }
 
+# A snapshot is read once into a variable rather than piped. `grep -q` closes
+# the pipe on its first match, and the writer dies of it before it has finished.
 screen() {
   "$PILOTTY" snapshot -s "$SESSION" --format text
 }
 
+shows() {
+  grep -q "$1" <<<"$SHOWN"
+}
+
 selected_stage() {
-  screen | grep -m1 '┃' | sed 's/^[^┃]*┃//; s/┃.*//' | tr -dc 'a-z'
+  grep -m1 '┃' <<<"$SHOWN" | sed 's/^[^┃]*┃//; s/┃.*//' | tr -dc 'a-z'
 }
 
 "$PILOTTY" kill -s "$SESSION" >/dev/null 2>&1 || true
 "$PILOTTY" spawn --name "$SESSION" --cwd "$PWD/packages/cli" bun src/run.ts watch >/dev/null
 "$PILOTTY" wait-for -s "$SESSION" "AUTH-3" >/dev/null || fail "the item never appeared"
 
-screen | grep -q "login with lockout" || fail "the item title is missing"
-screen | grep -q "verify fails and returns to implement" || fail "the loop is not reported"
-screen | grep -q "classified kind=feature" || fail "the selected stage shows no log"
+SHOWN="$(screen)"
+shows "login with lockout" || fail "the item title is missing"
+shows "verify fails and returns to implement" || fail "the loop is not reported"
+shows "classified kind=feature" || fail "the selected stage shows no log"
 
 opening="$(selected_stage)"
 [ "$opening" = "triage" ] || fail "expected triage selected at rest, saw '${opening}'"
@@ -36,6 +43,7 @@ opening="$(selected_stage)"
 "$PILOTTY" key -s "$SESSION" Right >/dev/null
 "$PILOTTY" wait-for -s "$SESSION" "searched lockout policies" >/dev/null || fail "the log never followed the selection"
 
+SHOWN="$(screen)"
 moved="$(selected_stage)"
 [ "$moved" = "research" ] || fail "expected research selected after Right, saw '${moved}'"
 

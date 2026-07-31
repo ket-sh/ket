@@ -1,3 +1,4 @@
+import { filesOf } from '@ket/preset';
 import { describe, expect, it } from 'vitest';
 
 import { WEB_PRESET } from './item.ts';
@@ -23,5 +24,25 @@ describe('what the web preset installs to render anything at all', () => {
 
   it('installs a renderer, since a route returns markup', () => {
     expect(WEB_PRESET.dependencies).toContain('react@19.2.8');
+  });
+});
+
+describe('what the web preset offers a project that wants its screens reviewed', () => {
+  const CHROMATIC = WEB_PRESET.integrations.find((offered) => offered.name === 'chromatic');
+
+  it('installs the runner Chromatic uploads its archives from', () => {
+    expect(CHROMATIC?.installs).toStrictEqual([
+      'chromatic@18.1.0',
+      '@chromatic-com/playwright@0.14.11',
+    ]);
+  });
+
+  it('replaces the spec, since the archive only exists when the spec imports theirs', () => {
+    const written = CHROMATIC === undefined ? [] : filesOf(CHROMATIC);
+
+    expect(written.map((file) => file.target)).toStrictEqual([
+      '~/.github/workflows/chromatic.yml',
+      '~/e2e/greeting.spec.ts',
+    ]);
   });
 });

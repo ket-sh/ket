@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { filesOf, reachesNothing, writes } from './item.ts';
+import { filesOf, installsOf, reachesNothing, writes } from './item.ts';
 
 const WRITING = {
   name: 'codeql',
@@ -21,6 +21,27 @@ describe('what an integration brings a project', () => {
 
   it('names no file for one that reaches a stage instead', () => {
     expect(filesOf(REACHING)).toStrictEqual([]);
+  });
+});
+
+describe('what an integration installs', () => {
+  it('names the packages one that installs some brings', () => {
+    const chromatic = {
+      name: 'chromatic',
+      asks: 'chromatic on a public repo and a private one.',
+      installs: ['chromatic@13.4.0'],
+      files: [writes('github-chromatic.yml', '.github/workflows/chromatic.yml')],
+    };
+
+    expect(installsOf(chromatic)).toStrictEqual(['chromatic@13.4.0']);
+  });
+
+  it('names nothing for one that brings only files', () => {
+    expect(installsOf(WRITING)).toStrictEqual([]);
+  });
+
+  it('names nothing for one that reaches a stage instead', () => {
+    expect(installsOf(REACHING)).toStrictEqual([]);
   });
 });
 

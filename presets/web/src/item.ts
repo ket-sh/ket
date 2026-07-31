@@ -54,6 +54,15 @@ export const WEB_PRESET: PresetItem = {
       asks: 'mobbin is a gallery of shipped screens to design against. A seat costs the same whether the repository is public or private.',
       reaches: { stage: 'designing', reference: 'https://mobbin.com' },
     },
+    {
+      name: 'chromatic',
+      asks: 'chromatic reviews what a page looks like on each push. Free to 5000 snapshots a month on a public repository or a private one, then paid.',
+      installs: ['chromatic@18.1.0', '@chromatic-com/playwright@0.14.11'],
+      files: [
+        writes('github-chromatic.yml', '.github/workflows/chromatic.yml'),
+        writes('source/chromatic/greeting.spec.ts', 'e2e/greeting.spec.ts'),
+      ],
+    },
     ...STANDING_INTEGRATIONS,
   ],
 };
