@@ -33,12 +33,38 @@ test -d "$PROJECT/.git" || fail "no repository was initialized"
 grep -q '"name": "order-service"' "$PROJECT/package.json" ||
   fail "the manifest is not named after the directory"
 
+echo "acceptance: a created project carries the standing law it is governed by"
+test -f "$PROJECT/CLAUDE.md" || fail "no standing law was written"
+grep -qxF "# \`order-service\`" "$PROJECT/CLAUDE.md" ||
+  fail "the standing law is not written for the project that got it"
+test -f "$PROJECT/skills-lock.json" || fail "no skills lockfile was written"
+
+# The standing law points an agent at skills. A skill the project never got is a
+# pointer to nothing, so every one it names has to be on disk.
+echo "acceptance: the skills the lockfile records arrive with the project"
+for skill in vitest find-skills; do
+  test -f "$PROJECT/.claude/skills/$skill/SKILL.md" ||
+    fail "$skill is locked but no such skill arrived"
+  grep -qF "\`$skill\` skill" "$PROJECT/CLAUDE.md" ||
+    fail "the standing law never sends the reader to the $skill skill it installed"
+done
+
 echo "acceptance: the scaffold arrives as its own commit"
 # Without one, the user's first diff is ket's output tangled with their own.
 test -z "$(cd "$PROJECT" && git status --porcelain)" ||
   fail "create left the scaffold uncommitted"
 (cd "$PROJECT" && git log -1 --pretty=%s) | grep -qx 'chore: scaffold with ket' ||
   fail "the first commit does not say what it is, in the form the project lints for"
+
+# A skill installed after the scaffold commit is a skill the user has to commit
+# themselves, and the point of the commit is that they inherit nothing untracked.
+committed() {
+  (cd "$PROJECT" && git ls-tree -r HEAD --name-only) | grep -qx "$1"
+}
+for tracked in CLAUDE.md skills-lock.json .claude/skills/vitest/SKILL.md \
+  .claude/skills/find-skills/SKILL.md; do
+  committed "$tracked" || fail "$tracked is not inside the first commit"
+done
 
 (cd "$PROJECT" && bun install >"$SANDBOX/install.log" 2>&1) || {
   tail -20 "$SANDBOX/install.log" >&2
@@ -94,6 +120,40 @@ grep -q "integrations: \['codecov', 'codeql', 'coderabbit'\]" "$WITH/.ket/config
 
 (cd "$SANDBOX" && "$KET" create unoffered --with chromatic >/dev/null 2>&1) &&
   fail "create accepted an integration the cli preset does not offer"
+
+# The tool clones over the network, and the network is not a promise ket can
+# make. Forcing the failure is the only way to find out what the user is left
+# holding when it happens.
+echo "acceptance: a project survives an install that cannot run"
+UNREACHABLE="$SANDBOX/no-network"
+STRANDED="$SANDBOX/stranded"
+mkdir -p "$UNREACHABLE"
+cat >"$UNREACHABLE/bunx" <<'REFUSE'
+#!/bin/sh
+echo "fatal: could not read from remote repository"
+exit 1
+REFUSE
+chmod +x "$UNREACHABLE/bunx"
+
+(cd "$SANDBOX" && PATH="$UNREACHABLE:$PATH" "$KET" create stranded >"$SANDBOX/stranded.log" 2>&1) ||
+  fail "create gave up on the project when the skills could not install"
+
+test -f "$STRANDED/skills-lock.json" ||
+  fail "a project whose skills did not install lost the lockfile that records them"
+test -d "$STRANDED/.claude/skills" &&
+  fail "skills arrived from an installer that refused"
+test -z "$(cd "$STRANDED" && git status --porcelain)" ||
+  fail "a failed install left the project uncommitted"
+
+grep -q 'skills did not install' "$SANDBOX/stranded.log" ||
+  fail "the outro says nothing about the skills that did not install"
+grep -q 'could not read from remote repository' "$SANDBOX/stranded.log" ||
+  fail "the outro hides what the installer actually said"
+for stranded in vitest find-skills; do
+  grep -q "skills@.* add .* --skill $stranded --agent claude-code --copy --yes" \
+    "$SANDBOX/stranded.log" ||
+    fail "the outro does not say how to install $stranded later"
+done
 
 echo "acceptance: every workflow a project gets is one github can run"
 mise exec -- actionlint "$WITH/.github/workflows/"*.yml ||
