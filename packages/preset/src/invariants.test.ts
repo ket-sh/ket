@@ -37,7 +37,7 @@ const SOUND: PresetSubject = {
   },
   semantics: {
     scripts: { fmt: 'oxfmt .' },
-    slice: { root: 'src/commands/{slice}', adapter: 'command.ts', mutate: [] },
+    slice: { roots: ['src/commands/{slice}'], adapters: ['command.ts', 'io/**'] },
     tests: { example: '{unit}.test.ts', property: '{unit}.property.test.ts' },
     acceptance: { runner: 'cucumber', drives: 'binary' },
     substrate: 'temporary-directories',
@@ -134,6 +134,8 @@ describe('a preset against the pipeline and the configs it writes', () => {
       'the gate lint names the pipeline job prose, which no workflow the preset writes declares',
       'the pipeline job check belongs to no gate the preset declares',
       'the mutation config the preset writes names no test config',
+      'the preset declares src/commands/*/command.ts an adapter, and the mutation config it writes never excludes it',
+      'the preset declares src/commands/*/io/** an adapter, and the mutation config it writes never excludes it',
     ]);
   });
 });

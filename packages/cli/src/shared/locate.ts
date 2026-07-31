@@ -5,7 +5,7 @@ import type { PresetName } from './configuration.ts';
 
 import { PRESET_NAMES } from './configuration.ts';
 
-const KET_DIRECTORY = '.ket';
+export const KET_DIRECTORY = '.ket';
 
 const SOURCE_DIRECTORY = 'src';
 
@@ -67,6 +67,18 @@ export function insideRepository(root: string, path: string): string | undefined
   const within = relative(root, path);
 
   return within.startsWith('..') ? undefined : within;
+}
+
+// Every command that writes state needs the repository, and a command that
+// cannot find one has nothing to write into.
+export async function ketRootOrThrow(from: string): Promise<string> {
+  const root = await ketRootFrom(from);
+
+  if (root === undefined) {
+    throw new Error(`no ${KET_DIRECTORY} directory above ${from}`);
+  }
+
+  return root;
 }
 
 export function keyFrom(loaded: unknown): string | undefined {

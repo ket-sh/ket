@@ -1,0 +1,15 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreBinaries": ["mise"],
+  "ignoreDependencies": ["@steiger/toolkit"],
+  "entry": [
+    "src/app/router.tsx",
+    "src/app/routes/**/*.tsx",
+    "e2e/**/*.spec.ts",
+    "vitest.mutation.config.ts",
+    "steiger.config.ts",
+    "probity.config.ts"
+  ],
+  "project": ["src/**/*.{ts,tsx}", "*.config.ts"],
+  "ignore": ["**/*.gen.ts"]
+}

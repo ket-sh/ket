@@ -84,6 +84,7 @@ describe('deciding whether an item is in flight', () => {
       'awaiting-approval',
       'implementing',
       'verifying',
+      'awaiting-merge',
     ]) {
       expect({ status, flight: isInFlight(status) }).toStrictEqual({ status, flight: true });
     }
@@ -97,6 +98,10 @@ describe('deciding whether an item is in flight', () => {
     expect(isInFlight('shipped')).toBe(false);
   });
 
+  it('counts an item waiting on a merge, since the work has not landed yet', () => {
+    expect(isInFlight('awaiting-merge')).toBe(true);
+  });
+
   it('declares every status the lifecycle names, and no more', () => {
     expect(ITEM_STATUSES).toStrictEqual([
       'idea',
@@ -105,13 +110,21 @@ describe('deciding whether an item is in flight', () => {
       'awaiting-approval',
       'implementing',
       'verifying',
+      'awaiting-merge',
       'shipped',
     ]);
+  });
+
+  it('waits on a merge after verification and before shipping', () => {
+    const order = [...ITEM_STATUSES];
+
+    expect(order.indexOf('awaiting-merge')).toBe(order.indexOf('verifying') + 1);
+    expect(order.indexOf('shipped')).toBe(order.indexOf('awaiting-merge') + 1);
   });
 });
 
 describe('a status the lifecycle never named', () => {
-  it('is not in flight, since the gates only know the seven', () => {
+  it('is not in flight, since the gates only know the eight', () => {
     expect(isInFlight('halfway')).toBe(false);
   });
 

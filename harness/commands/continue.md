@@ -28,8 +28,9 @@ built to run on its own, and the three human gates are the only places it waits.
 
 ## 3. Stop at a gate
 
-The three human gates are the triage confirmation, the decomposition
-confirmation, and `/ket:approve`. Stop at one of those, and only there.
+The four human gates are the triage confirmation, the decomposition
+confirmation, `/ket:approve` and `/ket:ship`. Stop at one of those, and only
+there.
 
 When you stop, say which item is in flight, what status it holds, and what you
 need from the user. If the item is waiting on approval, tell them the exact
@@ -39,9 +40,24 @@ command:
 /ket:approve <key>
 ```
 
-The stages after `implementing` are not built yet. Mutation and review run as
-their own gates in a later slice, so continuing an implementing item means
-carrying its failing test to green and then saying what remains.
+An item at `awaiting-merge` is waiting on a person to merge it, so tell them:
+
+```
+/ket:ship <key>
+```
+
+## 4. What each of the later statuses owes
+
+`implementing` carries the failing test to green, then runs
+`ket item verify <key>`. That command runs ring two, so a refusal names the
+project check that failed. Fix it and run the command again.
+
+`verifying` runs `/ket:review` and answers whatever it found, then runs
+`ket item deliver <key>` for the mutation gate. A survivor is a defect in the
+test, so read the `mutation` skill and kill it rather than moving on.
+
+`awaiting-merge` opens the pull request if it is not open, then stops. Only a
+person closes it.
 
 The `progress` skill holds the shape of that report: every task, every time,
 rather than only the one that moved.

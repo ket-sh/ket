@@ -6,7 +6,7 @@ import color from 'picocolors';
 
 import type { Configuration, PresetName } from '../../shared/configuration.ts';
 
-import { PRESET_NAMES } from '../../shared/configuration.ts';
+import { registeredPresets } from '../../shared/registry.ts';
 import { directoryLabel } from './directory-label.ts';
 import { integrationsOffered } from './integrations.ts';
 import { refuseKey } from './key.ts';
@@ -33,7 +33,7 @@ export async function askName(under: string): Promise<string | symbol> {
 async function askPreset(): Promise<PresetName | symbol> {
   return select({
     message: 'Please select your project type',
-    options: PRESET_NAMES.map((preset) => ({ value: preset, label: preset })),
+    options: registeredPresets().map(({ name }) => ({ value: name, label: name })),
   });
 }
 

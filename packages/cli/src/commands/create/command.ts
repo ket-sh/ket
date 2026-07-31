@@ -1,18 +1,20 @@
 import { isCancel } from '@clack/prompts';
-import { CLI_PRESET, CLI_SEMANTICS } from '@ket/preset-cli';
 import { defineCommand, showUsage } from 'citty';
 import { mkdir } from 'node:fs/promises';
 import { basename, relative } from 'node:path';
 
-import type { Configuration } from '../../shared/configuration.ts';
+import type { Configuration, PresetName } from '../../shared/configuration.ts';
+import type { RegisteredPreset } from '../../shared/registry.ts';
 
 import { commitScaffold, initializeRepository } from '../../shared/git.ts';
+import { governingPresets } from '../../shared/registry.ts';
 import { readTextIfPresent, writeFiles } from '../../shared/write-files.ts';
 import { announce, openCreate } from './announce.ts';
 import { filesToInstall, shippedContents } from './install.ts';
 import { chosenFrom, filesFor, namesOffered } from './integrations.ts';
 import { renderManifest } from './manifest.ts';
 import { planCreation } from './plan.ts';
+import { presetFrom } from './preset.ts';
 import { scaffoldFor } from './scaffold.ts';
 import { withHarnessRegistered } from './settings.ts';
 import { installSkills } from './skills-install.ts';
@@ -42,25 +44,53 @@ async function settleDirectory(given: string | undefined): Promise<string> {
   return answered;
 }
 
+function configuredFromFlags(
+  key: string | undefined,
+  named: string | undefined,
+  asked: string | undefined,
+): Configuration | undefined {
+  const chosen = presetFrom(asked);
+
+  if ('refused' in chosen) {
+    throw new Error(chosen.refused);
+  }
+
+  const outcome = chosenFrom(named, namesOffered([chosen.preset]));
+
+  if ('refused' in outcome) {
+    throw new Error(outcome.refused);
+  }
+
+  return key === undefined
+    ? undefined
+    : { key, targets: { '.': chosen.preset }, integrations: outcome.chosen };
+}
+
 async function settleConfiguration(
   key: string | undefined,
   named: string | undefined,
+  asked: string | undefined,
 ): Promise<Configuration | undefined> {
   if (!isInteractive()) {
-    const outcome = chosenFrom(named, namesOffered(['cli']));
-
-    if ('refused' in outcome) {
-      throw new Error(outcome.refused);
-    }
-
-    return key === undefined
-      ? undefined
-      : { key, targets: { '.': 'cli' }, integrations: outcome.chosen };
+    return configuredFromFlags(key, named, asked);
   }
 
   const outcome = await runWizard(key);
 
   return 'configured' in outcome ? outcome.configured : undefined;
+}
+
+// One target today, and a monorepo is the slice that brings more. Reading the
+// first is what keeps the manifest and the announcement from drifting back to
+// a preset the project never chose.
+function governingPreset(targets: PresetName[]): RegisteredPreset {
+  const [governing] = governingPresets(targets);
+
+  if (governing === undefined) {
+    throw new Error(`ket writes no preset for ${targets.join(', ')}`);
+  }
+
+  return governing;
 }
 
 const create = defineCommand({
@@ -79,6 +109,11 @@ const create = defineCommand({
       description: 'Integrations to enable, separated by commas',
       required: false,
     },
+    preset: {
+      type: 'string',
+      description: 'The kind of project to write',
+      required: false,
+    },
   },
   async run({ args }) {
     if (isInteractive()) {
@@ -86,7 +121,7 @@ const create = defineCommand({
     }
 
     const plan = await planCreation(await settleDirectory(args.directory));
-    const configuration = await settleConfiguration(plan.key, args.with);
+    const configuration = await settleConfiguration(plan.key, args.with, args.preset);
 
     if (configuration === undefined) {
       throw new Error(`nothing was configured for ${plan.root}`);
@@ -97,12 +132,13 @@ const create = defineCommand({
 
     const gitignore = await readTextIfPresent(plan.root, '.gitignore');
     const settings = await readTextIfPresent(plan.root, '.claude/settings.json');
-    const presets = Object.values(configuration.targets);
-    const name = basename(plan.root);
+    const targets = Object.values(configuration.targets);
+    const governing = governingPreset(targets);
+    const project = { name: basename(plan.root), key: configuration.key };
 
     const installed = [
-      ...filesToInstall(presets, name),
-      ...filesFor(presets, configuration.integrations),
+      ...filesToInstall(targets, project),
+      ...filesFor(targets, configuration.integrations),
     ];
 
     // A preset ignores what its own toolchain downloads and builds, and ket adds
@@ -113,10 +149,10 @@ const create = defineCommand({
     const written = [
       {
         path: 'package.json',
-        contents: renderManifest(name, {
-          dependencies: CLI_PRESET.dependencies,
-          devDependencies: CLI_PRESET.devDependencies,
-          scripts: CLI_SEMANTICS.scripts,
+        contents: renderManifest(project.name, {
+          dependencies: governing.item.dependencies,
+          devDependencies: governing.item.devDependencies,
+          scripts: governing.semantics.scripts,
         }),
       },
       { path: '.claude/settings.json', contents: withHarnessRegistered(settings) },
@@ -135,8 +171,8 @@ const create = defineCommand({
 
     announce(
       relative(process.cwd(), plan.root) || '.',
-      CLI_SEMANTICS.scripts,
-      CLI_SEMANTICS.gates,
+      governing.semantics.scripts,
+      governing.semantics.gates,
       first,
       skills,
     );

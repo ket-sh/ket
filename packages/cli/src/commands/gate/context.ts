@@ -1,21 +1,17 @@
-import { appendFile, readdir, readFile, realpath } from 'node:fs/promises';
+import type { PresetSemantics } from '@ket/preset';
+
+import { readFile, realpath } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 
 import type { PresetName } from '../../shared/configuration.ts';
-import type { StoredItem } from '../../shared/read-item.ts';
-import type { GovernedItem } from '../../shared/write-gate.ts';
+import type { GateEvent } from '../../shared/event.ts';
 import type { Denial } from './envelope.ts';
-import type { GateEvent } from './event.ts';
 
+import { semanticsOf } from '../../shared/governing.ts';
 import { insideRepository, ketRootFrom, sourceRootsOf, targetsFrom } from '../../shared/locate.ts';
 import { pathFrom } from './envelope.ts';
-import { renderEvent } from './event.ts';
 
 export const KET_DIRECTORY = '.ket';
-
-const EVENTS = 'events.jsonl';
-
-const ITEM_FILE = 'item.yaml';
 
 export const MANIFEST = 'package.json';
 
@@ -43,21 +39,25 @@ export async function sourcesOf(root: string): Promise<string[]> {
   return sourceRootsOf(await readTargets(root));
 }
 
-export async function readStored(root: string): Promise<StoredItem[]> {
-  const items = join(root, KET_DIRECTORY, 'items');
-  const entries = await readdir(items, { withFileTypes: true }).catch(() => []);
-  const directories = entries.filter((entry) => entry.isDirectory());
-
-  return Promise.all(
-    directories.map(async (entry) => ({
-      key: entry.name,
-      contents: await readFile(join(items, entry.name, ITEM_FILE), 'utf8').catch(() => ''),
-    })),
-  );
+export interface GovernedWrite {
+  root: string;
+  path: string;
+  semantics: PresetSemantics;
 }
 
-export async function record(root: string, event: GateEvent): Promise<void> {
-  await appendFile(join(root, KET_DIRECTORY, EVENTS), renderEvent(event), 'utf8');
+// A gate cannot judge a write without the file it touched and the preset that
+// governs the project. Either one missing says the same thing: nothing here is
+// ket's to answer for.
+export async function governedWrite(): Promise<GovernedWrite | undefined> {
+  const governed = await governedFile(await readEnvelope());
+
+  if (governed === undefined) {
+    return undefined;
+  }
+
+  const semantics = await semanticsOf(governed.root);
+
+  return semantics === undefined ? undefined : { ...governed, semantics };
 }
 
 export function eventFor(
@@ -73,10 +73,6 @@ export function eventFor(
     ...(item === undefined ? {} : { item }),
     ...(denial === undefined ? {} : { reason: denial.hookSpecificOutput.permissionDecisionReason }),
   };
-}
-
-export function keyOf(working: GovernedItem[]): string | undefined {
-  return working.length === 1 ? working[0]?.key : undefined;
 }
 
 // A repository reached through a symlink names its files one way and reports its

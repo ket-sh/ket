@@ -60,6 +60,18 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ket gate turn",
+            "timeout": 10,
+            "statusMessage": "asking whether the work reached a resting place"
+          }
+        ]
+      }
     ]
   }
 }

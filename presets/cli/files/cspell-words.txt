@@ -1,3 +1,5 @@
+__PROJECT_KEY__
+__PROJECT_NAME__
 aaabbccccd
 actionlint
 anscribe

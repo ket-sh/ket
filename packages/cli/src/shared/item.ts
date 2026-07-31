@@ -5,6 +5,7 @@ export const ITEM_STATUSES = [
   'awaiting-approval',
   'implementing',
   'verifying',
+  'awaiting-merge',
   'shipped',
 ] as const;
 

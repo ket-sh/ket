@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { GovernedItem, WriteAttempt } from './write-gate.ts';
 
-import { verdictFor, workingFrom } from './write-gate.ts';
+import { jobIn, verdictFor, workingFrom } from './write-gate.ts';
 
 const EPIC: GovernedItem = {
   key: 'AUTH-1',
@@ -91,5 +91,23 @@ describe('the item a gate treats as the job in hand', () => {
     const keys = workingFrom([{ ...CHILD, key: 'AUTH-1' }, CHILD]).map((item) => item.key);
 
     expect(keys).toStrictEqual(['AUTH-1', 'AUTH-2']);
+  });
+});
+
+describe('the one job a repository has in hand', () => {
+  it('is the child the epic delegates to, since the two of them are one job', () => {
+    expect(jobIn([EPIC, CHILD])).toStrictEqual(CHILD);
+  });
+
+  it('is the only item in flight when nothing delegates at all', () => {
+    expect(jobIn([CHILD])).toStrictEqual(CHILD);
+  });
+
+  it('is nobody where nothing is in flight, so no item governs the session', () => {
+    expect(jobIn([])).toBeUndefined();
+  });
+
+  it('is nobody where two items are in flight, since one job means one branch', () => {
+    expect(jobIn([{ ...CHILD, key: 'AUTH-1' }, CHILD])).toBeUndefined();
   });
 });

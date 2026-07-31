@@ -211,6 +211,14 @@ function unreadableIn(segments: Word[][]): string | undefined {
   return segments.map(inlineScriptIn).find((inline) => inline !== undefined);
 }
 
+// A shell command reads the same way whatever the question is, so the reading
+// lives here once and the questions live where they are asked.
+export function segmentsIn(command: string): string[][] {
+  return withoutHeredocBodies(command)
+    .flatMap((line) => segmentsOf(wordsOf(line)))
+    .map((segment) => segment.map((word) => word.text));
+}
+
 // Reading is always allowed, so a command naming no written path is waved
 // through. What cannot be read confidently and can write is refused instead,
 // because an unreadable command that gets waved through is the hole itself.

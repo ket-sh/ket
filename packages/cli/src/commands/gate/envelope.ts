@@ -86,3 +86,10 @@ export function refusal(reason: string): Denial {
 export function verdictReply(verdict: Verdict): Denial | undefined {
   return 'refused' in verdict ? refusal(verdict.refused) : undefined;
 }
+
+// The runtime sets this once a stop hook is already driving the turn, and it
+// overrides the hook outright after eight blocks in a row. A gate that fights
+// that gets turned off, so ket reads the flag and lets go.
+export function overriddenBy(envelope: unknown): boolean {
+  return fieldFrom(envelope, 'stop_hook_active') === true;
+}

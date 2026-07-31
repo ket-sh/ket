@@ -38,9 +38,9 @@ describe('an integration that changes nothing when it is asked for', () => {
     expect(integrationInvariantsOf(itemOffering([]))).toStrictEqual([]);
   });
 
-  it('names an integration that writes nothing', () => {
+  it('names an integration that changes nothing a project can see', () => {
     expect(invariantsBrokenBy({ files: [] })).toStrictEqual([
-      'the integration codecov writes no file',
+      'the integration codecov changes nothing a project can see',
     ]);
   });
 

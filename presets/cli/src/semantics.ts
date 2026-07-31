@@ -23,9 +23,8 @@ export const CLI_SEMANTICS: PresetSemantics = {
     prepare: 'lefthook install',
   },
   slice: {
-    root: `src/commands/${SLICE_PLACEHOLDER}`,
-    adapter: 'command.ts',
-    mutate: ['**/*.ts', '!**/*.test.ts', '!command.ts', '!io/**'],
+    roots: [`src/commands/${SLICE_PLACEHOLDER}`],
+    adapters: ['command.ts', 'io/**'],
   },
   tests: {
     example: `${UNIT_PLACEHOLDER}.test.ts`,
@@ -43,6 +42,7 @@ export const CLI_SEMANTICS: PresetSemantics = {
     two: [
       { runs: 'tsc --noEmit -p tsconfig.json', scope: 'project' },
       { runs: 'depcruise src --config .dependency-cruiser.cjs', scope: 'project' },
+      { runs: 'vitest run', scope: 'project' },
     ],
   },
   gates: [

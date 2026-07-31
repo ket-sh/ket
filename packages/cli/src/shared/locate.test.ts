@@ -3,7 +3,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { insideRepository, keyFrom, ketRootFrom, sourceRootsOf, targetsFrom } from './locate.ts';
+import {
+  insideRepository,
+  keyFrom,
+  ketRootFrom,
+  ketRootOrThrow,
+  sourceRootsOf,
+  targetsFrom,
+} from './locate.ts';
 
 let root = '';
 
@@ -143,5 +150,27 @@ describe('reading a written path the way a hook sends it', () => {
     expect(insideRepository('/work/shop', '/work/shop/src/commands/hello/command.ts')).toBe(
       'src/commands/hello/command.ts',
     );
+  });
+});
+
+describe('demanding the repository rather than answering without one', () => {
+  it('hands back the repository it found', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'ket-root-'));
+
+    await mkdir(join(root, '.ket'), { recursive: true });
+
+    expect(await ketRootOrThrow(root)).toBe(root);
+  });
+
+  it('refuses with the directory it looked above, so the message can be acted on', async () => {
+    const nowhere = await mkdtemp(join(tmpdir(), 'ket-none-'));
+
+    await expect(ketRootOrThrow(nowhere)).rejects.toThrow(nowhere);
+  });
+
+  it('names the directory it was looking for', async () => {
+    const nowhere = await mkdtemp(join(tmpdir(), 'ket-none-'));
+
+    await expect(ketRootOrThrow(nowhere)).rejects.toThrow('.ket');
   });
 });

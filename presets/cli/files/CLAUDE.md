@@ -27,7 +27,7 @@ carries the statuses, the commands that move an item between them, and the
 points where the pipeline stops for you.
 
 Drive it with `/ket:feature`, `/ket:explore`, `/ket:approve`, `/ket:continue`,
-`/ket:review`, and `/ket:status`.
+`/ket:review`, `/ket:ship`, and `/ket:status`.
 
 ## The gates
 
