@@ -134,10 +134,10 @@ const create = defineCommand({
     const settings = await readTextIfPresent(plan.root, '.claude/settings.json');
     const targets = Object.values(configuration.targets);
     const governing = governingPreset(targets);
-    const name = basename(plan.root);
+    const project = { name: basename(plan.root), key: configuration.key };
 
     const installed = [
-      ...filesToInstall(targets, name),
+      ...filesToInstall(targets, project),
       ...filesFor(targets, configuration.integrations),
     ];
 
@@ -149,7 +149,7 @@ const create = defineCommand({
     const written = [
       {
         path: 'package.json',
-        contents: renderManifest(name, {
+        contents: renderManifest(project.name, {
           dependencies: governing.item.dependencies,
           devDependencies: governing.item.devDependencies,
           scripts: governing.semantics.scripts,
