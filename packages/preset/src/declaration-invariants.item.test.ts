@@ -112,6 +112,36 @@ describe('how a preset presents itself to a registry', () => {
   });
 });
 
+describe('what an integration installs', () => {
+  it('breaks nothing when an integration pins everything it installs', () => {
+    const integrations = [
+      {
+        name: 'chromatic',
+        asks: 'chromatic, on a public repository and a private one.',
+        installs: ['chromatic@18.1.0'],
+        files: [writes('github-chromatic.yml', '.github/workflows/chromatic.yml')],
+      },
+    ];
+
+    expect(brokenWhenItem({ integrations })).toStrictEqual([]);
+  });
+
+  it('names a package an integration installs on a range rather than a pin', () => {
+    const integrations = [
+      {
+        name: 'chromatic',
+        asks: 'chromatic, on a public repository and a private one.',
+        installs: ['chromatic@^18.1.0'],
+        files: [writes('github-chromatic.yml', '.github/workflows/chromatic.yml')],
+      },
+    ];
+
+    expect(brokenWhenItem({ integrations })).toContain(
+      'the integration chromatic installs chromatic@^18.1.0, and a range moves a gate without a commit',
+    );
+  });
+});
+
 describe('where a preset targets what it writes', () => {
   it('names a file targeted outside the repository it configures', () => {
     const files = [

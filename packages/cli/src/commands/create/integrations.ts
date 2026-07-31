@@ -1,6 +1,6 @@
 import type { PresetIntegration } from '@ket/preset';
 
-import { filesOf } from '@ket/preset';
+import { filesOf, installsOf } from '@ket/preset';
 
 import type { PresetName } from '../../shared/configuration.ts';
 import type { ScaffoldFile } from '../../shared/write-files.ts';
@@ -56,4 +56,16 @@ export function filesFor(presets: PresetName[], chosen: string[]): ScaffoldFile[
   }
 
   return [...byPath.values()];
+}
+
+export function installsFor(presets: PresetName[], chosen: string[]): string[] {
+  const installed = new Set<string>();
+
+  for (const preset of governingPresets(presets)) {
+    for (const pin of chosenIn(preset.name, chosen).flatMap(installsOf)) {
+      installed.add(pin);
+    }
+  }
+
+  return [...installed];
 }

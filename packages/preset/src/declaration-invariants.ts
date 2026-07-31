@@ -1,6 +1,7 @@
 import type { PresetItem } from './item.ts';
 import type { GateSemantics, PresetSemantics } from './semantics.ts';
 
+import { installsOf } from './item.ts';
 import { SLICE_PLACEHOLDER, UNIT_PLACEHOLDER } from './semantics.ts';
 
 // The gate table shows a description beside a command, and a terminal is the
@@ -142,11 +143,22 @@ function isPinned(installed: string): boolean {
 }
 
 function installInvariants(item: PresetItem): string[] {
-  return [...item.dependencies, ...item.devDependencies]
-    .filter((installed) => !isPinned(installed))
-    .map(
-      (installed) => `the preset installs ${installed}, and a range moves a gate without a commit`,
-    );
+  return [
+    ...[...item.dependencies, ...item.devDependencies]
+      .filter((installed) => !isPinned(installed))
+      .map(
+        (installed) =>
+          `the preset installs ${installed}, and a range moves a gate without a commit`,
+      ),
+    ...item.integrations.flatMap((integration) =>
+      installsOf(integration)
+        .filter((installed) => !isPinned(installed))
+        .map(
+          (installed) =>
+            `the integration ${integration.name} installs ${installed}, and a range moves a gate without a commit`,
+        ),
+    ),
+  ];
 }
 
 const RESOLVED_AS = 'ket-';

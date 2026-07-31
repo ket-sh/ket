@@ -8,17 +8,38 @@ const PRIVATE_REPOSITORY = 'private';
 
 const LANDS_NOWHERE = '~/';
 
-function fileInvariants(integration: PresetIntegration, unasked: Set<string>): string[] {
-  const written = filesOf(integration)
-    .filter((file) => unasked.has(file.target))
-    .map(
-      (file) =>
-        `the integration ${integration.name} writes ${file.target}, which the preset already writes unasked`,
-    );
-
+function fileInvariants(integration: PresetIntegration): string[] {
   return reachesNothing(integration)
     ? [`the integration ${integration.name} changes nothing a project can see`]
-    : written;
+    : [];
+}
+
+// An integration may replace what the preset writes unasked: that is how one
+// swaps a spec for the version its own runner extends. Two integrations
+// reaching for one target is a different thing, and whichever ran last wins.
+interface Claim {
+  by: string;
+  target: string;
+}
+
+function claimsOf(integrations: PresetIntegration[]): Claim[] {
+  return integrations.flatMap((integration) =>
+    filesOf(integration).map((file) => ({ by: integration.name, target: file.target })),
+  );
+}
+
+function contestedTargets(integrations: PresetIntegration[]): string[] {
+  const claims = claimsOf(integrations);
+
+  return claims.flatMap((claim, at) =>
+    claims
+      .slice(0, at)
+      .filter((earlier) => earlier.target === claim.target)
+      .map(
+        (earlier) =>
+          `${claim.target} is claimed by ${earlier.by} and by ${claim.by}, so one of them never arrives`,
+      ),
+  );
 }
 
 function sentenceInvariants(integration: PresetIntegration): string[] {
@@ -62,11 +83,12 @@ function shapeInvariants(integration: PresetIntegration): string[] {
 }
 
 export function integrationInvariantsOf(item: PresetItem): string[] {
-  const unasked = new Set(item.files.map((file) => file.target));
-
-  return item.integrations.flatMap((integration) => [
-    ...shapeInvariants(integration),
-    ...fileInvariants(integration, unasked),
-    ...sentenceInvariants(integration),
-  ]);
+  return [
+    ...item.integrations.flatMap((integration) => [
+      ...shapeInvariants(integration),
+      ...fileInvariants(integration),
+      ...sentenceInvariants(integration),
+    ]),
+    ...contestedTargets(item.integrations),
+  ];
 }

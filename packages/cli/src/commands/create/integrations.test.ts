@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { chosenFrom, filesFor, integrationsOffered, namesOffered } from './integrations.ts';
+import {
+  chosenFrom,
+  filesFor,
+  installsFor,
+  integrationsOffered,
+  namesOffered,
+} from './integrations.ts';
 
 describe('what a preset offers', () => {
   it('offers the tools that suit a command line project', () => {
@@ -14,6 +20,7 @@ describe('what a preset offers', () => {
   it('offers the tools that suit a frontend project', () => {
     expect(integrationsOffered('web').map((offered) => offered.name)).toStrictEqual([
       'mobbin',
+      'chromatic',
       'codecov',
       'codeql',
       'coderabbit',
@@ -84,5 +91,26 @@ describe('reading the integrations named on the command line', () => {
     expect(chosenFrom('codecov,', namesOffered(['cli']))).toStrictEqual({
       refused: ' is not an integration this project offers. It offers codecov, codeql, coderabbit',
     });
+  });
+});
+
+describe('the packages a chosen integration installs', () => {
+  it('installs nothing when a project chose nothing', () => {
+    expect(installsFor(['web'], [])).toStrictEqual([]);
+  });
+
+  it('installs nothing for an integration that brings only files', () => {
+    expect(installsFor(['web'], ['codecov'])).toStrictEqual([]);
+  });
+
+  it('installs what the chosen integration needs to work at all', () => {
+    expect(installsFor(['web'], ['chromatic'])).toStrictEqual([
+      'chromatic@18.1.0',
+      '@chromatic-com/playwright@0.14.11',
+    ]);
+  });
+
+  it('installs a package once when two targets share the preset that offers it', () => {
+    expect(installsFor(['web', 'web'], ['chromatic'])).toHaveLength(2);
   });
 });
