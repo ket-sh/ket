@@ -38,6 +38,7 @@
         "@clack/prompts": "1.7.0",
         "@ket/preset": "workspace:*",
         "@ket/preset-cli": "workspace:*",
+        "@ket/preset-web": "workspace:*",
         "@ket/tui": "workspace:*",
         "citty": "0.2.2",
         "cli-table3": "0.6.5",
@@ -68,6 +69,17 @@
     },
     "presets/cli": {
       "name": "@ket/preset-cli",
+      "version": "0.0.0",
+      "dependencies": {
+        "@ket/preset": "workspace:*",
+      },
+      "devDependencies": {
+        "@stryker-mutator/core": "9.6.1",
+        "@stryker-mutator/vitest-runner": "9.6.1",
+      },
+    },
+    "presets/web": {
+      "name": "@ket/preset-web",
       "version": "0.0.0",
       "dependencies": {
         "@ket/preset": "workspace:*",
@@ -482,6 +494,8 @@
     "@ket/preset": ["@ket/preset@workspace:packages/preset"],
 
     "@ket/preset-cli": ["@ket/preset-cli@workspace:presets/cli"],
+
+    "@ket/preset-web": ["@ket/preset-web@workspace:presets/web"],
 
     "@ket/tui": ["@ket/tui@workspace:packages/tui"],
 

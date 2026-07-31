@@ -1,0 +1,35 @@
+{
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+  "version": "0.2",
+  "language": "en",
+  "dictionaryDefinitions": [
+    {
+      "name": "ket-words",
+      "path": "./cspell-words.txt",
+      "addWords": true
+    }
+  ],
+  "dictionaries": ["ket-words", "typescript", "node", "npm", "softwareTerms"],
+  "ignorePaths": [
+    "node_modules",
+    "dist",
+    "coverage",
+    ".turbo",
+    ".trash",
+    ".vale/styles",
+    ".agents",
+    ".claude/skills",
+    ".git",
+    "bun.lock",
+    "skills-lock.json",
+    "cspell-words.txt",
+    "**/*.gen.ts"
+  ],
+  "useGitignore": true,
+  "overrides": [
+    {
+      "filename": "**/*.test.ts",
+      "ignoreRegExpList": ["/'[^'\\s]{4,}'/g"]
+    }
+  ]
+}
