@@ -731,7 +731,11 @@ CHECKED=$((CHECKED + 1))
 # leaving verification is the boundary that requires verification to have run.
 printf 'export function lockedOut(attempts: number): boolean {\n  return attempts >= 3;\n}\n' \
   >"$PROJECT/src/lockout.ts"
-refuses_command 'under breaking threshold 90' item deliver OS-1
+# The threshold is read out of the config the preset writes rather than named
+# here, or moving it would leave this script asserting the old one.
+THRESHOLD="$(grep -o '"break": *[0-9]*' "$PROJECT/stryker.conf.json" | grep -o '[0-9]*$')"
+test -n "$THRESHOLD" || fail "the project ships no mutation threshold"
+refuses_command "under breaking threshold $THRESHOLD" item deliver OS-1
 status_is OS-1 verifying
 rm "$PROJECT/src/lockout.ts"
 
