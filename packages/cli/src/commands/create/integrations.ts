@@ -1,19 +1,15 @@
 import type { PresetIntegration } from '@ket/preset';
 
 import { filesOf } from '@ket/preset';
-import { CLI_PRESET, contentOf } from '@ket/preset-cli';
 
 import type { PresetName } from '../../shared/configuration.ts';
 import type { ScaffoldFile } from '../../shared/write-files.ts';
 
+import { governingPresets, presetNamed } from '../../shared/registry.ts';
 import { pathInProject } from './install.ts';
 
-const OFFERED: Partial<Record<PresetName, PresetIntegration[]>> = {
-  cli: CLI_PRESET.integrations,
-};
-
 export function integrationsOffered(preset: PresetName): PresetIntegration[] {
-  return OFFERED[preset] ?? [];
+  return presetNamed(preset)?.item.integrations ?? [];
 }
 
 function chosenIn(preset: PresetName, chosen: string[]): PresetIntegration[] {
@@ -48,12 +44,12 @@ export function chosenFrom(named: string | undefined, offered: string[]): Chosen
 export function filesFor(presets: PresetName[], chosen: string[]): ScaffoldFile[] {
   const byPath = new Map<string, ScaffoldFile>();
 
-  for (const preset of new Set(presets)) {
-    for (const integration of chosenIn(preset, chosen)) {
+  for (const preset of governingPresets(presets)) {
+    for (const integration of chosenIn(preset.name, chosen)) {
       for (const file of filesOf(integration)) {
         byPath.set(pathInProject(file.target), {
           path: pathInProject(file.target),
-          contents: contentOf(file.path),
+          contents: preset.contentOf(file.path),
         });
       }
     }

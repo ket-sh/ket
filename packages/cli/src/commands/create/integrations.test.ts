@@ -11,8 +11,17 @@ describe('what a preset offers', () => {
     ]);
   });
 
+  it('offers the tools that suit a frontend project', () => {
+    expect(integrationsOffered('web').map((offered) => offered.name)).toStrictEqual([
+      'mobbin',
+      'codecov',
+      'codeql',
+      'coderabbit',
+    ]);
+  });
+
   it('offers nothing for a preset ket does not ship yet', () => {
-    expect(integrationsOffered('web')).toStrictEqual([]);
+    expect(integrationsOffered('mobile')).toStrictEqual([]);
   });
 });
 

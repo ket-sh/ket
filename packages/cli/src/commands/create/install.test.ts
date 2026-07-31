@@ -1,6 +1,8 @@
 import { CLI_PRESET } from '@ket/preset-cli';
+import { WEB_PRESET } from '@ket/preset-web';
 import { describe, expect, it } from 'vitest';
 
+import { registeredPresets } from '../../shared/registry.ts';
 import { filesToInstall, pathInProject, shippedContents } from './install.ts';
 
 describe('placing a registry target inside a project', () => {
@@ -52,8 +54,29 @@ describe('choosing what a preset installs into a project', () => {
     );
   });
 
+  it('installs what the web preset promises when the web preset governs', () => {
+    const installed = filesToInstall(['web'], 'my-app');
+
+    expect(installed.map((file) => file.path)).toStrictEqual(
+      WEB_PRESET.files.map((file) => pathInProject(file.target)),
+    );
+  });
+
+  it('accepts the project name as a word, whichever preset writes the project', () => {
+    for (const { name } of registeredPresets()) {
+      const vocabulary = filesToInstall([name], 'zzquux').find(
+        (file) => file.path === 'cspell-words.txt',
+      );
+
+      expect({ name, accepted: vocabulary?.contents.includes('zzquux') }).toStrictEqual({
+        name,
+        accepted: true,
+      });
+    }
+  });
+
   it('installs nothing for a preset ket has yet to write', () => {
-    expect(filesToInstall(['web'], 'my-app')).toStrictEqual([]);
+    expect(filesToInstall(['mobile'], 'my-app')).toStrictEqual([]);
   });
 
   it('installs a file once when two targets share a preset', () => {
