@@ -1,23 +1,6 @@
-export interface PresetFile {
-  path: string;
-  type: 'registry:file';
-  target: string;
-}
+import type { PresetItem } from '@ket/preset';
 
-export interface PresetItem {
-  $schema: string;
-  name: string;
-  type: 'registry:item';
-  title: string;
-  description: string;
-  dependencies: string[];
-  devDependencies: string[];
-  files: PresetFile[];
-}
-
-function writes(path: string, target: string): PresetFile {
-  return { path: `files/${path}`, type: 'registry:file', target: `~/${target}` };
-}
+import { writes } from '@ket/preset';
 
 export const CLI_PRESET: PresetItem = {
   $schema: 'https://ui.shadcn.com/schema/registry-item.json',
@@ -68,6 +51,11 @@ export const CLI_PRESET: PresetItem = {
     writes('vale-styles/Terminology.yml', '.vale/styles/ket/Terminology.yml'),
     writes('vale-styles/Intensifiers.yml', '.vale/styles/ket/Intensifiers.yml'),
     writes('vale-styles/WeakOpeners.yml', '.vale/styles/ket/WeakOpeners.yml'),
+    writes('vale-vocabulary/accept.txt', '.vale/styles/config/vocabularies/ket/accept.txt'),
+    writes('gitignore', '.gitignore'),
+    writes('CLAUDE.md', 'CLAUDE.md'),
+    writes('skills-lock.json', 'skills-lock.json'),
+    writes('github-ci.yml', '.github/workflows/ci.yml'),
     writes('source/run.ts', 'src/run.ts'),
     writes('source/main.ts', 'src/main.ts'),
     writes('source/commands/hello/command.ts', 'src/commands/hello/command.ts'),
@@ -77,5 +65,22 @@ export const CLI_PRESET: PresetItem = {
       'source/commands/hello/greeting.property.test.ts',
       'src/commands/hello/greeting.property.test.ts',
     ),
+  ],
+  integrations: [
+    {
+      name: 'codecov',
+      asks: 'codecov, coverage on each pull request. Free on a public repo, paid on a private one past 250 uploads a month.',
+      files: [writes('github-coverage.yml', '.github/workflows/coverage.yml')],
+    },
+    {
+      name: 'codeql',
+      asks: 'codeql, security scanning on each push. Free on a public repo, paid on a private one per committer.',
+      files: [writes('github-codeql.yml', '.github/workflows/codeql.yml')],
+    },
+    {
+      name: 'coderabbit',
+      asks: 'coderabbit, a review on each pull request. Free on a public repo, 200 private reviews a month, then paid.',
+      files: [writes('coderabbit.yaml', '.coderabbit.yaml')],
+    },
   ],
 };

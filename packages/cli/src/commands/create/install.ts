@@ -24,6 +24,10 @@ function filesOf(preset: keyof typeof ITEMS, name: string): ScaffoldFile[] {
   }));
 }
 
+export function shippedContents(installed: ScaffoldFile[], path: string): string | undefined {
+  return installed.find((file) => file.path === path)?.contents;
+}
+
 export function filesToInstall(presets: PresetName[], name: string): ScaffoldFile[] {
   const byPath = new Map<string, ScaffoldFile>();
 

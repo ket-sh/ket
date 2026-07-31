@@ -37,6 +37,14 @@ module.exports = {
     },
 
     {
+      name: 'preset-knows-no-preset',
+      comment:
+        'packages/preset says what a preset is. Reaching a preset would tie the definition to one instance of it, and the next preset would inherit the cli.',
+      severity: 'error',
+      from: { path: '^packages/preset/src/' },
+      to: { path: '^presets/' },
+    },
+    {
       name: 'cli-commands-are-islands',
       comment:
         'A cli command may not reach another command. Whatever two commands need belongs in shared.',

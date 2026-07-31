@@ -1,0 +1,65 @@
+{
+  "description": "The gates ket runs while work happens",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ket gate write",
+            "timeout": 10,
+            "statusMessage": "asking the item whether this write is allowed"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ket gate test-first",
+            "timeout": 120,
+            "statusMessage": "asking the test-first gate whether a failing test covers this"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ket gate shell",
+            "timeout": 10,
+            "statusMessage": "checking that the command skips no gate"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ket gate toolchain",
+            "timeout": 10,
+            "statusMessage": "looking for a rule this project keeps by hand"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ket gate probe",
+            "timeout": 30,
+            "statusMessage": "running ring one over the file"
+          }
+        ]
+      }
+    ]
+  }
+}

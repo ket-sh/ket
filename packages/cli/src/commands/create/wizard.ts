@@ -1,4 +1,6 @@
-import { cancel, confirm, isCancel, select, text } from '@clack/prompts';
+import type { PresetIntegration } from '@ket/preset';
+
+import { cancel, isCancel, multiselect, select, text } from '@clack/prompts';
 import { homedir } from 'node:os';
 import color from 'picocolors';
 
@@ -6,13 +8,17 @@ import type { Configuration, PresetName } from '../../shared/configuration.ts';
 
 import { PRESET_NAMES } from '../../shared/configuration.ts';
 import { directoryLabel } from './directory-label.ts';
+import { integrationsOffered } from './integrations.ts';
 import { refuseKey } from './key.ts';
 import { refuseName } from './name.ts';
-import { addTarget, refuseDirectory } from './targets.ts';
 
 export type WizardOutcome = { configured: Configuration } | { cancelled: true };
 
 const CANCELLED = { cancelled: true } as const;
+
+// One project, one target, and it covers the whole repository. A monorepo asks
+// for several, and that is its own slice.
+const WHOLE_REPOSITORY = '.';
 
 export async function askName(under: string): Promise<string | symbol> {
   const shown = directoryLabel(under, homedir());
@@ -24,19 +30,9 @@ export async function askName(under: string): Promise<string | symbol> {
   });
 }
 
-async function askDirectory(gathered: Record<string, PresetName>): Promise<string | symbol> {
-  return text({
-    message: 'Which directory does this target cover?',
-    placeholder: '.',
-    defaultValue: '.',
-    validate: (given) =>
-      refuseDirectory(gathered, given === undefined || given === '' ? '.' : given),
-  });
-}
-
 async function askPreset(): Promise<PresetName | symbol> {
   return select({
-    message: 'Which preset governs it?',
+    message: 'Please select your project type',
     options: PRESET_NAMES.map((preset) => ({ value: preset, label: preset })),
   });
 }
@@ -50,54 +46,35 @@ async function askKey(suggested: string | undefined): Promise<string | symbol> {
   });
 }
 
-async function askOneTarget(
-  gathered: Record<string, PresetName>,
-): Promise<Record<string, PresetName> | symbol> {
-  const directory = Object.keys(gathered).length === 0 ? '.' : await askDirectory(gathered);
-
-  if (isCancel(directory)) {
-    return directory;
+async function askIntegrations(offered: PresetIntegration[]): Promise<string[] | symbol> {
+  if (offered.length === 0) {
+    return [];
   }
 
-  const preset = await askPreset();
-
-  if (isCancel(preset)) {
-    return preset;
-  }
-
-  const outcome = addTarget(gathered, directory, preset);
-
-  return 'added' in outcome ? outcome.added : gathered;
-}
-
-async function gatherTargets(): Promise<Record<string, PresetName> | symbol> {
-  let gathered: Record<string, PresetName> = {};
-
-  for (;;) {
-    const withOneMore = await askOneTarget(gathered);
-
-    if (isCancel(withOneMore)) {
-      return withOneMore;
-    }
-
-    gathered = withOneMore;
-
-    const another = await confirm({ message: 'Add another target?', initialValue: false });
-
-    if (isCancel(another)) {
-      return another;
-    }
-
-    if (!another) {
-      return gathered;
-    }
-  }
+  return multiselect({
+    message: 'Which online services do you want to use?',
+    options: offered.map((integration) => ({
+      value: integration.name,
+      label: integration.name,
+      hint: integration.asks,
+    })),
+    required: false,
+    initialValues: [],
+  });
 }
 
 export async function runWizard(suggestedKey: string | undefined): Promise<WizardOutcome> {
-  const targets = await gatherTargets();
+  const preset = await askPreset();
 
-  if (isCancel(targets)) {
+  if (isCancel(preset)) {
+    cancel('Nothing was written.');
+
+    return CANCELLED;
+  }
+
+  const integrations = await askIntegrations(integrationsOffered(preset));
+
+  if (isCancel(integrations)) {
     cancel('Nothing was written.');
 
     return CANCELLED;
@@ -111,5 +88,5 @@ export async function runWizard(suggestedKey: string | undefined): Promise<Wizar
     return CANCELLED;
   }
 
-  return { configured: { key, targets } };
+  return { configured: { key, targets: { [WHOLE_REPOSITORY]: preset }, integrations } };
 }

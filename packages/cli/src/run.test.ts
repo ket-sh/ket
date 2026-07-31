@@ -1,13 +1,47 @@
-import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { runCommand } from './run.ts';
+
+const OBLIGING = `#!/bin/sh
+mkdir -p ".claude/skills/$5"
+printf 'installed\\n' > ".claude/skills/$5/SKILL.md"
+exit 0
+`;
+
+const REFUSING = `#!/bin/sh
+echo "could not reach github"
+exit 1
+`;
+
+let restored = '';
 
 async function scratch(): Promise<string> {
   return mkdtemp(join(tmpdir(), 'ket-'));
 }
+
+// Every create reaches for the skills the preset locks, and a suite that let it
+// reach the network would measure github rather than ket.
+async function installerThat(behaves: string): Promise<void> {
+  const where = await scratch();
+
+  await writeFile(join(where, 'bunx'), behaves, 'utf8');
+  await chmod(join(where, 'bunx'), 0o755);
+
+  process.env['PATH'] = `${where}:${restored}`;
+}
+
+beforeEach(async () => {
+  restored = process.env['PATH'] ?? '';
+
+  await installerThat(OBLIGING);
+});
+
+afterEach(() => {
+  process.env['PATH'] = restored;
+});
 
 describe('the ket command line', () => {
   it('creates a project where it was told to', async () => {
@@ -43,5 +77,26 @@ describe('the ket command line', () => {
 
   it('names the command it was asked for when that command does not exist', async () => {
     await expect(runCommand('deploy', [])).rejects.toThrow(/deploy/);
+  });
+});
+
+describe('the skills a created project starts with', () => {
+  it('installs what the preset locked, where the agent looks for it', async () => {
+    const where = join(await scratch(), 'order-service');
+
+    await runCommand('create', [where]);
+
+    await expect(
+      readFile(join(where, '.claude', 'skills', 'vitest', 'SKILL.md'), 'utf8'),
+    ).resolves.toContain('installed');
+  });
+
+  it('hands over a project that is still committed when no skill could install', async () => {
+    const where = join(await scratch(), 'billing-gateway');
+
+    await installerThat(REFUSING);
+    await runCommand('create', [where]);
+
+    await expect(readFile(join(where, 'skills-lock.json'), 'utf8')).resolves.toContain('vitest');
   });
 });

@@ -15,7 +15,13 @@
     "!src/shared/write-files.ts",
     "!src/commands/*/wizard.ts",
     "!src/shared/git.ts",
-    "!src/commands/*/announce.ts"
+    "!src/commands/*/announce.ts",
+    "!src/commands/gate/command.ts",
+    "!src/commands/*/context.ts",
+    "!src/commands/gate/test-first.ts",
+    "!src/commands/item/command.ts",
+    "!src/commands/gate/shell.ts",
+    "!src/commands/create/skills-install.ts"
   ],
   "reporters": ["progress", "clear-text"],
   "coverageAnalysis": "perTest",

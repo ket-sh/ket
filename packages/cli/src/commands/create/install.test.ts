@@ -1,7 +1,7 @@
 import { CLI_PRESET } from '@ket/preset-cli';
 import { describe, expect, it } from 'vitest';
 
-import { filesToInstall, pathInProject } from './install.ts';
+import { filesToInstall, pathInProject, shippedContents } from './install.ts';
 
 describe('placing a registry target inside a project', () => {
   it('drops the home marker the registry writes', () => {
@@ -60,5 +60,21 @@ describe('choosing what a preset installs into a project', () => {
     const installed = filesToInstall(['cli', 'cli'], 'my-app');
 
     expect(installed).toHaveLength(CLI_PRESET.files.length);
+  });
+});
+
+describe('reading what a preset ships for a path', () => {
+  it('finds the contents a preset writes to that path', () => {
+    const installed = filesToInstall(['cli'], 'shop');
+
+    expect(shippedContents(installed, '.gitignore')).toContain('node_modules/');
+  });
+
+  it('reports nothing for a path no preset writes', () => {
+    expect(shippedContents(filesToInstall(['cli'], 'shop'), 'LICENSE')).toBeUndefined();
+  });
+
+  it('reports nothing when no preset writes anything', () => {
+    expect(shippedContents([], '.gitignore')).toBeUndefined();
   });
 });

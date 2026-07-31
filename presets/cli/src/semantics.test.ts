@@ -1,9 +1,9 @@
-import { readdir } from 'node:fs/promises';
+import { repositoryRootFrom } from '@ket/preset';
+import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { repositoryRootFrom } from './repository-root.ts';
-import { CLI_SEMANTICS, sliceDirectoryOf, testFileFor } from './semantics.ts';
+import { CLI_SEMANTICS } from './semantics.ts';
 
 const OUR_CLI = join(repositoryRootFrom(import.meta.dirname), 'packages', 'cli');
 
@@ -46,15 +46,9 @@ describe('what the cli preset declares about tests', () => {
     expect(CLI_SEMANTICS.tests.example).not.toBe(CLI_SEMANTICS.tests.property);
   });
 
-  it('names both suites after the unit they cover', () => {
-    expect(testFileFor(CLI_SEMANTICS.tests.example, 'greeting')).toBe('greeting.test.ts');
-    expect(testFileFor(CLI_SEMANTICS.tests.property, 'greeting')).toBe('greeting.property.test.ts');
-  });
-
-  it('refuses a unit name a file system would not hold', () => {
-    expect(() => testFileFor(CLI_SEMANTICS.tests.property, 'Greeting Two')).toThrow(
-      'Greeting Two is not a unit name',
-    );
+  it('marks where a unit name goes in each test pattern', () => {
+    expect(CLI_SEMANTICS.tests.example).toBe('{unit}.test.ts');
+    expect(CLI_SEMANTICS.tests.property).toBe('{unit}.property.test.ts');
   });
 });
 
@@ -114,16 +108,6 @@ describe('what the cli preset declares about gates', () => {
   });
 });
 
-describe('resolving a slice directory', () => {
-  it('fills the slice name into the root the preset declares', () => {
-    expect(sliceDirectoryOf(CLI_SEMANTICS, 'auth-login')).toBe('src/commands/auth-login');
-  });
-
-  it('refuses a slice name that would escape the root', () => {
-    expect(() => sliceDirectoryOf(CLI_SEMANTICS, '../elsewhere')).toThrow(/slice name/);
-  });
-});
-
 describe('the shape of what the cli preset declares', () => {
   it('gives every script a command to run', () => {
     for (const [name, command] of Object.entries(CLI_SEMANTICS.scripts)) {
@@ -135,6 +119,10 @@ describe('the shape of what the cli preset declares', () => {
     expect(CLI_SEMANTICS.substrate).toBe('temporary-directories');
   });
 
+  it('names the lockfile as a file, since a workspace keeps one in any directory', () => {
+    expect(CLI_SEMANTICS.lockfile).not.toContain('/');
+  });
+
   it('keeps tests, the adapter and the edge out of mutation, and nothing else', () => {
     expect(CLI_SEMANTICS.slice.mutate).toStrictEqual([
       '**/*.ts',
@@ -143,17 +131,42 @@ describe('the shape of what the cli preset declares', () => {
       '!io/**',
     ]);
   });
+});
 
-  it('marks where a unit name goes in each test pattern', () => {
-    expect(CLI_SEMANTICS.tests.example).toBe('{unit}.test.ts');
-    expect(CLI_SEMANTICS.tests.property).toBe('{unit}.property.test.ts');
+describe('the test-first gate against the config the cli preset writes', () => {
+  it('guards the source a slice lands in, not the layout of some other repository', async () => {
+    const configuration = await readFile(
+      join(import.meta.dirname, '..', 'files', 'probity.config.ts'),
+      'utf8',
+    );
+    const quoted = [...configuration.matchAll(/'(?<glob>[^']+)'/gu)]
+      .map((found) => found.groups?.['glob'] ?? '')
+      .filter((glob) => glob.includes('*') && !glob.startsWith('!'));
+    const roots = quoted.map((glob) => glob.split('/')[0]);
+
+    expect(roots.length).toBeGreaterThan(0);
+    expect(new Set(roots)).toStrictEqual(new Set([CLI_SEMANTICS.slice.root.split('/')[0]]));
   });
 
-  it('refuses a slice name that only starts out well', () => {
-    expect(() => sliceDirectoryOf(CLI_SEMANTICS, 'auth login')).toThrow(/slice name/);
-  });
+  it('leaves the tests it drives out, since a test is what unlocks the source', async () => {
+    const configuration = await readFile(
+      join(import.meta.dirname, '..', 'files', 'probity.config.ts'),
+      'utf8',
+    );
 
-  it('refuses a unit name that only starts out well', () => {
-    expect(() => testFileFor(CLI_SEMANTICS.tests.example, 'greeting TWO')).toThrow(/unit name/);
+    expect(configuration).toContain('!**/*.test.*');
+  });
+});
+
+describe('the prose gate against the config the cli preset writes', () => {
+  it('syncs the very package its prose config declares, so a fresh checkout finds it', async () => {
+    const configuration = await readFile(
+      join(import.meta.dirname, '..', 'files', 'vale.ini'),
+      'utf8',
+    );
+    const declared = /\/(?<name>[A-Za-z]+)\.zip/u.exec(configuration)?.groups?.['name'];
+
+    expect(declared).toBeDefined();
+    expect(CLI_SEMANTICS.scripts['lint:prose']).toContain(`.vale/styles/${declared ?? ''}`);
   });
 });

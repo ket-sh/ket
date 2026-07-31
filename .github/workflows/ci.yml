@@ -76,8 +76,13 @@ jobs:
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version-file: package.json
+      # A created project runs its prose gate through mise, so the claim that it
+      # passes its own gate chain cannot be tested on a runner without one.
+      - uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
+        with:
+          install: false
       - run: bun install --frozen-lockfile
-      - run: ./scripts/acceptance-create.sh
+      - run: bun run test:acceptance
 
   prose:
     needs: changes

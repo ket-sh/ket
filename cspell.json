@@ -19,6 +19,7 @@
     ".vale/styles",
     ".agents",
     ".claude/skills",
+    ".claude/worktrees",
     ".git",
     "bun.lock",
     "skills-lock.json",

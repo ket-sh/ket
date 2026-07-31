@@ -1,0 +1,15 @@
+Bun
+citty
+cspell
+depcruise
+gitleaks
+jscpd
+ket
+knip
+lefthook
+oxfmt
+oxlint
+probity
+Stryker
+Vale
+Vitest

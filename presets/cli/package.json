@@ -15,6 +15,9 @@
     "check-types": "tsc --noEmit -p tsconfig.json",
     "test:mutation": "stryker run"
   },
+  "dependencies": {
+    "@ket/preset": "workspace:*"
+  },
   "devDependencies": {
     "@stryker-mutator/core": "9.6.1",
     "@stryker-mutator/vitest-runner": "9.6.1"
