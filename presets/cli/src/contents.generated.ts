@@ -66,13 +66,3 @@ export const PRESET_CONTENTS: Record<string, string> = {
   'files/vitest.mutation.config.ts':
     "import { defineConfig } from 'vitest/config';\n\nexport default defineConfig({\n  test: {\n    include: ['src/**/*.test.ts'],\n  },\n});\n",
 };
-
-export function contentOf(path: string): string {
-  const contents = PRESET_CONTENTS[path];
-
-  if (contents === undefined) {
-    throw new Error(`the cli preset promises ${path} but ships no such file`);
-  }
-
-  return contents;
-}

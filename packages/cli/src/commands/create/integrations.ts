@@ -1,4 +1,4 @@
-import type { PresetIntegration } from '@ket/preset-cli';
+import type { PresetIntegration } from '@ket/preset';
 
 import { CLI_PRESET, contentOf } from '@ket/preset-cli';
 

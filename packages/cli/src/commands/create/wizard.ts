@@ -1,4 +1,4 @@
-import type { PresetIntegration } from '@ket/preset-cli';
+import type { PresetIntegration } from '@ket/preset';
 
 import { cancel, isCancel, multiselect, select, text } from '@clack/prompts';
 import { homedir } from 'node:os';

@@ -1,4 +1,4 @@
-import type { RingCheck } from '@ket/preset-cli';
+import type { RingCheck } from '@ket/preset';
 
 import { describe, expect, it } from 'vitest';
 

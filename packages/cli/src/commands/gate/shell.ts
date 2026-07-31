@@ -1,4 +1,5 @@
-import { adapterPatternsOf, CLI_SEMANTICS } from '@ket/preset-cli';
+import { adapterPatternsOf } from '@ket/preset';
+import { CLI_SEMANTICS } from '@ket/preset-cli';
 
 import type { Verdict } from '../../shared/verdict.ts';
 import type { Denial } from './envelope.ts';

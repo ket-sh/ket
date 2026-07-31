@@ -1,4 +1,4 @@
-import type { GateSemantics } from '@ket/preset-cli';
+import type { GateSemantics } from '@ket/preset';
 
 import color from 'picocolors';
 

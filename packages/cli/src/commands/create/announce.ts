@@ -1,4 +1,4 @@
-import type { GateSemantics } from '@ket/preset-cli';
+import type { GateSemantics } from '@ket/preset';
 
 import { intro, outro } from '@clack/prompts';
 import color from 'picocolors';
