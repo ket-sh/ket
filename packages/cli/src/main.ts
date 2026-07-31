@@ -6,6 +6,7 @@ const load = {
   gate: async () => import('./commands/gate/command.ts'),
   item: async () => import('./commands/item/command.ts'),
   review: async () => import('./commands/review/command.ts'),
+  turn: async () => import('./commands/turn/command.ts'),
 };
 
 export const commands = {
@@ -17,6 +18,7 @@ export const hidden = {
   gate: async () => (await load.gate()).default,
   item: async () => (await load.item()).default,
   review: async () => (await load.review()).default,
+  turn: async () => (await load.turn()).default,
 };
 
 export async function showUsageOf(name: keyof typeof commands): Promise<void> {
