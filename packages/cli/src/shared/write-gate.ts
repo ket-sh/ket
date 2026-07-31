@@ -49,7 +49,10 @@ function crowded(inFlight: GovernedItem[]): Verdict | undefined {
     return undefined;
   }
 
-  const keys = inFlight.map((item) => item.key);
+  // A directory hands back its entries in whatever order the filesystem keeps
+  // them, and a refusal that reads differently on two machines is one nobody can
+  // check against.
+  const keys = inFlight.map((item) => item.key).toSorted();
 
   return {
     refused: `${keys.join(' and ')} are both in flight. One job means one branch.`,
