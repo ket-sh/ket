@@ -1,19 +1,21 @@
 import type { PresetIntegration, PresetItem } from './item.ts';
 
+import { filesOf, reachesNothing } from './item.ts';
+
 const PUBLIC_REPOSITORY = 'public';
 
 const PRIVATE_REPOSITORY = 'private';
 
 function fileInvariants(integration: PresetIntegration, unasked: Set<string>): string[] {
-  const written = integration.files
+  const written = filesOf(integration)
     .filter((file) => unasked.has(file.target))
     .map(
       (file) =>
         `the integration ${integration.name} writes ${file.target}, which the preset already writes unasked`,
     );
 
-  return integration.files.length === 0
-    ? [`the integration ${integration.name} writes no file`]
+  return reachesNothing(integration)
+    ? [`the integration ${integration.name} changes nothing a project can see`]
     : written;
 }
 

@@ -1,5 +1,6 @@
 import type { PresetIntegration } from '@ket/preset';
 
+import { filesOf } from '@ket/preset';
 import { CLI_PRESET, contentOf } from '@ket/preset-cli';
 
 import type { PresetName } from '../../shared/configuration.ts';
@@ -49,7 +50,7 @@ export function filesFor(presets: PresetName[], chosen: string[]): ScaffoldFile[
 
   for (const preset of new Set(presets)) {
     for (const integration of chosenIn(preset, chosen)) {
-      for (const file of integration.files) {
+      for (const file of filesOf(integration)) {
         byPath.set(pathInProject(file.target), {
           path: pathInProject(file.target),
           contents: contentOf(file.path),

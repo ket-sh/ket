@@ -1,5 +1,5 @@
 export type { PresetSubject } from './invariants.ts';
-export type { PresetIntegration, PresetItem } from './item.ts';
+export type { PresetIntegration, PresetItem, StageReference } from './item.ts';
 export type { GateSemantics, PresetSemantics, RingCheck } from './semantics.ts';
 export type { LockedSkills, PresetSkill } from './skills.ts';
 
@@ -7,7 +7,7 @@ export { contentReaderFor } from './contents.ts';
 export { writeContentsModule } from './contents-module.ts';
 export { harnessSkillsOf } from './harness-skills.ts';
 export { brokenInvariantsOf } from './invariants.ts';
-export { dependencyNamesOf, writes } from './item.ts';
+export { dependencyNamesOf, filesOf, reachesNothing, writes } from './item.ts';
 export { repositoryRootFrom } from './repository-root.ts';
 export {
   adapterPatternsOf,

@@ -6,10 +6,29 @@ export interface PresetFile {
 
 // A preset offers what suits it. A tool that reads a screen has nothing to say
 // about a command line, so the preset that governs one never asks for it.
-export interface PresetIntegration {
+export interface StageReference {
+  stage: string;
+  reference: string;
+}
+
+interface OfferedIntegration {
   name: string;
   asks: string;
-  files: PresetFile[];
+}
+
+// An integration either puts files in a project or changes what an agent
+// reaches for at a stage. A design gallery is the second kind, and demanding a
+// file from it would be demanding the wrong thing.
+export type PresetIntegration =
+  | (OfferedIntegration & { files: PresetFile[] })
+  | (OfferedIntegration & { reaches: StageReference });
+
+export function filesOf(integration: PresetIntegration): PresetFile[] {
+  return 'files' in integration ? integration.files : [];
+}
+
+export function reachesNothing(integration: PresetIntegration): boolean {
+  return filesOf(integration).length === 0 && !('reaches' in integration);
 }
 
 export interface PresetItem {
@@ -29,7 +48,7 @@ export function writes(path: string, target: string): PresetFile {
 }
 
 export function everyFileOf(item: PresetItem): PresetFile[] {
-  return [...item.files, ...item.integrations.flatMap((integration) => integration.files)];
+  return [...item.files, ...item.integrations.flatMap(filesOf)];
 }
 
 const PIN_SEPARATOR = '@';
