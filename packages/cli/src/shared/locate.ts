@@ -69,6 +69,18 @@ export function insideRepository(root: string, path: string): string | undefined
   return within.startsWith('..') ? undefined : within;
 }
 
+// Every command that writes state needs the repository, and a command that
+// cannot find one has nothing to write into.
+export async function ketRootOrThrow(from: string): Promise<string> {
+  const root = await ketRootFrom(from);
+
+  if (root === undefined) {
+    throw new Error(`no ${KET_DIRECTORY} directory above ${from}`);
+  }
+
+  return root;
+}
+
 export function keyFrom(loaded: unknown): string | undefined {
   const exported = isRecord(loaded) ? loaded['default'] : undefined;
   const declared = isRecord(exported) ? exported['key'] : undefined;

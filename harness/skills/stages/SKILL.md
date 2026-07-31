@@ -27,6 +27,24 @@ Stop at those four and wait. Between them, keep going without asking. An agent
 that files an item and then reports back has left the job half done, and an
 agent that decides an epic's children alone has decided what the product is.
 
+## Before the work reaches anybody else
+
+Mutation gates the move out of `verifying`, and the review does not. But a push
+or a pull request puts the work in front of somebody, and `ket gate shell`
+refuses either while no review has answered for the item.
+
+Two answers count, and a skip is one of them:
+
+```
+/ket:review                                    the review runs and records itself
+ket review skip <key> --reason '<why>'         a deliberate skip, recorded with its reason
+```
+
+Take the second only when the user says so. A skip is theirs to make, not
+yours to assume, and the reason lands in `.ket/events.jsonl` where anybody
+reading the history can weigh it later. That is the point: the escape hatch
+exists and it leaves a mark.
+
 ## The table
 
 | Status              | Size                   | What runs here                                     | What ends it                                |

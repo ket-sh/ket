@@ -7,8 +7,17 @@ import type { Denial } from './envelope.ts';
 import { writesOf } from '../../shared/command-writes.ts';
 import { ketRootFrom } from '../../shared/locate.ts';
 import { inFlightFrom } from '../../shared/read-item.ts';
+import { reviewedIn } from '../../shared/reviewed.ts';
 import { shellVerdict, unreadableVerdict } from '../../shared/shell-gate.ts';
-import { eventFor, governedPaths, readEnvelope, readStored, record, sourcesOf } from './context.ts';
+import {
+  eventFor,
+  governedPaths,
+  readEnvelope,
+  readLog,
+  readStored,
+  record,
+  sourcesOf,
+} from './context.ts';
 import { commandFrom, verdictReply } from './envelope.ts';
 
 async function commandVerdict(root: string, command: string): Promise<Verdict> {
@@ -25,6 +34,7 @@ async function commandVerdict(root: string, command: string): Promise<Verdict> {
     adapters: adapterPatternsOf(CLI_SEMANTICS),
     lockfile: CLI_SEMANTICS.lockfile,
     inFlight: inFlightFrom(await readStored(root)),
+    reviewed: reviewedIn(await readLog(root)),
   });
 }
 

@@ -2,14 +2,14 @@ import { appendFile, readdir, readFile, realpath } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 
 import type { PresetName } from '../../shared/configuration.ts';
+import type { GateEvent } from '../../shared/event.ts';
 import type { StoredItem } from '../../shared/read-item.ts';
 import type { GovernedItem } from '../../shared/write-gate.ts';
 import type { Denial } from './envelope.ts';
-import type { GateEvent } from './event.ts';
 
+import { renderEvent } from '../../shared/event.ts';
 import { insideRepository, ketRootFrom, sourceRootsOf, targetsFrom } from '../../shared/locate.ts';
 import { pathFrom } from './envelope.ts';
-import { renderEvent } from './event.ts';
 
 export const KET_DIRECTORY = '.ket';
 
@@ -54,6 +54,10 @@ export async function readStored(root: string): Promise<StoredItem[]> {
       contents: await readFile(join(items, entry.name, ITEM_FILE), 'utf8').catch(() => ''),
     })),
   );
+}
+
+export async function readLog(root: string): Promise<string> {
+  return readFile(join(root, KET_DIRECTORY, EVENTS), 'utf8').catch(() => '');
 }
 
 export async function record(root: string, event: GateEvent): Promise<void> {

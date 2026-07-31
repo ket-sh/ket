@@ -1,6 +1,8 @@
+import type { ItemStatus } from './item.ts';
 import type { Verdict } from './verdict.ts';
 import type { GovernedItem } from './write-gate.ts';
 
+import { publishesWork } from './publish.ts';
 import { ALLOWED } from './verdict.ts';
 import { verdictFor } from './write-gate.ts';
 
@@ -13,6 +15,7 @@ export interface CommandAttempt {
   adapters: string[];
   lockfile: string;
   inFlight: GovernedItem[];
+  reviewed: string[];
 }
 
 function skipping(command: string): Verdict | undefined {
@@ -53,6 +56,32 @@ export function unreadableVerdict(part: string): Verdict {
   };
 }
 
+// A review answers for source, and source arrives at implementing. Before that
+// there is nothing to have reviewed, so a push carries no unanswered work.
+const CARRIES_SOURCE: ItemStatus[] = ['implementing', 'verifying', 'awaiting-merge'];
+
+// Mutation gates the transition and the review does not, but work does not
+// reach anybody else until somebody has answered for it. A skip is an answer.
+function unreviewed(attempt: CommandAttempt): Verdict | undefined {
+  const [working] = attempt.inFlight;
+
+  if (working === undefined || !publishesWork(attempt.command)) {
+    return undefined;
+  }
+
+  if (!CARRIES_SOURCE.includes(working.status)) {
+    return undefined;
+  }
+
+  if (attempt.reviewed.includes(working.key)) {
+    return undefined;
+  }
+
+  return {
+    refused: `this command publishes ${working.key} and no review has answered for it. Run /ket:review, or record a deliberate skip with ket review skip ${working.key} --reason.`,
+  };
+}
+
 export function shellVerdict(attempt: CommandAttempt): Verdict {
-  return skipping(attempt.command) ?? writing(attempt) ?? ALLOWED;
+  return skipping(attempt.command) ?? writing(attempt) ?? unreviewed(attempt) ?? ALLOWED;
 }

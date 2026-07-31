@@ -800,6 +800,35 @@ test -z "$elsewhere" || fail "the citations gate judged prose no item wrote: $el
 rm -f "$PROJECT/PLAN.md"
 CHECKED=$((CHECKED + 4))
 
+echo "acceptance: work does not reach anybody until somebody answered for it"
+# Mutation gates the transition and the review does not, but a push puts the
+# work in front of someone else, and that is where the question gets asked.
+only_item OS-1 feature story awaiting-merge 'login with lockout'
+shell_refuses 'git push' 'no review has answered for it'
+shell_refuses 'gh pr create --fill' 'no review has answered for it'
+shell_runs 'git status'
+shell_runs 'gh pr list'
+
+# The escape hatch exists and leaves a mark. A skip nobody can see is the same
+# as no gate at all.
+(cd "$PROJECT" && "$KET" review skip OS-1 --reason '' >/dev/null 2>&1) &&
+  fail "a review was skipped with no reason, so nothing records why"
+CHECKED=$((CHECKED + 1))
+(cd "$PROJECT" && "$KET" review skip OS-1 --reason 'a one word typo fix') >/dev/null ||
+  fail "a deliberate skip with a reason was refused"
+shell_runs 'git push'
+grep -q '"gate":"review","outcome":"skipped"' "$PROJECT/.ket/events.jsonl" ||
+  fail "the skip left no mark in the log"
+grep -q 'a one word typo fix' "$PROJECT/.ket/events.jsonl" ||
+  fail "the log records a skip without the reason it was skipped for"
+CHECKED=$((CHECKED + 2))
+
+(cd "$PROJECT" && "$KET" review record OS-2) >/dev/null ||
+  fail "a review that ran could not be recorded"
+grep -q '"gate":"review","outcome":"allowed","about":"OS-2"' "$PROJECT/.ket/events.jsonl" ||
+  fail "a recorded review left no mark in the log"
+CHECKED=$((CHECKED + 1))
+
 echo "acceptance: a written path never reaches a tool as a flag"
 # The path comes from whatever asked for the write, so a file named --fix would
 # otherwise arrive at the linter as the flag it looks like. Sent relative on

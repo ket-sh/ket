@@ -1,6 +1,6 @@
 export interface GateEvent {
-  gate: 'write' | 'probe' | 'shell' | 'test-first' | 'transition' | 'citations';
-  outcome: 'allowed' | 'refused';
+  gate: 'write' | 'probe' | 'shell' | 'test-first' | 'transition' | 'citations' | 'review';
+  outcome: 'allowed' | 'refused' | 'skipped';
   about: string;
   item?: string;
   reason?: string;

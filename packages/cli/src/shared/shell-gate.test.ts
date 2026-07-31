@@ -21,6 +21,7 @@ function attempt(over: Partial<CommandAttempt>): CommandAttempt {
     adapters: ['src/commands/*/command.ts'],
     lockfile: 'bun.lock',
     inFlight: [TRIAGED],
+    reviewed: [],
     ...over,
   };
 }

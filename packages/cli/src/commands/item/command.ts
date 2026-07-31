@@ -15,7 +15,7 @@ import { renderBoard } from '../../shared/board.ts';
 import { failuresAmong } from '../../shared/checks.ts';
 import { decompositionOf } from '../../shared/decompose.ts';
 import { ITEM_KINDS, ITEM_SIZES, nextKey, renderItem, titleRefusal } from '../../shared/item.ts';
-import { keyFrom, ketRootFrom } from '../../shared/locate.ts';
+import { keyFrom, ketRootOrThrow } from '../../shared/locate.ts';
 import { parseItem } from '../../shared/read-item.ts';
 import { argvOf } from '../../shared/ring.ts';
 import {
@@ -41,16 +41,6 @@ function oneOf<Known extends string>(known: readonly Known[], given: string): Kn
   }
 
   return found;
-}
-
-async function rootOrThrow(): Promise<string> {
-  const root = await ketRootFrom(process.cwd());
-
-  if (root === undefined) {
-    throw new Error(`no ${KET_DIRECTORY} directory above ${process.cwd()}`);
-  }
-
-  return root;
 }
 
 async function keyOf(root: string): Promise<string> {
@@ -143,7 +133,7 @@ const file = defineCommand({
     parent: { type: 'string', description: 'The epic or story this breaks out of' },
   },
   async run({ args }) {
-    const root = await rootOrThrow();
+    const root = await ketRootOrThrow(process.cwd());
     const allocated = nextKey(await keyOf(root), await itemsIn(root));
 
     const kind: ItemKind = oneOf(ITEM_KINDS, args.kind);
@@ -175,7 +165,7 @@ function stage(name: string, description: string, decide: Decision) {
       key: { type: 'positional', required: true, description: 'The item to move' },
     },
     async run({ args }) {
-      const root = await rootOrThrow();
+      const root = await ketRootOrThrow(process.cwd());
       const outcome = await decide(await read(root, args.key), root);
 
       if ('refused' in outcome) {

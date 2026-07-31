@@ -79,3 +79,17 @@ say so in one line and stop.
 
 Change nothing while reviewing. Fixing what you found is the next job, and it
 re-enters through the item that owns it.
+
+## Record that it ran
+
+The shell gate refuses a push or a pull request while no review has answered for
+the item in flight, and it reads the answer off `.ket/events.jsonl` rather than
+taking anybody's word. So the last step of a review is recording it:
+
+```
+ket review record <key>
+```
+
+Record it whatever the review found. The gate asks whether somebody answered,
+not whether the answer was clean. Findings that survived are for the user to
+act on, and an unrecorded review reads exactly like one that never ran.
