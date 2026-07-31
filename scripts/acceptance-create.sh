@@ -33,10 +33,22 @@ test -d "$PROJECT/.git" || fail "no repository was initialized"
 grep -q '"name": "order-service"' "$PROJECT/package.json" ||
   fail "the manifest is not named after the directory"
 
+echo "acceptance: the scaffold arrives as its own commit"
+# Without one, the user's first diff is ket's output tangled with their own.
+test -z "$(cd "$PROJECT" && git status --porcelain)" ||
+  fail "create left the scaffold uncommitted"
+(cd "$PROJECT" && git log -1 --pretty=%s) | grep -qx 'chore: scaffold with ket' ||
+  fail "the first commit does not say what it is, in the form the project lints for"
+
 (cd "$PROJECT" && bun install >"$SANDBOX/install.log" 2>&1) || {
   tail -20 "$SANDBOX/install.log" >&2
   fail "the manifest does not resolve"
 }
+
+# The project lints its own commit messages, so the commit ket made must pass
+# the linter ket shipped with it.
+(cd "$PROJECT" && git log -1 --pretty=%B | ./node_modules/.bin/commitlint) ||
+  fail "the scaffold commit does not pass the commitlint the project ships"
 
 # The preset declares its gates, so the list lives there rather than here. A gate
 # typed into this script is a gate that can go missing from a created project

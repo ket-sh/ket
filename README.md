@@ -106,7 +106,9 @@ Then `create` writes the project and tells you what to run:
 ```
 
 ket names the manifest after the directory, fills in what the preset needs, and
-writes the preset's files. Installing stays your call:
+writes the preset's files. It commits them too, as `chore: scaffold with ket`,
+so your first diff is your own work rather than ket's tangled with it.
+Installing stays your call:
 
 ```sh
 cd shop

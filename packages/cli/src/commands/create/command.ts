@@ -6,7 +6,7 @@ import { basename, relative } from 'node:path';
 
 import type { Configuration } from '../../shared/configuration.ts';
 
-import { initializeRepository } from '../../shared/git.ts';
+import { commitScaffold, initializeRepository } from '../../shared/git.ts';
 import { readTextIfPresent, writeFiles } from '../../shared/write-files.ts';
 import { announce, openCreate } from './announce.ts';
 import { filesToInstall, shippedContents } from './install.ts';
@@ -123,7 +123,14 @@ const create = defineCommand({
 
     await writeFiles(plan.root, written);
 
-    announce(relative(process.cwd(), plan.root) || '.', CLI_SEMANTICS.scripts, CLI_SEMANTICS.gates);
+    const first = await commitScaffold(plan.root);
+
+    announce(
+      relative(process.cwd(), plan.root) || '.',
+      CLI_SEMANTICS.scripts,
+      CLI_SEMANTICS.gates,
+      first,
+    );
 
     return plan;
   },

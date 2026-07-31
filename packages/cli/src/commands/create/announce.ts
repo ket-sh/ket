@@ -3,6 +3,7 @@ import type { GateSemantics } from '@ket/preset-cli';
 import { intro, outro } from '@clack/prompts';
 import color from 'picocolors';
 
+import type { FirstCommit } from '../../shared/git.ts';
 import type { Shade } from './banner.ts';
 import type { Step } from './next-steps.ts';
 
@@ -26,6 +27,8 @@ const READY = ' is ready';
 const DRIVING = 'Then open Claude Code and drive it';
 
 const DOCS = 'ket.sh/docs';
+
+const UNCOMMITTED = 'The scaffold is written but git would not commit it:';
 
 function paintsGradient(): boolean {
   return supportsTrueColor(process.env['COLORTERM'] ?? '', process.env['TERM'] ?? '');
@@ -54,10 +57,19 @@ export function openCreate(): void {
   intro();
 }
 
+function commitNote(first: FirstCommit): string {
+  if ('committed' in first) {
+    return '';
+  }
+
+  return `${INDENT}${color.yellow(UNCOMMITTED)}\n${INDENT}${color.dim(first.refused)}\n`;
+}
+
 export function announce(
   directory: string,
   scripts: Record<string, string>,
   gates: GateSemantics[],
+  first: FirstCommit,
 ): void {
   outro(color.dim('Project created'));
 
@@ -70,5 +82,6 @@ export function announce(
   console.log(`${gateTable(gates)}\n`);
   console.log(`${INDENT}${color.dim(DRIVING)}\n`);
   console.log(`${commandTable(PIPELINE_COMMANDS)}\n`);
+  console.log(commitNote(first));
   console.log(`${INDENT}${color.dim('More at')} ${color.cyan(DOCS)}\n`);
 }
