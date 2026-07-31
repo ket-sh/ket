@@ -14,6 +14,7 @@ import type { Transition } from '../../shared/transition.ts';
 import { renderBoard } from '../../shared/board.ts';
 import { failuresAmong } from '../../shared/checks.ts';
 import { decompositionOf } from '../../shared/decompose.ts';
+import { readStored } from '../../shared/item-store.ts';
 import { ITEM_KINDS, ITEM_SIZES, nextKey, renderItem, titleRefusal } from '../../shared/item.ts';
 import { keyFrom, ketRootOrThrow } from '../../shared/locate.ts';
 import { parseItem } from '../../shared/read-item.ts';
@@ -66,19 +67,9 @@ async function itemsIn(root: string): Promise<string[]> {
 // Written once at create and never again, it went on saying the project had no
 // items long after it had them, and a board that lies is worse than none.
 async function refreshBoard(root: string): Promise<void> {
-  const keys = await itemsIn(root);
-  const stored = await Promise.all(
-    keys.map(async (key) => ({
-      key,
-      contents: await readFile(join(root, KET_DIRECTORY, 'items', key, ITEM_FILE), 'utf8').catch(
-        () => '',
-      ),
-    })),
-  );
-
   await writeFile(
     join(root, KET_DIRECTORY, BOARD_FILE),
-    renderBoard(await keyOf(root), stored),
+    renderBoard(await keyOf(root), await readStored(root)),
     'utf8',
   );
 }

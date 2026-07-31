@@ -1,14 +1,8 @@
 import { defineCommand, showUsage } from 'citty';
-import { appendFile } from 'node:fs/promises';
-import { join } from 'node:path';
 
-import { renderEvent } from '../../shared/event.ts';
+import { record } from '../../shared/event-log.ts';
 import { ketRootOrThrow } from '../../shared/locate.ts';
 import { reviewEventFor } from '../../shared/review.ts';
-
-const KET_DIRECTORY = '.ket';
-
-const EVENTS = 'events.jsonl';
 
 async function answer(key: string, reason: string | undefined): Promise<void> {
   const root = await ketRootOrThrow(process.cwd());
@@ -18,11 +12,11 @@ async function answer(key: string, reason: string | undefined): Promise<void> {
     throw new Error(outcome.refused);
   }
 
-  await appendFile(join(root, KET_DIRECTORY, EVENTS), renderEvent(outcome), 'utf8');
+  await record(root, outcome);
   process.stdout.write(`${key} ${outcome.outcome}\n`);
 }
 
-const record = defineCommand({
+const recordReview = defineCommand({
   meta: { name: 'record', description: 'Record that a review answered for an item' },
   args: {
     key: { type: 'positional', required: true, description: 'The item the review answered for' },
@@ -45,7 +39,7 @@ const skip = defineCommand({
 
 const review = defineCommand({
   meta: { name: 'review', description: 'Answer for an item before it goes out' },
-  subCommands: { record, skip },
+  subCommands: { record: recordReview, skip },
 });
 
 export async function usage(): Promise<void> {

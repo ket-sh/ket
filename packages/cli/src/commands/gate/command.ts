@@ -13,22 +13,21 @@ import type { ProposalReply } from './proposal.ts';
 import type { ProbeReply } from './ring.ts';
 
 import { failuresAmong } from '../../shared/checks.ts';
+import { record } from '../../shared/event-log.ts';
+import { readStored } from '../../shared/item-store.ts';
 import { ketRootFrom } from '../../shared/locate.ts';
 import { inFlightFrom } from '../../shared/read-item.ts';
 import { argvFor } from '../../shared/ring.ts';
 import { arrivalsIn, declaredIn, recordToolchain, seenIn } from '../../shared/toolchain.ts';
-import { verdictFor, workingFrom } from '../../shared/write-gate.ts';
+import { jobIn, verdictFor } from '../../shared/write-gate.ts';
 import { citationReply, pathsCitedIn, missingIn } from './citations.ts';
 import {
   eventFor,
   governedFile,
   KET_DIRECTORY,
-  keyOf,
   MANIFEST,
   readEnvelope,
   readJson,
-  readStored,
-  record,
   sourcesOf,
   TOOLCHAIN,
 } from './context.ts';
@@ -57,7 +56,7 @@ async function judgeWrite(): Promise<Denial | undefined> {
     }),
   );
 
-  await record(root, eventFor('write', path, denial, keyOf(workingFrom(inFlight))));
+  await record(root, eventFor('write', path, denial, jobIn(inFlight)?.key));
 
   return denial;
 }

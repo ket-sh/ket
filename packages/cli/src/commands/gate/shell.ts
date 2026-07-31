@@ -5,19 +5,13 @@ import type { Verdict } from '../../shared/verdict.ts';
 import type { Denial } from './envelope.ts';
 
 import { writesOf } from '../../shared/command-writes.ts';
+import { readLog, record } from '../../shared/event-log.ts';
+import { readStored } from '../../shared/item-store.ts';
 import { ketRootFrom } from '../../shared/locate.ts';
 import { inFlightFrom } from '../../shared/read-item.ts';
 import { reviewedIn } from '../../shared/reviewed.ts';
 import { shellVerdict, unreadableVerdict } from '../../shared/shell-gate.ts';
-import {
-  eventFor,
-  governedPaths,
-  readEnvelope,
-  readLog,
-  readStored,
-  record,
-  sourcesOf,
-} from './context.ts';
+import { eventFor, governedPaths, readEnvelope, sourcesOf } from './context.ts';
 import { commandFrom, verdictReply } from './envelope.ts';
 
 async function commandVerdict(root: string, command: string): Promise<Verdict> {
