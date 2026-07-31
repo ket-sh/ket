@@ -1,6 +1,35 @@
 import { describe, expect, it } from 'vitest';
 
-import { actingTranscript, commandFrom, pathFrom, pointedAt, verdictReply } from './envelope.ts';
+import {
+  actingTranscript,
+  commandFrom,
+  overriddenBy,
+  pathFrom,
+  pointedAt,
+  verdictReply,
+} from './envelope.ts';
+
+describe('whether the runtime has already overridden the stop hook', () => {
+  it('reads the flag a stop envelope carries once a hook is driving the turn', () => {
+    expect(overriddenBy({ hook_event_name: 'Stop', stop_hook_active: true })).toBe(true);
+  });
+
+  it('reads a fresh stop as one no hook has driven yet', () => {
+    expect(overriddenBy({ hook_event_name: 'Stop', stop_hook_active: false })).toBe(false);
+  });
+
+  it('reads an envelope that carries no such flag as one no hook has driven', () => {
+    expect(overriddenBy({ hook_event_name: 'Stop' })).toBe(false);
+  });
+
+  it('reads a flag spelled as anything but true as no override at all', () => {
+    expect(overriddenBy({ stop_hook_active: 'true' })).toBe(false);
+  });
+
+  it('reads nothing from a payload that is not an object', () => {
+    expect(overriddenBy('nonsense')).toBe(false);
+  });
+});
 
 describe('reading the path a hook event is about', () => {
   it('reads the file a write names', () => {

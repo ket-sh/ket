@@ -75,6 +75,13 @@ const WHY_NOT_SHIP: Refusals = {
 
 const OWES_DESIGN: ItemSize[] = ['epic', 'story'];
 
+const DECOMPOSES: ItemSize = 'epic';
+
+export interface Stage {
+  status: ItemStatus;
+  size: ItemSize;
+}
+
 function moveTo(item: Item, status: ItemStatus, whyNot: Refusals): Transition {
   const refused = whyNot[item.status];
 
@@ -89,12 +96,12 @@ export function submissionOf(item: Item): Transition {
   return moveTo(item, 'awaiting-approval', WHY_NOT_SUBMIT);
 }
 
-function designOwedBy(item: Item): string | undefined {
-  if (item.status !== 'triaged' || !OWES_DESIGN.some((size) => size === item.size)) {
+function designOwedBy(stage: Stage): string | undefined {
+  if (stage.status !== 'triaged' || !OWES_DESIGN.some((size) => size === stage.size)) {
     return undefined;
   }
 
-  return `not designed yet, and ${item.size} work does not skip design`;
+  return `not designed yet, and ${stage.size} work does not skip design`;
 }
 
 export function approvalOf(item: Item): Transition {
@@ -125,4 +132,40 @@ export function deliveryOf(item: Item, failures: RingFailure[]): Transition {
 
 export function shipmentOf(item: Item): Transition {
   return moveTo(item, 'shipped', WHY_NOT_SHIP);
+}
+
+interface MachineStep {
+  runs: string;
+  whyNot: Refusals;
+}
+
+const MACHINE_STEPS: MachineStep[] = [
+  { runs: 'ket item design', whyNot: WHY_NOT_DESIGN },
+  { runs: 'ket item submit', whyNot: WHY_NOT_SUBMIT },
+  { runs: 'ket item verify', whyNot: WHY_NOT_VERIFY },
+  { runs: 'ket item deliver', whyNot: WHY_NOT_DELIVER },
+];
+
+function approvalMoves(stage: Stage): boolean {
+  return designOwedBy(stage) === undefined && WHY_NOT_APPROVE[stage.status] === undefined;
+}
+
+function shipmentMoves(stage: Stage): boolean {
+  return WHY_NOT_SHIP[stage.status] === undefined;
+}
+
+function picksItsChildren(stage: Stage): boolean {
+  return stage.status === 'designing' && stage.size === DECOMPOSES;
+}
+
+function waitsForAPerson(stage: Stage): boolean {
+  return approvalMoves(stage) || shipmentMoves(stage) || picksItsChildren(stage);
+}
+
+export function machineStepOf(stage: Stage): string | undefined {
+  if (waitsForAPerson(stage)) {
+    return undefined;
+  }
+
+  return MACHINE_STEPS.find((step) => step.whyNot[stage.status] === undefined)?.runs;
 }

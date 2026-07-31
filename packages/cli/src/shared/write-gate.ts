@@ -176,3 +176,11 @@ function sealed(attempt: WriteAttempt): Verdict | undefined {
 export function verdictFor(attempt: WriteAttempt): Verdict {
   return sealed(attempt) ?? governed(attempt);
 }
+
+// One job means one branch, so a repository holding two of them has no single
+// item that answers for the session.
+export function jobIn(inFlight: GovernedItem[]): GovernedItem | undefined {
+  const working = workingFrom(inFlight);
+
+  return working.length === 1 ? working[0] : undefined;
+}
