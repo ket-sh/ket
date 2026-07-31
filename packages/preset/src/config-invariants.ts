@@ -171,8 +171,39 @@ function mutationInvariants(item: PresetItem, shipped: PresetContents): string[]
     : [`the mutation config the preset writes names ${named}, which the preset ships nowhere`];
 }
 
+const SHIPPED_SOURCE = 'files/source/';
+
+const IMPORTED = /(?<=from ')[^']+(?=')/gu;
+
+const RUNTIME_BUILTIN = 'node:';
+
+const RELATIVE = '.';
+
+// A package the source reaches for is a package the project needs installed.
+// Nothing else in the preset says so, and the source is what breaks without it.
+function sourceInvariants(item: PresetItem, shipped: PresetContents): string[] {
+  const installed = new Set(dependencyNamesOf(item).map(packageBehind));
+  const reached = item.files
+    .filter((file) => file.path.startsWith(SHIPPED_SOURCE))
+    .map((file) => shipped[file.path])
+    .filter((source): source is string => source !== undefined)
+    .flatMap((source) => [...source.matchAll(IMPORTED)])
+    .map((found) => found[0])
+    .filter(
+      (specifier) => !specifier.startsWith(RELATIVE) && !specifier.startsWith(RUNTIME_BUILTIN),
+    )
+    .map(packageBehind);
+
+  return [...new Set(reached)]
+    .filter((named) => !installed.has(named))
+    .map(
+      (named) => `the source the preset ships imports ${named}, which the preset installs nowhere`,
+    );
+}
+
 export function configInvariantsOf(item: PresetItem, shipped: PresetContents): string[] {
   return [
+    ...sourceInvariants(item, shipped),
     ...typeInvariants(item, shipped),
     ...lintInvariants(item, shipped),
     ...proseInvariants(item, shipped),

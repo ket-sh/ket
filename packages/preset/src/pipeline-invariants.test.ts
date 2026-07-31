@@ -40,11 +40,32 @@ const ITEM: PresetItem = {
   description: 'A preset written to be read by a test.',
   dependencies: [],
   devDependencies: [],
-  files: [writes('readme.md', 'README.md'), writes('github-ci.yml', '.github/workflows/ci.yml')],
+  files: [
+    writes('readme.md', 'README.md'),
+    writes('github-ci.yml', '.github/workflows/ci.yml'),
+    writes('lefthook.yml', 'lefthook.yml'),
+  ],
   integrations: [],
 };
 
-const SHIPPED = { 'files/readme.md': README, 'files/github-ci.yml': WORKFLOW };
+const HOOKS = `pre-commit:
+  jobs:
+    - name: protect-main
+      run: test "$(git branch --show-current)" != "main"
+    - name: lint
+      run: oxlint .
+
+commit-msg:
+  jobs:
+    - name: commitlint
+      run: commitlint --edit {1}
+`;
+
+const SHIPPED = {
+  'files/readme.md': README,
+  'files/github-ci.yml': WORKFLOW,
+  'files/lefthook.yml': HOOKS,
+};
 
 function semanticsGating(gates: GateSemantics[]): PresetSemantics {
   return {
@@ -93,9 +114,11 @@ describe('a gate the pipeline never runs', () => {
   });
 
   it('names every gate that goes missing when the preset writes no workflow at all', () => {
-    const item = { ...ITEM, files: [writes('readme.md', 'README.md')] };
+    const gates = GATES.map((gate) => ({ ...gate, commitJob: '' }));
 
-    expect(pipelineInvariantsOf(item, semanticsGating(GATES), SHIPPED)).toHaveLength(2);
+    expect(
+      pipelineInvariantsOf({ ...ITEM, files: [] }, semanticsGating(gates), SHIPPED),
+    ).toHaveLength(2);
   });
 });
 
@@ -172,5 +195,43 @@ describe('what the pipeline reads a job out of', () => {
     const item = { ...ITEM, files: [writes('github-ci.yml', '.github/workflows/ci.yml')] };
 
     expect(pipelineInvariantsOf(item, semanticsGating([]), {})).toStrictEqual([]);
+  });
+});
+
+describe('a gate the commit hook never runs', () => {
+  it('names a gate whose commit job the shipped hook file never runs', () => {
+    const gates = [{ ...LINT_GATE, commitJob: 'style' }, MUTATION_GATE];
+
+    expect(pipelineInvariantsOf(ITEM, semanticsGating(gates), SHIPPED)).toContain(
+      'the gate lint names the commit job style, which the hook file the preset writes never runs',
+    );
+  });
+
+  it('says nothing about a gate that arms no commit job at all', () => {
+    const gates = [{ ...LINT_GATE, commitJob: '' }, MUTATION_GATE];
+
+    expect(pipelineInvariantsOf(ITEM, semanticsGating(gates), SHIPPED)).toStrictEqual([]);
+  });
+
+  it('names every armed gate when the preset writes no hook file at all', () => {
+    const item = { ...ITEM, files: [writes('github-ci.yml', '.github/workflows/ci.yml')] };
+
+    expect(pipelineInvariantsOf(item, semanticsGating(GATES), SHIPPED)).toContain(
+      'the gate lint names the commit job lint, and the preset writes no hook file at all',
+    );
+  });
+
+  it('reads a hook file whole when no message stage follows the jobs', () => {
+    const shipped = { ...SHIPPED, 'files/lefthook.yml': 'pre-commit:\n  jobs:\n    - name: lint' };
+
+    expect(pipelineInvariantsOf(ITEM, semanticsGating(GATES), shipped)).toStrictEqual([]);
+  });
+
+  it('reads only the jobs the hook runs before a message is written', () => {
+    const gates = [{ ...LINT_GATE, commitJob: 'commitlint' }, MUTATION_GATE];
+
+    expect(pipelineInvariantsOf(ITEM, semanticsGating(gates), SHIPPED)).toContain(
+      'the gate lint names the commit job commitlint, which the hook file the preset writes never runs',
+    );
   });
 });

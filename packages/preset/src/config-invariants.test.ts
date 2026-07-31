@@ -224,3 +224,61 @@ describe('the mutation config a preset writes against the test config it ships',
     ]);
   });
 });
+
+describe('what a preset ships as source against what it installs', () => {
+  const SOURCE =
+    "import { createRouter } from '@tanstack/react-router';\nimport { join } from 'node:path';\nimport { greeting } from './model/greeting.ts';\n";
+
+  function invariantsShipping(installed: string[], source: string): string[] {
+    const item = {
+      ...ITEM,
+      dependencies: installed,
+      files: [...ITEM.files, writes('source/router.tsx', 'src/app/router.tsx')],
+    };
+
+    return configInvariantsOf(item, { ...SHIPPED, 'files/source/router.tsx': source });
+  }
+
+  it('breaks nothing when the preset installs every package its source imports', () => {
+    expect(invariantsShipping(['@tanstack/react-router@1.170.18'], SOURCE)).toStrictEqual([]);
+  });
+
+  it('names a package the source imports and the preset installs nowhere', () => {
+    expect(invariantsShipping([], SOURCE)).toStrictEqual([
+      'the source the preset ships imports @tanstack/react-router, which the preset installs nowhere',
+    ]);
+  });
+
+  it('reads no package out of a relative import, since that is the preset itself', () => {
+    expect(
+      invariantsShipping([], "import { greeting } from './model/greeting.ts';\n"),
+    ).toStrictEqual([]);
+  });
+
+  it('reads no import out of a file the preset ships as anything but source', () => {
+    const item = { ...ITEM, dependencies: [] };
+    const shipped = { ...SHIPPED, 'files/vale-styles/NoEmDash.yml': "from 'react'" };
+
+    expect(configInvariantsOf(item, shipped)).toStrictEqual([]);
+  });
+
+  it('reads no import out of a source file whose bytes the preset carries nowhere', () => {
+    const item = {
+      ...ITEM,
+      dependencies: [],
+      files: [...ITEM.files, writes('source/router.tsx', 'src/app/router.tsx')],
+    };
+
+    expect(configInvariantsOf(item, SHIPPED)).toStrictEqual([]);
+  });
+
+  it('reads no package out of a runtime builtin', () => {
+    expect(invariantsShipping([], "import { join } from 'node:path';\n")).toStrictEqual([]);
+  });
+
+  it('reads the package behind a subpath the source reaches into', () => {
+    const source = "import { tanstackStart } from '@tanstack/react-start/plugin/vite';\n";
+
+    expect(invariantsShipping(['@tanstack/react-start@1.168.34'], source)).toStrictEqual([]);
+  });
+});
