@@ -14,7 +14,7 @@ export {
   coveringTestsOf,
   ringOneOf,
   SLICE_PLACEHOLDER,
-  sliceDirectoryOf,
+  sliceDirectoriesOf,
   testFileFor,
   UNIT_PLACEHOLDER,
 } from './semantics.ts';

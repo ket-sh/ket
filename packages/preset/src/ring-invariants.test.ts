@@ -16,7 +16,7 @@ const SOUND: RingSemantics = {
 function semanticsRinging(rings: RingSemantics, fmt = 'oxfmt .'): PresetSemantics {
   return {
     scripts: { fmt },
-    slice: { root: 'src/commands/{slice}', adapter: 'command.ts', mutate: [] },
+    slice: { roots: ['src/commands/{slice}'], adapters: ['command.ts', 'io/**'] },
     tests: { example: '{unit}.test.ts', property: '{unit}.property.test.ts' },
     acceptance: { runner: 'cucumber', drives: 'binary' },
     substrate: 'temporary-directories',

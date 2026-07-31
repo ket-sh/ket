@@ -23,9 +23,8 @@ export const CLI_SEMANTICS: PresetSemantics = {
     prepare: 'lefthook install',
   },
   slice: {
-    root: `src/commands/${SLICE_PLACEHOLDER}`,
-    adapter: 'command.ts',
-    mutate: ['**/*.ts', '!**/*.test.ts', '!command.ts', '!io/**'],
+    roots: [`src/commands/${SLICE_PLACEHOLDER}`],
+    adapters: ['command.ts', 'io/**'],
   },
   tests: {
     example: `${UNIT_PLACEHOLDER}.test.ts`,

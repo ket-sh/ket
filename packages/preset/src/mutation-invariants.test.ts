@@ -21,11 +21,7 @@ const ITEM: PresetItem = {
 
 const SEMANTICS: PresetSemantics = {
   scripts: {},
-  slice: {
-    root: 'src/commands/{slice}',
-    adapter: 'command.ts',
-    mutate: ['**/*.ts', '!**/*.test.ts', '!command.ts', '!io/**'],
-  },
+  slice: { roots: ['src/commands/{slice}'], adapters: ['command.ts', 'io/**'] },
   tests: { example: '{unit}.test.ts', property: '{unit}.property.test.ts' },
   acceptance: { runner: 'cucumber', drives: 'binary' },
   substrate: 'temporary-directories',

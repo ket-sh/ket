@@ -7,18 +7,14 @@ import {
   coveringTestsOf,
   ringOneOf,
   SLICE_PLACEHOLDER,
-  sliceDirectoryOf,
+  sliceDirectoriesOf,
   testFileFor,
   UNIT_PLACEHOLDER,
 } from './semantics.ts';
 
 const SEMANTICS: PresetSemantics = {
   scripts: { fmt: 'oxfmt .', test: 'vitest run' },
-  slice: {
-    root: 'src/commands/{slice}',
-    adapter: 'command.ts',
-    mutate: ['**/*.ts', '!**/*.test.ts', '!command.ts', '!io/**'],
-  },
+  slice: { roots: ['src/commands/{slice}'], adapters: ['command.ts', 'io/**'] },
   tests: { example: '{unit}.test.ts', property: '{unit}.property.test.ts' },
   acceptance: { runner: 'cucumber', drives: 'binary' },
   substrate: 'temporary-directories',
@@ -60,10 +56,10 @@ describe('the token a preset marks a name with', () => {
   it('fills a slice root the preset wrote with the token the package publishes', () => {
     const declared = {
       ...SEMANTICS,
-      slice: { ...SEMANTICS.slice, root: `src/features/${SLICE_PLACEHOLDER}` },
+      slice: { ...SEMANTICS.slice, roots: [`src/features/${SLICE_PLACEHOLDER}`] },
     };
 
-    expect(sliceDirectoryOf(declared, 'auth')).toBe('src/features/auth');
+    expect(sliceDirectoriesOf(declared, 'auth')).toStrictEqual(['src/features/auth']);
   });
 
   it('fills a test pattern the preset wrote with the token the package publishes', () => {
@@ -73,15 +69,15 @@ describe('the token a preset marks a name with', () => {
 
 describe('resolving a slice directory', () => {
   it('fills the slice name into the root the preset declares', () => {
-    expect(sliceDirectoryOf(SEMANTICS, 'auth-login')).toBe('src/commands/auth-login');
+    expect(sliceDirectoriesOf(SEMANTICS, 'auth-login')).toStrictEqual(['src/commands/auth-login']);
   });
 
   it('refuses a slice name that would escape the root', () => {
-    expect(() => sliceDirectoryOf(SEMANTICS, '../elsewhere')).toThrow(/slice name/);
+    expect(() => sliceDirectoriesOf(SEMANTICS, '../elsewhere')).toThrow(/slice name/);
   });
 
   it('refuses a slice name that only starts out well', () => {
-    expect(() => sliceDirectoryOf(SEMANTICS, 'auth login')).toThrow(/slice name/);
+    expect(() => sliceDirectoriesOf(SEMANTICS, 'auth login')).toThrow(/slice name/);
   });
 });
 
@@ -90,11 +86,11 @@ describe('the paths a preset calls an adapter', () => {
     expect(adapterPatternsOf(SEMANTICS)).toContain('src/commands/*/command.ts');
   });
 
-  it('reads the edge directory the mutation list keeps out', () => {
+  it('reads every adapter the slice declares, not only the first', () => {
     expect(adapterPatternsOf(SEMANTICS)).toContain('src/commands/*/io/**');
   });
 
-  it('names nothing the mutation list does not exclude', () => {
+  it('names one pattern per adapter the slice declares', () => {
     expect(adapterPatternsOf(SEMANTICS)).toHaveLength(2);
   });
 

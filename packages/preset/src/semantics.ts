@@ -1,7 +1,6 @@
 interface SliceSemantics {
-  root: string;
-  adapter: string;
-  mutate: string[];
+  roots: string[];
+  adapters: string[];
 }
 
 interface AcceptanceSemantics {
@@ -52,22 +51,13 @@ const SLICE_NAME = /^[a-z][a-z0-9-]*$/;
 
 const UNIT_NAME = /^[a-z][a-z0-9-]*$/;
 
-const EXCLUSION = '!';
-
-function isExclusion(entry: string): boolean {
-  return entry.startsWith(EXCLUSION);
-}
-
-function isTestPattern(entry: string): boolean {
-  return entry.includes('test');
-}
-
+// A slice keeps one directory per layer, and a command line happens to have one
+// layer where a frontend has several. What it hands to the outside is the same
+// question in both: which paths inside it are adapters.
 export function adapterPatternsOf(semantics: PresetSemantics): string[] {
-  const anySlice = semantics.slice.root.replace(SLICE_PLACEHOLDER, '*');
-
-  return semantics.slice.mutate
-    .filter((entry) => isExclusion(entry) && !isTestPattern(entry))
-    .map((entry) => `${anySlice}/${entry.slice(EXCLUSION.length)}`);
+  return semantics.slice.roots.flatMap((root) =>
+    semantics.slice.adapters.map((adapter) => `${root.replace(SLICE_PLACEHOLDER, '*')}/${adapter}`),
+  );
 }
 
 const SEPARATOR = '/';
@@ -123,10 +113,10 @@ export function testFileFor(pattern: string, unit: string): string {
   return pattern.replace(UNIT_PLACEHOLDER, unit);
 }
 
-export function sliceDirectoryOf(semantics: PresetSemantics, slice: string): string {
+export function sliceDirectoriesOf(semantics: PresetSemantics, slice: string): string[] {
   if (!SLICE_NAME.test(slice)) {
     throw new Error(`${slice} is not a slice name. Use lowercase letters, digits and hyphens`);
   }
 
-  return semantics.slice.root.replace(SLICE_PLACEHOLDER, slice);
+  return semantics.slice.roots.map((root) => root.replace(SLICE_PLACEHOLDER, slice));
 }

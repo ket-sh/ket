@@ -12,17 +12,17 @@ describe('what the cli preset declares about a project', () => {
     const commands = await readdir(join(OUR_CLI, 'src', 'commands'));
 
     expect(commands).toContain('create');
-    expect(CLI_SEMANTICS.slice.root).toBe('src/commands/{slice}');
+    expect(CLI_SEMANTICS.slice.roots).toStrictEqual(['src/commands/{slice}']);
   });
 
   it('names the adapter file this repository actually writes', async () => {
     const inside = await readdir(join(OUR_CLI, 'src', 'commands', 'create'));
 
-    expect(inside).toContain(CLI_SEMANTICS.slice.adapter);
+    expect(inside).toContain(CLI_SEMANTICS.slice.adapters[0]);
   });
 
-  it('keeps mutation off the adapter, since §7 scopes it to the domain', () => {
-    expect(CLI_SEMANTICS.slice.mutate).toContain(`!${CLI_SEMANTICS.slice.adapter}`);
+  it('keeps the side effects it names apart from the domain beside them', () => {
+    expect(CLI_SEMANTICS.slice.adapters).toStrictEqual(['command.ts', 'io/**']);
   });
 
   it('drives acceptance through the built binary, not a browser', () => {
@@ -123,13 +123,8 @@ describe('the shape of what the cli preset declares', () => {
     expect(CLI_SEMANTICS.lockfile).not.toContain('/');
   });
 
-  it('keeps tests, the adapter and the edge out of mutation, and nothing else', () => {
-    expect(CLI_SEMANTICS.slice.mutate).toStrictEqual([
-      '**/*.ts',
-      '!**/*.test.ts',
-      '!command.ts',
-      '!io/**',
-    ]);
+  it('keeps the adapter and the edge apart from the domain, and nothing else', () => {
+    expect(CLI_SEMANTICS.slice.adapters).toStrictEqual(['command.ts', 'io/**']);
   });
 });
 
@@ -145,7 +140,9 @@ describe('the test-first gate against the config the cli preset writes', () => {
     const roots = quoted.map((glob) => glob.split('/')[0]);
 
     expect(roots.length).toBeGreaterThan(0);
-    expect(new Set(roots)).toStrictEqual(new Set([CLI_SEMANTICS.slice.root.split('/')[0]]));
+    const declared = CLI_SEMANTICS.slice.roots.map((root) => root.split('/')[0]);
+
+    expect(new Set(roots)).toStrictEqual(new Set(declared));
   });
 
   it('leaves the tests it drives out, since a test is what unlocks the source', async () => {

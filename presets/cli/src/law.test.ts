@@ -15,13 +15,19 @@ async function standingLaw(): Promise<string> {
 
 describe('the standing law the cli preset writes into a project', () => {
   it('names the directory a slice roots in, so the layout it teaches is the one it writes', async () => {
-    const [rooted] = CLI_SEMANTICS.slice.root.split(SLICE_PLACEHOLDER);
+    const law = await standingLaw();
 
-    expect(await standingLaw()).toContain(rooted);
+    for (const root of CLI_SEMANTICS.slice.roots) {
+      const [rooted] = root.split(SLICE_PLACEHOLDER);
+
+      expect(law).toContain(rooted);
+    }
   });
 
   it('names the adapter a slice keeps its process behavior in', async () => {
-    expect(await standingLaw()).toContain(CLI_SEMANTICS.slice.adapter);
+    const [adapter] = CLI_SEMANTICS.slice.adapters;
+
+    expect(await standingLaw()).toContain(adapter);
   });
 
   it('names both test files a unit takes, since one of them is easy to forget', async () => {
