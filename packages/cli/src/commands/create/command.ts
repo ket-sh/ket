@@ -15,7 +15,10 @@ import { renderManifest } from './manifest.ts';
 import { planCreation } from './plan.ts';
 import { scaffoldFor } from './scaffold.ts';
 import { withHarnessRegistered } from './settings.ts';
+import { installSkills } from './skills-install.ts';
 import { askName, runWizard } from './wizard.ts';
+
+const LOCKFILE = 'skills-lock.json';
 
 function isInteractive(): boolean {
   return process.stdin.isTTY;
@@ -123,6 +126,11 @@ const create = defineCommand({
 
     await writeFiles(plan.root, written);
 
+    // The skills land before the commit so the project is handed over whole,
+    // and a refusal is reported rather than thrown: the scaffold is worth
+    // keeping even when the tool cannot reach the sources it clones from.
+    const skills = await installSkills(plan.root, shippedContents(installed, LOCKFILE));
+
     const first = await commitScaffold(plan.root);
 
     announce(
@@ -130,6 +138,7 @@ const create = defineCommand({
       CLI_SEMANTICS.scripts,
       CLI_SEMANTICS.gates,
       first,
+      skills,
     );
 
     return plan;

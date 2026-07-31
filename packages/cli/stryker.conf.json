@@ -20,7 +20,8 @@
     "!src/commands/*/context.ts",
     "!src/commands/gate/test-first.ts",
     "!src/commands/item/command.ts",
-    "!src/commands/gate/shell.ts"
+    "!src/commands/gate/shell.ts",
+    "!src/commands/create/skills-install.ts"
   ],
   "reporters": ["progress", "clear-text"],
   "coverageAnalysis": "perTest",

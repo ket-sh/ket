@@ -6,6 +6,7 @@ import color from 'picocolors';
 import type { FirstCommit } from '../../shared/git.ts';
 import type { Shade } from './banner.ts';
 import type { Step } from './next-steps.ts';
+import type { SkillsInstalled } from './skills.ts';
 
 import { gradientOver, KET_BANNER, supportsTrueColor } from './banner.ts';
 import { commandTable } from './command-table.ts';
@@ -13,6 +14,7 @@ import { confetti } from './confetti.ts';
 import { gateTable } from './gate-table.ts';
 import { nextSteps } from './next-steps.ts';
 import { PIPELINE_COMMANDS } from './pipeline-commands.generated.ts';
+import { skillsNote } from './skills.ts';
 
 const OPENS_AT: Shade = [34, 211, 238];
 
@@ -65,11 +67,24 @@ function commitNote(first: FirstCommit): string {
   return `${INDENT}${color.yellow(UNCOMMITTED)}\n${INDENT}${color.dim(first.refused)}\n`;
 }
 
+function asNoteLines(lines: string[]): string {
+  const [heading, ...said] = lines;
+
+  if (heading === undefined) {
+    return '';
+  }
+
+  const rest = said.map((line) => `${INDENT}${color.dim(line)}`);
+
+  return `${INDENT}${color.yellow(heading)}\n${rest.join('\n')}\n`;
+}
+
 export function announce(
   directory: string,
   scripts: Record<string, string>,
   gates: GateSemantics[],
   first: FirstCommit,
+  skills: SkillsInstalled,
 ): void {
   outro(color.dim('Project created'));
 
@@ -82,6 +97,7 @@ export function announce(
   console.log(`${gateTable(gates)}\n`);
   console.log(`${INDENT}${color.dim(DRIVING)}\n`);
   console.log(`${commandTable(PIPELINE_COMMANDS)}\n`);
+  console.log(asNoteLines(skillsNote(skills)));
   console.log(commitNote(first));
   console.log(`${INDENT}${color.dim('More at')} ${color.cyan(DOCS)}\n`);
 }
