@@ -51,7 +51,7 @@ function asStepLines(steps: Step[]): string {
 
 export function openCreate(): void {
   console.log(`\n${shaded(KET_BANNER).join('\n')}\n`);
-  intro(color.dim('a project, and the gates that keep it honest'));
+  intro();
 }
 
 export function announce(

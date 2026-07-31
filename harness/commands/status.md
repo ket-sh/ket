@@ -1,5 +1,6 @@
 ---
 description: Show what is in flight and what each item is waiting on
+order: 6
 ---
 
 Read every `.ket/items/*/item.yaml` and report what is in flight.

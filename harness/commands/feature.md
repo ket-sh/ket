@@ -1,6 +1,7 @@
 ---
 description: File a piece of work and carry it to the first gate
 argument-hint: what the work is
+order: 1
 ---
 
 The user wants this built: **$ARGUMENTS**

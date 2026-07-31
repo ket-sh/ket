@@ -1,6 +1,7 @@
 ---
 description: Pass the human gate so implementation may begin
 argument-hint: the item key
+order: 3
 ---
 
 Approve **$ARGUMENTS** so work on it can start.

@@ -11,23 +11,34 @@ const MARKDOWN = '.md';
 
 const DESCRIPTION = 'description:';
 
-async function saysOf(entry: string): Promise<string> {
-  const contents = await readFile(join(COMMANDS, entry), 'utf8');
-  const line = contents.split('\n').find((each) => each.startsWith(DESCRIPTION)) ?? '';
+const ORDER = 'order:';
 
-  return line.slice(DESCRIPTION.length).trim();
+async function frontmatterOf(entry: string): Promise<{ says: string; at: number }> {
+  const lines = (await readFile(join(COMMANDS, entry), 'utf8')).split('\n');
+  const said = lines.find((each) => each.startsWith(DESCRIPTION)) ?? '';
+  const ordered = lines.find((each) => each.startsWith(ORDER)) ?? '';
+  const at = Number(ordered.slice(ORDER.length).trim());
+
+  if (!Number.isInteger(at)) {
+    throw new Error(`${entry} declares no order, so the outro cannot place it`);
+  }
+
+  return { says: said.slice(DESCRIPTION.length).trim(), at };
 }
 
 async function shipped(): Promise<{ name: string; says: string }[]> {
   const entries = await readdir(COMMANDS);
-  const named = entries.filter((entry) => entry.endsWith(MARKDOWN)).toSorted();
-
-  return Promise.all(
+  const named = entries.filter((entry) => entry.endsWith(MARKDOWN));
+  const read = await Promise.all(
     named.map(async (entry) => ({
       name: entry.slice(0, -MARKDOWN.length),
-      says: await saysOf(entry),
+      ...(await frontmatterOf(entry)),
     })),
   );
+
+  return read
+    .toSorted((left, right) => left.at - right.at)
+    .map((command) => ({ name: command.name, says: command.says }));
 }
 
 function render(commands: { name: string; says: string }[]): string {

@@ -1,6 +1,7 @@
 ---
 description: Think a piece of work through before filing it
 argument-hint: what to think about
+order: 2
 ---
 
 Think about **$ARGUMENTS**.

@@ -1,6 +1,7 @@
 ---
 description: Review with two seats and a judge that settles them
 argument-hint: what to review, or nothing for the working tree
+order: 5
 ---
 
 Review **$ARGUMENTS**. With no argument, review the working tree against its

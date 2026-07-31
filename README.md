@@ -56,8 +56,8 @@ ket create shop
 Then it asks two more questions:
 
 ```text
-Which preset governs this project?                          cli
-Which of these should this project use? Space to pick.      codecov codeql coderabbit
+Please select your project type                              cli
+Which online services do you want to use?                    codecov codeql coderabbit
 What key should item IDs carry?                             SHOP
 ```
 

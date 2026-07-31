@@ -32,7 +32,7 @@ export async function askName(under: string): Promise<string | symbol> {
 
 async function askPreset(): Promise<PresetName | symbol> {
   return select({
-    message: 'Which preset governs this project?',
+    message: 'Please select your project type',
     options: PRESET_NAMES.map((preset) => ({ value: preset, label: preset })),
   });
 }
@@ -52,7 +52,7 @@ async function askIntegrations(offered: PresetIntegration[]): Promise<string[] |
   }
 
   return multiselect({
-    message: 'Which of these should this project use? Space to pick, Enter for none.',
+    message: 'Which online services do you want to use?',
     options: offered.map((integration) => ({
       value: integration.name,
       label: integration.name,
