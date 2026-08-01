@@ -13,7 +13,7 @@ const ITEM: PresetItem = {
   title: 'ket example',
   description: 'A preset written to be read by a test.',
   dependencies: ['citty@0.1.6'],
-  devDependencies: ['oxlint@1.76.0', '@stylistic/eslint-plugin@5.10.0'],
+  devDependencies: ['oxlint@1.76.0', '@stylistic/eslint-plugin@5.10.0', 'cucumber@13.2.0'],
   files: [writes('lefthook.yml', 'lefthook.yml')],
   integrations: [],
 };

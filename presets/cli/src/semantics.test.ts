@@ -34,8 +34,11 @@ describe('what the cli preset declares about a project', () => {
     expect(CLI_SEMANTICS.slice.adapters).toStrictEqual(['command.ts', 'io/**']);
   });
 
-  it('drives acceptance through the built binary, not a browser', () => {
-    expect(CLI_SEMANTICS.acceptance).toStrictEqual({ runner: 'cucumber', drives: 'binary' });
+  it('drives a scenario through the built binary, not a browser', () => {
+    expect(CLI_SEMANTICS.acceptance).toStrictEqual({
+      runner: '@cucumber/cucumber',
+      drives: 'binary',
+    });
   });
 
   it('runs every test on one runner, since the bun exception belongs to the tui', () => {

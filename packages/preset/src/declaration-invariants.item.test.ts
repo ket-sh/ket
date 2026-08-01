@@ -13,7 +13,7 @@ const ITEM: PresetItem = {
   title: 'ket example',
   description: 'A preset written to be read by a test.',
   dependencies: ['citty@0.1.6'],
-  devDependencies: ['oxlint@1.76.0', '@stylistic/eslint-plugin@5.10.0'],
+  devDependencies: ['oxlint@1.76.0', '@stylistic/eslint-plugin@5.10.0', 'cucumber@13.2.0'],
   files: [writes('lefthook.yml', 'lefthook.yml')],
   integrations: [],
 };
@@ -62,9 +62,11 @@ describe('how a preset names and pins what it installs', () => {
   });
 
   it('keeps a scoped package whole, since the scope is half its name', () => {
-    expect(brokenWhenItem({ devDependencies: ['@stylistic/eslint-plugin@5.10.0'] })).toStrictEqual(
-      [],
-    );
+    expect(
+      brokenWhenItem({
+        devDependencies: [...ITEM.devDependencies, '@stylistic/eslint-plugin@5.10.0'],
+      }),
+    ).toStrictEqual([]);
   });
 
   it('names a scoped package with no version behind its scope', () => {
@@ -109,6 +111,41 @@ describe('how a preset presents itself to a registry', () => {
     expect(brokenWhenItem({ $schema: '' })).toContain(
       'the preset declares no schema, and a registry validates an item against one',
     );
+  });
+});
+
+describe('the runner a preset says answers for it', () => {
+  it('breaks nothing when the preset installs the runner it names', () => {
+    const semantics = { ...SEMANTICS, acceptance: { runner: 'cucumber', drives: 'binary' } };
+
+    expect(declarationInvariantsOf(ITEM, semantics)).toStrictEqual([]);
+  });
+
+  it('names an acceptance runner the preset installs nowhere', () => {
+    const item = {
+      ...ITEM,
+      devDependencies: ITEM.devDependencies.filter(
+        (installed) => !installed.startsWith('cucumber'),
+      ),
+    };
+    const semantics = { ...SEMANTICS, acceptance: { runner: 'cucumber', drives: 'binary' } };
+
+    expect(declarationInvariantsOf(item, semantics)).toContain(
+      'the preset says cucumber drives its acceptance, and installs no such package',
+    );
+  });
+
+  it('reads a scoped runner as the package behind it', () => {
+    const item = {
+      ...ITEM,
+      devDependencies: [...ITEM.devDependencies, '@cucumber/cucumber@13.2.0'],
+    };
+    const semantics = {
+      ...SEMANTICS,
+      acceptance: { runner: '@cucumber/cucumber', drives: 'binary' },
+    };
+
+    expect(declarationInvariantsOf(item, semantics)).toStrictEqual([]);
   });
 });
 
