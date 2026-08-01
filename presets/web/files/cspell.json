@@ -30,6 +30,10 @@
     {
       "filename": "**/*.test.ts",
       "ignoreRegExpList": ["/'[^'\\s]{4,}'/g"]
+    },
+    {
+      "filename": ".oxlintrc.json",
+      "ignoreRegExpList": ["/\"react-doctor\\/[^\"]*\"/g"]
     }
   ]
 }

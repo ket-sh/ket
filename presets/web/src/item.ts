@@ -17,9 +17,11 @@ export const WEB_PRESET: PresetItem = {
   ],
   devDependencies: [
     ...STANDING_TOOLCHAIN,
+    'oxlint-plugin-react-doctor@0.9.3',
     'vite@8.2.0',
     '@vitejs/plugin-react@6.0.5',
     '@playwright/test@1.62.1',
+    '@axe-core/playwright@4.12.1',
     'steiger@0.6.0',
     '@feature-sliced/steiger-plugin@0.7.0',
     '@steiger/toolkit@0.2.3',
@@ -46,6 +48,8 @@ export const WEB_PRESET: PresetItem = {
     ),
     writes('source/greeting/ui/greeting-panel.tsx', 'src/entities/greeting/ui/greeting-panel.tsx'),
     writes('source/greeting/index.ts', 'src/entities/greeting/index.ts'),
+    writes('source/e2e/helpers/a11y.ts', 'e2e/helpers/a11y.ts'),
+    writes('source/e2e/helpers/harness.ts', 'e2e/helpers/harness.ts'),
     writes('source/e2e/greeting.spec.ts', 'e2e/greeting.spec.ts'),
   ],
   integrations: [
@@ -60,7 +64,7 @@ export const WEB_PRESET: PresetItem = {
       installs: ['chromatic@18.1.0', '@chromatic-com/playwright@0.14.11'],
       files: [
         writes('github-chromatic.yml', '.github/workflows/chromatic.yml'),
-        writes('source/chromatic/greeting.spec.ts', 'e2e/greeting.spec.ts'),
+        writes('source/chromatic/harness.ts', 'e2e/helpers/harness.ts'),
       ],
     },
     ...STANDING_INTEGRATIONS,

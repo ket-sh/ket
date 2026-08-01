@@ -1,5 +1,5 @@
 import { dependencyNamesOf, repositoryRootFrom, testFileFor } from '@ket/preset';
-import { access, readFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -51,7 +51,10 @@ async function versionsKetPins(): Promise<Record<string, string>> {
 }
 
 async function readsPresetFile(name: string): Promise<string> {
-  return readFile(join(import.meta.dirname, '..', 'files', name), 'utf8');
+  const kept = join(import.meta.dirname, '..', 'files', name);
+  const shared = join(repositoryRootFrom(import.meta.dirname), 'packages', 'preset', 'files', name);
+
+  return readFile(kept, 'utf8').catch(async () => readFile(shared, 'utf8'));
 }
 
 async function commitJobsItWrites(): Promise<string[]> {
@@ -143,7 +146,7 @@ describe('the cli preset item', () => {
 
   it('carries every file it promises, since a missing one fails at init and not here', async () => {
     for (const file of CLI_PRESET.files) {
-      await expect(access(join(import.meta.dirname, '..', file.path))).resolves.toBeUndefined();
+      await expect(readsPresetFile(file.path.slice('files/'.length))).resolves.toBeDefined();
     }
   });
 });

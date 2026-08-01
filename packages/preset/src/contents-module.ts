@@ -16,8 +16,12 @@ function moduleCarrying(shipped: PresetContents): string {
   return `export const PRESET_CONTENTS: Record<string, string> = {\n${entries}\n};\n`;
 }
 
-export async function writeContentsModule(item: PresetItem, root: string): Promise<void> {
-  const shipped = await shippedFilesOf(item, root);
+export async function writeContentsModule(
+  item: PresetItem,
+  root: string,
+  shared?: string,
+): Promise<void> {
+  const shipped = await shippedFilesOf(item, root, shared);
 
   await writeFile(join(root, GENERATED), moduleCarrying(shipped));
 }

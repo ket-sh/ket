@@ -70,7 +70,7 @@ describe('the rings the web preset closes a write and a stage with', () => {
 
   it('runs the linter over the written file alone, which is what keeps a write cheap', () => {
     expect(WEB_SEMANTICS.rings.one).toContainEqual({
-      runs: 'oxlint --no-error-on-unmatched-pattern',
+      runs: 'oxlint --deny-warnings --no-error-on-unmatched-pattern',
       scope: 'file',
     });
   });

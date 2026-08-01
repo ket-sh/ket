@@ -1,6 +1,6 @@
 import type { PresetSemantics } from '@ket/preset';
 
-import { SLICE_PLACEHOLDER, UNIT_PLACEHOLDER } from '@ket/preset';
+import { SLICE_PLACEHOLDER, STANDING_GATES, UNIT_PLACEHOLDER } from '@ket/preset';
 
 export const WEB_SEMANTICS: PresetSemantics = {
   scripts: {
@@ -10,7 +10,7 @@ export const WEB_SEMANTICS: PresetSemantics = {
     test: 'vitest run --project domain',
     'test:browser': 'playwright test',
     'test:mutation': 'stryker run',
-    lint: 'oxlint .',
+    lint: 'oxlint --deny-warnings .',
     'lint:boundaries': 'steiger src --fail-on-warnings',
     'lint:dead': 'knip',
     'lint:dup': 'jscpd -c .jscpd.json src',
@@ -42,89 +42,34 @@ export const WEB_SEMANTICS: PresetSemantics = {
   substrate: 'temporary-directories',
   lockfile: 'bun.lock',
   gates: [
-    {
-      script: 'lint',
-      guards: 'It checks style, correctness and imports.',
-      commitJob: 'lint',
-      ciJob: 'check',
-    },
-    {
-      script: 'check-types',
-      guards: 'It checks types at full strictness.',
-      commitJob: 'typecheck',
-      ciJob: 'check',
-    },
+    STANDING_GATES.lint,
+    STANDING_GATES.types,
     {
       script: 'lint:boundaries',
       guards: 'It checks a layer imports only below it.',
       commitJob: 'boundaries',
       ciJob: 'check',
     },
-    {
-      script: 'lint:dead',
-      guards: 'It finds code nothing reaches.',
-      commitJob: 'dead',
-      ciJob: 'check',
-    },
-    {
-      script: 'lint:dup',
-      guards: 'It finds knowledge written twice.',
-      commitJob: 'dup',
-      ciJob: 'check',
-    },
-    {
-      script: 'lint:spell',
-      guards: 'It finds words nobody has agreed on.',
-      commitJob: 'spell',
-      ciJob: 'check',
-    },
-    {
-      script: 'lint:prose',
-      guards: 'It checks the prose in every markdown.',
-      commitJob: '',
-      ciJob: 'prose',
-    },
-    {
-      script: 'fmt:check',
-      guards: 'It checks formatting, so diffs show why.',
-      commitJob: 'fmt',
-      ciJob: 'check',
-    },
-    {
-      script: 'test',
-      guards: 'It checks the behavior the suite claims.',
-      commitJob: '',
-      ciJob: 'check',
-    },
-    {
-      script: 'lint:secrets',
-      guards: 'It finds a secret before it ships.',
-      commitJob: 'gitleaks',
-      ciJob: 'check',
-    },
-    {
-      script: 'lint:workflows',
-      guards: 'It checks the pipeline files for defects.',
-      commitJob: 'workflows',
-      ciJob: 'check',
-    },
+    STANDING_GATES.dead,
+    STANDING_GATES.dup,
+    STANDING_GATES.spell,
+    STANDING_GATES.prose,
+    STANDING_GATES.format,
+    STANDING_GATES.tests,
+    STANDING_GATES.secrets,
+    STANDING_GATES.workflows,
     {
       script: 'test:browser',
       guards: 'It drives the pages a person will.',
       commitJob: '',
       ciJob: 'browser',
     },
-    {
-      script: 'test:mutation',
-      guards: 'It checks that the suite asserts anything.',
-      commitJob: '',
-      ciJob: 'mutation',
-    },
+    STANDING_GATES.mutation,
   ],
   rings: {
     formats: [{ runs: 'oxfmt', scope: 'file' }],
     one: [
-      { runs: 'oxlint --no-error-on-unmatched-pattern', scope: 'file' },
+      { runs: 'oxlint --deny-warnings --no-error-on-unmatched-pattern', scope: 'file' },
       { runs: 'vitest run --project domain', scope: 'covering' },
     ],
     two: [

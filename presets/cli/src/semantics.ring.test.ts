@@ -7,7 +7,9 @@ describe('what the cli preset runs on every write', () => {
   it('runs the linter per file, since that is what makes the ring cheap', () => {
     const perFile = CLI_SEMANTICS.rings.one.filter((check) => check.scope === 'file');
 
-    expect(perFile.map((check) => check.runs)).toContain('oxlint --no-error-on-unmatched-pattern');
+    expect(perFile.map((check) => check.runs)).toContain(
+      'oxlint --deny-warnings --no-error-on-unmatched-pattern',
+    );
   });
 
   it('runs the tests that cover the written file, since nothing else runs them', () => {
