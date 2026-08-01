@@ -1,4 +1,5 @@
 import type { PresetFile, PresetIntegration } from './item.ts';
+import type { GateSemantics } from './semantics.ts';
 
 import { writes } from './item.ts';
 
@@ -73,3 +74,89 @@ export const STANDING_TOOLCHAIN: string[] = [
   '@nizos/probity@1.10.0',
   'typescript@5.9.3',
 ];
+
+// A gate that reads the same way whatever a project builds is declared once.
+// A preset composes its own chain from these and adds what only it needs, so
+// the order a project sees stays the preset's own decision.
+interface StandingGates {
+  lint: GateSemantics;
+  types: GateSemantics;
+  dead: GateSemantics;
+  dup: GateSemantics;
+  spell: GateSemantics;
+  prose: GateSemantics;
+  format: GateSemantics;
+  tests: GateSemantics;
+  secrets: GateSemantics;
+  workflows: GateSemantics;
+  mutation: GateSemantics;
+}
+
+export const STANDING_GATES: StandingGates = {
+  lint: {
+    script: 'lint',
+    guards: 'It checks style, correctness and imports.',
+    commitJob: 'lint',
+    ciJob: 'check',
+  },
+  types: {
+    script: 'check-types',
+    guards: 'It checks types at full strictness.',
+    commitJob: 'typecheck',
+    ciJob: 'check',
+  },
+  dead: {
+    script: 'lint:dead',
+    guards: 'It finds code nothing reaches.',
+    commitJob: 'dead',
+    ciJob: 'check',
+  },
+  dup: {
+    script: 'lint:dup',
+    guards: 'It finds knowledge written twice.',
+    commitJob: 'dup',
+    ciJob: 'check',
+  },
+  spell: {
+    script: 'lint:spell',
+    guards: 'It finds words nobody has agreed on.',
+    commitJob: 'spell',
+    ciJob: 'check',
+  },
+  prose: {
+    script: 'lint:prose',
+    guards: 'It checks the prose in every markdown.',
+    commitJob: '',
+    ciJob: 'prose',
+  },
+  format: {
+    script: 'fmt:check',
+    guards: 'It checks formatting, so diffs show why.',
+    commitJob: 'fmt',
+    ciJob: 'check',
+  },
+  tests: {
+    script: 'test',
+    guards: 'It checks the behavior the suite claims.',
+    commitJob: '',
+    ciJob: 'check',
+  },
+  secrets: {
+    script: 'lint:secrets',
+    guards: 'It finds a secret before it ships.',
+    commitJob: 'gitleaks',
+    ciJob: 'check',
+  },
+  workflows: {
+    script: 'lint:workflows',
+    guards: 'It checks the pipeline files for defects.',
+    commitJob: 'workflows',
+    ciJob: 'check',
+  },
+  mutation: {
+    script: 'test:mutation',
+    guards: 'It checks that the suite asserts anything.',
+    commitJob: '',
+    ciJob: 'mutation',
+  },
+};

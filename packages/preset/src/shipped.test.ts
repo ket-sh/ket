@@ -10,6 +10,8 @@ import { shippedFilesOf } from './shipped.ts';
 
 let root = '';
 
+let standing = '';
+
 function itemPromising(files: PresetItem['files']): PresetItem {
   return {
     $schema: 'https://ui.shadcn.com/schema/registry-item.json',
@@ -31,10 +33,17 @@ beforeAll(async () => {
   await writeFile(join(root, 'files', 'knip.json'), '{}\n', 'utf8');
   await writeFile(join(root, 'files', 'source', 'main.ts'), "export const a = 'b';\n", 'utf8');
   await writeFile(join(root, 'files', 'unpromised.json'), 'null\n', 'utf8');
+
+  standing = await mkdtemp(join(tmpdir(), 'ket-standing-'));
+
+  await mkdir(join(standing, 'files'), { recursive: true });
+  await writeFile(join(standing, 'files', 'mise.toml'), '[tools]\n', 'utf8');
+  await writeFile(join(standing, 'files', 'knip.json'), 'SHARED\n', 'utf8');
 });
 
 afterAll(async () => {
   await rm(root, { recursive: true, force: true });
+  await rm(standing, { recursive: true, force: true });
 });
 
 describe('the files a preset ships', () => {
@@ -92,5 +101,27 @@ describe('the files a preset ships', () => {
     const item = itemPromising([writes('nowhere.json', 'nowhere.json')]);
 
     await expect(shippedFilesOf(item, root)).rejects.toThrow('nowhere.json');
+  });
+});
+
+describe('a file every preset ships alike', () => {
+  it('reads it from where it is kept once, when the preset keeps no copy', async () => {
+    const item = itemPromising([writes('mise.toml', 'mise.toml')]);
+
+    expect(await shippedFilesOf(item, root, standing)).toStrictEqual({
+      'files/mise.toml': '[tools]\n',
+    });
+  });
+
+  it('lets a preset that keeps its own copy answer with that one', async () => {
+    const item = itemPromising([writes('knip.json', 'knip.json')]);
+
+    expect(await shippedFilesOf(item, root, standing)).toStrictEqual({ 'files/knip.json': '{}\n' });
+  });
+
+  it('refuses a promised file neither the preset nor the shared place holds', async () => {
+    const item = itemPromising([writes('nowhere.json', 'nowhere.json')]);
+
+    await expect(shippedFilesOf(item, root, standing)).rejects.toThrow();
   });
 });

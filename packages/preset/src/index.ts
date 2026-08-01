@@ -19,5 +19,10 @@ export {
   UNIT_PLACEHOLDER,
 } from './semantics.ts';
 export { shippedFilesOf } from './shipped.ts';
-export { STANDING_FILES, STANDING_INTEGRATIONS, STANDING_TOOLCHAIN } from './standing.ts';
+export {
+  STANDING_FILES,
+  STANDING_GATES,
+  STANDING_INTEGRATIONS,
+  STANDING_TOOLCHAIN,
+} from './standing.ts';
 export { skillsFrom } from './skills.ts';

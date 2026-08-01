@@ -7,6 +7,15 @@ import { CLI_SEMANTICS } from './semantics.ts';
 
 const OUR_CLI = join(repositoryRootFrom(import.meta.dirname), 'packages', 'cli');
 
+// A file every preset writes alike is kept once beside the package that
+// declares it, and only what this preset differs on sits in its own files.
+async function readsPresetFile(name: string): Promise<string> {
+  const kept = join(import.meta.dirname, '..', 'files', name);
+  const shared = join(repositoryRootFrom(import.meta.dirname), 'packages', 'preset', 'files', name);
+
+  return readFile(kept, 'utf8').catch(async () => readFile(shared, 'utf8'));
+}
+
 describe('what the cli preset declares about a project', () => {
   it('roots a slice where this repository roots its commands', async () => {
     const commands = await readdir(join(OUR_CLI, 'src', 'commands'));
@@ -130,10 +139,7 @@ describe('the shape of what the cli preset declares', () => {
 
 describe('the test-first gate against the config the cli preset writes', () => {
   it('guards the source a slice lands in, not the layout of some other repository', async () => {
-    const configuration = await readFile(
-      join(import.meta.dirname, '..', 'files', 'probity.config.ts'),
-      'utf8',
-    );
+    const configuration = await readsPresetFile('probity.config.ts');
     const quoted = [...configuration.matchAll(/'(?<glob>[^']+)'/gu)]
       .map((found) => found.groups?.['glob'] ?? '')
       .filter((glob) => glob.includes('*') && !glob.startsWith('!'));
@@ -146,10 +152,7 @@ describe('the test-first gate against the config the cli preset writes', () => {
   });
 
   it('leaves the tests it drives out, since a test is what unlocks the source', async () => {
-    const configuration = await readFile(
-      join(import.meta.dirname, '..', 'files', 'probity.config.ts'),
-      'utf8',
-    );
+    const configuration = await readsPresetFile('probity.config.ts');
 
     expect(configuration).toContain('!**/*.test.*');
   });
@@ -157,10 +160,7 @@ describe('the test-first gate against the config the cli preset writes', () => {
 
 describe('the prose gate against the config the cli preset writes', () => {
   it('syncs the very package its prose config declares, so a fresh checkout finds it', async () => {
-    const configuration = await readFile(
-      join(import.meta.dirname, '..', 'files', 'vale.ini'),
-      'utf8',
-    );
+    const configuration = await readsPresetFile('vale.ini');
     const declared = /\/(?<name>[A-Za-z]+)\.zip/u.exec(configuration)?.groups?.['name'];
 
     expect(declared).toBeDefined();

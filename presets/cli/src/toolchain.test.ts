@@ -1,3 +1,4 @@
+import { repositoryRootFrom } from '@ket/preset';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -5,7 +6,10 @@ import { describe, expect, it } from 'vitest';
 import { CLI_SEMANTICS } from './semantics.ts';
 
 async function readsPresetFile(name: string): Promise<string> {
-  return readFile(join(import.meta.dirname, '..', 'files', name), 'utf8');
+  const kept = join(import.meta.dirname, '..', 'files', name);
+  const shared = join(repositoryRootFrom(import.meta.dirname), 'packages', 'preset', 'files', name);
+
+  return readFile(kept, 'utf8').catch(async () => readFile(shared, 'utf8'));
 }
 
 describe('the toolchain the cli preset declares', () => {

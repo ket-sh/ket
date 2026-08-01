@@ -37,12 +37,12 @@ describe('what the web preset offers a project that wants its screens reviewed',
     ]);
   });
 
-  it('replaces the spec, since the archive only exists when the spec imports theirs', () => {
+  it('replaces the harness every spec reaches through, not one spec', () => {
     const written = CHROMATIC === undefined ? [] : filesOf(CHROMATIC);
 
     expect(written.map((file) => file.target)).toStrictEqual([
       '~/.github/workflows/chromatic.yml',
-      '~/e2e/greeting.spec.ts',
+      '~/e2e/helpers/harness.ts',
     ]);
   });
 });

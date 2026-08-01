@@ -60,6 +60,9 @@ jobs:
       - run: bun run lint:boundaries
       - run: bun run lint:fsd
       - run: bun run check-types:workflows
+      - run: bun run check-types:root-configs
+      - run: bun run lint:dead
+      - run: bun run lint:dup
       - run: bun run lint:spell
 
   mutation:

@@ -1,13 +1,13 @@
 import type { PresetSemantics } from '@ket/preset';
 
-import { SLICE_PLACEHOLDER, UNIT_PLACEHOLDER } from '@ket/preset';
+import { SLICE_PLACEHOLDER, STANDING_GATES, UNIT_PLACEHOLDER } from '@ket/preset';
 
 export const CLI_SEMANTICS: PresetSemantics = {
   scripts: {
     build: 'bun build src/run.ts --compile --outfile dist/app',
     test: 'vitest run',
     'test:mutation': 'stryker run',
-    lint: 'oxlint .',
+    lint: 'oxlint --deny-warnings .',
     'lint:boundaries': 'depcruise src --config .dependency-cruiser.cjs',
     'lint:dead': 'knip',
     'lint:dup': 'jscpd -c .jscpd.json src',
@@ -36,7 +36,7 @@ export const CLI_SEMANTICS: PresetSemantics = {
   rings: {
     formats: [{ runs: 'oxfmt', scope: 'file' }],
     one: [
-      { runs: 'oxlint --no-error-on-unmatched-pattern', scope: 'file' },
+      { runs: 'oxlint --deny-warnings --no-error-on-unmatched-pattern', scope: 'file' },
       { runs: 'vitest run', scope: 'covering' },
     ],
     two: [
@@ -46,78 +46,23 @@ export const CLI_SEMANTICS: PresetSemantics = {
     ],
   },
   gates: [
-    {
-      script: 'lint',
-      guards: 'It checks style, correctness and imports.',
-      commitJob: 'lint',
-      ciJob: 'check',
-    },
-    {
-      script: 'check-types',
-      guards: 'It checks types at full strictness.',
-      commitJob: 'typecheck',
-      ciJob: 'check',
-    },
+    STANDING_GATES.lint,
+    STANDING_GATES.types,
     {
       script: 'lint:boundaries',
       guards: 'It checks what a module may import.',
       commitJob: 'boundaries',
       ciJob: 'check',
     },
-    {
-      script: 'lint:dead',
-      guards: 'It finds code nothing reaches.',
-      commitJob: 'dead',
-      ciJob: 'check',
-    },
-    {
-      script: 'lint:dup',
-      guards: 'It finds knowledge written twice.',
-      commitJob: 'dup',
-      ciJob: 'check',
-    },
-    {
-      script: 'lint:spell',
-      guards: 'It finds words nobody has agreed on.',
-      commitJob: 'spell',
-      ciJob: 'check',
-    },
-    {
-      script: 'lint:prose',
-      guards: 'It checks the prose in every markdown.',
-      commitJob: '',
-      ciJob: 'prose',
-    },
-    {
-      script: 'fmt:check',
-      guards: 'It checks formatting, so diffs show why.',
-      commitJob: 'fmt',
-      ciJob: 'check',
-    },
-    {
-      script: 'test',
-      guards: 'It checks the behavior the suite claims.',
-      commitJob: '',
-      ciJob: 'check',
-    },
-    {
-      script: 'lint:secrets',
-      guards: 'It finds a secret before it ships.',
-      commitJob: 'gitleaks',
-      ciJob: 'check',
-    },
-    {
-      script: 'lint:workflows',
-      guards: 'It checks the pipeline files for defects.',
-      commitJob: 'workflows',
-      ciJob: 'check',
-    },
-    {
-      script: 'test:mutation',
-      guards: 'It checks that the suite asserts anything.',
-      commitJob: '',
-      ciJob: 'mutation',
-    },
+    STANDING_GATES.dead,
+    STANDING_GATES.dup,
+    STANDING_GATES.spell,
+    STANDING_GATES.prose,
+    STANDING_GATES.format,
+    STANDING_GATES.tests,
+    STANDING_GATES.secrets,
+    STANDING_GATES.workflows,
+    STANDING_GATES.mutation,
   ],
 
   testRuntime: 'vitest',
