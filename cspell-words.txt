@@ -4,6 +4,7 @@ anscribe
 arrayify
 artipacked
 backoff
+bddgen
 bunx
 capitalises
 chromatic
@@ -15,6 +16,7 @@ COLORTERM
 conftest
 consola
 cucumberjs
+cva
 Datree
 dedup
 depcruise
@@ -35,12 +37,14 @@ lefthook
 lockfiles
 mobbin
 Mobbin
+msw
 nizos
 nofilter
 nolint
 nonword
 NOSYSTEM
 nsegmentless
+oklch
 openspec
 opentui
 opentui-spinner
@@ -57,6 +61,7 @@ rhysd
 scrollbox
 segmentless
 semgrep
+shadcn
 shellcheck
 steiger
 stryker
@@ -81,6 +86,7 @@ usecase
 usecases
 vitest
 vtsls
+WCAG
 worktree
 worktrees
 zizmor

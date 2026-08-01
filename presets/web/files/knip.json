@@ -1,15 +1,15 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "ignoreBinaries": ["mise"],
-  "ignoreDependencies": ["@steiger/toolkit"],
+  "ignoreDependencies": ["@steiger/toolkit", "tailwindcss", "class-variance-authority"],
   "entry": [
     "src/app/router.tsx",
     "src/app/routes/**/*.tsx",
-    "e2e/**/*.ts",
     "vitest.mutation.config.ts",
     "steiger.config.ts",
-    "probity.config.ts"
+    "probity.config.ts",
+    "e2e/**/*.ts"
   ],
   "project": ["src/**/*.{ts,tsx}", "*.config.ts"],
-  "ignore": ["**/*.gen.ts"]
+  "ignore": ["**/*.gen.ts", "src/shared/ui/**"]
 }

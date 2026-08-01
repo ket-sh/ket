@@ -6,6 +6,7 @@ anscribe
 arrayify
 artipacked
 backoff
+bddgen
 bunx
 chromatic
 citty

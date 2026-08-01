@@ -68,5 +68,5 @@ export const PRESET_CONTENTS: Record<string, string> = {
   'files/vitest.config.ts':
     "import { defineConfig } from 'vitest/config';\n\nexport default defineConfig({\n  test: {\n    include: ['src/**/*.test.ts'],\n  },\n});\n",
   'files/vitest.mutation.config.ts':
-    "import { defineConfig } from 'vitest/config';\n\nexport default defineConfig({\n  test: {\n    include: ['src/**/*.test.ts'],\n  },\n});\n",
+    "import { defineConfig } from 'vitest/config';\n\n// The mutation gate measures the domain. An integration test composes adapters\n// and stubs a boundary, so it answers a different question and is left out.\nexport default defineConfig({\n  test: {\n    include: ['src/**/*.test.ts'],\n    exclude: ['src/**/*.integration.test.ts'],\n  },\n});\n",
 };

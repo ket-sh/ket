@@ -272,6 +272,10 @@ describe('what a preset ships as source against what it installs', () => {
     expect(configInvariantsOf(item, SHIPPED)).toStrictEqual([]);
   });
 
+  it('reads no package out of a path the project aliases to its own source', () => {
+    expect(invariantsShipping([], "import { cn } from '@/shared/cn.ts';\n")).toStrictEqual([]);
+  });
+
   it('reads no package out of a runtime builtin', () => {
     expect(invariantsShipping([], "import { join } from 'node:path';\n")).toStrictEqual([]);
   });

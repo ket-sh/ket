@@ -44,8 +44,8 @@ describe('what the web preset declares about a project', () => {
     expect(WEB_SEMANTICS.slice.adapters).toStrictEqual(['ui/**', 'api/**']);
   });
 
-  it('drives acceptance through a browser, not a built binary', () => {
-    expect(WEB_SEMANTICS.acceptance).toStrictEqual({ runner: 'playwright', drives: 'browser' });
+  it('drives a scenario through a browser, not a built binary', () => {
+    expect(WEB_SEMANTICS.acceptance).toStrictEqual({ runner: 'playwright-bdd', drives: 'browser' });
   });
 
   it('runs the domain suite on its own project, so a browser test stays out of it', () => {

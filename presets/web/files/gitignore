@@ -19,3 +19,6 @@ dist/
 # Written by `playwright test`
 test-results/
 playwright-report/
+
+# Written by `bddgen`
+.features-gen/
