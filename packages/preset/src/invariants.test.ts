@@ -20,7 +20,7 @@ const SOUND: PresetSubject = {
     title: 'ket example',
     description: 'A preset written to be read by a test.',
     dependencies: [],
-    devDependencies: [],
+    devDependencies: ['cucumber@13.2.0'],
     files: [
       writes('knip.json', 'knip.json'),
       writes('github-ci.yml', '.github/workflows/ci.yml'),

@@ -1,7 +1,7 @@
 import type { PresetItem } from './item.ts';
 import type { GateSemantics, PresetSemantics } from './semantics.ts';
 
-import { installsOf } from './item.ts';
+import { dependencyNamesOf, installsOf } from './item.ts';
 import { SLICE_PLACEHOLDER, UNIT_PLACEHOLDER } from './semantics.ts';
 
 // The gate table shows a description beside a command, and a terminal is the
@@ -175,14 +175,22 @@ function introductionInvariants(item: PresetItem): string[] {
   ];
 }
 
-function acceptanceInvariants(semantics: PresetSemantics): string[] {
+// A preset that names a runner and installs nothing is a preset whose scenarios
+// nobody can run, and a preset that names none says nothing worth adding to.
+function acceptanceInvariants(item: PresetItem, semantics: PresetSemantics): string[] {
+  const { runner, drives } = semantics.acceptance;
+
+  if (runner === '') {
+    return ['the preset names no acceptance runner, so nothing drives what a person would'];
+  }
+
   return [
-    ...(semantics.acceptance.runner === ''
-      ? ['the preset names no acceptance runner, so nothing drives what a person would']
-      : []),
-    ...(semantics.acceptance.drives === ''
+    ...(drives === ''
       ? ['the preset says its acceptance drives nothing, and a runner drives something']
       : []),
+    ...(new Set(dependencyNamesOf(item)).has(runner)
+      ? []
+      : [`the preset says ${runner} drives its acceptance, and installs no such package`]),
   ];
 }
 
@@ -234,7 +242,7 @@ export function declarationInvariantsOf(item: PresetItem, semantics: PresetSeman
     ...scriptInvariants(semantics),
     ...testInvariants(semantics),
     ...shapeInvariants(semantics),
-    ...acceptanceInvariants(semantics),
+    ...acceptanceInvariants(item, semantics),
     ...installInvariants(item),
     ...introductionInvariants(item),
     ...registryInvariants(item),

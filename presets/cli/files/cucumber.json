@@ -1,0 +1,7 @@
+{
+  "default": {
+    "import": ["acceptance/steps/**/*.ts"],
+    "paths": ["features/**/*.feature"],
+    "format": ["summary"]
+  }
+}

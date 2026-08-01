@@ -19,6 +19,11 @@ and `greeting.property.test.ts` for the ones you didn't. Both sit beside the
 source. The `tdd` skill carries the order they arrive in, and the `vitest` skill
 covers the runner, its config, and its coverage.
 
+What the built binary has to answer for is a scenario. `features/` holds the
+`.feature` files, `acceptance/steps/` holds what each step does, and cucumber
+runs them against `dist/app` rather than the source. The `gherkin` skill carries
+the six checks a scenario passes.
+
 ## The pipeline
 
 Work is an item. An item lives in `.ket/items/<key>/`, and `.ket/BOARD.md`

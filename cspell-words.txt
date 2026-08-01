@@ -35,8 +35,8 @@ knip
 kubeconform
 lefthook
 lockfiles
-mobbin
 Mobbin
+mobbin
 msw
 nizos
 nofilter
@@ -44,6 +44,7 @@ nolint
 nonword
 NOSYSTEM
 nsegmentless
+nunasserted
 oklch
 openspec
 opentui
@@ -78,6 +79,7 @@ tsconfigs
 tsgolint
 tuiparts
 turborepo
+unasserted
 unlinted
 unlocks
 unrepresentable

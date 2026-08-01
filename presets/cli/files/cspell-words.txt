@@ -55,6 +55,7 @@ tsconfigs
 tsgolint
 tuiparts
 turborepo
+unasserted
 unlinted
 unlocks
 usecase
