@@ -179,6 +179,10 @@ const RUNTIME_BUILTIN = 'node:';
 
 const RELATIVE = '.';
 
+// A scope carries a name after the slash, and `@/` carries none. A project that
+// aliases it to its own source is importing itself rather than a package.
+const ALIASED = '@/';
+
 // A package the source reaches for is a package the project needs installed.
 // Nothing else in the preset says so, and the source is what breaks without it.
 function sourceInvariants(item: PresetItem, shipped: PresetContents): string[] {
@@ -190,7 +194,10 @@ function sourceInvariants(item: PresetItem, shipped: PresetContents): string[] {
     .flatMap((source) => [...source.matchAll(IMPORTED)])
     .map((found) => found[0])
     .filter(
-      (specifier) => !specifier.startsWith(RELATIVE) && !specifier.startsWith(RUNTIME_BUILTIN),
+      (specifier) =>
+        !specifier.startsWith(RELATIVE) &&
+        !specifier.startsWith(RUNTIME_BUILTIN) &&
+        !specifier.startsWith(ALIASED),
     )
     .map(packageBehind);
 

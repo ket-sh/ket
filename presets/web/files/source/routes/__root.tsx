@@ -1,5 +1,7 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-router';
 
+import styles from '../styles.css?url';
+
 export const Route = createRootRoute({
   head: () => ({
     meta: [
@@ -7,6 +9,7 @@ export const Route = createRootRoute({
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       { title: '__PROJECT_NAME__' },
     ],
+    links: [{ rel: 'stylesheet', href: styles }],
   }),
   shellComponent: ({ children }) => (
     <html lang="en">

@@ -22,10 +22,19 @@ Routing has its own layer. `src/app/` holds the router, the route files, and the
 route tree TanStack Start generates from them. Nothing writes to a generated file by
 hand, and every gate skips a `.gen.ts`.
 
+Style is a token rather than a value. `src/app/styles.css` holds them and the
+`design-tokens` skill says what may be one, what may not, and why a raw color
+in a component is a decision nobody wrote down.
+
 A unit named `greeting` takes `greeting.test.ts` for the cases you thought of,
 and `greeting.property.test.ts` for the ones you didn't. Both sit beside the
-source, and both run in node. What a browser has to answer for goes to
-`e2e/` instead, where `playwright` drives the pages a person will.
+source, and both run in node. A test that composes several slices and stubs only the
+network takes `{unit}.integration.test.ts`, and the mutation gate leaves it alone
+because it measures a boundary rather than a decision.
+
+What a browser has to answer for is a scenario. `features/` holds the `.feature`
+files, `e2e/steps/` holds what each step does, and `playwright-bdd` runs them.
+The `gherkin` skill carries the six checks a scenario passes.
 
 The `tdd` skill carries the order tests arrive in, and the `vitest` skill covers
 the runner, its config, and its coverage.

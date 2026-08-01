@@ -1,0 +1,33 @@
+@import 'tailwindcss';
+
+/* A token names a decision rather than a value, so a screen changes in one
+   place. Tailwind reads these through @theme, so `bg-surface` is the token. */
+@theme {
+  --color-surface: oklch(1 0 0);
+  --color-surface-sunken: oklch(0.97 0 0);
+  --color-ink: oklch(0.21 0 0);
+  --color-ink-muted: oklch(0.55 0 0);
+  --color-accent: oklch(0.55 0.18 265);
+  --color-accent-ink: oklch(0.99 0 0);
+  --color-edge: oklch(0.92 0 0);
+
+  --radius-panel: 0.75rem;
+}
+
+/* The same decisions, made again for a reader who asked for less light. */
+@media (prefers-color-scheme: dark) {
+  @theme {
+    --color-surface: oklch(0.19 0 0);
+    --color-surface-sunken: oklch(0.15 0 0);
+    --color-ink: oklch(0.96 0 0);
+    --color-ink-muted: oklch(0.66 0 0);
+    --color-accent: oklch(0.72 0.15 265);
+    --color-accent-ink: oklch(0.17 0 0);
+    --color-edge: oklch(0.29 0 0);
+  }
+}
+
+body {
+  background-color: var(--color-surface);
+  color: var(--color-ink);
+}

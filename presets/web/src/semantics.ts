@@ -8,7 +8,8 @@ export const WEB_SEMANTICS: PresetSemantics = {
     build: 'vite build',
     start: 'vite preview',
     test: 'vitest run --project domain',
-    'test:browser': 'playwright test',
+    'test:integration': 'vitest run --project integration',
+    'test:browser': 'bddgen && playwright test',
     'test:mutation': 'stryker run',
     lint: 'oxlint --deny-warnings .',
     'lint:boundaries': 'steiger src --fail-on-warnings',
@@ -38,7 +39,7 @@ export const WEB_SEMANTICS: PresetSemantics = {
     example: `${UNIT_PLACEHOLDER}.test.ts`,
     property: `${UNIT_PLACEHOLDER}.property.test.ts`,
   },
-  acceptance: { runner: 'playwright', drives: 'browser' },
+  acceptance: { runner: 'playwright-bdd', drives: 'browser' },
   substrate: 'temporary-directories',
   lockfile: 'bun.lock',
   gates: [
@@ -56,6 +57,12 @@ export const WEB_SEMANTICS: PresetSemantics = {
     STANDING_GATES.prose,
     STANDING_GATES.format,
     STANDING_GATES.tests,
+    {
+      script: 'test:integration',
+      guards: 'It checks what the slices do together.',
+      commitJob: '',
+      ciJob: 'check',
+    },
     STANDING_GATES.secrets,
     STANDING_GATES.workflows,
     {

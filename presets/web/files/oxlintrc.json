@@ -9,6 +9,10 @@
     {
       "name": "@stylistic",
       "specifier": "@stylistic/eslint-plugin"
+    },
+    {
+      "name": "tailwindcss",
+      "specifier": "oxlint-tailwindcss"
     }
   ],
   "categories": {},
@@ -935,5 +939,14 @@
     ".turbo/**",
     ".trash/**",
     "**/*.gen.ts"
+  ],
+  "overrides": [
+    {
+      "files": ["src/shared/ui/**"],
+      "rules": {
+        "react-doctor/only-export-components": "off",
+        "react-doctor/jsx-props-no-spreading": "off"
+      }
+    }
   ]
 }
