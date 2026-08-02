@@ -5,6 +5,7 @@ arrayify
 artipacked
 backoff
 bddgen
+bunfig
 bunx
 capitalises
 chromatic
@@ -20,6 +21,7 @@ cva
 Datree
 dedup
 depcruise
+dmno
 dorny
 electricsql
 esac
@@ -63,7 +65,6 @@ pilotty
 pipx
 playwright
 probity
-reyz
 rhysd
 scrollbox
 segmentless
@@ -92,6 +93,7 @@ unrepresentable
 unreviewed
 usecase
 usecases
+varlock
 veryslow
 vitest
 vtsls

@@ -23,8 +23,8 @@ Every ui component in a scaffolded project carries two siblings: a story and
 a component test. The rule covers `src/shared/ui/` and every slice `ui/`
 segment, and it reaches a component the shadcn registry wrote like any other.
 
-The reference is `~/Projects/recompose`, with two deltas: the check is
-absolute rather than diff-based, and it demands the pair rather than the
+The reference is a prior project of the user's, with two deltas. The check
+is absolute rather than diff-based, and it demands the pair rather than the
 story alone.
 
 - Storybook arrives in the web preset: `@storybook/tanstack-react` with the
@@ -49,5 +49,4 @@ story alone.
 - Chromatic reading the Storybook build. The existing Playwright-based
   integration stays as it is.
 - The torii banner in the CLI. That wish holds its own place in the queue.
-- The recompose and reyz-web comparison list. That deliverable follows this
-  work.
+- The prior-art comparison list. That deliverable follows this work.
