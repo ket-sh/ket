@@ -1,7 +1,7 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "ignoreBinaries": ["mise"],
-  "ignoreDependencies": ["@steiger/toolkit", "tailwindcss", "class-variance-authority"],
+  "ignoreDependencies": ["@steiger/toolkit", "tailwindcss"],
   "entry": [
     "src/app/router.tsx",
     "src/app/routes/**/*.tsx",

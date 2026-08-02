@@ -24,7 +24,7 @@ export const PRESET_CONTENTS: Record<string, string> = {
   'files/gitleaks.toml':
     "[extend]\nuseDefault = true\n\n[[allowlists]]\ntargetRules = [\"generic-api-key\"]\npaths = ['''^\\.agents/skills/''']\n",
   'files/jscpd.json':
-    '{\n  "format": ["typescript"],\n  "formatsExts": { "typescript": ["ts", "tsx", "mts"] },\n  "ignore": ["**/node_modules/**", "**/dist/**", "**/*.gen.ts", "**/*.test.ts", "**/*.test.tsx"],\n  "minTokens": 50,\n  "minLines": 5,\n  "threshold": 0,\n  "reporters": ["console"]\n}\n',
+    '{\n  "format": ["typescript"],\n  "formatsExts": {\n    "typescript": ["ts", "tsx", "mts"]\n  },\n  "ignore": [\n    "**/node_modules/**",\n    "**/dist/**",\n    "**/*.gen.ts",\n    "**/*.test.ts",\n    "**/*.test.tsx",\n    "**/shared/ui/**"\n  ],\n  "minTokens": 50,\n  "minLines": 5,\n  "threshold": 0,\n  "reporters": ["console"]\n}\n',
   'files/knip.json':
     '{\n  "$schema": "https://unpkg.com/knip@6/schema.json",\n  "ignoreBinaries": ["mise"],\n  "entry": ["src/run.ts", "probity.config.ts", "commitlint.config.ts"],\n  "project": ["src/**/*.ts", "probity.config.ts", "commitlint.config.ts"]\n}\n',
   'files/lefthook.yml':
