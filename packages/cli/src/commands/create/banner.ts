@@ -37,3 +37,91 @@ export function gradientOver(pieces: string[], from: Shade, to: Shade): string[]
 
   return pieces.map((piece, step) => painted(piece, shadeAt(from, to, step, steps)));
 }
+
+type Role = 'torii' | 'cat' | 'ground';
+
+const TORII_SHADE: Shade = [216, 72, 39];
+
+const CAT_SHADE: Shade = [255, 217, 168];
+
+const GROUND_SHADE: Shade = [74, 124, 89];
+
+const SHADE_OF: Record<Role, Shade> = {
+  torii: TORII_SHADE,
+  cat: CAT_SHADE,
+  ground: GROUND_SHADE,
+};
+
+type Segment = readonly [Role, string];
+
+const ROOF_TOP: Segment = ['torii', '▗▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▖'];
+
+const ROOF_UNDERSIDE: Segment = ['torii', '▝▀▀▀█▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█▀▀▀▘'];
+
+const NECK: Segment = ['torii', '    █▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█'];
+
+const PILLAR_GAP: Segment = ['torii', '    █               █'];
+
+const TORII_ROWS: readonly (readonly Segment[])[] = [
+  [ROOF_TOP],
+  [ROOF_UNDERSIDE],
+  [NECK],
+  [PILLAR_GAP],
+  [
+    ['torii', '    █      '],
+    ['cat', '▄ ▄'],
+    ['torii', '      █'],
+  ],
+  [
+    ['torii', '    █      '],
+    ['cat', '███▖'],
+    ['torii', '     █'],
+  ],
+  [
+    ['torii', '    █      '],
+    ['cat', '▜█▛'],
+    ['torii', '      █'],
+  ],
+  [PILLAR_GAP],
+  [
+    ['ground', ' ▁▁▁'],
+    ['torii', '█'],
+    ['ground', '▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁'],
+    ['torii', '█'],
+    ['ground', '▁▁▁'],
+  ],
+];
+
+export function paintedTorii(): string[] {
+  return TORII_ROWS.map((segments) =>
+    segments.map(([role, glyphs]) => painted(glyphs, SHADE_OF[role])).join(''),
+  );
+}
+
+const ART_WIDTH = 25;
+
+const TEXT_GAP = '   ';
+
+const BODY_FIRST_ROW = 3;
+
+const BODY_LAST_ROW = 7;
+
+const ANSI_CODE = new RegExp(`${String.fromCharCode(27)}\\[[\\d;]+m`, 'gu');
+
+function plainWidth(line: string): number {
+  return line.replaceAll(ANSI_CODE, '').length;
+}
+
+function paddedToArtWidth(line: string): string {
+  return line + ' '.repeat(ART_WIDTH - plainWidth(line));
+}
+
+export function toriiBeside(text: string[]): string[] {
+  return paintedTorii().map((row, index) => {
+    if (index < BODY_FIRST_ROW || index > BODY_LAST_ROW) {
+      return row;
+    }
+
+    return `${paddedToArtWidth(row)}${TEXT_GAP}${text[index - BODY_FIRST_ROW] ?? ''}`;
+  });
+}
