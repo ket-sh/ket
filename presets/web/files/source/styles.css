@@ -27,6 +27,10 @@
 
   --radius-panel: 0.75rem;
 
+  /* Words sit on the brightest part of the artwork, so they carry their own
+     edge. A scrim heavy enough to do this instead would flatten the sky. */
+  --text-shadow-artwork: 0 1px 24px color-mix(in oklab, var(--color-scrim) 30%, transparent);
+
   /* A component registry writes these names, and pointing them at the
      decisions above is what makes an added component part of this system
      rather than a second one living beside it. Its `accent` means a surface

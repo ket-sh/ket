@@ -22,7 +22,7 @@ function Home() {
       >
         <source src="/ket-bg.mp4" type="video/mp4" />
       </video>
-      <div className="from-scrim/55 via-scrim/10 to-scrim/40 absolute inset-0 bg-gradient-to-b" />
+      <div className="from-scrim/55 via-scrim/10 to-scrim/40 absolute inset-0 bg-linear-to-b" />
 
       <header className="relative flex items-center justify-between px-6 py-5 sm:px-10">
         <a className="font-mono text-xl font-medium tracking-wide" href="https://ket.sh">
@@ -43,9 +43,9 @@ function Home() {
         </Badge>
         <WelcomeHeading
           project={PROJECT}
-          className="text-5xl font-semibold tracking-tight sm:text-7xl"
+          className="text-shadow-artwork text-5xl font-semibold tracking-tight sm:text-7xl"
         />
-        <p className="max-w-xl text-lg leading-relaxed text-balance">
+        <p className="text-shadow-artwork max-w-xl text-lg leading-relaxed text-balance">
           Your project is scaffolded and every quality rule already runs as a machine gate. Agents
           build; the gates hold.
         </p>
@@ -54,7 +54,7 @@ function Home() {
       <footer className="relative flex flex-col items-center px-6 pb-10">
         <p className="bg-scrim/35 rounded-lg px-4 py-2 font-mono text-sm backdrop-blur-sm">
           Start your first feature in Claude Code with{' '}
-          <code className="text-glow">/ket:feature "your prompt"</code>
+          <code className="text-glow">/ket:feature &quot;your prompt&quot;</code>
         </p>
       </footer>
     </div>
