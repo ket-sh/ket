@@ -2,6 +2,7 @@ export interface PresetFile {
   path: string;
   type: 'registry:file';
   target: string;
+  encoding?: 'base64';
 }
 
 // A preset offers what suits it. A tool that reads a screen has nothing to say
@@ -50,6 +51,15 @@ export interface PresetItem {
 
 export function writes(path: string, target: string): PresetFile {
   return { path: `files/${path}`, type: 'registry:file', target: `~/${target}` };
+}
+
+export function copies(path: string, target: string): PresetFile {
+  return {
+    path: `files/${path}`,
+    type: 'registry:file',
+    target: `~/${target}`,
+    encoding: 'base64',
+  };
 }
 
 export function everyFileOf(item: PresetItem): PresetFile[] {
