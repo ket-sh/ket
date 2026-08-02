@@ -1,9 +1,11 @@
+import { Buffer } from 'node:buffer';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, relative, resolve, sep } from 'node:path';
 
 export interface ScaffoldFile {
   path: string;
   contents: string;
+  encoding?: 'base64';
 }
 
 function resolveInside(root: string, path: string): string {
@@ -30,6 +32,11 @@ export async function writeFiles(root: string, files: ScaffoldFile[]): Promise<v
     const target = resolveInside(root, file.path);
 
     await mkdir(dirname(target), { recursive: true });
-    await writeFile(target, file.contents, 'utf8');
+
+    if (file.encoding === 'base64') {
+      await writeFile(target, Buffer.from(file.contents, 'base64'));
+    } else {
+      await writeFile(target, file.contents, 'utf8');
+    }
   }
 }
