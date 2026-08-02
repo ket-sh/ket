@@ -89,6 +89,7 @@ usecases
 vitest
 vtsls
 WCAG
+wordmark
 worktree
 worktrees
 zizmor
