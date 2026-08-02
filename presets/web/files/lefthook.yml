@@ -10,13 +10,13 @@ pre-commit:
     - name: lint
       priority: 1
       glob: '*.{ts,tsx,mts,js,jsx,mjs,cjs}'
-      exclude: '*.gen.ts'
+      exclude: '{*.gen.ts,env.d.ts}'
       run: ./node_modules/.bin/oxlint --fix --deny-warnings --no-error-on-unmatched-pattern {staged_files}
       stage_fixed: true
     - name: dup
       priority: 1
       glob: '*.{ts,tsx,mts}'
-      exclude: '*.gen.ts'
+      exclude: '{*.gen.ts,env.d.ts}'
       run: ./node_modules/.bin/jscpd -c .jscpd.json {staged_files}
     - name: spell
       priority: 1
@@ -36,7 +36,7 @@ pre-commit:
     - name: fmt
       priority: 2
       glob: '*.{ts,tsx,mts,js,jsx,mjs,cjs,json,md,yaml,yml}'
-      exclude: '*.gen.ts'
+      exclude: '{*.gen.ts,env.d.ts}'
       run: ./node_modules/.bin/oxfmt --no-error-on-unmatched-pattern {staged_files}
       stage_fixed: true
     - name: workflows

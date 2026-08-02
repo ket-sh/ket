@@ -28,3 +28,7 @@ storybook-static/
 
 # Written by the component runner when a test fails
 __screenshots__/
+
+# Holds resolved values; varlock reads .env.schema, never this
+.env
+*.local

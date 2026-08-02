@@ -67,6 +67,7 @@ unlinted
 unlocks
 usecase
 usecases
+varlock
 vitest
 worktree
 worktrees

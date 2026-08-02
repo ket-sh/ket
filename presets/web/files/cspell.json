@@ -24,6 +24,7 @@
     "skills-lock.json",
     "cspell-words.txt",
     "**/*.gen.ts",
+    "env.d.ts",
     "public"
   ],
   "useGitignore": true,

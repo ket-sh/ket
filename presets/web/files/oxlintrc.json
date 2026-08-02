@@ -938,7 +938,8 @@
     "coverage/**",
     ".turbo/**",
     ".trash/**",
-    "**/*.gen.ts"
+    "**/*.gen.ts",
+    "env.d.ts"
   ],
   "overrides": [
     {
