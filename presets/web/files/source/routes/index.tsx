@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-import { GreetingPanel } from '../../entities/greeting';
+import { WelcomeHeading } from '../../entities/welcome';
 import { Badge } from '../../shared/ui/badge.tsx';
 import { Button } from '../../shared/ui/button.tsx';
 
@@ -8,79 +8,55 @@ export const Route = createFileRoute('/')({ component: Home });
 
 const PROJECT = '__PROJECT_NAME__';
 
-const LAYERS = [
-  {
-    segment: 'model',
-    answers: 'What the slice decides',
-    guarded: 'unit, property and mutation',
-    detail:
-      'Pure, and the only part the mutation gate measures. A decision that drifts out of here drifts out of reach of the gate that checks it.',
-  },
-  {
-    segment: 'api',
-    answers: 'What it says to the outside',
-    guarded: 'integration',
-    detail:
-      'The one place a boundary is crossed. Its tests compose the real slice and stub only the network, which is the single double the rules allow.',
-  },
-  {
-    segment: 'ui',
-    answers: 'What a person sees',
-    guarded: 'scenario and accessibility',
-    detail:
-      'Answered for by a browser rather than a runner. Every scenario also asks axe whether a person could operate what it just rendered.',
-  },
-];
-
 function Home() {
   return (
-    <main className="bg-surface text-ink min-h-dvh">
-      <section className="mx-auto max-w-3xl px-6 pt-24 pb-16">
-        <Badge variant="outline">A project under ket</Badge>
+    <div className="bg-canvas text-paper relative flex min-h-svh flex-col overflow-hidden bg-[url(/ket-bg-poster.webp)] bg-cover bg-center">
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        aria-hidden="true"
+        poster="/ket-bg-poster.webp"
+        className="absolute inset-0 size-full object-cover motion-reduce:hidden"
+      >
+        <source src="/ket-bg.mp4" type="video/mp4" />
+      </video>
+      <div className="from-scrim/55 via-scrim/10 to-scrim/40 absolute inset-0 bg-gradient-to-b" />
 
-        <h1 className="mt-6 text-5xl font-semibold tracking-tight text-balance">{PROJECT}</h1>
+      <header className="relative flex items-center justify-between px-6 py-5 sm:px-10">
+        <a className="font-mono text-xl font-medium tracking-wide" href="https://ket.sh">
+          ket
+        </a>
+        <Button
+          asChild
+          variant="secondary"
+          className="bg-scrim/90 text-paper hover:bg-scrim rounded-full"
+        >
+          <a href="https://ket.sh/docs/presets/web">Read the docs</a>
+        </Button>
+      </header>
 
-        <p className="text-ink-muted mt-5 max-w-prose text-lg leading-relaxed">
-          Every layer below has one job and a gate that answers for it. Nothing here is switched off
-          to reach green.
+      <main className="relative flex flex-1 flex-col items-center gap-4 px-6 pt-2 text-center sm:pt-4">
+        <Badge variant="outline" className="border-paper/45 text-paper font-mono backdrop-blur-xs">
+          ket web preset
+        </Badge>
+        <WelcomeHeading
+          project={PROJECT}
+          className="text-5xl font-semibold tracking-tight sm:text-7xl"
+        />
+        <p className="max-w-xl text-lg leading-relaxed text-balance">
+          Your project is scaffolded and every quality rule already runs as a machine gate. Agents
+          build; the gates hold.
         </p>
+      </main>
 
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Button>Start a feature</Button>
-          <Button variant="outline">Read the standing law</Button>
-        </div>
-      </section>
-
-      <section aria-labelledby="running" className="mx-auto max-w-3xl px-6 pb-16">
-        <h2 id="running" className="text-ink-muted text-sm font-medium tracking-wide uppercase">
-          A slice, running
-        </h2>
-
-        <div className="border-edge bg-surface-sunken mt-4 rounded-(--radius-panel) border p-6">
-          <GreetingPanel who="world" className="text-2xl font-medium" />
-          <p className="text-ink-muted mt-2 text-sm">
-            Rendered by the greeting entity, decided by its model, and checked by every gate in the
-            chain.
-          </p>
-        </div>
-      </section>
-
-      <section aria-labelledby="layers" className="mx-auto max-w-3xl px-6 pb-24">
-        <h2 id="layers" className="text-ink-muted text-sm font-medium tracking-wide uppercase">
-          Where a thing goes
-        </h2>
-
-        <ul className="mt-6 grid gap-8 sm:grid-cols-3">
-          {LAYERS.map((layer) => (
-            <li className="border-edge flex flex-col border-t pt-4" key={layer.segment}>
-              <h3 className="font-mono text-sm font-semibold">{layer.segment}/</h3>
-              <p className="mt-2 font-medium">{layer.answers}</p>
-              <p className="text-ink-muted mt-2 grow text-sm leading-relaxed">{layer.detail}</p>
-              <p className="text-ink-muted mt-3 pt-3 text-xs">Guarded by {layer.guarded}.</p>
-            </li>
-          ))}
-        </ul>
-      </section>
-    </main>
+      <footer className="relative flex flex-col items-center px-6 pb-10">
+        <p className="bg-scrim/35 rounded-lg px-4 py-2 font-mono text-sm backdrop-blur-sm">
+          Start your first feature in Claude Code with{' '}
+          <code className="text-glow">/ket:feature "your prompt"</code>
+        </p>
+      </footer>
+    </div>
   );
 }

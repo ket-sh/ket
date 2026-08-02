@@ -1,4 +1,6 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/google-sans-flex';
+@import '@fontsource-variable/google-sans-code';
 
 /* A token names a decision rather than a value, so a screen changes in one
    place. Tailwind reads these through @theme, so `bg-surface` is the token. */
@@ -12,6 +14,16 @@
   --color-edge: oklch(0.89 0 0);
   --color-alarm: oklch(0.51 0.21 27);
   --color-alarm-ink: oklch(0.99 0 0);
+
+  --font-sans: 'Google Sans Flex Variable', system-ui, sans-serif;
+  --font-mono: 'Google Sans Code Variable', ui-monospace, monospace;
+
+  /* The artwork keeps its own light whatever the reader asked for, so these
+     four stay constant across schemes. */
+  --color-paper: oklch(0.98 0.01 75);
+  --color-scrim: oklch(0.18 0.01 75);
+  --color-glow: oklch(0.9 0.08 75);
+  --color-canvas: oklch(0.68 0.15 40);
 
   --radius-panel: 0.75rem;
 
