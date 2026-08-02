@@ -27,9 +27,12 @@ The reference is `~/Projects/recompose`, with two deltas: the check is
 absolute rather than diff-based, and it demands the pair rather than the
 story alone.
 
-- Storybook arrives in the web preset: `@storybook/react-vite` with the
+- Storybook arrives in the web preset: `@storybook/tanstack-react` with the
   accessibility addon, a `.storybook/` pair of config files that load
   `src/app/styles.css`, and the `storybook` and `storybook:build` scripts.
+  The first plan named `@storybook/react-vite`; verification against a real
+  scaffold moved the design to the first-party TanStack framework, because
+  the Start manifest plugin claims the client build under the generic one.
 - Component tests run in the browser: a `component` Vitest project drives
   `src/**/*.browser.test.tsx` through the Playwright provider the scaffold
   already carries. The `test:component` script runs it, and the mutation
