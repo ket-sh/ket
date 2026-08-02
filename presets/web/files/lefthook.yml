@@ -33,6 +33,10 @@ pre-commit:
       priority: 1
       glob: 'src/**/ui/**/*.tsx'
       run: bun scripts/check-ui-pairs.mts
+    - name: env
+      priority: 1
+      glob: '.env.schema'
+      run: bun run lint:env
     - name: fmt
       priority: 2
       glob: '*.{ts,tsx,mts,js,jsx,mjs,cjs,json,md,yaml,yml}'

@@ -22,6 +22,7 @@ export const WEB_SEMANTICS: PresetSemantics = {
     'lint:workflows':
       'mise install -q && mise exec -- zizmor --min-severity medium .github/workflows/ && mise exec -- actionlint -color',
     'lint:ui': 'bun scripts/check-ui-pairs.mts',
+    'lint:env': 'varlock load',
     'test:component': 'vitest run --project component',
     storybook: 'storybook dev -p 6006',
     'storybook:build': 'storybook build',
@@ -59,6 +60,12 @@ export const WEB_SEMANTICS: PresetSemantics = {
       script: 'lint:ui',
       guards: 'It checks a ui component ships its pair.',
       commitJob: 'ui',
+      ciJob: 'check',
+    },
+    {
+      script: 'lint:env',
+      guards: 'It checks the env matches its schema.',
+      commitJob: 'env',
       ciJob: 'check',
     },
     STANDING_GATES.dead,

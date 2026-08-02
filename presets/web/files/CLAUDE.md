@@ -26,6 +26,10 @@ Style is a token rather than a value. `src/app/styles.css` holds them and the
 `design-tokens` skill says what may be one, what may not, and why a raw color
 in a component is a decision nobody wrote down.
 
+The environment is a schema before it's a value. `.env.schema` holds the
+decisions, and `env.d.ts` follows from it rather than from a hand edit. The
+`varlock` skill carries the rules for growing it.
+
 A unit named `welcome` takes `welcome.test.ts` for the cases you thought of,
 and `welcome.property.test.ts` for the ones you didn't. Both sit beside the
 source, and both run in node. A test that composes several slices and stubs only the
