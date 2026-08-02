@@ -95,6 +95,7 @@ veryslow
 vitest
 vtsls
 WCAG
+webp
 wordmark
 worktree
 worktrees
