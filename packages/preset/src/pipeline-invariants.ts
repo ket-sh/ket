@@ -23,12 +23,15 @@ function jobsIn(workflow: string): string[] {
     .filter((job): job is string => job !== undefined);
 }
 
-function jobsThePipelineDeclares(item: PresetItem, shipped: PresetContents): string[] {
+function workflowsThePipelineWrites(item: PresetItem, shipped: PresetContents): string[] {
   return item.files
     .filter((file) => file.target.startsWith(WORKFLOW_DIRECTORY))
     .map((file) => shipped[file.path])
-    .filter((written): written is string => written !== undefined)
-    .flatMap(jobsIn);
+    .filter((written): written is string => written !== undefined);
+}
+
+function jobsThePipelineDeclares(item: PresetItem, shipped: PresetContents): string[] {
+  return workflowsThePipelineWrites(item, shipped).flatMap(jobsIn);
 }
 
 const HOOKS = '~/lefthook.yml';
@@ -71,21 +74,57 @@ function commitInvariants(
     );
 }
 
+function jobBlockIn(workflow: string, job: string): string | undefined {
+  const [, jobsBlock] = workflow.split(JOBS_BLOCK);
+
+  if (jobsBlock === undefined) {
+    return undefined;
+  }
+
+  const lines = jobsBlock.split('\n');
+  const start = lines.findIndex((line) => jobIn(line) === job);
+
+  if (start === -1) {
+    return undefined;
+  }
+
+  const rest = lines.slice(start + 1);
+  const end = rest.findIndex((line) => jobIn(line) !== undefined);
+
+  return (end === -1 ? rest : rest.slice(0, end)).join('\n');
+}
+
+function scriptRunsInJob(workflows: string[], job: string, script: string): boolean {
+  const call = `bun run ${script}`;
+
+  return workflows.some((workflow) => jobBlockIn(workflow, job)?.includes(call) === true);
+}
+
 export function pipelineInvariantsOf(
   item: PresetItem,
   semantics: PresetSemantics,
   shipped: PresetContents,
 ): string[] {
+  const workflows = workflowsThePipelineWrites(item, shipped);
   const declared = jobsThePipelineDeclares(item, shipped);
   const claimed = new Set(semantics.gates.map((gate) => gate.ciJob));
+  const namesADeclaredJob = (gate: (typeof semantics.gates)[number]): boolean =>
+    declared.includes(gate.ciJob);
 
   return [
     ...commitInvariants(item, semantics, shipped),
     ...semantics.gates
-      .filter((gate) => !declared.includes(gate.ciJob))
+      .filter((gate) => !namesADeclaredJob(gate))
       .map(
         (gate) =>
           `the gate ${gate.script} names the pipeline job ${gate.ciJob}, which no workflow the preset writes declares`,
+      ),
+    ...semantics.gates
+      .filter(namesADeclaredJob)
+      .filter((gate) => !scriptRunsInJob(workflows, gate.ciJob, gate.script))
+      .map(
+        (gate) =>
+          `the gate ${gate.script} names the pipeline job ${gate.ciJob}, whose steps never run bun run ${gate.script}`,
       ),
     ...declared
       .filter((job) => !claimed.has(job))

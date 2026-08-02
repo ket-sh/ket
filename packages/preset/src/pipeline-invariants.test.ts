@@ -179,7 +179,8 @@ describe('what the pipeline reads a job out of', () => {
   it('reads no job out of a key that carries a value, since a job opens a block', () => {
     const shipped = {
       ...SHIPPED,
-      'files/github-ci.yml': 'name: ci\n\njobs:\n  check:\n    runs-on: ubuntu\n  timeout: 30\n',
+      'files/github-ci.yml':
+        'name: ci\n\njobs:\n  check:\n    runs-on: ubuntu\n    steps:\n      - run: bun run lint\n  timeout: 30\n',
     };
 
     expect(pipelineInvariantsOf(ITEM, semanticsGating([LINT_GATE]), shipped)).toStrictEqual([]);
