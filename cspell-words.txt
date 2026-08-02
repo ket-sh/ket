@@ -63,6 +63,7 @@ pilotty
 pipx
 playwright
 probity
+reyz
 rhysd
 scrollbox
 segmentless
