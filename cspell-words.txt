@@ -23,6 +23,7 @@ depcruise
 dorny
 electricsql
 esac
+faststart
 frontmatter
 fulfilment
 gitdir
@@ -34,9 +35,12 @@ ket
 knip
 kubeconform
 lefthook
+libx
 lockfiles
-Mobbin
+magick
 mobbin
+Mobbin
+movflags
 msw
 nizos
 nofilter
@@ -86,6 +90,7 @@ unrepresentable
 unreviewed
 usecase
 usecases
+veryslow
 vitest
 vtsls
 WCAG
