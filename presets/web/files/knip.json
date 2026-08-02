@@ -16,5 +16,5 @@
     "e2e/**/*.ts"
   ],
   "project": ["src/**/*.{ts,tsx}", "*.config.ts"],
-  "ignore": ["**/*.gen.ts", "env.d.ts", "src/shared/ui/**"]
+  "ignore": ["**/*.gen.ts", "src/shared/ui/**"]
 }
