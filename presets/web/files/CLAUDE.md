@@ -26,8 +26,8 @@ Style is a token rather than a value. `src/app/styles.css` holds them and the
 `design-tokens` skill says what may be one, what may not, and why a raw color
 in a component is a decision nobody wrote down.
 
-A unit named `greeting` takes `greeting.test.ts` for the cases you thought of,
-and `greeting.property.test.ts` for the ones you didn't. Both sit beside the
+A unit named `welcome` takes `welcome.test.ts` for the cases you thought of,
+and `welcome.property.test.ts` for the ones you didn't. Both sit beside the
 source, and both run in node. A test that composes several slices and stubs only the
 network takes `{unit}.integration.test.ts`, and the mutation gate leaves it alone
 because it measures a boundary rather than a decision.
