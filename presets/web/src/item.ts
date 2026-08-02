@@ -1,6 +1,12 @@
 import type { PresetItem } from '@ket/preset';
 
-import { STANDING_FILES, STANDING_INTEGRATIONS, STANDING_TOOLCHAIN, writes } from '@ket/preset';
+import {
+  copies,
+  STANDING_FILES,
+  STANDING_INTEGRATIONS,
+  STANDING_TOOLCHAIN,
+  writes,
+} from '@ket/preset';
 
 export const WEB_PRESET: PresetItem = {
   $schema: 'https://ui.shadcn.com/schema/registry-item.json',
@@ -36,6 +42,8 @@ export const WEB_PRESET: PresetItem = {
     '@steiger/toolkit@0.2.3',
     '@types/react@19.2.18',
     '@types/react-dom@19.2.4',
+    '@fontsource-variable/google-sans-flex@5.3.1',
+    '@fontsource-variable/google-sans-code@5.3.0',
   ],
   files: [
     ...STANDING_FILES,
@@ -52,28 +60,27 @@ export const WEB_PRESET: PresetItem = {
     writes('source/routeTree.gen.ts', 'src/app/routeTree.gen.ts'),
     writes('source/routes/__root.tsx', 'src/app/routes/__root.tsx'),
     writes('source/routes/index.tsx', 'src/app/routes/index.tsx'),
-    writes('source/greeting/model/greeting.ts', 'src/entities/greeting/model/greeting.ts'),
+    writes('source/welcome/model/welcome.ts', 'src/entities/welcome/model/welcome.ts'),
+    writes('source/welcome/model/welcome.test.ts', 'src/entities/welcome/model/welcome.test.ts'),
     writes(
-      'source/greeting/model/greeting.test.ts',
-      'src/entities/greeting/model/greeting.test.ts',
+      'source/welcome/model/welcome.property.test.ts',
+      'src/entities/welcome/model/welcome.property.test.ts',
     ),
+    writes('source/welcome/api/welcomed.ts', 'src/entities/welcome/api/welcomed.ts'),
     writes(
-      'source/greeting/model/greeting.property.test.ts',
-      'src/entities/greeting/model/greeting.property.test.ts',
-    ),
-    writes('source/greeting/api/welcome.ts', 'src/entities/greeting/api/welcome.ts'),
-    writes(
-      'source/greeting/api/welcome.integration.test.ts',
-      'src/entities/greeting/api/welcome.integration.test.ts',
+      'source/welcome/api/welcomed.integration.test.ts',
+      'src/entities/welcome/api/welcomed.integration.test.ts',
     ),
     writes('source/test-support/network.ts', 'src/test-support/network.ts'),
     writes('source/test-support/integration-setup.ts', 'src/test-support/integration-setup.ts'),
-    writes('source/greeting/ui/greeting-panel.tsx', 'src/entities/greeting/ui/greeting-panel.tsx'),
-    writes('source/greeting/index.ts', 'src/entities/greeting/index.ts'),
+    writes('source/welcome/ui/welcome-heading.tsx', 'src/entities/welcome/ui/welcome-heading.tsx'),
+    writes('source/welcome/index.ts', 'src/entities/welcome/index.ts'),
     writes('source/e2e/helpers/a11y.ts', 'e2e/helpers/a11y.ts'),
     writes('source/e2e/helpers/harness.ts', 'e2e/helpers/harness.ts'),
-    writes('source/features/greeting.feature', 'features/greeting.feature'),
-    writes('source/e2e/steps/greeting.steps.ts', 'e2e/steps/greeting.steps.ts'),
+    writes('source/features/welcome.feature', 'features/welcome.feature'),
+    writes('source/e2e/steps/welcome.steps.ts', 'e2e/steps/welcome.steps.ts'),
+    copies('source/hero/ket-bg.mp4', 'public/ket-bg.mp4'),
+    copies('source/hero/ket-bg-poster.webp', 'public/ket-bg-poster.webp'),
   ],
   integrations: [
     {
