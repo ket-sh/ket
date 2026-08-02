@@ -1,9 +1,12 @@
+import { copies, writes } from '@ket/preset';
+import { Buffer } from 'node:buffer';
 import { describe, expect, it } from 'vitest';
 
 import {
   chosenFrom,
   filesFor,
   installsFor,
+  integrationFile,
   integrationsOffered,
   namesOffered,
 } from './integrations.ts';
@@ -56,6 +59,27 @@ describe('the files a chosen integration installs', () => {
 
   it('installs a file once when two targets offer the same integration', () => {
     expect(filesFor(['cli', 'cli'], ['codeql'])).toHaveLength(1);
+  });
+});
+
+describe('turning an integration file into what a project receives', () => {
+  it('marks a binary integration file as base64 and keeps its bytes whole', () => {
+    const carried = Buffer.from('workflow badge bytes').toString('base64');
+
+    expect(integrationFile(copies('badge.png', '.github/badge.png'), carried)).toStrictEqual({
+      path: '.github/badge.png',
+      contents: carried,
+      encoding: 'base64',
+    });
+  });
+
+  it('carries a text integration file without marking an encoding', () => {
+    const file = writes('codeql.yml', '.github/workflows/codeql.yml');
+
+    expect(integrationFile(file, 'name: CodeQL')).toStrictEqual({
+      path: '.github/workflows/codeql.yml',
+      contents: 'name: CodeQL',
+    });
   });
 });
 

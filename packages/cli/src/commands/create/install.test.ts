@@ -1,9 +1,11 @@
+import { copies, writes } from '@ket/preset';
 import { CLI_PRESET } from '@ket/preset-cli';
 import { WEB_PRESET } from '@ket/preset-web';
+import { Buffer } from 'node:buffer';
 import { describe, expect, it } from 'vitest';
 
 import { registeredPresets } from '../../shared/registry.ts';
-import { filesToInstall, pathInProject, shippedContents } from './install.ts';
+import { filesToInstall, pathInProject, scaffolded, shippedContents } from './install.ts';
 
 const MY_APP = { name: 'my-app', key: 'SHOP' };
 
@@ -22,6 +24,28 @@ describe('placing a registry target inside a project', () => {
 
   it('leaves a target that never carried the marker alone', () => {
     expect(pathInProject('lefthook.yml')).toBe('lefthook.yml');
+  });
+});
+
+describe('turning a preset file into what a project receives', () => {
+  it('leaves base64 contents untouched by the project name', () => {
+    const carried = Buffer.from('__PROJECT_NAME__ stays as bytes').toString('base64');
+
+    expect(scaffolded(copies('hero/bg.mp4', 'public/bg.mp4'), carried, MY_APP)).toStrictEqual({
+      path: 'public/bg.mp4',
+      contents: carried,
+      encoding: 'base64',
+    });
+  });
+
+  it('substitutes the project name into a text file, marking no encoding', () => {
+    const installed = scaffolded(
+      writes('main.ts', 'src/main.ts'),
+      "name: '__PROJECT_NAME__'",
+      MY_APP,
+    );
+
+    expect(installed).toStrictEqual({ path: 'src/main.ts', contents: "name: 'my-app'" });
   });
 });
 
