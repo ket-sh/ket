@@ -25,5 +25,12 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "e2e/**/*.ts", "*.config.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "e2e/**/*.ts",
+    "scripts/**/*.mts",
+    ".storybook/**/*.ts",
+    "*.config.ts"
+  ]
 }

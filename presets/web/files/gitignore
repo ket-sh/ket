@@ -22,3 +22,9 @@ playwright-report/
 
 # Written by `bddgen`
 .features-gen/
+
+# Built by `storybook build`
+storybook-static/
+
+# Written by the component runner when a test fails
+__screenshots__/

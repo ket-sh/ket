@@ -1,4 +1,5 @@
 import { existsSync, globSync } from 'node:fs';
+import process from 'node:process';
 
 const SIBLING_MARKS = /\.(stories|test|browser\.test)\.tsx$/u;
 

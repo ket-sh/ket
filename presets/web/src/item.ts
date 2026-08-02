@@ -45,7 +45,7 @@ export const WEB_PRESET: PresetItem = {
     '@fontsource-variable/google-sans-flex@5.3.1',
     '@fontsource-variable/google-sans-code@5.3.0',
     'storybook@10.5.5',
-    '@storybook/react-vite@10.5.5',
+    '@storybook/tanstack-react@10.5.5',
     '@storybook/addon-a11y@10.5.5',
     '@vitest/browser-playwright@4.1.10',
     'vitest-browser-react@2.2.0',
