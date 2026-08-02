@@ -1,3 +1,5 @@
+import react from '@vitejs/plugin-react';
+import { playwright } from '@vitest/browser-playwright';
 import { defineConfig } from 'vitest/config';
 
 // The domain runs alone in node, because that is what the mutation runner
@@ -20,6 +22,19 @@ export default defineConfig({
           environment: 'node',
           include: ['src/**/*.integration.test.ts'],
           setupFiles: ['src/test-support/integration-setup.ts'],
+        },
+      },
+      {
+        plugins: [react()],
+        test: {
+          name: 'component',
+          include: ['src/**/*.browser.test.tsx'],
+          browser: {
+            enabled: true,
+            headless: true,
+            provider: playwright(),
+            instances: [{ browser: 'chromium' }],
+          },
         },
       },
     ],

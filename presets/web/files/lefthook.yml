@@ -29,6 +29,10 @@ pre-commit:
       priority: 1
       glob: 'src/**/*.{ts,tsx}'
       run: ./node_modules/.bin/steiger src --fail-on-warnings
+    - name: ui
+      priority: 1
+      glob: 'src/**/ui/*.tsx'
+      run: bun scripts/check-ui-pairs.mts
     - name: fmt
       priority: 2
       glob: '*.{ts,tsx,mts,js,jsx,mjs,cjs,json,md,yaml,yml}'
