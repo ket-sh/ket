@@ -5,7 +5,8 @@ import type { PresetSubject } from './invariants.ts';
 import { brokenInvariantsOf } from './invariants.ts';
 import { writes } from './item.ts';
 
-const WORKFLOW = 'name: ci\n\njobs:\n  check:\n    runs-on: ubuntu-latest\n';
+const WORKFLOW =
+  'name: ci\n\njobs:\n  check:\n    runs-on: ubuntu-latest\n    steps:\n      - run: bun run lint\n      - run: bun run check-types\n      - run: bun run test\n      - run: bun run test:mutation\n';
 
 const LAW = 'Read the `tdd` skill before a test, and the `vitest` skill for the runner.\n';
 

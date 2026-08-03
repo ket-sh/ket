@@ -5,6 +5,7 @@ arrayify
 artipacked
 backoff
 bddgen
+bunfig
 bunx
 capitalises
 chromatic
@@ -20,9 +21,11 @@ cva
 Datree
 dedup
 depcruise
+dmno
 dorny
 electricsql
 esac
+faststart
 frontmatter
 fulfilment
 gitdir
@@ -33,10 +36,15 @@ Karpathy
 ket
 knip
 kubeconform
+labelledby
 lefthook
+libx
+Lingui
 lockfiles
+magick
 Mobbin
 mobbin
+movflags
 msw
 nizos
 nofilter
@@ -49,6 +57,8 @@ oklch
 openspec
 opentui
 opentui-spinner
+ossf
+OSSF
 oxfmt
 oxfmtrc
 oxlint
@@ -59,6 +69,7 @@ pipx
 playwright
 probity
 rhysd
+sarif
 scrollbox
 segmentless
 semgrep
@@ -86,9 +97,13 @@ unrepresentable
 unreviewed
 usecase
 usecases
+varlock
+veryslow
 vitest
 vtsls
 WCAG
+webp
+wordmark
 worktree
 worktrees
 zizmor

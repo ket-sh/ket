@@ -23,7 +23,9 @@
     "bun.lock",
     "skills-lock.json",
     "cspell-words.txt",
-    "**/*.gen.ts"
+    "**/*.gen.ts",
+    "env.d.ts",
+    "public"
   ],
   "useGitignore": true,
   "overrides": [

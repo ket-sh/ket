@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { PresetItem } from './item.ts';
 
-import { dependencyNamesOf, everyFileOf, writes } from './item.ts';
+import { copies, dependencyNamesOf, everyFileOf, writes } from './item.ts';
 
 function itemThat(offering: Partial<PresetItem>): PresetItem {
   return {
@@ -33,6 +33,25 @@ describe('a file a preset promises', () => {
       path: 'files/source/main.ts',
       type: 'registry:file',
       target: '~/src/main.ts',
+    });
+  });
+});
+
+describe('a promise to copy bytes', () => {
+  it('marks the file as base64 under files/ and the home marker', () => {
+    expect(copies('source/hero/ket-bg.mp4', 'public/ket-bg.mp4')).toStrictEqual({
+      path: 'files/source/hero/ket-bg.mp4',
+      type: 'registry:file',
+      target: '~/public/ket-bg.mp4',
+      encoding: 'base64',
+    });
+  });
+
+  it('writes text with no encoding mark at all', () => {
+    expect(writes('vite.config.ts', 'vite.config.ts')).toStrictEqual({
+      path: 'files/vite.config.ts',
+      type: 'registry:file',
+      target: '~/vite.config.ts',
     });
   });
 });

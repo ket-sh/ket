@@ -38,6 +38,7 @@ nonword
 openspec
 opentui
 opentui-spinner
+ossf
 oxfmt
 oxfmtrc
 oxlint
@@ -48,6 +49,7 @@ pipx
 playwright
 probity
 rhysd
+sarif
 scrollbox
 segmentless
 semgrep
@@ -67,6 +69,7 @@ unlinted
 unlocks
 usecase
 usecases
+varlock
 vitest
 worktree
 worktrees

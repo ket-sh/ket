@@ -3,8 +3,8 @@ const PROJECT_NAME_TOKEN = '__PROJECT_NAME__';
 const PROJECT_KEY_TOKEN = '__PROJECT_KEY__';
 
 export interface ProjectNames {
-  name: string;
-  key: string;
+  readonly name: string;
+  readonly key: string;
 }
 
 export function withProjectNames(contents: string, project: ProjectNames): string {

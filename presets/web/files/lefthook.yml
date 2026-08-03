@@ -10,13 +10,13 @@ pre-commit:
     - name: lint
       priority: 1
       glob: '*.{ts,tsx,mts,js,jsx,mjs,cjs}'
-      exclude: '*.gen.ts'
+      exclude: '{*.gen.ts,env.d.ts}'
       run: ./node_modules/.bin/oxlint --fix --deny-warnings --no-error-on-unmatched-pattern {staged_files}
       stage_fixed: true
     - name: dup
       priority: 1
       glob: '*.{ts,tsx,mts}'
-      exclude: '*.gen.ts'
+      exclude: '{*.gen.ts,env.d.ts}'
       run: ./node_modules/.bin/jscpd -c .jscpd.json {staged_files}
     - name: spell
       priority: 1
@@ -29,10 +29,22 @@ pre-commit:
       priority: 1
       glob: 'src/**/*.{ts,tsx}'
       run: ./node_modules/.bin/steiger src --fail-on-warnings
+    - name: graph
+      priority: 1
+      glob: 'src/**/*.{ts,tsx}'
+      run: bun run lint:graph
+    - name: ui
+      priority: 1
+      glob: 'src/**/ui/**/*.tsx'
+      run: bun scripts/check-ui-pairs.mts
+    - name: env
+      priority: 1
+      glob: '.env.schema'
+      run: bun run lint:env
     - name: fmt
       priority: 2
       glob: '*.{ts,tsx,mts,js,jsx,mjs,cjs,json,md,yaml,yml}'
-      exclude: '*.gen.ts'
+      exclude: '{*.gen.ts,env.d.ts}'
       run: ./node_modules/.bin/oxfmt --no-error-on-unmatched-pattern {staged_files}
       stage_fixed: true
     - name: workflows

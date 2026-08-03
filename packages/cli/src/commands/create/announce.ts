@@ -8,7 +8,7 @@ import type { Shade } from './banner.ts';
 import type { Step } from './next-steps.ts';
 import type { SkillsInstalled } from './skills.ts';
 
-import { gradientOver, KET_BANNER, supportsTrueColor } from './banner.ts';
+import { gradientOver, KET_BANNER, supportsTrueColor, toriiBeside } from './banner.ts';
 import { commandTable } from './command-table.ts';
 import { confetti } from './confetti.ts';
 import { gateTable } from './gate-table.ts';
@@ -54,8 +54,14 @@ function asStepLines(steps: Step[]): string {
     .join('\n\n');
 }
 
+function bannerLines(): string[] {
+  const lines = shaded(KET_BANNER);
+
+  return paintsGradient() ? toriiBeside(lines) : lines;
+}
+
 export function openCreate(): void {
-  console.log(`\n${shaded(KET_BANNER).join('\n')}\n`);
+  console.log(`\n${bannerLines().join('\n')}\n`);
   intro();
 }
 

@@ -3,7 +3,14 @@
   "formatsExts": {
     "typescript": ["ts", "tsx", "mts"]
   },
-  "ignore": ["**/node_modules/**", "**/dist/**", "**/*.gen.ts", "**/*.test.ts", "**/*.test.tsx"],
+  "ignore": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/*.gen.ts",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/shared/ui/**"
+  ],
   "minTokens": 50,
   "minLines": 5,
   "threshold": 0,

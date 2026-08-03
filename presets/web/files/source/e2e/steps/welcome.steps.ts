@@ -7,8 +7,8 @@ Given('a visitor opens the home page', async ({ page }) => {
   await page.goto('/');
 });
 
-Then('the page greets the world', async ({ page }) => {
-  await expect(page.getByTestId('greeting')).toHaveText('hello world');
+Then('the page welcomes them to {string}', async ({ page }, project: string) => {
+  await expect(page.getByTestId('welcome')).toHaveText(`Welcome to ${project}.`);
 });
 
 Then('the page is operable by anyone', async ({ page }) => {

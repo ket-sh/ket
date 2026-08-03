@@ -23,7 +23,10 @@
     ".git",
     "bun.lock",
     "skills-lock.json",
-    "cspell-words.txt"
+    "cspell-words.txt",
+    "**/*.mp4",
+    "**/*.webp",
+    "presets/*/src/contents.generated.ts"
   ],
   "useGitignore": true,
   "overrides": [
@@ -32,7 +35,7 @@
       "ignoreRegExpList": ["/'[^'\\s]{4,}'/g"]
     },
     {
-      "filename": ["presets/*/files/oxlintrc.json", "presets/*/src/contents.generated.ts"],
+      "filename": "presets/*/files/oxlintrc.json",
       "ignoreRegExpList": ["/react-doctor\\\\?/[a-z0-9-]+/g"]
     }
   ]

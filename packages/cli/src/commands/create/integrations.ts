@@ -1,4 +1,4 @@
-import type { PresetIntegration } from '@ket/preset';
+import type { PresetFile, PresetIntegration } from '@ket/preset';
 
 import { filesOf, installsOf } from '@ket/preset';
 
@@ -41,16 +41,23 @@ export function chosenFrom(named: string | undefined, offered: string[]): Chosen
   return { chosen: asked };
 }
 
+export function integrationFile(file: PresetFile, contents: string): ScaffoldFile {
+  return {
+    path: pathInProject(file.target),
+    contents,
+    ...(file.encoding === 'base64' ? { encoding: 'base64' as const } : {}),
+  };
+}
+
 export function filesFor(presets: PresetName[], chosen: string[]): ScaffoldFile[] {
   const byPath = new Map<string, ScaffoldFile>();
 
   for (const preset of governingPresets(presets)) {
     for (const integration of chosenIn(preset.name, chosen)) {
       for (const file of filesOf(integration)) {
-        byPath.set(pathInProject(file.target), {
-          path: pathInProject(file.target),
-          contents: preset.contentOf(file.path),
-        });
+        const built = integrationFile(file, preset.contentOf(file.path));
+
+        byPath.set(built.path, built);
       }
     }
   }

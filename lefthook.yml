@@ -47,6 +47,10 @@ pre-commit:
     - name: typecheck
       priority: 3
       run: bun run check-types
+    - name: templates
+      priority: 4
+      glob: 'presets/*/files/**'
+      run: bun scripts/check-preset-templates.mts {staged_files}
 
 commit-msg:
   jobs:

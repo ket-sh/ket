@@ -1,7 +1,12 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "ignoreBinaries": ["mise"],
-  "ignoreDependencies": ["@steiger/toolkit", "tailwindcss", "class-variance-authority"],
+  "ignoreDependencies": [
+    "@steiger/toolkit",
+    "tailwindcss",
+    "@fontsource-variable/google-sans-flex",
+    "@fontsource-variable/google-sans-code"
+  ],
   "entry": [
     "src/app/router.tsx",
     "src/app/routes/**/*.tsx",

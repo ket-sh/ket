@@ -16,6 +16,9 @@ export default defineConfig({
   webServer: {
     command: 'bun run build && bun run start',
     url: 'http://localhost:4173',
-    reuseExistingServer: true,
+    // Reusing whatever answers this port lets an unrelated server, or a build
+    // from an earlier commit, answer for this one. A port already taken has to
+    // stop the gate rather than redirect it.
+    reuseExistingServer: false,
   },
 });

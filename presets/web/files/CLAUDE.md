@@ -18,6 +18,11 @@ adapters, so a decision that drifts into a component drifts out of reach of the
 gate that measures it. `steiger` is what refuses an import that reaches up a
 layer or sideways into another slice.
 
+`steiger` knows the layers, and `dependency-cruiser` knows the graph: a cycle
+between two files, an orphan nothing imports, an import nothing resolves, and
+a package the manifest never named. Neither tool repeats what the other
+already catches.
+
 Routing has its own layer. `src/app/` holds the router, the route files, and the
 route tree TanStack Start generates from them. Nothing writes to a generated file by
 hand, and every gate skips a `.gen.ts`.
@@ -26,8 +31,12 @@ Style is a token rather than a value. `src/app/styles.css` holds them and the
 `design-tokens` skill says what may be one, what may not, and why a raw color
 in a component is a decision nobody wrote down.
 
-A unit named `greeting` takes `greeting.test.ts` for the cases you thought of,
-and `greeting.property.test.ts` for the ones you didn't. Both sit beside the
+The environment is a schema before it's a value. `.env.schema` holds the
+decisions, and `env.d.ts` follows from it rather than from a hand edit. The
+`varlock` skill carries the rules for growing it.
+
+A unit named `welcome` takes `welcome.test.ts` for the cases you thought of,
+and `welcome.property.test.ts` for the ones you didn't. Both sit beside the
 source, and both run in node. A test that composes several slices and stubs only the
 network takes `{unit}.integration.test.ts`, and the mutation gate leaves it alone
 because it measures a boundary rather than a decision.
@@ -62,6 +71,11 @@ JavaScript, so `lint:prose`, `lint:secrets` and `lint:workflows` need
 missing command rather than a finding.
 
 No gate here gets switched off to reach green.
+
+A dev tool heavy enough to want its own lockfile earns a package under
+`tooling/`, isolated from this project's manifest. Nothing here is heavy
+enough yet: Stryker stays in the project's own lockfile until a tool that
+genuinely needs the isolation arrives.
 
 ## When no skill covers the question
 
