@@ -14,18 +14,43 @@ import { announce, openCreate } from './announce.ts';
 import { filesToInstall, shippedContents } from './install.ts';
 import { chosenFrom, filesFor, installsFor, namesOffered } from './integrations.ts';
 import { renderManifest } from './manifest.ts';
+import { projectNames } from './name-token.ts';
+import { foundOwner } from './owner-lookup.ts';
+import { ownerIn } from './owner.ts';
+import { ownedFiles } from './ownership.ts';
 import { planCreation } from './plan.ts';
 import { presetFrom } from './preset.ts';
 import { scaffoldFor } from './scaffold.ts';
 import { withHarnessRegistered } from './settings.ts';
 import { installSkills } from './skills-install.ts';
 import { runsWizard } from './wizard-choice.ts';
-import { askName, runWizard } from './wizard.ts';
+import { askName, askOwner, runWizard } from './wizard.ts';
 
 const LOCKFILE = 'skills-lock.json';
 
+interface CreationChoices {
+  configuration: Configuration | undefined;
+  owner: string | undefined;
+}
+
 function isInteractive(): boolean {
   return process.stdin.isTTY;
+}
+
+async function promptedOwner(given: string | undefined): Promise<string | undefined> {
+  const found = await foundOwner(given);
+
+  if (found !== undefined) {
+    return found;
+  }
+
+  const answered = await askOwner();
+
+  if (isCancel(answered)) {
+    throw new Error('nothing was created');
+  }
+
+  return ownerIn(answered);
 }
 
 async function promptedDirectory(given: string | undefined): Promise<string> {
@@ -78,6 +103,28 @@ async function wizardConfiguration(key: string | undefined): Promise<Configurati
   return 'configured' in outcome ? outcome.configured : undefined;
 }
 
+// A cancelled wizard has already said nothing was written, so asking who owns
+// it would be one question past the answer.
+async function choicesFromWizard(
+  key: string | undefined,
+  given: string | undefined,
+): Promise<CreationChoices> {
+  const configuration = await wizardConfiguration(key);
+
+  return configuration === undefined
+    ? { configuration, owner: undefined }
+    : { configuration, owner: await promptedOwner(given) };
+}
+
+async function choicesFromFlags(
+  key: string | undefined,
+  named: string | undefined,
+  asked: string | undefined,
+  given: string | undefined,
+): Promise<CreationChoices> {
+  return { configuration: configuredFromFlags(key, named, asked), owner: await foundOwner(given) };
+}
+
 // One target today, and a monorepo is the slice that brings more. Reading the
 // first is what keeps the manifest and the announcement from drifting back to
 // a preset the project never chose.
@@ -91,7 +138,11 @@ function governingPreset(targets: PresetName[]): RegisteredPreset {
   return governing;
 }
 
-async function writeScaffold(plan: CreationPlan, configuration: Configuration): Promise<void> {
+async function writeScaffold(
+  plan: CreationPlan,
+  configuration: Configuration,
+  owner: string | undefined,
+): Promise<void> {
   await mkdir(plan.root, { recursive: true });
   await initializeRepository(plan.root);
 
@@ -99,12 +150,12 @@ async function writeScaffold(plan: CreationPlan, configuration: Configuration): 
   const settings = await readTextIfPresent(plan.root, '.claude/settings.json');
   const targets = Object.values(configuration.targets);
   const governing = governingPreset(targets);
-  const project = { name: basename(plan.root), key: configuration.key };
+  const project = projectNames(basename(plan.root), configuration.key, owner);
 
-  const installed = [
-    ...filesToInstall(targets, project),
-    ...filesFor(targets, configuration.integrations),
-  ];
+  const installed = ownedFiles(
+    [...filesToInstall(targets, project), ...filesFor(targets, configuration.integrations)],
+    owner,
+  );
 
   // A preset ignores what its own toolchain downloads and builds, and ket adds
   // the state it keeps. The scaffold writes last, so it appends to the file
@@ -173,6 +224,11 @@ const create = defineCommand({
       description: 'The kind of project to write',
       required: false,
     },
+    owner: {
+      type: 'string',
+      description: 'Who owns the code, as a GitHub user or team',
+      required: false,
+    },
   },
   async run({ args }) {
     const wizard = runsWizard(isInteractive(), args.preset);
@@ -185,15 +241,15 @@ const create = defineCommand({
       ? await promptedDirectory(args.directory)
       : requiredDirectory(args.directory);
     const plan = await planCreation(directory);
-    const configuration = wizard
-      ? await wizardConfiguration(plan.key)
-      : configuredFromFlags(plan.key, args.with, args.preset);
+    const { configuration, owner } = wizard
+      ? await choicesFromWizard(plan.key, args.owner)
+      : await choicesFromFlags(plan.key, args.with, args.preset, args.owner);
 
     if (configuration === undefined) {
       throw new Error(`nothing was configured for ${plan.root}`);
     }
 
-    await writeScaffold(plan, configuration);
+    await writeScaffold(plan, configuration, owner);
 
     return plan;
   },

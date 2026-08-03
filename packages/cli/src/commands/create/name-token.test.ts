@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { withProjectNames } from './name-token.ts';
+import { projectNames, withProjectNames } from './name-token.ts';
 
 const PROJECT = { name: 'my-app', key: 'SHOP' };
+
+const OWNED = { name: 'my-app', key: 'SHOP', owner: 'reyz' };
 
 describe('putting what a project is called into a file the preset ships', () => {
   it('replaces the name token with the name', () => {
@@ -33,5 +35,44 @@ describe('putting what a project is called into a file the preset ships', () => 
 
   it('leaves a file that carries no token untouched', () => {
     expect(withProjectNames('plain contents', PROJECT)).toBe('plain contents');
+  });
+});
+
+describe('putting who owns a project into a file the preset ships', () => {
+  it('replaces the owner token with the owner', () => {
+    expect(withProjectNames('* @__PROJECT_OWNER__', OWNED)).toBe('* @reyz');
+  });
+
+  it('replaces every occurrence of the owner, since every line names one', () => {
+    expect(withProjectNames('* @__PROJECT_OWNER__\n.claude/ @__PROJECT_OWNER__', OWNED)).toBe(
+      '* @reyz\n.claude/ @reyz',
+    );
+  });
+
+  it('leaves the owner token standing when the project names no owner', () => {
+    expect(withProjectNames('* @__PROJECT_OWNER__', PROJECT)).toBe('* @__PROJECT_OWNER__');
+  });
+
+  it('still names the project when it names no owner', () => {
+    expect(withProjectNames('__PROJECT_NAME__ @__PROJECT_OWNER__', PROJECT)).toBe(
+      'my-app @__PROJECT_OWNER__',
+    );
+  });
+});
+
+describe('the names a project is written into its own files under', () => {
+  it('carries the owner when create resolved one', () => {
+    expect(projectNames('my-app', 'SHOP', 'reyz')).toStrictEqual({
+      name: 'my-app',
+      key: 'SHOP',
+      owner: 'reyz',
+    });
+  });
+
+  it('carries no owner at all when create resolved none', () => {
+    expect(projectNames('my-app', 'SHOP', undefined)).toStrictEqual({
+      name: 'my-app',
+      key: 'SHOP',
+    });
   });
 });

@@ -53,6 +53,7 @@ nonword
 NOSYSTEM
 nsegmentless
 nunasserted
+octocat
 oklch
 openspec
 opentui
@@ -67,6 +68,7 @@ pilotty
 pipx
 playwright
 probity
+reyz
 rhysd
 scrollbox
 segmentless

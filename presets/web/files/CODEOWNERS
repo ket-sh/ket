@@ -1,0 +1,26 @@
+* @__PROJECT_OWNER__
+
+CLAUDE.md @__PROJECT_OWNER__
+.claude/ @__PROJECT_OWNER__
+.github/workflows/ @__PROJECT_OWNER__
+.github/CODEOWNERS @__PROJECT_OWNER__
+.env.schema @__PROJECT_OWNER__
+scripts/ @__PROJECT_OWNER__
+package.json @__PROJECT_OWNER__
+tsconfig.json @__PROJECT_OWNER__
+mise.toml @__PROJECT_OWNER__
+lefthook.yml @__PROJECT_OWNER__
+probity.config.ts @__PROJECT_OWNER__
+commitlint.config.ts @__PROJECT_OWNER__
+.oxlintrc.json @__PROJECT_OWNER__
+.oxfmtrc.json @__PROJECT_OWNER__
+.dependency-cruiser.cjs @__PROJECT_OWNER__
+steiger.config.ts @__PROJECT_OWNER__
+knip.json @__PROJECT_OWNER__
+.jscpd.json @__PROJECT_OWNER__
+cspell.json @__PROJECT_OWNER__
+.vale.ini @__PROJECT_OWNER__
+.gitleaks.toml @__PROJECT_OWNER__
+vitest.config.ts @__PROJECT_OWNER__
+vitest.mutation.config.ts @__PROJECT_OWNER__
+stryker.conf.json @__PROJECT_OWNER__

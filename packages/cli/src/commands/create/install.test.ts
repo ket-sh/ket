@@ -9,6 +9,10 @@ import { filesToInstall, pathInProject, scaffolded, shippedContents } from './in
 
 const MY_APP = { name: 'my-app', key: 'SHOP' };
 
+const OWNED = { name: 'my-app', key: 'SHOP', owner: 'reyz' };
+
+const CODE_OWNERS = '.github/CODEOWNERS';
+
 describe('placing a registry target inside a project', () => {
   it('drops the home marker the registry writes', () => {
     expect(pathInProject('~/lefthook.yml')).toBe('lefthook.yml');
@@ -86,6 +90,10 @@ describe('choosing what a preset installs into a project', () => {
     expect(installed.map((file) => file.path)).toStrictEqual(
       WEB_PRESET.files.map((file) => pathInProject(file.target)),
     );
+  });
+
+  it('puts the owner into the ownership file the preset ships', () => {
+    expect(shippedContents(filesToInstall(['web'], OWNED), CODE_OWNERS)).toContain('* @reyz');
   });
 
   it('accepts what a project is called, whichever preset writes it', () => {

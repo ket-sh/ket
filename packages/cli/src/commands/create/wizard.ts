@@ -30,6 +30,13 @@ export async function askName(under: string): Promise<string | symbol> {
   });
 }
 
+export async function askOwner(): Promise<string | symbol> {
+  return text({
+    message: 'Who owns the code? A GitHub user or team, without the at sign.',
+    placeholder: 'octocat',
+  });
+}
+
 async function askPreset(): Promise<PresetName | symbol> {
   return select({
     message: 'Please select your project type',
