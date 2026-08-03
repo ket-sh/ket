@@ -2,6 +2,14 @@
 @import '@fontsource-variable/google-sans-flex';
 @import '@fontsource-variable/google-sans-code';
 
+/* Tailwind reads every non-ignored file for class candidates, so a class
+   token quoted in a pipeline record or a test step would write a rule into
+   the shipped sheet. The scan stays inside the source it styles. */
+@source not '../../.ket';
+@source not '../../.claude';
+@source not '../../e2e';
+@source not '../../features';
+
 /* A token names a decision rather than a value, so a screen changes in one
    place. Tailwind reads these through @theme, so `bg-surface` is the token. */
 @theme {
@@ -52,9 +60,11 @@
   --color-ring: var(--color-brand);
 }
 
-/* The same decisions, made again for a reader who asked for less light. */
+/* The same decisions, made again for a reader who asked for less light. These
+   land on `:root` rather than in a second `@theme`, because Tailwind flattens a
+   nested `@theme` into the one above and every reader then gets these. */
 @media (prefers-color-scheme: dark) {
-  @theme {
+  :root {
     --color-surface: oklch(0.18 0 0);
     --color-surface-sunken: oklch(0.14 0 0);
     --color-ink: oklch(0.97 0 0);
