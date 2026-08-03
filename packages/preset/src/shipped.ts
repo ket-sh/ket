@@ -32,7 +32,12 @@ export async function shippedFilesOf(
   root: string,
   shared?: string,
 ): Promise<PresetContents> {
-  const files = everyFileOf(item).toSorted((one, other) => one.path.localeCompare(other.path));
+  const byPath = new Map(everyFileOf(item).map((file) => [file.path, file] as const));
+  const paths = [...byPath.keys()].toSorted();
+  const entries = [...byPath.entries()];
+  const files = paths.flatMap((path) =>
+    entries.filter(([held]) => held === path).map(([, file]) => file),
+  );
 
   const read = await Promise.all(
     files.map(

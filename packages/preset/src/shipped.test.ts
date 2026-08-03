@@ -34,6 +34,9 @@ beforeAll(async () => {
   await writeFile(join(root, 'files', 'knip.json'), '{}\n', 'utf8');
   await writeFile(join(root, 'files', 'source', 'main.ts'), "export const a = 'b';\n", 'utf8');
   await writeFile(join(root, 'files', 'unpromised.json'), 'null\n', 'utf8');
+  await writeFile(join(root, 'files', 'Z.txt'), 'Z\n', 'utf8');
+  await writeFile(join(root, 'files', 'a.txt'), 'a\n', 'utf8');
+  await writeFile(join(root, 'files', 'dual.txt'), 'plain\n', 'utf8');
 
   standing = await mkdtemp(join(tmpdir(), 'ket-standing-'));
 
@@ -102,6 +105,28 @@ describe('the files a preset ships', () => {
     const item = itemPromising([writes('nowhere.json', 'nowhere.json')]);
 
     await expect(shippedFilesOf(item, root)).rejects.toThrow('nowhere.json');
+  });
+});
+
+describe('the order paths ship in', () => {
+  it('orders paths by code unit rather than the machine locale', async () => {
+    const declared = itemPromising([writes('a.txt', 'a.txt'), writes('Z.txt', 'Z.txt')]);
+
+    expect(Object.keys(await shippedFilesOf(declared, root))).toStrictEqual([
+      'files/Z.txt',
+      'files/a.txt',
+    ]);
+  });
+
+  it('lets the later declaration of a shared path decide how its bytes are read', async () => {
+    const item = itemPromising([
+      writes('dual.txt', 'first-target'),
+      copies('dual.txt', 'second-target'),
+    ]);
+
+    const shipped = await shippedFilesOf(item, root);
+
+    expect(shipped['files/dual.txt']).toBe(Buffer.from('plain\n', 'utf8').toString('base64'));
   });
 });
 
