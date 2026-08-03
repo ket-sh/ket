@@ -9,7 +9,7 @@ const EXACT_GENERATED_NAMES = new Set(['env.d.ts', 'bun.lock']);
 
 const SECRET_NAME = '.env';
 
-const LOCAL_ENV_OVERRIDE = /^\.env\.[^/]+\.local$/u;
+const LOCAL_ENV_OVERRIDE = /^\.env(\.[^/]+)?\.local$/u;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
