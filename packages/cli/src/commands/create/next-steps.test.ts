@@ -66,3 +66,22 @@ describe('the script the reader is told to start with', () => {
     });
   });
 });
+
+describe('the gallery, when the scaffold ships one', () => {
+  it('offers it right after the dev loop step', () => {
+    const scripts = { dev: 'ket watch', storybook: 'storybook dev -p 6006' };
+
+    expect(nextSteps('my-app', scripts).slice(-2)).toStrictEqual([
+      { says: 'Start the loop', runs: 'bun run dev' },
+      { says: 'Open the component gallery', runs: 'bun run storybook' },
+    ]);
+  });
+
+  it('stays out of the list when the scaffold ships no storybook script', () => {
+    expect(nextSteps('my-app', { dev: 'ket watch' })).toStrictEqual([
+      { says: 'Move into it', runs: 'cd my-app' },
+      { says: 'Install the toolchain', runs: 'bun install' },
+      { says: 'Start the loop', runs: 'bun run dev' },
+    ]);
+  });
+});
