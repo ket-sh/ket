@@ -103,8 +103,6 @@ async function wizardConfiguration(key: string | undefined): Promise<Configurati
   return 'configured' in outcome ? outcome.configured : undefined;
 }
 
-// A cancelled wizard has already said nothing was written, so asking who owns
-// it would be one question past the answer.
 async function choicesFromWizard(
   key: string | undefined,
   given: string | undefined,
