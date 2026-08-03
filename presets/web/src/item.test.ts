@@ -33,6 +33,14 @@ describe('what the web preset installs to check the shape of its own import grap
   });
 });
 
+describe('what the web preset ships so a generated file refuses the edit it never wants', () => {
+  it('ships the hook script the scaffold runs before every edit and write', () => {
+    expect(WEB_PRESET.files.map((file) => file.target)).toContain(
+      '~/scripts/protect-generated.mts',
+    );
+  });
+});
+
 describe('what the web preset offers a project that wants its screens reviewed', () => {
   const CHROMATIC = WEB_PRESET.integrations.find((offered) => offered.name === 'chromatic');
 
