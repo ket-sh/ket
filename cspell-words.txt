@@ -22,6 +22,7 @@ cva
 Datree
 dedup
 depcruise
+difit
 dmno
 dorny
 electricsql
@@ -96,6 +97,7 @@ unlinted
 unlocks
 unrepresentable
 unreviewed
+urandom
 usecase
 usecases
 varlock
