@@ -39,10 +39,11 @@ kubeconform
 labelledby
 lefthook
 libx
+Lingui
 lockfiles
 magick
-mobbin
 Mobbin
+mobbin
 movflags
 msw
 nizos
@@ -56,6 +57,7 @@ oklch
 openspec
 opentui
 opentui-spinner
+OSSF
 oxfmt
 oxfmtrc
 oxlint
