@@ -59,7 +59,6 @@ export const WEB_PRESET: PresetItem = {
     writes('playwright.config.ts', 'playwright.config.ts'),
     writes('steiger.config.ts', 'steiger.config.ts'),
     writes('dependency-cruiser.cjs', '.dependency-cruiser.cjs'),
-    writes('CODEOWNERS', '.github/CODEOWNERS'),
     writes('components.json', 'components.json'),
     writes('bunfig.toml', 'bunfig.toml'),
     writes('source/env.schema', '.env.schema'),

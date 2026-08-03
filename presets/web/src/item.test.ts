@@ -41,18 +41,6 @@ describe('what the web preset ships so a generated file refuses the edit it neve
   });
 });
 
-describe('what the web preset ships so a guardrail names who answers for it', () => {
-  const OWNERSHIP = WEB_PRESET.files.find((file) => file.target === '~/.github/CODEOWNERS');
-
-  it('ships the ownership file github reads reviewers from', () => {
-    expect(OWNERSHIP?.path).toBe('files/CODEOWNERS');
-  });
-
-  it('writes the ownership file rather than copying it, since it carries a token', () => {
-    expect(OWNERSHIP?.encoding).toBeUndefined();
-  });
-});
-
 describe('what the web preset offers a project that wants its screens reviewed', () => {
   const CHROMATIC = WEB_PRESET.integrations.find((offered) => offered.name === 'chromatic');
 

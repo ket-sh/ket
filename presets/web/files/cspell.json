@@ -23,7 +23,6 @@
     "bun.lock",
     "skills-lock.json",
     "cspell-words.txt",
-    ".github/CODEOWNERS",
     "**/*.gen.ts",
     "env.d.ts",
     "public"
