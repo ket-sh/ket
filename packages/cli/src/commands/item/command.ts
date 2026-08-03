@@ -17,16 +17,18 @@ import { semanticsOf } from '../../shared/governing.ts';
 import { readStored } from '../../shared/item-store.ts';
 import { ITEM_KINDS, ITEM_SIZES, nextKey, renderItem, titleRefusal } from '../../shared/item.ts';
 import { keyFrom, ketRootOrThrow } from '../../shared/locate.ts';
-import { parseItem } from '../../shared/read-item.ts';
+import { inFlightFrom, parseItem } from '../../shared/read-item.ts';
 import { argvOf } from '../../shared/ring.ts';
 import {
   approvalOf,
   deliveryOf,
   designOf,
+  reopeningOf,
   shipmentOf,
   submissionOf,
   verificationOf,
 } from '../../shared/transition.ts';
+import { secondJobAmong } from '../../shared/write-gate.ts';
 
 const KET_DIRECTORY = '.ket';
 
@@ -147,7 +149,7 @@ const file = defineCommand({
   },
 });
 
-type Decision = (item: Item, root: string) => Promise<Transition>;
+type Decision = (item: Item, root: string, key: string) => Promise<Transition>;
 
 function stage(name: string, description: string, decide: Decision) {
   return defineCommand({
@@ -157,7 +159,7 @@ function stage(name: string, description: string, decide: Decision) {
     },
     async run({ args }) {
       const root = await ketRootOrThrow(process.cwd());
-      const outcome = await decide(await read(root, args.key), root);
+      const outcome = await decide(await read(root, args.key), root, args.key);
 
       if ('refused' in outcome) {
         throw new Error(`${args.key} is ${outcome.refused}`);
@@ -171,6 +173,29 @@ function stage(name: string, description: string, decide: Decision) {
 
 function byStatus(move: (item: Item) => Transition): Decision {
   return async (item) => Promise.resolve(move(item));
+}
+
+// A stage that opens work checks the door: another item already being worked
+// means this one waits its turn, and hearing that here beats hearing it from
+// the write gate one edit into the job.
+function whileNothingElseWorks(move: (item: Item) => Transition): Decision {
+  return async (item, root, key) => {
+    const opened = move(item);
+
+    if ('refused' in opened) {
+      return opened;
+    }
+
+    const held = secondJobAmong(inFlightFrom(await readStored(root)), key);
+
+    if (held !== undefined) {
+      return {
+        refused: `waiting its turn: ${held.key} is the job in hand, and one job means one branch`,
+      };
+    }
+
+    return opened;
+  };
 }
 
 function plannedOnProject(checks: RingCheck[]): PlannedCheck[] {
@@ -209,7 +234,11 @@ function mutationChecks(semantics: PresetSemantics): RingCheck[] {
   return [{ runs, scope: 'project' }];
 }
 
-const design = stage('design', 'Open the design stage on a triaged item', byStatus(designOf));
+const design = stage(
+  'design',
+  'Open the design stage on a triaged item',
+  whileNothingElseWorks(designOf),
+);
 
 const submit = stage(
   'submit',
@@ -217,7 +246,11 @@ const submit = stage(
   byStatus(submissionOf),
 );
 
-const approve = stage('approve', 'Move an approved item to implementing', byStatus(approvalOf));
+const approve = stage(
+  'approve',
+  'Move an approved item to implementing',
+  whileNothingElseWorks(approvalOf),
+);
 
 const verify = stage(
   'verify',
@@ -233,9 +266,11 @@ const deliver = stage(
 
 const ship = stage('ship', 'Record that the pull request merged', byStatus(shipmentOf));
 
+const reopen = stage('reopen', 'Send reviewed work back to implementing', byStatus(reopeningOf));
+
 const item = defineCommand({
   meta: { name: 'item', description: 'Write the state a gate reads' },
-  subCommands: { file, design, submit, approve, verify, deliver, ship },
+  subCommands: { file, design, submit, approve, verify, deliver, reopen, ship },
 });
 
 export async function usage(): Promise<void> {

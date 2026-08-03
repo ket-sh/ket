@@ -73,6 +73,17 @@ const WHY_NOT_SHIP: Refusals = {
   shipped: 'already shipped',
 };
 
+const WHY_NOT_REOPEN: Refusals = {
+  idea: 'still an idea, so there is nothing to send back',
+  triaged: 'not implemented yet, so there is nothing to send back',
+  designing: 'still designing, so there is nothing to send back',
+  'awaiting-approval': 'awaiting approval, so there is nothing to send back',
+  implementing: 'already implementing',
+  verifying: undefined,
+  'awaiting-merge': undefined,
+  shipped: 'already shipped, so a defect found now files as its own item',
+};
+
 const OWES_DESIGN: ItemSize[] = ['epic', 'story'];
 
 const DECOMPOSES: ItemSize = 'epic';
@@ -132,6 +143,12 @@ export function deliveryOf(item: Item, failures: RingFailure[]): Transition {
 
 export function shipmentOf(item: Item): Transition {
   return moveTo(item, 'shipped', WHY_NOT_SHIP);
+}
+
+// Not a machine step: the machine's path out of verifying is deliver, and only
+// a person reading a review sends work back.
+export function reopeningOf(item: Item): Transition {
+  return moveTo(item, 'implementing', WHY_NOT_REOPEN);
 }
 
 interface MachineStep {

@@ -75,6 +75,12 @@ rather than moving the item on.
 Either command refuses by naming the check that failed and repeating what it
 said. Fix that, then run the same command again.
 
+A review finding that needs source cannot be answered where it was found,
+because the write gate opens source only at `implementing`. Run
+`ket item reopen <key>`: verifying or awaiting-merge returns to implementing,
+the fix arrives test-first like any other line, and the item earns its way
+out through the same commands it passed before.
+
 `/ket:ship` records a merge. The cycle ends there rather than at the opened pull
 request, because `shipped` has to mean it landed rather than somebody thought it
 was done.

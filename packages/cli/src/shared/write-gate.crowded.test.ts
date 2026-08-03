@@ -85,6 +85,24 @@ describe('a board holding only filed items', () => {
   });
 });
 
+describe('naming three or more jobs in flight at once', () => {
+  it('says all rather than both, since both means two', () => {
+    const verdict = verdictFor(
+      attempt({
+        inFlight: [
+          { ...STORY, key: 'OS-3' },
+          { ...STORY, key: 'OS-1' },
+          { ...STORY, key: 'OS-2' },
+        ],
+      }),
+    );
+
+    expect(verdict).toStrictEqual({
+      refused: 'OS-1 and OS-2 and OS-3 are all in flight. One job means one branch.',
+    });
+  });
+});
+
 describe('naming the two jobs that are both in flight', () => {
   it('names them in key order, whatever order the directory returned them in', () => {
     const scattered = verdictFor(

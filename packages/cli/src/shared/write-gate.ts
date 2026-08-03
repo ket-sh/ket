@@ -54,9 +54,10 @@ function crowded(inFlight: GovernedItem[]): Verdict | undefined {
   // them, and a refusal that reads differently on two machines is one nobody can
   // check against.
   const keys = inFlight.map((item) => item.key).toSorted();
+  const many = keys.length === 2 ? 'both' : 'all';
 
   return {
-    refused: `${keys.join(' and ')} are both in flight. One job means one branch.`,
+    refused: `${keys.join(' and ')} are ${many} in flight. One job means one branch.`,
   };
 }
 
@@ -193,6 +194,15 @@ function sealed(attempt: WriteAttempt): Verdict | undefined {
 
 export function verdictFor(attempt: WriteAttempt): Verdict {
   return sealed(attempt) ?? governed(attempt);
+}
+
+// The door a stage opening checks: another item already being worked, and not
+// an ancestor delegating to this one, means the opening waits its turn.
+export function secondJobAmong(
+  inFlight: GovernedItem[],
+  opening: string,
+): GovernedItem | undefined {
+  return worked(workingFrom(inFlight)).find((item) => item.key !== opening);
 }
 
 // One job means one branch, so a repository holding two of them has no single
