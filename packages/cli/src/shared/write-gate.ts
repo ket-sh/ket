@@ -2,6 +2,7 @@ import type { ItemKind, ItemSize, ItemStatus } from './item.ts';
 import type { Verdict } from './verdict.ts';
 
 import { matchesGlob } from './glob.ts';
+import { isWorking } from './item.ts';
 import { ALLOWED } from './verdict.ts';
 
 const SCENARIO = '.feature';
@@ -93,6 +94,17 @@ export function workingFrom(inFlight: GovernedItem[]): GovernedItem[] {
   return inFlight.filter((item) => !delegates(item, inFlight));
 }
 
+function worked(candidates: GovernedItem[]): GovernedItem[] {
+  return candidates.filter((item) => isWorking(item.status));
+}
+
+// The same directory-order concern crowded() names: a refusal that names one
+// filed item has to name the same one on every machine. Nothing filters here,
+// because a caller only reaches for the backlog once nothing is being worked.
+function byKey(candidates: GovernedItem[]): GovernedItem[] {
+  return candidates.toSorted((one, two) => one.key.localeCompare(two.key));
+}
+
 function governing(attempt: WriteAttempt, working: GovernedItem[]): GovernedItem | undefined {
   return underSource(attempt.path, attempt.sources) ? working[0] : undefined;
 }
@@ -153,15 +165,21 @@ function byHand(path: string): Verdict | undefined {
   };
 }
 
+function answerable(candidates: GovernedItem[]): GovernedItem[] {
+  const working = worked(candidates);
+
+  return working.length > 0 ? working : byKey(candidates);
+}
+
 function governed(attempt: WriteAttempt): Verdict {
-  const working = workingFrom(attempt.inFlight);
-  const item = governing(attempt, working);
+  const candidates = workingFrom(attempt.inFlight);
+  const item = governing(attempt, answerable(candidates));
 
   if (item === undefined) {
     return ALLOWED;
   }
 
-  return crowded(working) ?? unapproved(item) ?? misclassified(item, attempt) ?? ALLOWED;
+  return crowded(worked(candidates)) ?? unapproved(item) ?? misclassified(item, attempt) ?? ALLOWED;
 }
 
 function sealed(attempt: WriteAttempt): Verdict | undefined {
@@ -178,9 +196,15 @@ export function verdictFor(attempt: WriteAttempt): Verdict {
 }
 
 // One job means one branch, so a repository holding two of them has no single
-// item that answers for the session.
+// item that answers for the session. A filed backlog is not a second job: when
+// nothing is being worked, the first filed item is the one up next.
 export function jobIn(inFlight: GovernedItem[]): GovernedItem | undefined {
-  const working = workingFrom(inFlight);
+  const candidates = workingFrom(inFlight);
+  const working = worked(candidates);
 
-  return working.length === 1 ? working[0] : undefined;
+  if (working.length > 1) {
+    return undefined;
+  }
+
+  return working[0] ?? byKey(candidates)[0];
 }

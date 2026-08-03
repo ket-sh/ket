@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { Item } from './item.ts';
 
-import { ITEM_STATUSES, isInFlight, nextKey, renderItem, titleRefusal } from './item.ts';
+import { ITEM_STATUSES, isInFlight, isWorking, nextKey, renderItem, titleRefusal } from './item.ts';
 
 const STORY: Item = {
   title: 'login with lockout',
@@ -123,9 +123,39 @@ describe('deciding whether an item is in flight', () => {
   });
 });
 
+describe('deciding whether an item is being worked', () => {
+  it('counts every status between design and the merge it waits on', () => {
+    for (const status of [
+      'designing',
+      'awaiting-approval',
+      'implementing',
+      'verifying',
+      'awaiting-merge',
+    ]) {
+      expect({ status, working: isWorking(status) }).toStrictEqual({ status, working: true });
+    }
+  });
+
+  it('leaves a triaged item out, since filed work waits its turn', () => {
+    expect(isWorking('triaged')).toBe(false);
+  });
+
+  it('leaves an idea out, since nobody picked it up', () => {
+    expect(isWorking('idea')).toBe(false);
+  });
+
+  it('leaves a shipped item out, since its pull request landed', () => {
+    expect(isWorking('shipped')).toBe(false);
+  });
+});
+
 describe('a status the lifecycle never named', () => {
   it('is not in flight, since the gates only know the eight', () => {
     expect(isInFlight('halfway')).toBe(false);
+  });
+
+  it('is not being worked either, for the same reason', () => {
+    expect(isWorking('halfway')).toBe(false);
   });
 
   it('is not in flight even when it reads like one', () => {

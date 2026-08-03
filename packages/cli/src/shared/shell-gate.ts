@@ -4,7 +4,7 @@ import type { GovernedItem } from './write-gate.ts';
 
 import { publishesWork } from './publish.ts';
 import { ALLOWED } from './verdict.ts';
-import { verdictFor } from './write-gate.ts';
+import { jobIn, verdictFor } from './write-gate.ts';
 
 const SKIPS_A_GATE = ['--no-verify', '--no-gpg-sign'];
 
@@ -63,7 +63,7 @@ const CARRIES_SOURCE: ItemStatus[] = ['implementing', 'verifying', 'awaiting-mer
 // Mutation gates the transition and the review does not, but work does not
 // reach anybody else until somebody has answered for it. A skip is an answer.
 function unreviewed(attempt: CommandAttempt): Verdict | undefined {
-  const [working] = attempt.inFlight;
+  const working = jobIn(attempt.inFlight);
 
   if (working === undefined || !publishesWork(attempt.command)) {
     return undefined;

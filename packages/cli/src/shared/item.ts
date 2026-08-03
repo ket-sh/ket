@@ -50,6 +50,12 @@ export function isInFlight(status: string): boolean {
   );
 }
 
+const FILED: ItemStatus = 'triaged';
+
+export function isWorking(status: string): boolean {
+  return isInFlight(status) && status !== FILED;
+}
+
 function renderChildren(children: string[]): string {
   if (children.length === 0) {
     return 'children: []';

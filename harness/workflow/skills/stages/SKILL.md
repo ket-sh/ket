@@ -116,8 +116,9 @@ can be filed later if the work turns out to need them.
 Then work the first child from the top of the table: it is `triaged`, so it
 takes `ket item design` next. The epic keeps its own status and stops governing
 writes while a child of it is in flight, so the child is the job and one job
-still means one branch. Do not run the children in parallel. Two of them in
-flight at once is two jobs, and the write gate refuses both.
+still means one branch. Do not run the children in parallel. A `triaged` child
+is backlog and crowds nobody, but two children past that status at once is two
+jobs, and the write gate refuses both.
 
 ## Why design is mandatory above subtask
 

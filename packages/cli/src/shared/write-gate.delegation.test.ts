@@ -110,4 +110,17 @@ describe('the one job a repository has in hand', () => {
   it('is nobody where two items are in flight, since one job means one branch', () => {
     expect(jobIn([{ ...CHILD, key: 'AUTH-1' }, CHILD])).toBeUndefined();
   });
+
+  it('is the item being worked while filed siblings wait their turn', () => {
+    expect(jobIn([{ ...CHILD, key: 'AUTH-3', status: 'triaged' }, CHILD])).toStrictEqual(CHILD);
+  });
+
+  it('is the first of the filed items when nothing is being worked yet', () => {
+    const filed = jobIn([
+      { ...CHILD, key: 'AUTH-3', status: 'triaged' },
+      { ...CHILD, key: 'AUTH-2', status: 'triaged' },
+    ]);
+
+    expect(filed?.key).toBe('AUTH-2');
+  });
 });
