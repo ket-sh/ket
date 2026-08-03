@@ -15,6 +15,7 @@ import { readTextIfPresent, writeFiles } from '../../shared/write-files.ts';
 import { announce, openCreate } from './announce.ts';
 import { filesToInstall, shippedContents } from './install.ts';
 import { chosenFrom, filesFor, installsFor, namesOffered } from './integrations.ts';
+import { withChosenLaw } from './law.ts';
 import { renderManifest } from './manifest.ts';
 import { heroHint } from './name-token.ts';
 import { PIPELINE_COMMANDS } from './pipeline-commands.generated.ts';
@@ -110,10 +111,10 @@ async function writeScaffold(plan: CreationPlan, configuration: Configuration): 
     hint: heroHint(configuration),
   };
 
-  const installed = [
-    ...filesToInstall(targets, project),
-    ...filesFor(targets, configuration.integrations),
-  ];
+  const installed = withChosenLaw(
+    [...filesToInstall(targets, project), ...filesFor(targets, configuration.integrations)],
+    configuration,
+  );
 
   // A preset ignores what its own toolchain downloads and builds, and ket adds
   // the state it keeps. The scaffold writes last, so it appends to the file

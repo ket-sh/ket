@@ -8,7 +8,9 @@ import { writes } from './item.ts';
 const WORKFLOW =
   'name: ci\n\njobs:\n  check:\n    runs-on: ubuntu-latest\n    steps:\n      - run: bun run lint\n      - run: bun run check-types\n      - run: bun run test\n      - run: bun run test:mutation\n';
 
-const LAW = 'Read the `tdd` skill before a test, and the `vitest` skill for the runner.\n';
+const PLAIN_LAW = 'Read the `tdd` skill before a test, and the `vitest` skill for the runner.\n';
+
+const LAW = `${PLAIN_LAW}\n## The pipeline\n\nDrive it with \`/ket:feature\`.\n`;
 
 const LOCKFILE = JSON.stringify({ version: 1, skills: { vitest: { source: 'antfu/skills' } } });
 
@@ -26,6 +28,7 @@ const SOUND: PresetSubject = {
       writes('knip.json', 'knip.json'),
       writes('github-ci.yml', '.github/workflows/ci.yml'),
       writes('CLAUDE.md', 'CLAUDE.md'),
+      writes('CLAUDE.plain.md', 'CLAUDE.plain.md'),
       writes('skills-lock.json', 'skills-lock.json'),
     ],
     integrations: [
@@ -67,6 +70,7 @@ const SOUND: PresetSubject = {
     'files/github-ci.yml': WORKFLOW,
     'files/github-coverage.yml': 'name: coverage\n',
     'files/CLAUDE.md': LAW,
+    'files/CLAUDE.plain.md': PLAIN_LAW,
     'files/skills-lock.json': LOCKFILE,
   },
   shipped: {
@@ -74,8 +78,37 @@ const SOUND: PresetSubject = {
     'files/github-ci.yml': WORKFLOW,
     'files/github-coverage.yml': 'name: coverage\n',
     'files/CLAUDE.md': LAW,
+    'files/CLAUDE.plain.md': PLAIN_LAW,
     'files/skills-lock.json': LOCKFILE,
   },
+};
+
+const BROKEN_EVERYWHERE: PresetSubject = {
+  ...SOUND,
+  carried: {
+    'files/github-ci.yml': WORKFLOW,
+    'files/github-coverage.yml': 'name: coverage\n',
+    'files/CLAUDE.md': LAW,
+    'files/CLAUDE.plain.md': PLAIN_LAW,
+    'files/skills-lock.json': LOCKFILE,
+  },
+  semantics: { ...SOUND.semantics, rings: { ...SOUND.semantics.rings, two: [] } },
+  item: {
+    ...SOUND.item,
+    integrations: [
+      {
+        name: 'codecov',
+        asks: 'codecov, free on a public repo.',
+        files: [writes('github-coverage.yml', '.github/workflows/coverage.yml')],
+      },
+    ],
+  },
+};
+
+const UNSHIPPED_SKILL_PAIR = {
+  'files/CLAUDE.md':
+    'Use the `turborepo` skill.\n\n## The pipeline\n\nDrive it with `/ket:feature`.\n',
+  'files/CLAUDE.plain.md': 'Use the `turborepo` skill.\n',
 };
 
 describe('a preset against everything a preset must be', () => {
@@ -84,28 +117,7 @@ describe('a preset against everything a preset must be', () => {
   });
 
   it('names what broke in every family at once, not the first family that broke', () => {
-    const broken: PresetSubject = {
-      ...SOUND,
-      carried: {
-        'files/github-ci.yml': WORKFLOW,
-        'files/github-coverage.yml': 'name: coverage\n',
-        'files/CLAUDE.md': LAW,
-        'files/skills-lock.json': LOCKFILE,
-      },
-      semantics: { ...SOUND.semantics, rings: { ...SOUND.semantics.rings, two: [] } },
-      item: {
-        ...SOUND.item,
-        integrations: [
-          {
-            name: 'codecov',
-            asks: 'codecov, free on a public repo.',
-            files: [writes('github-coverage.yml', '.github/workflows/coverage.yml')],
-          },
-        ],
-      },
-    };
-
-    expect(brokenInvariantsOf(broken)).toStrictEqual([
+    expect(brokenInvariantsOf(BROKEN_EVERYWHERE)).toStrictEqual([
       'the preset promises files/knip.json but carries no such file',
       'ring two declares no check, so a stage ends measured by nothing',
       'the integration codecov does not say what a private repository pays',
@@ -116,8 +128,8 @@ describe('a preset against everything a preset must be', () => {
     const broken: PresetSubject = {
       ...SOUND,
       harnessSkills: [],
-      carried: { ...SOUND.carried, 'files/CLAUDE.md': 'Use the `turborepo` skill.\n' },
-      shipped: { ...SOUND.shipped, 'files/CLAUDE.md': 'Use the `turborepo` skill.\n' },
+      carried: { ...SOUND.carried, ...UNSHIPPED_SKILL_PAIR },
+      shipped: { ...SOUND.shipped, ...UNSHIPPED_SKILL_PAIR },
     };
 
     expect(brokenInvariantsOf(broken)).toStrictEqual([

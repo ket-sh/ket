@@ -161,6 +161,53 @@ describe('creating a project that drives the pipeline, the default', () => {
   });
 });
 
+describe('the law a created project reads from CLAUDE.md', () => {
+  it('teaches the pipeline when the project takes the workflow', async () => {
+    const where = join(await scratch(), 'shop-front');
+
+    await runCommand('create', [where, '--preset', 'web']);
+
+    await expect(readFile(join(where, 'CLAUDE.md'), 'utf8')).resolves.toContain('/ket:feature');
+    await expect(readFile(join(where, 'CLAUDE.plain.md'), 'utf8')).rejects.toThrow();
+  });
+
+  it('teaches no pipeline when the project declines it', async () => {
+    const where = join(await scratch(), 'shop-front');
+
+    await runCommand('create', [where, '--preset', 'web', '--no-workflow']);
+
+    const law = await readFile(join(where, 'CLAUDE.md'), 'utf8');
+
+    expect(law).not.toContain('/ket:');
+    await expect(readFile(join(where, 'CLAUDE.plain.md'), 'utf8')).rejects.toThrow();
+  });
+});
+
+describe('the hero hint a created page shows', () => {
+  it('points at the first feature when the project takes the workflow', async () => {
+    const where = join(await scratch(), 'shop-front');
+
+    await runCommand('create', [where, '--preset', 'web']);
+
+    const hero = await readFile(join(where, 'src/app/routes/index.tsx'), 'utf8');
+
+    expect(hero).toContain('Start your first feature in Claude Code with');
+    expect(hero).toContain('/ket:feature "your prompt"');
+  });
+
+  it('points at the code when the project declines the workflow', async () => {
+    const where = join(await scratch(), 'shop-front');
+
+    await runCommand('create', [where, '--preset', 'web', '--no-workflow']);
+
+    const hero = await readFile(join(where, 'src/app/routes/index.tsx'), 'utf8');
+
+    expect(hero).toContain('Make it yours: edit');
+    expect(hero).toContain('src/entities/welcome');
+    expect(hero).not.toContain('/ket:feature');
+  });
+});
+
 describe('the skills a created project starts with', () => {
   it('installs what the preset locked, where the agent looks for it', async () => {
     const where = join(await scratch(), 'order-service');

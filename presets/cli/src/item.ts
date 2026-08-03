@@ -17,6 +17,7 @@ export const CLI_PRESET: PresetItem = {
   ],
   files: [
     ...STANDING_FILES,
+    writes('CLAUDE.plain.md', 'CLAUDE.plain.md'),
     writes('dependency-cruiser.cjs', '.dependency-cruiser.cjs'),
     writes('cucumber.json', 'cucumber.json'),
     writes('source/features/greeting.feature', 'features/greeting.feature'),

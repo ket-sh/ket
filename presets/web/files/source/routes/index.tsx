@@ -51,8 +51,7 @@ function Home() {
 
       <footer className="relative flex flex-col items-center px-6 pb-10">
         <p className="bg-scrim/35 rounded-lg px-4 py-2 font-mono text-sm backdrop-blur-sm">
-          Start your first feature in Claude Code with{' '}
-          <code className="text-glow">/ket:feature &quot;your prompt&quot;</code>
+          __HERO_HINT_TEXT__ <code className="text-glow">{'__HERO_HINT_CODE__'}</code>
         </p>
       </footer>
     </div>
