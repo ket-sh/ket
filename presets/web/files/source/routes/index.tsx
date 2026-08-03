@@ -29,12 +29,10 @@ function Home() {
           ket
         </a>
         <Button
-          asChild
+          render={<a href="https://ket.sh/docs/presets/web">Read the docs</a>}
           variant="secondary"
           className="bg-scrim/90 text-paper hover:bg-scrim rounded-full"
-        >
-          <a href="https://ket.sh/docs/presets/web">Read the docs</a>
-        </Button>
+        />
       </header>
 
       <main className="relative flex flex-1 flex-col items-center gap-4 px-6 pt-2 text-center sm:pt-4">

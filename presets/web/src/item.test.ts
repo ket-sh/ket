@@ -25,6 +25,10 @@ describe('what the web preset installs to render anything at all', () => {
   it('installs a renderer, since a route returns markup', () => {
     expect(WEB_PRESET.dependencies).toContain('react@19.2.8');
   });
+
+  it('installs the primitive base the shared components render through', () => {
+    expect(WEB_PRESET.dependencies).toContain('@base-ui/react@1.6.0');
+  });
 });
 
 describe('what the web preset installs to check the shape of its own import graph', () => {

@@ -10,11 +10,9 @@ describe('a button', () => {
     await expect.element(screen.getByRole('button', { name: 'Start a feature' })).toBeVisible();
   });
 
-  it('becomes the anchor it wraps when asked to', async () => {
+  it('becomes the anchor it is told to render as', async () => {
     const screen = await render(
-      <Button asChild>
-        <a href="https://ket.sh/docs">Read the docs</a>
-      </Button>,
+      <Button render={<a href="https://ket.sh/docs">Read the docs</a>} />,
     );
 
     await expect

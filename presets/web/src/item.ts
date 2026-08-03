@@ -16,12 +16,12 @@ export const WEB_PRESET: PresetItem = {
   description:
     'A TanStack Start application under ket, with the gate chain ket runs against itself.',
   dependencies: [
+    '@base-ui/react@1.6.0',
     '@tanstack/react-router@1.170.18',
     '@tanstack/react-start@1.168.34',
     'class-variance-authority@0.7.1',
     'clsx@2.1.1',
     'tailwind-merge@3.6.0',
-    'radix-ui@1.6.7',
     'react@19.2.8',
     'react-dom@19.2.8',
     'varlock@1.16.0',
