@@ -58,6 +58,7 @@ oklch
 openspec
 opentui
 opentui-spinner
+ossf
 OSSF
 oxfmt
 oxfmtrc
@@ -70,6 +71,7 @@ playwright
 probity
 reyz
 rhysd
+sarif
 scrollbox
 segmentless
 semgrep

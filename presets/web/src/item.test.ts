@@ -72,3 +72,22 @@ describe('what the web preset offers a project that wants its screens reviewed',
     ]);
   });
 });
+
+describe('what the web preset offers a project that wants a supply-chain risk score', () => {
+  const SCORECARD = WEB_PRESET.integrations.find((offered) => offered.name === 'scorecard');
+
+  it('offers it beside the other services that answer for a repository', () => {
+    expect(SCORECARD).toBeDefined();
+  });
+
+  it('ships the workflow scorecard reads its schedule and its permissions from', () => {
+    const written = SCORECARD === undefined ? [] : filesOf(SCORECARD);
+
+    expect(written.map((file) => file.target)).toStrictEqual(['~/.github/workflows/scorecard.yml']);
+  });
+
+  it('says what a public repository gets and what a private one still needs', () => {
+    expect(SCORECARD?.asks.toLowerCase()).toContain('public');
+    expect(SCORECARD?.asks.toLowerCase()).toContain('private');
+  });
+});

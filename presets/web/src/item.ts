@@ -127,6 +127,11 @@ export const WEB_PRESET: PresetItem = {
         writes('source/chromatic/harness.ts', 'e2e/helpers/harness.ts'),
       ],
     },
+    {
+      name: 'scorecard',
+      asks: 'scorecard publishes a supply-chain risk score on each push to main and once a week. A public repository gets the full score; a private one needs GitHub Advanced Security before scorecard can publish anything.',
+      files: [writes('github-scorecard.yml', '.github/workflows/scorecard.yml')],
+    },
     ...STANDING_INTEGRATIONS,
   ],
 };

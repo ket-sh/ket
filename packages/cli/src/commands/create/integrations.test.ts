@@ -24,6 +24,7 @@ describe('what a preset offers', () => {
     expect(integrationsOffered('web').map((offered) => offered.name)).toStrictEqual([
       'mobbin',
       'chromatic',
+      'scorecard',
       'codecov',
       'codeql',
       'coderabbit',
