@@ -15,7 +15,7 @@ const LAW = `${PLAIN_LAW}\n## The pipeline\n\nDrive it with \`/ket:feature\`.\n`
 const LOCKFILE = JSON.stringify({ version: 1, skills: { vitest: { source: 'antfu/skills' } } });
 
 const SOUND: PresetSubject = {
-  harnessSkills: ['tdd', 'gates'],
+  harnessSkills: { gates: ['tdd', 'gates'], workflow: [] },
   item: {
     $schema: 'https://ui.shadcn.com/schema/registry-item.json',
     name: 'ket-example',
@@ -127,7 +127,7 @@ describe('a preset against everything a preset must be', () => {
   it('names the standing law it points nowhere with, alongside what else broke', () => {
     const broken: PresetSubject = {
       ...SOUND,
-      harnessSkills: [],
+      harnessSkills: { gates: [], workflow: [] },
       carried: { ...SOUND.carried, ...UNSHIPPED_SKILL_PAIR },
       shipped: { ...SOUND.shipped, ...UNSHIPPED_SKILL_PAIR },
     };

@@ -11,9 +11,14 @@ async function skillNamesIn(directory: string): Promise<string[]> {
   return entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
 }
 
-export async function harnessSkillsOf(root: string): Promise<string[]> {
+export interface HarnessSkills {
+  gates: string[];
+  workflow: string[];
+}
+
+export async function harnessSkillsOf(root: string): Promise<HarnessSkills> {
   const gates = await skillNamesIn(join(root, GATES_SKILLS));
   const workflow = await skillNamesIn(join(root, WORKFLOW_SKILLS));
 
-  return [...new Set([...gates, ...workflow])];
+  return { gates, workflow };
 }

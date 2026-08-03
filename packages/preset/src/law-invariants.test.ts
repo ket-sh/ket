@@ -6,7 +6,7 @@ import type { PresetItem } from './item.ts';
 import { writes } from './item.ts';
 import { lawInvariantsOf } from './law-invariants.ts';
 
-const HARNESS_SKILLS = ['tdd', 'gates', 'mutation'];
+const HARNESS_SKILLS = { gates: ['tdd', 'gates', 'mutation'], workflow: ['stages'] };
 
 const LOCKFILE = JSON.stringify({
   version: 1,
@@ -83,7 +83,11 @@ describe('the standing law a preset writes into a project', () => {
 
   it('reports the lockfile it cannot read rather than the skills it then cannot find', () => {
     expect(
-      lawInvariantsOf(ITEM, { ...SHIPPED, 'files/skills-lock.json': 'not a lockfile' }, []),
+      lawInvariantsOf(
+        ITEM,
+        { ...SHIPPED, 'files/skills-lock.json': 'not a lockfile' },
+        { gates: [], workflow: [] },
+      ),
     ).toStrictEqual(['the skills lockfile is not json anything can read']);
   });
 });
@@ -149,6 +153,24 @@ describe('the pipeline traces a plain law must never keep', () => {
       'the plain law names BOARD.md, which a project without the workflow never has',
     ]);
   });
+
+  it('names the skill the plain law points at that only the workflow bundle ships', () => {
+    const body = 'Read the `stages` skill before moving an item.\n';
+
+    expect(lawInvariantsOf(ITEM, { ...SHIPPED, ...pairOver(body) }, HARNESS_SKILLS)).toStrictEqual([
+      'the plain law names the stages skill, which only the workflow bundle ships',
+    ]);
+  });
+
+  it('lets the standing law point at a workflow skill the plain law never carries', () => {
+    const shipped = {
+      ...SHIPPED,
+      'files/CLAUDE.md': `${BODY}\n## The pipeline\n\nThe \`stages\` skill carries the statuses.\n`,
+      'files/CLAUDE.plain.md': BODY,
+    };
+
+    expect(lawInvariantsOf(ITEM, shipped, HARNESS_SKILLS)).toStrictEqual([]);
+  });
 });
 
 describe('the skills a standing law points an agent at', () => {
@@ -172,7 +194,9 @@ describe('the skills a standing law points an agent at', () => {
   it('counts a skill the lockfile installs as one the standing law may name', () => {
     const body = 'Use the `vitest` skill for the runner.\n';
 
-    expect(lawInvariantsOf(ITEM, { ...SHIPPED, ...pairOver(body) }, [])).toStrictEqual([]);
+    expect(
+      lawInvariantsOf(ITEM, { ...SHIPPED, ...pairOver(body) }, { gates: [], workflow: [] }),
+    ).toStrictEqual([]);
   });
 
   it('counts a skill the harness ships as one the standing law may name', () => {

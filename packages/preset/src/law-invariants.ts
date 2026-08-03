@@ -1,4 +1,5 @@
 import type { PresetContents } from './contents.ts';
+import type { HarnessSkills } from './harness-skills.ts';
 import type { PresetItem } from './item.ts';
 
 import { writtenTo } from './contents.ts';
@@ -73,20 +74,40 @@ function tracesKeptIn(plain: string): string[] {
   );
 }
 
-function plainLawInvariantsOf(item: PresetItem, shipped: PresetContents, law: string): string[] {
+interface LawReach {
+  shipping: Set<string>;
+  withoutTheWorkflow: Set<string>;
+}
+
+function workflowBoundSkillsIn(plain: string, reachable: LawReach): string[] {
+  return skillsNamedIn(plain)
+    .filter((named) => reachable.shipping.has(named) && !reachable.withoutTheWorkflow.has(named))
+    .map((named) => `the plain law names the ${named} skill, which only the workflow bundle ships`);
+}
+
+function plainLawInvariantsOf(
+  item: PresetItem,
+  shipped: PresetContents,
+  law: string,
+  reachable: LawReach,
+): string[] {
   const plain = writtenTo(item, shipped, PLAIN_LAW);
 
   if (plain === undefined) {
     return [NO_PLAIN_LAW];
   }
 
-  return [...pairInvariants(law, plain), ...tracesKeptIn(plain)];
+  return [
+    ...pairInvariants(law, plain),
+    ...tracesKeptIn(plain),
+    ...workflowBoundSkillsIn(plain, reachable),
+  ];
 }
 
 export function lawInvariantsOf(
   item: PresetItem,
   shipped: PresetContents,
-  harnessSkills: string[],
+  harnessSkills: HarnessSkills,
 ): string[] {
   const law = writtenTo(item, shipped, STANDING_LAW);
 
@@ -106,10 +127,12 @@ export function lawInvariantsOf(
     return [locked.unreadable];
   }
 
-  const shipping = new Set([...harnessSkills, ...locked.skills.map((skill) => skill.name)]);
+  const installed = locked.skills.map((skill) => skill.name);
+  const shipping = new Set([...harnessSkills.gates, ...harnessSkills.workflow, ...installed]);
+  const withoutTheWorkflow = new Set([...harnessSkills.gates, ...installed]);
 
   return [
-    ...plainLawInvariantsOf(item, shipped, law),
+    ...plainLawInvariantsOf(item, shipped, law, { shipping, withoutTheWorkflow }),
     ...skillsNamedIn(law)
       .filter((named) => !shipping.has(named))
       .map(
