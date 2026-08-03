@@ -27,6 +27,12 @@ describe('what the web preset installs to render anything at all', () => {
   });
 });
 
+describe('what the web preset installs to check the shape of its own import graph', () => {
+  it('installs the tool that finds a cycle, an orphan and an import steiger never follows', () => {
+    expect(WEB_PRESET.devDependencies).toContain('dependency-cruiser@18.1.1');
+  });
+});
+
 describe('what the web preset offers a project that wants its screens reviewed', () => {
   const CHROMATIC = WEB_PRESET.integrations.find((offered) => offered.name === 'chromatic');
 

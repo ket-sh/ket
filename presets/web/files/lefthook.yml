@@ -29,6 +29,10 @@ pre-commit:
       priority: 1
       glob: 'src/**/*.{ts,tsx}'
       run: ./node_modules/.bin/steiger src --fail-on-warnings
+    - name: graph
+      priority: 1
+      glob: 'src/**/*.{ts,tsx}'
+      run: bun run lint:graph
     - name: ui
       priority: 1
       glob: 'src/**/ui/**/*.tsx'

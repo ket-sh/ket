@@ -18,6 +18,11 @@ adapters, so a decision that drifts into a component drifts out of reach of the
 gate that measures it. `steiger` is what refuses an import that reaches up a
 layer or sideways into another slice.
 
+`steiger` knows the layers, and `dependency-cruiser` knows the graph: a cycle
+between two files, an orphan nothing imports, an import nothing resolves, and
+a package the manifest never named. Neither tool repeats what the other
+already catches.
+
 Routing has its own layer. `src/app/` holds the router, the route files, and the
 route tree TanStack Start generates from them. Nothing writes to a generated file by
 hand, and every gate skips a `.gen.ts`.

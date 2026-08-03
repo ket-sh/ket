@@ -61,6 +61,25 @@ describe('what the web preset declares about a project', () => {
       'steiger src --fail-on-warnings',
     );
   });
+
+  it('checks the import graph for what a layer check never sees: a cycle, an orphan, an unresolvable import', () => {
+    expect(WEB_SEMANTICS.scripts['lint:graph']).toBe(
+      'depcruise src --output-type err-long --cache --cache-strategy content',
+    );
+  });
+
+  it('gates a commit and the pipeline on the import graph, right after the layering check', () => {
+    const boundaries = WEB_SEMANTICS.gates.findIndex((gate) => gate.script === 'lint:boundaries');
+    const graph = WEB_SEMANTICS.gates.findIndex((gate) => gate.script === 'lint:graph');
+
+    expect(WEB_SEMANTICS.gates[graph]).toStrictEqual({
+      script: 'lint:graph',
+      guards: 'It checks an import crosses no boundary.',
+      commitJob: 'graph',
+      ciJob: 'check',
+    });
+    expect(graph).toBe(boundaries + 1);
+  });
 });
 
 describe('the rings the web preset closes a write and a stage with', () => {

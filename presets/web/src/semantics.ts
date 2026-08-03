@@ -22,6 +22,7 @@ export const WEB_SEMANTICS: PresetSemantics = {
     'lint:workflows':
       'mise install -q && mise exec -- zizmor --min-severity medium .github/workflows/ && mise exec -- actionlint -color',
     'lint:ui': 'bun scripts/check-ui-pairs.mts',
+    'lint:graph': 'depcruise src --output-type err-long --cache --cache-strategy content',
     'lint:env': 'bun scripts/check-env.mts',
     'test:component': 'vitest run --project component',
     storybook: 'storybook dev -p 6006',
@@ -54,6 +55,12 @@ export const WEB_SEMANTICS: PresetSemantics = {
       script: 'lint:boundaries',
       guards: 'It checks a layer imports only below it.',
       commitJob: 'boundaries',
+      ciJob: 'check',
+    },
+    {
+      script: 'lint:graph',
+      guards: 'It checks an import crosses no boundary.',
+      commitJob: 'graph',
       ciJob: 'check',
     },
     {
