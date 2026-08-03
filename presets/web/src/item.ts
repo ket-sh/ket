@@ -104,6 +104,7 @@ export const WEB_PRESET: PresetItem = {
     writes('source/storybook/main.ts', '.storybook/main.ts'),
     writes('source/storybook/preview.ts', '.storybook/preview.ts'),
     writes('source/scripts/check-ui-pairs.mts', 'scripts/check-ui-pairs.mts'),
+    writes('source/scripts/check-env.mts', 'scripts/check-env.mts'),
     copies('source/hero/ket-bg.mp4', 'public/ket-bg.mp4'),
     copies('source/hero/ket-bg-poster.webp', 'public/ket-bg-poster.webp'),
   ],

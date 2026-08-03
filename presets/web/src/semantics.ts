@@ -22,7 +22,7 @@ export const WEB_SEMANTICS: PresetSemantics = {
     'lint:workflows':
       'mise install -q && mise exec -- zizmor --min-severity medium .github/workflows/ && mise exec -- actionlint -color',
     'lint:ui': 'bun scripts/check-ui-pairs.mts',
-    'lint:env': 'varlock load',
+    'lint:env': 'bun scripts/check-env.mts',
     'test:component': 'vitest run --project component',
     storybook: 'storybook dev -p 6006',
     'storybook:build': 'storybook build',
