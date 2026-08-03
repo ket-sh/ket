@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { PIPELINE_COMMANDS } from './pipeline-commands.generated.ts';
 
-const MARKER = join('harness', 'commands');
+const MARKER = join('harness', 'workflow', 'commands');
 
 // The mutation runner copies this package into a sandbox, so the number of
 // steps up to the repository is not fixed. The harness is the marker.

@@ -12,7 +12,8 @@ Write the scenario before the automation. A scenario written after the code
 documents the code rather than the agreement, and the agreement was the point.
 
 Scenarios live beside the item that agreed them, under
-`.ket/items/<key>/features/`.
+`.ket/items/<key>/features/`. Without the workflow, the artifact lives under
+`docs/features/` instead.
 
 ## The invariant
 

@@ -7,9 +7,14 @@
   "plugins": [
     {
       "name": "ket",
-      "source": "./harness",
-      "description": "The pipeline ket drives, with the gates that keep a status honest"
+      "source": "./harness/gates",
+      "description": "The gates that keep a status honest"
+    },
+    {
+      "name": "ket-workflow",
+      "source": "./harness/workflow",
+      "description": "The pipeline ket drives through those gates"
     }
   ],
-  "description": "The pipeline ket drives, and the gates that keep a status honest"
+  "description": "The gates that keep a status honest, and the pipeline ket drives through them"
 }

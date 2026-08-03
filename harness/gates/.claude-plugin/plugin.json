@@ -1,10 +1,10 @@
 {
   "name": "ket",
   "displayName": "ket",
-  "description": "Drives the ket pipeline and refuses a write the work has not earned",
+  "description": "Refuses a write the work has not earned, and keeps a status honest",
   "author": { "name": "ket", "url": "https://github.com/ket-sh/ket" },
   "homepage": "https://github.com/ket-sh/ket",
   "repository": "https://github.com/ket-sh/ket",
   "license": "MIT",
-  "keywords": ["tdd", "mutation-testing", "spec-driven", "guardrails"]
+  "keywords": ["tdd", "mutation-testing", "guardrails"]
 }
