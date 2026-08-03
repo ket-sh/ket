@@ -14,6 +14,7 @@ describe('copying bytes into a project, over arbitrary names and payloads', () =
         const installed = scaffolded(copies('hero/bg.mp4', 'public/bg.mp4'), carried, {
           name,
           key,
+          hint: { text: name, code: key },
         });
 
         expect(installed.contents).toBe(carried);

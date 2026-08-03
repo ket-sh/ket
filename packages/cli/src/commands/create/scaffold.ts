@@ -19,11 +19,19 @@ export function withEventsIgnored(gitignore: string): string | undefined {
   return `${opening}${EVENTS_IGNORE_RULE}\n`;
 }
 
+function itemState(configuration: Configuration): ScaffoldFile[] {
+  return configuration.workflow
+    ? [
+        { path: `${KET_DIRECTORY}/BOARD.md`, contents: renderBoard(configuration.key, []) },
+        { path: `${KET_DIRECTORY}/items/.gitkeep`, contents: '' },
+      ]
+    : [];
+}
+
 export function scaffoldFiles(configuration: Configuration): ScaffoldFile[] {
   return [
     { path: `${KET_DIRECTORY}/config.ts`, contents: renderConfiguration(configuration) },
-    { path: `${KET_DIRECTORY}/BOARD.md`, contents: renderBoard(configuration.key, []) },
-    { path: `${KET_DIRECTORY}/items/.gitkeep`, contents: '' },
+    ...itemState(configuration),
   ];
 }
 

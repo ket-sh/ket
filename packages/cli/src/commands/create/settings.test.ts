@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { withHarnessRegistered } from './settings.ts';
+import { withHarnessAndWorkflowRegistered, withHarnessRegistered } from './settings.ts';
 
 function parsed(rendered: string): unknown {
   return JSON.parse(rendered);
@@ -167,6 +167,55 @@ describe('recognizing the guard hook already running, past whatever shape a proj
     expect(parsed(withHarnessRegistered(existing, [GUARD_SCRIPT]))).toMatchObject({
       hooks: { PreToolUse: [null, guardGroup()] },
     });
+  });
+});
+
+describe('registering the pipeline bundle beside the gates', () => {
+  it('enables both bundles for a project that took the pipeline', () => {
+    expect(parsed(withHarnessAndWorkflowRegistered('', []))).toMatchObject({
+      enabledPlugins: { 'ket@ket': true, 'ket-workflow@ket': true },
+    });
+  });
+
+  it('enables the gates alone for a project that declined the pipeline', () => {
+    const merged: unknown = parsed(withHarnessRegistered('', []));
+
+    expect(merged).toMatchObject({ enabledPlugins: { 'ket@ket': true } });
+    expect(merged).not.toMatchObject({ enabledPlugins: { 'ket-workflow@ket': true } });
+  });
+
+  it('names the same marketplace either way, since one marketplace publishes both', () => {
+    expect(parsed(withHarnessAndWorkflowRegistered('', []))).toMatchObject({
+      extraKnownMarketplaces: { ket: { source: { source: 'github', repo: 'ket-sh/ket' } } },
+    });
+  });
+
+  it('keeps a plugin the project already enabled while adding both of its own', () => {
+    const existing = JSON.stringify({ enabledPlugins: { 'other@house': true } });
+
+    expect(parsed(withHarnessAndWorkflowRegistered(existing, []))).toMatchObject({
+      enabledPlugins: { 'other@house': true, 'ket@ket': true, 'ket-workflow@ket': true },
+    });
+  });
+
+  it('wires the guard hook the same way once the pipeline comes along', () => {
+    expect(parsed(withHarnessAndWorkflowRegistered('', [GUARD_SCRIPT]))).toMatchObject({
+      hooks: { PreToolUse: [guardGroup()] },
+    });
+  });
+
+  it('adds no guard hook when nothing the scaffold ships runs the guard script', () => {
+    expect(parsed(withHarnessAndWorkflowRegistered('', []))).not.toHaveProperty('hooks');
+  });
+
+  it('leaves a project that already registered both unchanged', () => {
+    const already = withHarnessAndWorkflowRegistered('', []);
+
+    expect(withHarnessAndWorkflowRegistered(already, [])).toBe(already);
+  });
+
+  it('ends with a newline, so a formatter leaves it alone', () => {
+    expect(withHarnessAndWorkflowRegistered('', []).endsWith('\n')).toBe(true);
   });
 });
 

@@ -1,12 +1,13 @@
 import type { PresetIntegration } from '@ket/preset';
 
-import { cancel, isCancel, multiselect, select, text } from '@clack/prompts';
+import { cancel, confirm, isCancel, multiselect, select, text } from '@clack/prompts';
 import { homedir } from 'node:os';
 import color from 'picocolors';
 
 import type { Configuration, PresetName } from '../../shared/configuration.ts';
 
 import { registeredPresets } from '../../shared/registry.ts';
+import { drawWorkflow } from './announce.ts';
 import { directoryLabel } from './directory-label.ts';
 import { integrationsOffered } from './integrations.ts';
 import { refuseKey } from './key.ts';
@@ -46,6 +47,15 @@ async function askKey(suggested: string | undefined): Promise<string | symbol> {
   });
 }
 
+async function askWorkflow(): Promise<boolean | symbol> {
+  drawWorkflow();
+
+  return confirm({
+    message: 'Should ket drive your work through this pipeline?',
+    initialValue: true,
+  });
+}
+
 async function askIntegrations(offered: PresetIntegration[]): Promise<string[] | symbol> {
   if (offered.length === 0) {
     return [];
@@ -80,6 +90,38 @@ export async function runWizard(suggestedKey: string | undefined): Promise<Wizar
     return CANCELLED;
   }
 
+  const workflow = await askWorkflow();
+
+  if (isCancel(workflow)) {
+    cancel('Nothing was written.');
+
+    return CANCELLED;
+  }
+
+  const targets = { [WHOLE_REPOSITORY]: preset };
+
+  if (!workflow) {
+    return keylessConfiguration(suggestedKey, targets, integrations);
+  }
+
+  return keyedConfiguration(suggestedKey, targets, integrations);
+}
+
+function keylessConfiguration(
+  suggestedKey: string | undefined,
+  targets: Record<string, PresetName>,
+  integrations: string[],
+): WizardOutcome {
+  return {
+    configured: { key: suggestedKey ?? '', targets, integrations, workflow: false },
+  };
+}
+
+async function keyedConfiguration(
+  suggestedKey: string | undefined,
+  targets: Record<string, PresetName>,
+  integrations: string[],
+): Promise<WizardOutcome> {
   const key = await askKey(suggestedKey);
 
   if (isCancel(key)) {
@@ -88,5 +130,5 @@ export async function runWizard(suggestedKey: string | undefined): Promise<Wizar
     return CANCELLED;
   }
 
-  return { configured: { key, targets: { [WHOLE_REPOSITORY]: preset }, integrations } };
+  return { configured: { key, targets, integrations, workflow: true } };
 }

@@ -1,23 +1,30 @@
 import { describe, expect, it } from 'vitest';
 
+import type { Configuration } from '../../shared/configuration.ts';
+
 import { scaffoldFiles, scaffoldFor, withEventsIgnored } from './scaffold.ts';
+
+const DRIVEN: Configuration = { key: 'OFS', targets: {}, integrations: [], workflow: true };
+
+const GATED_ONLY: Configuration = { ...DRIVEN, workflow: false };
 
 describe('composing everything init writes', () => {
   it('adds the gitignore change when the rule is missing', () => {
-    const paths = scaffoldFor({ key: 'OFS', targets: {}, integrations: [] }, 'node_modules/\n').map(
-      (file) => file.path,
-    );
+    const paths = scaffoldFor(DRIVEN, 'node_modules/\n').map((file) => file.path);
 
     expect(paths).toContain('.gitignore');
   });
 
   it('leaves the gitignore out when the rule is already there', () => {
-    const paths = scaffoldFor(
-      { key: 'OFS', targets: {}, integrations: [] },
-      '.ket/events.jsonl\n',
-    ).map((file) => file.path);
+    const paths = scaffoldFor(DRIVEN, '.ket/events.jsonl\n').map((file) => file.path);
 
     expect(paths).not.toContain('.gitignore');
+  });
+
+  it('keeps the event log out of the diff even for a project that took no pipeline', () => {
+    const paths = scaffoldFor(GATED_ONLY, 'node_modules/\n').map((file) => file.path);
+
+    expect(paths).toContain('.gitignore');
   });
 });
 
@@ -45,41 +52,57 @@ describe('keeping the event log out of the diff', () => {
 
 describe('deciding what init writes into a repository', () => {
   it('writes a config, a board and a home for items', () => {
-    const paths = scaffoldFiles({ key: 'OFS', targets: {}, integrations: [] }).map(
-      (file) => file.path,
-    );
+    const paths = scaffoldFiles(DRIVEN).map((file) => file.path);
 
     expect(paths).toStrictEqual(['.ket/config.ts', '.ket/BOARD.md', '.ket/items/.gitkeep']);
   });
 
   it('carries the chosen key into the config', () => {
-    const [config] = scaffoldFiles({ key: 'OFS', targets: {}, integrations: [] });
+    const [config] = scaffoldFiles(DRIVEN);
 
     expect(config?.contents).toContain("key: 'OFS'");
   });
 
   it('carries the targets into the config, so a gate can resolve a preset from a path', () => {
-    const [config] = scaffoldFiles({
-      key: 'OFS',
-      targets: { 'packages/cli': 'cli' },
-      integrations: [],
-    });
+    const [config] = scaffoldFiles({ ...DRIVEN, targets: { 'packages/cli': 'cli' } });
 
     expect(config?.contents).toContain("'packages/cli': 'cli'");
   });
 
   it('leaves the items directory empty', () => {
-    const files = scaffoldFiles({ key: 'OFS', targets: {}, integrations: [] });
+    const files = scaffoldFiles(DRIVEN);
     const gitkeep = files.find((file) => file.path.endsWith('.gitkeep'));
 
     expect(gitkeep?.contents).toBe('');
   });
 
   it('names the board so it reads on its own', () => {
-    const board = scaffoldFiles({ key: 'OFS', targets: {}, integrations: [] }).find((file) =>
-      file.path.endsWith('BOARD.md'),
-    );
+    const board = scaffoldFiles(DRIVEN).find((file) => file.path.endsWith('BOARD.md'));
 
     expect(board?.contents).toContain('# OFS board');
+  });
+});
+
+describe('writing into a repository that took the gates without the pipeline', () => {
+  it('writes the config alone, since the gates read it and nothing tracks items', () => {
+    expect(scaffoldFiles(GATED_ONLY).map((file) => file.path)).toStrictEqual(['.ket/config.ts']);
+  });
+
+  it('writes no board, because a board with nowhere to draw from would only lie', () => {
+    const board = scaffoldFiles(GATED_ONLY).find((file) => file.path.endsWith('BOARD.md'));
+
+    expect(board).toBeUndefined();
+  });
+
+  it('opens no home for items, since no command would ever file one', () => {
+    const gitkeep = scaffoldFiles(GATED_ONLY).find((file) => file.path.endsWith('.gitkeep'));
+
+    expect(gitkeep).toBeUndefined();
+  });
+
+  it('records the refusal in the config, so a later tool reads the choice rather than guessing', () => {
+    const [config] = scaffoldFiles(GATED_ONLY);
+
+    expect(config?.contents).toContain('workflow: false,');
   });
 });

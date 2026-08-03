@@ -7,7 +7,9 @@ import { describe, expect, it } from 'vitest';
 import { registeredPresets } from '../../shared/registry.ts';
 import { filesToInstall, pathInProject, scaffolded, shippedContents } from './install.ts';
 
-const MY_APP = { name: 'my-app', key: 'SHOP' };
+const HINT = { text: 'Make it yours: edit', code: 'src/entities/welcome' };
+
+const MY_APP = { name: 'my-app', key: 'SHOP', hint: HINT };
 
 describe('placing a registry target inside a project', () => {
   it('drops the home marker the registry writes', () => {
@@ -90,7 +92,7 @@ describe('choosing what a preset installs into a project', () => {
 
   it('accepts what a project is called, whichever preset writes it', () => {
     for (const { name } of registeredPresets()) {
-      const vocabulary = filesToInstall([name], { name: 'zzquux', key: 'SHOP' }).find(
+      const vocabulary = filesToInstall([name], { name: 'zzquux', key: 'SHOP', hint: HINT }).find(
         (file) => file.path === 'cspell-words.txt',
       );
       const carried = vocabulary?.contents ?? '';
@@ -113,14 +115,17 @@ describe('choosing what a preset installs into a project', () => {
 
 describe('reading what a preset ships for a path', () => {
   it('finds the contents a preset writes to that path', () => {
-    const installed = filesToInstall(['cli'], { name: 'shop', key: 'SHOP' });
+    const installed = filesToInstall(['cli'], { name: 'shop', key: 'SHOP', hint: HINT });
 
     expect(shippedContents(installed, '.gitignore')).toContain('node_modules/');
   });
 
   it('reports nothing for a path no preset writes', () => {
     expect(
-      shippedContents(filesToInstall(['cli'], { name: 'shop', key: 'SHOP' }), 'LICENSE'),
+      shippedContents(
+        filesToInstall(['cli'], { name: 'shop', key: 'SHOP', hint: HINT }),
+        'LICENSE',
+      ),
     ).toBeUndefined();
   });
 
