@@ -123,7 +123,13 @@ async function writeScaffold(plan: CreationPlan, configuration: Configuration): 
         scripts: governing.semantics.scripts,
       }),
     },
-    { path: '.claude/settings.json', contents: withHarnessRegistered(settings) },
+    {
+      path: '.claude/settings.json',
+      contents: withHarnessRegistered(
+        settings,
+        installed.map((file) => file.path),
+      ),
+    },
     ...installed,
     ...scaffoldFor(configuration, ignored),
   ];
