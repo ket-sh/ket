@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { projectNames, withProjectNames } from './name-token.ts';
+import { withProjectNames } from './name-token.ts';
 
 const PROJECT = { name: 'my-app', key: 'SHOP' };
 
@@ -33,11 +33,5 @@ describe('putting what a project is called into a file the preset ships', () => 
 
   it('leaves a file that carries no token untouched', () => {
     expect(withProjectNames('plain contents', PROJECT)).toBe('plain contents');
-  });
-});
-
-describe('the names a project is written into its own files under', () => {
-  it('carries the name and the key it was given', () => {
-    expect(projectNames('my-app', 'SHOP')).toStrictEqual({ name: 'my-app', key: 'SHOP' });
   });
 });

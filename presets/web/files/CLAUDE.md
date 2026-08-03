@@ -72,6 +72,11 @@ missing command rather than a finding.
 
 No gate here gets switched off to reach green.
 
+A dev tool heavy enough to want its own lockfile earns a package under
+`tooling/`, isolated from this project's manifest. Nothing here is heavy
+enough yet: Stryker stays in the project's own lockfile until a tool that
+genuinely needs the isolation arrives.
+
 ## When no skill covers the question
 
 The `find-skills` skill looks for one this project has yet to install.

@@ -60,10 +60,12 @@ same pull request.
 - **Scorecard.** An optional integration beside Codecov and CodeQL: the
   Open Source Security Foundation's weekly Scorecard workflow, offered at
   create time.
-- **Security-only reviewer.** The scaffold harness gains a second Stop-hook
-  reviewer scoped to security posture alone: secret handling, trust
-  boundaries, unsafe patterns. It reports beside the rules reviewer, never
-  instead of it.
+- **Security-only reviewer.** The repository's own harness gains a second
+  Stop-hook reviewer scoped to security posture alone: secret handling,
+  trust boundaries, unsafe patterns. It seats beside the rules reviewer in
+  `.claude/settings.json`, never instead of it. The scaffold harness carries
+  no Stop-hook reviewers yet, so the same seat there is a follow-up rather
+  than part of this wave.
 - **The tooling pattern, scoped to its smallest slice.** Of the scaffold's dev tools,
   only Stryker is heavy enough to justify lockfile isolation, and moving it
   would break `bun run test:mutation` conventions across the repo. The

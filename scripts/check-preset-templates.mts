@@ -37,6 +37,8 @@ function redSuite(name: string, said: string): string {
   return [`${name}'s suite is red.`, said, `cd presets/${name} && bun run test`].join('\n');
 }
 
+const GENERATED_PATHS = ['src/contents.generated.ts', 'files/oxlintrc.json'];
+
 function checkPreset(name: string): string | undefined {
   const root = `presets/${name}`;
   const generated = ranIn(root, 'bun', ['run', 'generate']);
@@ -49,7 +51,7 @@ function checkPreset(name: string): string | undefined {
     'diff',
     '--exit-code',
     '--',
-    `${root}/src/contents.generated.ts`,
+    ...GENERATED_PATHS.map((path) => `${root}/${path}`),
   ]);
 
   if (diffed !== undefined) {

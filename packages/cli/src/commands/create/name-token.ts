@@ -7,10 +7,6 @@ export interface ProjectNames {
   readonly key: string;
 }
 
-export function projectNames(name: string, key: string): ProjectNames {
-  return { name, key };
-}
-
 export function withProjectNames(contents: string, project: ProjectNames): string {
   return contents
     .replaceAll(PROJECT_NAME_TOKEN, project.name)

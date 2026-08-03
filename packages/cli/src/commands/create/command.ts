@@ -5,6 +5,7 @@ import { basename, relative } from 'node:path';
 
 import type { Configuration, PresetName } from '../../shared/configuration.ts';
 import type { RegisteredPreset } from '../../shared/registry.ts';
+import type { ProjectNames } from './name-token.ts';
 import type { CreationPlan } from './plan.ts';
 
 import { commitScaffold, initializeRepository } from '../../shared/git.ts';
@@ -14,7 +15,6 @@ import { announce, openCreate } from './announce.ts';
 import { filesToInstall, shippedContents } from './install.ts';
 import { chosenFrom, filesFor, installsFor, namesOffered } from './integrations.ts';
 import { renderManifest } from './manifest.ts';
-import { projectNames } from './name-token.ts';
 import { planCreation } from './plan.ts';
 import { presetFrom } from './preset.ts';
 import { scaffoldFor } from './scaffold.ts';
@@ -79,18 +79,6 @@ async function wizardConfiguration(key: string | undefined): Promise<Configurati
   return 'configured' in outcome ? outcome.configured : undefined;
 }
 
-async function choicesFromWizard(key: string | undefined): Promise<Configuration | undefined> {
-  return wizardConfiguration(key);
-}
-
-function choicesFromFlags(
-  key: string | undefined,
-  named: string | undefined,
-  asked: string | undefined,
-): Configuration | undefined {
-  return configuredFromFlags(key, named, asked);
-}
-
 // One target today, and a monorepo is the slice that brings more. Reading the
 // first is what keeps the manifest and the announcement from drifting back to
 // a preset the project never chose.
@@ -112,7 +100,7 @@ async function writeScaffold(plan: CreationPlan, configuration: Configuration): 
   const settings = await readTextIfPresent(plan.root, '.claude/settings.json');
   const targets = Object.values(configuration.targets);
   const governing = governingPreset(targets);
-  const project = projectNames(basename(plan.root), configuration.key);
+  const project: ProjectNames = { name: basename(plan.root), key: configuration.key };
 
   const installed = [
     ...filesToInstall(targets, project),
@@ -199,8 +187,8 @@ const create = defineCommand({
       : requiredDirectory(args.directory);
     const plan = await planCreation(directory);
     const configuration = wizard
-      ? await choicesFromWizard(plan.key)
-      : choicesFromFlags(plan.key, args.with, args.preset);
+      ? await wizardConfiguration(plan.key)
+      : configuredFromFlags(plan.key, args.with, args.preset);
 
     if (configuration === undefined) {
       throw new Error(`nothing was configured for ${plan.root}`);
