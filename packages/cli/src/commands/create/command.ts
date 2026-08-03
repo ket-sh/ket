@@ -15,7 +15,7 @@ import { readTextIfPresent, writeFiles } from '../../shared/write-files.ts';
 import { announce, openCreate } from './announce.ts';
 import { filesToInstall, shippedContents } from './install.ts';
 import { chosenFrom, filesFor, installsFor, namesOffered } from './integrations.ts';
-import { withChosenLaw } from './law.ts';
+import { keepingTheStandingLaw, landingThePlainLaw } from './law.ts';
 import { renderManifest } from './manifest.ts';
 import { heroHint } from './name-token.ts';
 import { PIPELINE_COMMANDS } from './pipeline-commands.generated.ts';
@@ -111,10 +111,10 @@ async function writeScaffold(plan: CreationPlan, configuration: Configuration): 
     hint: heroHint(configuration),
   };
 
-  const installed = withChosenLaw(
-    [...filesToInstall(targets, project), ...filesFor(targets, configuration.integrations)],
-    configuration,
-  );
+  const installed = lawFor(configuration)([
+    ...filesToInstall(targets, project),
+    ...filesFor(targets, configuration.integrations),
+  ]);
 
   // A preset ignores what its own toolchain downloads and builds, and ket adds
   // the state it keeps. The scaffold writes last, so it appends to the file
@@ -158,6 +158,10 @@ function settingsFor(configuration: Configuration, settings: string, paths: stri
   return configuration.workflow
     ? withHarnessAndWorkflowRegistered(settings, paths)
     : withHarnessRegistered(settings, paths);
+}
+
+function lawFor(configuration: Configuration): (installed: ScaffoldFile[]) => ScaffoldFile[] {
+  return configuration.workflow ? keepingTheStandingLaw : landingThePlainLaw;
 }
 
 function manifestEntry(

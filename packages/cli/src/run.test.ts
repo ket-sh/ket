@@ -1,4 +1,4 @@
-import { chmod, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, readdir, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -168,7 +168,7 @@ describe('the law a created project reads from CLAUDE.md', () => {
     await runCommand('create', [where, '--preset', 'web']);
 
     await expect(readFile(join(where, 'CLAUDE.md'), 'utf8')).resolves.toContain('/ket:feature');
-    await expect(readFile(join(where, 'CLAUDE.plain.md'), 'utf8')).rejects.toThrow();
+    expect(await readdir(where)).not.toContain('CLAUDE.plain.md');
   });
 
   it('teaches no pipeline when the project declines it', async () => {
@@ -179,7 +179,7 @@ describe('the law a created project reads from CLAUDE.md', () => {
     const law = await readFile(join(where, 'CLAUDE.md'), 'utf8');
 
     expect(law).not.toContain('/ket:');
-    await expect(readFile(join(where, 'CLAUDE.plain.md'), 'utf8')).rejects.toThrow();
+    expect(await readdir(where)).not.toContain('CLAUDE.plain.md');
   });
 });
 
