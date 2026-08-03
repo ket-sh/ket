@@ -1,0 +1,23 @@
+{
+  "name": "oxlint-plugin-ket",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "lint": "oxlint --config ../../.oxlintrc.json .",
+    "fmt": "oxfmt --config ../../.oxfmtrc.json .",
+    "fmt:check": "oxfmt --config ../../.oxfmtrc.json --check .",
+    "check-types": "tsc --noEmit -p tsconfig.json",
+    "test:mutation": "stryker run"
+  },
+  "devDependencies": {
+    "@oxlint/plugins": "1.76.0",
+    "@stryker-mutator/core": "9.6.1",
+    "@stryker-mutator/vitest-runner": "9.6.1",
+    "oxlint": "1.76.0"
+  }
+}

@@ -19,6 +19,9 @@
     "packages/cli": {
       "project": ["src/**/*.ts"]
     },
+    "packages/oxlint-plugin-ket": {
+      "project": ["src/**/*.ts"]
+    },
     "packages/preset": {
       "project": ["src/**/*.ts"]
     },

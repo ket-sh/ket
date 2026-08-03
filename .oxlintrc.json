@@ -5,6 +5,10 @@
     {
       "name": "@stylistic",
       "specifier": "@stylistic/eslint-plugin"
+    },
+    {
+      "name": "ket",
+      "specifier": "./packages/oxlint-plugin-ket/src/index.ts"
     }
   ],
   "categories": {},
@@ -202,7 +206,8 @@
     "typescript/promise-function-async": "error",
     "typescript/strict-boolean-expressions": "error",
     "typescript/strict-void-return": "error",
-    "typescript/prefer-readonly-parameter-types": "off"
+    "typescript/prefer-readonly-parameter-types": "off",
+    "ket/no-boolean-switch-param": "error"
   },
   "options": {
     "typeAware": true,

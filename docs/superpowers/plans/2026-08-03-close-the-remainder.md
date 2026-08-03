@@ -52,7 +52,7 @@ then read `files` exactly as today. The map dedupe keeps the later declaration (
 
 **Files:**
 
-- Create: a new workspace package `packages/lint-rules` (name `@ket/lint-rules`) with `src/no-boolean-switch-param.ts`, its unit tests, and the package scaffolding the other packages carry (tsconfig, scripts, stryker config).
+- Create: a new workspace package `packages/oxlint-plugin-ket` (name `oxlint-plugin-ket`) with `src/no-boolean-switch-param.ts`, its unit tests, and the package scaffolding the other packages carry (tsconfig, scripts, stryker config).
 - Modify: the root `.oxlintrc.json` to load the rule through oxlint's current external-plugin mechanism (per the research; verify the config key against the oxlint docs).
 
 - [ ] The rule reports a function whose body branches on a parameter declared `boolean` (an `if` or a ternary whose test is the bare parameter, covering most of the body). Start with the honest detectable core: a `boolean`-typed parameter read as a bare condition anywhere in the function. The clean-code doc stays the source of truth; the rule is its machine.
@@ -176,7 +176,7 @@ then read `files` exactly as today. The map dedupe keeps the later declaration (
 ### Task 11: The chain, the note, and the record
 
 - [ ] The harness note: two sentences in the repository `CLAUDE.md` under the TDD section naming the probity subagent symptom and the working pattern. Vale-clean.
-- [ ] Full repository chain, then mutation on every touched package (`packages/preset`, `packages/cli`, `packages/lint-rules`, `presets/web`). Zero survivors.
+- [ ] Full repository chain, then mutation on every touched package (`packages/preset`, `packages/cli`, `packages/oxlint-plugin-ket`, `presets/web`). Zero survivors.
 - [ ] Push (the branch is public already) and update the pull request body with a "closing the remainder" section.
 
 ---
