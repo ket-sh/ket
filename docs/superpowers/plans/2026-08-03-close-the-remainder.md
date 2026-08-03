@@ -99,7 +99,7 @@ then read `files` exactly as today. The map dedupe keeps the later declaration (
 - Create: `presets/web/files/dependency-cruiser.cjs` (targets `.dependency-cruiser.cjs`; exact filename per the tool's docs)
 - Modify: `presets/web/src/item.ts` (devDependency pin, writes entry), `presets/web/src/semantics.ts` (script `'lint:graph': 'depcruise src'` or the documented invocation, gate after `lint:boundaries` with guards `It checks an import crosses no boundary.`, commitJob `graph`, ciJob `check`), `presets/web/files/lefthook.yml` (job `graph`), `presets/web/files/github-ci.yml` (step in `check`).
 
-- [ ] Rules, strictest form per the research: no circular dependencies, no orphans (with the standard entry-point exceptions the docs show), the Feature-Sliced layer order (`app` above `pages` above `widgets` above `features` above `entities` above `shared`), and no import into a slice's internals past its `index`.
+- [ ] Rules, strictest form per the research, without encoding any business rule twice: steiger already owns every Feature-Sliced rule (layers, cross-slice, public API), so dependency-cruiser adds only what steiger lacks. Extend `dependency-cruiser/configs/recommended-strict` (circular dependencies, orphans, unresolvable imports, packages missing from the manifest, all at error), point `tsConfig` at the scaffold's, set `tsPreCompilationDeps` on, and exclude the generated files.
 - [ ] Verify the tool runs under Bun in a scratch directory before wiring anything.
 - [ ] probity rhythm as usual; regenerate; suites green.
 - [ ] Commit: `feat(presets): gate the import graph`.
