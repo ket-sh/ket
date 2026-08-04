@@ -4,6 +4,7 @@ import {
   arrivalsIn,
   declaredIn,
   decisionArrivalsIn,
+  headingIn,
   kindArrivalsIn,
   kindOf,
   recordAdvised,
@@ -131,6 +132,30 @@ describe('what arrived since ket last looked', () => {
     const tooLong = 'a'.repeat(215);
 
     expect(arrivalsIn({ declared: [tooLong, 'ok'], shipped: [], seen: [] })).toStrictEqual(['ok']);
+  });
+});
+
+describe('the decision an ADR heading carries', () => {
+  it('reads the sentence the first heading states', () => {
+    expect(headingIn('# Use Postgres over MySQL\n\nStatus: accepted\n')).toBe(
+      'Use Postgres over MySQL',
+    );
+  });
+
+  it('trims the space around the sentence', () => {
+    expect(headingIn('#   Use Postgres   \n')).toBe('Use Postgres');
+  });
+
+  it('reads the first heading, not a later one', () => {
+    expect(headingIn('# The decision\n\n# A later heading\n')).toBe('The decision');
+  });
+
+  it('reads no decision from a subheading, which opens with more than one hash', () => {
+    expect(headingIn('## Context\n\nsome prose\n')).toBeUndefined();
+  });
+
+  it('reads no decision from a record with no heading at all', () => {
+    expect(headingIn('just prose, no heading\n')).toBeUndefined();
   });
 });
 

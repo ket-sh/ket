@@ -58,6 +58,14 @@ export function arrivalsIn(look: ToolchainLook): string[] {
   );
 }
 
+const HEADING_MARK = '# ';
+
+export function headingIn(markdown: string): string | undefined {
+  const heading = markdown.split('\n').find((line) => line.startsWith(HEADING_MARK));
+
+  return heading === undefined ? undefined : heading.slice(HEADING_MARK.length).trim();
+}
+
 const TITLE_LIMIT = 200;
 
 function carriesInAReply(title: string): boolean {
