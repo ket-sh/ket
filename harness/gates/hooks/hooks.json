@@ -68,11 +68,11 @@
       },
       {
         "matcher": "Bash",
-        "if": "Bash(bun *)",
         "hooks": [
           {
             "type": "command",
             "command": "ket gate toolchain",
+            "if": "Bash(bun:*)",
             "timeout": 10,
             "statusMessage": "looking for what the command brought"
           }

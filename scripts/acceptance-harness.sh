@@ -980,7 +980,8 @@ LOOKED=""
 looks_at() {
   local status=0
 
-  LOOKED="$( (cd "$1" && "$KET" gate toolchain) 2>&1 )" || status=$?
+  LOOKED="$(printf '{"hook_event_name":"SessionStart"}' |
+    (cd "$1" && "$KET" gate toolchain) 2>&1)" || status=$?
   test "$status" -eq 0 ||
     fail "the toolchain gate failed in $1: exit $status, said: ${LOOKED:-nothing}"
 }
@@ -1090,9 +1091,38 @@ grep -q '"SessionStart"' harness/gates/hooks/hooks.json ||
   fail "the toolchain gate is not wired to a session start event"
 
 echo "acceptance: the harness looks again where a dependency lands"
-grep -q '"Bash(bun \*)"' harness/gates/hooks/hooks.json ||
-  fail "the toolchain gate is not scoped to the commands that bring a dependency"
-test "$(grep -c '"command": "ket gate toolchain"' harness/gates/hooks/hooks.json)" -eq 3 ||
+# The if field scopes the Bash arming, and it belongs on the hook entry rather
+# than the matcher group, where the runtime would ignore it and run the look
+# after every command. Reading the shape is what proves the scope binds.
+python3 - <<'BINDS' || fail "the Bash arming does not scope the toolchain look to a bun command"
+import json, sys
+
+hooks = json.load(open("harness/gates/hooks/hooks.json"))["hooks"]["PostToolUse"]
+bash = [entry for entry in hooks if entry.get("matcher") == "Bash"]
+looks = [
+    hook
+    for entry in bash
+    for hook in entry["hooks"]
+    if hook["command"] == "ket gate toolchain"
+]
+sys.exit(0 if looks and all(hook.get("if") == "Bash(bun:*)" for hook in looks) else 1)
+BINDS
+looks_for_toolchain() {
+  python3 - "$1" <<'ARMS'
+import json, sys
+
+want = int(sys.argv[1])
+hooks = json.load(open("harness/gates/hooks/hooks.json"))["hooks"]
+calls = [
+    hook.get("command")
+    for event in hooks.values()
+    for entry in event
+    for hook in entry["hooks"]
+]
+sys.exit(0 if calls.count("ket gate toolchain") == want else 1)
+ARMS
+}
+looks_for_toolchain 3 ||
   fail "the toolchain gate is not armed at the session start, the edit, and the command"
 
 echo "acceptance: the hidden command stays hidden"
