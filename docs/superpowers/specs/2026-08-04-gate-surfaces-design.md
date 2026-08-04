@@ -40,6 +40,15 @@ about, without leaving Claude Code.
 - The server dies with the gate. The command that moves the item's status
   kills it, and a four hour idle timeout collects the abandoned tab.
 
+## The surface arrives at the gate
+
+- Nobody remembers to run the show command. Every human gate starts or
+  reuses the item's server, opens the browser tab, and says the address in
+  the chat.
+- A tab the user closed reopens at the next gate, and an artifact revised
+  while a gate holds reaches the open tab through the push channel.
+- A headless session prints the address instead of opening a browser.
+
 ## What the page shows, by stage
 
 - While the item awaits approval: the solution design with its architecture
