@@ -17,16 +17,16 @@ export const MANIFEST = 'package.json';
 
 export const TOOLCHAIN = 'toolchain.json';
 
-export async function readEnvelope(): Promise<unknown> {
-  const text = await new Response(process.stdin).text();
-
-  if (text === '') {
+export function envelopeFrom(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
     return undefined;
   }
+}
 
-  const parsed: unknown = JSON.parse(text);
-
-  return parsed;
+export async function readEnvelope(): Promise<unknown> {
+  return envelopeFrom(await new Response(process.stdin).text());
 }
 
 async function readTargets(root: string): Promise<Record<string, PresetName>> {

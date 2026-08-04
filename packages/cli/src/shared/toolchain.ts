@@ -4,6 +4,16 @@ const DECLARING = ['dependencies', 'devDependencies'];
 
 const INDENT = 2;
 
+// A name that lands in a proposal a session reads has to be one a registry
+// could resolve, never a manifest key carrying a newline or an instruction.
+const REGISTRY_NAME = /^(?:@[a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/u;
+
+const NAME_LIMIT = 214;
+
+function resolvesInARegistry(name: string): boolean {
+  return name.length <= NAME_LIMIT && REGISTRY_NAME.test(name);
+}
+
 export interface ToolchainLook {
   declared: string[];
   shipped: string[];
@@ -43,7 +53,9 @@ export function seenIn(record: unknown): string[] {
 export function arrivalsIn(look: ToolchainLook): string[] {
   const covered = new Set([...look.shipped, ...look.seen]);
 
-  return inOneOrder(look.declared.filter((name) => !covered.has(name)));
+  return inOneOrder(
+    look.declared.filter((name) => !covered.has(name) && resolvesInARegistry(name)),
+  );
 }
 
 export function recordToolchain(names: string[]): string {

@@ -78,6 +78,12 @@ describe('the ket command line', () => {
   it('names the command it was asked for when that command does not exist', async () => {
     await expect(runCommand('deploy', [])).rejects.toThrow(/deploy/);
   });
+
+  it('writes nothing for a name that could cut the code it lands in', async () => {
+    const where = join(await scratch(), "shop'; break(); const z = '");
+
+    await expect(runCommand('create', [where])).rejects.toThrow(/cannot name a project/);
+  });
 });
 
 describe('creating a project that takes the gates without the pipeline', () => {

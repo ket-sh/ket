@@ -22,6 +22,12 @@ function fieldFrom(envelope: unknown, field: string): unknown {
   return isRecord(envelope) ? envelope[field] : undefined;
 }
 
+export function eventNameFrom(envelope: unknown): string | undefined {
+  const named = fieldFrom(envelope, 'hook_event_name');
+
+  return typeof named === 'string' ? named : undefined;
+}
+
 function namedIn(envelope: unknown, field: string): string | undefined {
   const input = isRecord(envelope) ? envelope['tool_input'] : undefined;
   const named = isRecord(input) ? input[field] : undefined;
