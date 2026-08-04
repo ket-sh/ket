@@ -1,0 +1,164 @@
+import { readingLayout } from './reading.ts';
+
+interface FeatureFile {
+  name: string;
+  source: string;
+}
+
+interface SurfaceArtifacts {
+  spec?: string | undefined;
+  design?: string | undefined;
+  adr?: string | undefined;
+  brief?: string | undefined;
+  findings?: string | undefined;
+  features: FeatureFile[];
+}
+
+export interface ItemSurface {
+  key: string;
+  title: string;
+  status: string;
+  artifacts: SurfaceArtifacts;
+}
+
+export interface SurfaceOptions {
+  sessionKey: string;
+}
+
+interface Section {
+  id: string;
+  label: string;
+  written: boolean;
+  body: string;
+}
+
+const STAGES: readonly string[] = [
+  'triaged',
+  'designing',
+  'awaiting-approval',
+  'implementing',
+  'verifying',
+  'awaiting-merge',
+  'shipped',
+];
+
+const DESIGN_STAGES = new Set(['designing', 'awaiting-approval']);
+
+const escaped = (text: string): string =>
+  text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+
+function defaultSection(status: string, artifacts: SurfaceArtifacts): string {
+  if (status === 'triaged') {
+    return 'spec';
+  }
+
+  if (DESIGN_STAGES.has(status)) {
+    return 'design';
+  }
+
+  return artifacts.brief === undefined ? 'design' : 'change';
+}
+
+function stepper(status: string): string {
+  const current = STAGES.indexOf(status);
+  const nodes = STAGES.map((stage, position) => {
+    const state = position === current ? 'is-current' : position < current ? 'is-done' : 'is-next';
+
+    return `<li class="stage ${state}" data-stage="${stage}">${stage}</li>`;
+  });
+
+  return `<ol class="stepper">${nodes.join('')}</ol>`;
+}
+
+function proseSection(id: string, label: string, source: string | undefined): Section {
+  return {
+    id,
+    label,
+    written: source !== undefined && source.trim() !== '',
+    body: readingLayout(source ?? ''),
+  };
+}
+
+function criteriaSection(features: FeatureFile[]): Section {
+  const cards = features.map(
+    (feature) =>
+      `<article class="feature" data-feature="${escaped(feature.name)}"><pre>${escaped(feature.source)}</pre></article>`,
+  );
+
+  return {
+    id: 'criteria',
+    label: 'Criteria',
+    written: features.length > 0,
+    body: cards.join(''),
+  };
+}
+
+function wireframeSection(sessionKey: string): Section {
+  return {
+    id: 'wireframe',
+    label: 'Wireframe',
+    written: true,
+    body: `<iframe class="wireframe" src="/wireframe?key=${sessionKey}"></iframe>`,
+  };
+}
+
+function sectionsOf(artifacts: SurfaceArtifacts, sessionKey: string): Section[] {
+  return [
+    proseSection('spec', 'Spec', artifacts.spec),
+    proseSection('design', 'Design', artifacts.design),
+    proseSection('decision', 'Decision', artifacts.adr),
+    criteriaSection(artifacts.features),
+    wireframeSection(sessionKey),
+    proseSection('change', 'Change', artifacts.brief),
+    proseSection('findings', 'Findings', artifacts.findings),
+  ];
+}
+
+function navEntry(section: Section, features: FeatureFile[]): string {
+  const dimmed = section.written ? '' : ' is-dimmed';
+  const entry = `<a data-section="${section.id}" class="nav-entry${dimmed}" href="#${section.id}">${section.label}</a>`;
+
+  if (section.id !== 'criteria') {
+    return entry;
+  }
+
+  const children = features.map(
+    (feature) =>
+      `<a class="nav-child" data-feature="${escaped(feature.name)}" href="#criteria">${escaped(feature.name)}</a>`,
+  );
+
+  return `${entry}${children.join('')}`;
+}
+
+function sectionShell(section: Section): string {
+  const missing = section.written
+    ? section.body
+    : '<p class="not-written">Not written at this stage.</p>';
+
+  return `<section id="section-${section.id}" class="surface-section">${missing}</section>`;
+}
+
+export function assemblePage(item: ItemSurface, options: SurfaceOptions): string {
+  const sections = sectionsOf(item.artifacts, options.sessionKey);
+  const nav = sections.map((section) => navEntry(section, item.artifacts.features));
+  const bodies = sections.map(sectionShell);
+
+  return `<!doctype html>
+<html lang="en" data-default-section="${defaultSection(item.status, item.artifacts)}">
+<head>
+<meta charset="utf-8">
+<title>${escaped(item.key)} · ${escaped(item.title)}</title>
+</head>
+<body>
+<header class="surface-header">
+<span class="item-key">${escaped(item.key)}</span>
+<h1 class="item-title">${escaped(item.title)}</h1>
+${stepper(item.status)}
+</header>
+<nav class="surface-nav">${nav.join('')}</nav>
+<main class="surface-main">${bodies.join('')}</main>
+<script type="module" src="/surface.js?key=${options.sessionKey}"></script>
+<script>new WebSocket(\`ws://\${location.host}/ws?key=${options.sessionKey}\`).onmessage = () => location.reload();</script>
+</body>
+</html>`;
+}
