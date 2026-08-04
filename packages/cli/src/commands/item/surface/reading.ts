@@ -29,10 +29,26 @@ interface Step {
 const escaped = (markup: string): string =>
   markup.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 
+const URL_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
+
+const SAFE_SCHEMES = new Set(['http:', 'https:', 'mailto:']);
+
+const carriesSafeAddress = (address: string): boolean => {
+  const scheme = URL_SCHEME.exec(address.trim())?.[0];
+
+  return scheme === undefined || SAFE_SCHEMES.has(scheme.toLowerCase());
+};
+
 const MARKDOWN = new Marked({
   renderer: {
     html({ text }) {
       return escaped(text);
+    },
+    link(token) {
+      return carriesSafeAddress(token.href) ? false : this.parser.parseInline(token.tokens);
+    },
+    image(token) {
+      return carriesSafeAddress(token.href) ? false : escaped(token.text);
     },
   },
 });

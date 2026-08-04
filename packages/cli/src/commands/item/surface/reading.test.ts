@@ -154,6 +154,26 @@ describe('the reading layout of untrusted prose', () => {
     expect(rendered).toContain('&lt;script&gt;');
   });
 
+  it('drops a link whose scheme could run code, keeping its words', () => {
+    const rendered = readingLayout('# The gate surfaces\n\n[click me](javascript:alert(1))\n');
+
+    expect(rendered).not.toContain('javascript:');
+    expect(rendered).toContain('click me');
+  });
+
+  it('drops an image whose source is not a plain address, keeping its words', () => {
+    const rendered = readingLayout('# The gate surfaces\n\n![the mark](data:text/html;base64,x)\n');
+
+    expect(rendered).not.toContain('data:');
+    expect(rendered).toContain('the mark');
+  });
+
+  it('keeps a link to a plain web address', () => {
+    const rendered = readingLayout('# The gate surfaces\n\n[the docs](https://ket.sh/docs)\n');
+
+    expect(rendered).toContain('<a href="https://ket.sh/docs">');
+  });
+
   it('marks a path in code as a chip, so a reader sees it is a file', () => {
     expect(readingLayout(WITH_PATH)).toContain(
       '<span class="chip">packages/cli/src/commands/item/surface/page.ts</span>',
