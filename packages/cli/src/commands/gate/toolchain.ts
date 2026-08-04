@@ -7,7 +7,7 @@ import type { ProposalEvent, ProposalReply } from './proposal.ts';
 
 import { presetOf } from '../../shared/governing.ts';
 import { ketRootFrom } from '../../shared/locate.ts';
-import { arrivalsIn, declaredIn, recordToolchain, seenIn } from '../../shared/toolchain.ts';
+import { arrivalsIn, declaredIn, recordAdvised, seenUnder } from '../../shared/toolchain.ts';
 import { KET_DIRECTORY, MANIFEST, readEnvelope, readJson, TOOLCHAIN } from './context.ts';
 import { proposalEventFrom, proposalReply } from './proposal.ts';
 
@@ -28,11 +28,12 @@ async function lookAtToolchain(event: ProposalEvent): Promise<ProposalReply | un
   }
 
   const record = join(root, KET_DIRECTORY, TOOLCHAIN);
-  const seen = seenIn(await readJson(record));
+  const held = await readJson(record);
+  const dependencies = seenUnder(held, 'dependencies');
   const arrivals = arrivalsIn({
     declared: declaredIn(await readJson(join(root, MANIFEST))),
     shipped: dependencyNamesOf(governing),
-    seen,
+    seen: dependencies,
   });
   const reply = proposalReply(arrivals, event);
 
@@ -40,7 +41,15 @@ async function lookAtToolchain(event: ProposalEvent): Promise<ProposalReply | un
     return undefined;
   }
 
-  await writeFile(record, recordToolchain([...seen, ...arrivals]), 'utf8');
+  await writeFile(
+    record,
+    recordAdvised({
+      dependencies: [...dependencies, ...arrivals],
+      decisions: seenUnder(held, 'decisions'),
+      kinds: seenUnder(held, 'kinds'),
+    }),
+    'utf8',
+  );
 
   return reply;
 }

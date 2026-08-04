@@ -1,5 +1,3 @@
-const SEEN = 'seen';
-
 const DECLARING = ['dependencies', 'devDependencies'];
 
 const INDENT = 2;
@@ -46,8 +44,10 @@ export function declaredIn(manifest: unknown): string[] {
   return isRecord(manifest) ? DECLARING.flatMap((field) => keysOf(manifest[field])) : [];
 }
 
-export function seenIn(record: unknown): string[] {
-  return isRecord(record) ? namesOf(record[SEEN]) : [];
+export type AdvisedSection = 'dependencies' | 'decisions' | 'kinds';
+
+export function seenUnder(record: unknown, section: AdvisedSection): string[] {
+  return isRecord(record) ? namesOf(record[section]) : [];
 }
 
 export function arrivalsIn(look: ToolchainLook): string[] {
@@ -58,6 +58,12 @@ export function arrivalsIn(look: ToolchainLook): string[] {
   );
 }
 
-export function recordToolchain(names: string[]): string {
-  return `${JSON.stringify({ [SEEN]: inOneOrder(names) }, undefined, INDENT)}\n`;
+export function recordAdvised(sections: Record<AdvisedSection, string[]>): string {
+  const ordered = {
+    dependencies: inOneOrder(sections.dependencies),
+    decisions: inOneOrder(sections.decisions),
+    kinds: inOneOrder(sections.kinds),
+  };
+
+  return `${JSON.stringify(ordered, undefined, INDENT)}\n`;
 }

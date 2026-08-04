@@ -1,18 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { arrivalsIn, declaredIn, recordToolchain, seenIn } from './toolchain.ts';
+import { arrivalsIn, declaredIn, recordAdvised, seenUnder } from './toolchain.ts';
 
 const MANIFEST = {
   name: 'order-service',
   dependencies: { citty: '0.2.2', 'drizzle-orm': '0.44.0' },
   devDependencies: { oxlint: '1.76.0' },
 };
-
-function readBack(record: string): string[] {
-  const written: unknown = JSON.parse(record);
-
-  return seenIn(written);
-}
 
 describe('reading the dependencies a project declares', () => {
   it('names what the project runs and what checks it, since both bring rules', () => {
@@ -40,25 +34,33 @@ describe('reading the dependencies a project declares', () => {
   });
 });
 
-describe('reading what ket has already looked at', () => {
-  it('recovers every name it recorded last time', () => {
-    expect(seenIn({ seen: ['drizzle-orm', 'redis'] })).toStrictEqual(['drizzle-orm', 'redis']);
+describe('reading what ket has already looked at, per section', () => {
+  it('recovers the names recorded under a section', () => {
+    expect(
+      seenUnder({ dependencies: ['drizzle-orm'], decisions: [], kinds: [] }, 'dependencies'),
+    ).toStrictEqual(['drizzle-orm']);
   });
 
   it('reads nothing from a record no project has written yet', () => {
-    expect(seenIn(undefined)).toStrictEqual([]);
+    expect(seenUnder(undefined, 'decisions')).toStrictEqual([]);
   });
 
-  it('reads nothing from a record that names nothing', () => {
-    expect(seenIn({})).toStrictEqual([]);
+  it('reads nothing from a section that names nothing', () => {
+    expect(seenUnder({ kinds: [] }, 'kinds')).toStrictEqual([]);
   });
 
   it('leaves out an entry that is not a name', () => {
-    expect(seenIn({ seen: ['drizzle-orm', 7] })).toStrictEqual(['drizzle-orm']);
+    expect(seenUnder({ kinds: ['.tf', 7] }, 'kinds')).toStrictEqual(['.tf']);
   });
 
-  it('reads nothing from a record whose names are not a list', () => {
-    expect(seenIn({ seen: 'drizzle-orm' })).toStrictEqual([]);
+  it('reads nothing from a section that is not a list', () => {
+    expect(seenUnder({ decisions: 'a decision' }, 'decisions')).toStrictEqual([]);
+  });
+
+  it('reads one section apart from another', () => {
+    const record = { dependencies: ['redis'], decisions: ['a choice'], kinds: ['.tf'] };
+
+    expect(seenUnder(record, 'decisions')).toStrictEqual(['a choice']);
   });
 });
 
@@ -124,27 +126,46 @@ describe('what arrived since ket last looked', () => {
   });
 });
 
-describe('recording what it has looked at', () => {
-  it('records a name so the next session finds it seen', () => {
-    expect(readBack(recordToolchain(['drizzle-orm']))).toStrictEqual(['drizzle-orm']);
+describe('recording what it has looked at, in three sections', () => {
+  function readBackUnder(
+    record: string,
+    section: 'dependencies' | 'decisions' | 'kinds',
+  ): string[] {
+    return seenUnder(JSON.parse(record), section);
+  }
+
+  it('records a name under the section it belongs to', () => {
+    const record = recordAdvised({ dependencies: ['drizzle-orm'], decisions: [], kinds: [] });
+
+    expect(readBackUnder(record, 'dependencies')).toStrictEqual(['drizzle-orm']);
+  });
+
+  it('keeps the sections apart', () => {
+    const record = recordAdvised({
+      dependencies: ['redis'],
+      decisions: ['a choice'],
+      kinds: ['.tf'],
+    });
+
+    expect(readBackUnder(record, 'kinds')).toStrictEqual(['.tf']);
+    expect(readBackUnder(record, 'decisions')).toStrictEqual(['a choice']);
   });
 
   it('records one entry per name, however many times it was given one', () => {
-    expect(readBack(recordToolchain(['redis', 'redis']))).toStrictEqual(['redis']);
+    const record = recordAdvised({ dependencies: ['redis', 'redis'], decisions: [], kinds: [] });
+
+    expect(readBackUnder(record, 'dependencies')).toStrictEqual(['redis']);
   });
 
   it('records them in a stable order, so a diff shows what changed', () => {
-    expect(readBack(recordToolchain(['redis', 'drizzle-orm']))).toStrictEqual([
-      'drizzle-orm',
-      'redis',
-    ]);
+    const record = recordAdvised({ dependencies: [], decisions: [], kinds: ['.ts', '.tf'] });
+
+    expect(readBackUnder(record, 'kinds')).toStrictEqual(['.tf', '.ts']);
   });
 
   it('ends the record with a newline, since a file in a repository does', () => {
-    expect(recordToolchain(['redis']).endsWith('\n')).toBe(true);
-  });
-
-  it('writes a name on its own line, so a diff names what arrived', () => {
-    expect(recordToolchain(['redis'])).toContain('\n  "seen": [\n    "redis"\n  ]');
+    expect(
+      recordAdvised({ dependencies: ['redis'], decisions: [], kinds: [] }).endsWith('\n'),
+    ).toBe(true);
   });
 });
