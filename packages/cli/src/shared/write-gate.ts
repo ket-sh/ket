@@ -196,8 +196,6 @@ export function verdictFor(attempt: WriteAttempt): Verdict {
   return sealed(attempt) ?? governed(attempt);
 }
 
-// The door a stage opening checks: another item already being worked, and not
-// an ancestor delegating to this one, means the opening waits its turn.
 export function secondJobAmong(
   inFlight: GovernedItem[],
   opening: string,
@@ -206,8 +204,7 @@ export function secondJobAmong(
 }
 
 // One job means one branch, so a repository holding two of them has no single
-// item that answers for the session. A filed backlog is not a second job: when
-// nothing is being worked, the first filed item is the one up next.
+// item that answers for the session.
 export function jobIn(inFlight: GovernedItem[]): GovernedItem | undefined {
   const candidates = workingFrom(inFlight);
   const working = worked(candidates);

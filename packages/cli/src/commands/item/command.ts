@@ -175,9 +175,7 @@ function byStatus(move: (item: Item) => Transition): Decision {
   return async (item) => Promise.resolve(move(item));
 }
 
-// A stage that opens work checks the door: another item already being worked
-// means this one waits its turn, and hearing that here beats hearing it from
-// the write gate one edit into the job.
+// Refusing here beats hearing it from the write gate one edit into the job.
 function whileNothingElseWorks(move: (item: Item) => Transition): Decision {
   return async (item, root, key) => {
     const opened = move(item);
