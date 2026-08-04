@@ -79,10 +79,10 @@ export function decisionArrivalsIn(look: { titles: string[]; seen: string[] }): 
 }
 
 export function kindOf(path: string): string | undefined {
-  const name = path.slice(path.lastIndexOf('/') + 1);
-  const dot = name.lastIndexOf('.');
+  const dot = path.lastIndexOf('.');
+  const slash = path.lastIndexOf('/');
 
-  return dot > 0 ? name.slice(dot) : undefined;
+  return dot > slash + 1 ? path.slice(dot) : undefined;
 }
 
 export function kindArrivalsIn(look: {
