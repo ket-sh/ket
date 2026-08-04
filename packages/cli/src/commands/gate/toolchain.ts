@@ -35,7 +35,7 @@ async function lookAtToolchain(event: ProposalEvent): Promise<ProposalReply | un
     shipped: dependencyNamesOf(governing),
     seen: dependencies,
   });
-  const reply = proposalReply(arrivals, event);
+  const reply = proposalReply({ dependencies: arrivals, decisions: [], kinds: [] }, event);
 
   if (reply === undefined) {
     return undefined;

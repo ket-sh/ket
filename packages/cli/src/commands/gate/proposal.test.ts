@@ -2,46 +2,73 @@ import { describe, expect, it } from 'vitest';
 
 import { proposalEventFrom, proposalReply } from './proposal.ts';
 
-const ASKING =
-  'Each one brings a rule this project would otherwise keep by hand, and a craft a skill can ' +
-  'teach. Use the ket:mechanical-checks skill: research the check that would keep the rule, ' +
-  'judge whether it earns its cost, and propose it. Use the find-skills skill: look for a skill ' +
-  'that teaches the dependency, and propose installing it, with skills-lock.json recording a ' +
-  'yes. Each proposal stands on its own. ket proposes, the user decides.';
+function only(dependencies: string[]): {
+  dependencies: string[];
+  decisions: string[];
+  kinds: string[];
+} {
+  return { dependencies, decisions: [], kinds: [] };
+}
 
-describe('proposing a machine for a rule a dependency brought', () => {
-  it('says nothing when nothing arrived, so a session about nothing stays quiet', () => {
-    expect(proposalReply([], 'SessionStart')).toBeUndefined();
-  });
+function contextOf(
+  arrivals: { dependencies: string[]; decisions: string[]; kinds: string[] },
+  event: 'SessionStart' | 'PostToolUse',
+): string {
+  return proposalReply(arrivals, event)?.hookSpecificOutput.additionalContext ?? '';
+}
 
-  it('names the arrival and sends the session to the skill that judges it', () => {
-    expect(proposalReply(['drizzle-orm'], 'SessionStart')).toStrictEqual({
-      hookSpecificOutput: {
-        hookEventName: 'SessionStart',
-        additionalContext: `new since ket last looked: drizzle-orm\n\n${ASKING}`,
-      },
-    });
-  });
-
-  it('names every arrival, not only the first', () => {
+describe('proposing a machine and a skill for what a project brought', () => {
+  it('says nothing when nothing arrived, so a look about nothing stays quiet', () => {
     expect(
-      proposalReply(['drizzle-orm', 'redis'], 'SessionStart')?.hookSpecificOutput.additionalContext,
-    ).toContain('new since ket last looked: drizzle-orm, redis');
+      proposalReply({ dependencies: [], decisions: [], kinds: [] }, 'SessionStart'),
+    ).toBeUndefined();
   });
 
-  it('never carries a decision, since a look refuses nothing', () => {
-    expect(Object.keys(proposalReply(['redis'], 'SessionStart') ?? {})).toStrictEqual([
+  it('names a dependency and sends the session down both routes', () => {
+    const context = contextOf(only(['drizzle-orm']), 'SessionStart');
+
+    expect(context).toContain('drizzle-orm');
+    expect(context).toContain('mechanical-checks');
+    expect(context).toContain('find-skills');
+  });
+
+  it('names a decision a project recorded', () => {
+    const context = contextOf(
+      { dependencies: [], decisions: ['Use Postgres over MySQL'], kinds: [] },
+      'SessionStart',
+    );
+
+    expect(context).toContain('Use Postgres over MySQL');
+  });
+
+  it('names a file kind a write brought', () => {
+    const context = contextOf({ dependencies: [], decisions: [], kinds: ['.tf'] }, 'PostToolUse');
+
+    expect(context).toContain('.tf');
+  });
+
+  it('names each source under its own line, so one is not read as another', () => {
+    const context = contextOf(
+      { dependencies: ['redis'], decisions: ['A choice'], kinds: ['.tf'] },
+      'PostToolUse',
+    );
+    const lines = context.split('\n');
+
+    expect(lines.some((line) => line.includes('redis'))).toBe(true);
+    expect(lines.some((line) => line.includes('A choice'))).toBe(true);
+    expect(lines.some((line) => line.includes('.tf'))).toBe(true);
+  });
+
+  it('answers in the shape of the event that asked', () => {
+    expect(proposalReply(only(['redis']), 'PostToolUse')?.hookSpecificOutput.hookEventName).toBe(
+      'PostToolUse',
+    );
+  });
+
+  it('never carries a decision key, since a look refuses nothing', () => {
+    expect(Object.keys(proposalReply(only(['redis']), 'SessionStart') ?? {})).toStrictEqual([
       'hookSpecificOutput',
     ]);
-  });
-
-  it('answers a mid-session look in the shape of the event that asked', () => {
-    expect(proposalReply(['redis'], 'PostToolUse')).toStrictEqual({
-      hookSpecificOutput: {
-        hookEventName: 'PostToolUse',
-        additionalContext: `new since ket last looked: redis\n\n${ASKING}`,
-      },
-    });
   });
 });
 
