@@ -57,6 +57,24 @@
             "command": "ket gate probe",
             "timeout": 30,
             "statusMessage": "running ring one over the file"
+          },
+          {
+            "type": "command",
+            "command": "ket gate toolchain",
+            "timeout": 10,
+            "statusMessage": "looking for what the edit brought"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "if": "Bash(bun *)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ket gate toolchain",
+            "timeout": 10,
+            "statusMessage": "looking for what the command brought"
           }
         ]
       }

@@ -1049,6 +1049,31 @@ test -z "$LOOKED" ||
 cp "$SANDBOX/manifest.json" "$PROJECT/package.json"
 CHECKED=$((CHECKED + 1))
 
+echo "acceptance: an arrival mid-session is answered where it lands"
+arrives() {
+  local status=0
+
+  ARRIVED="$(printf '{"hook_event_name":"PostToolUse","tool_name":"Bash","tool_input":{"command":"bun add graphql"}}' |
+    (cd "$PROJECT" && "$KET" gate toolchain) 2>&1)" || status=$?
+  test "$status" -eq 0 ||
+    fail "the mid-session look failed: exit $status, said: ${ARRIVED:-nothing}"
+}
+
+declares graphql 16.12.0
+arrives
+echo "$ARRIVED" | grep -q '"hookEventName":"PostToolUse"' ||
+  fail "the mid-session look answered in the wrong event shape: ${ARRIVED:-nothing}"
+echo "$ARRIVED" | grep -q 'graphql' ||
+  fail "the mid-session look never named the arrival: ${ARRIVED:-nothing}"
+echo "$ARRIVED" | grep -q 'find-skills' ||
+  fail "the mid-session look named no skill route"
+echo "$ARRIVED" | grep -q 'mechanical-checks' ||
+  fail "the mid-session look named no rules route"
+arrives
+test -z "$ARRIVED" ||
+  fail "the mid-session look named the same arrival twice: $ARRIVED"
+CHECKED=$((CHECKED + 5))
+
 echo "acceptance: a repository ket never touched hears nothing about its toolchain"
 printf '{"dependencies":{"drizzle-orm":"0.44.0"}}\n' >"$SANDBOX/package.json"
 looks_at "$SANDBOX"
@@ -1063,6 +1088,12 @@ grep -q 'ket gate toolchain' harness/gates/hooks/hooks.json ||
   fail "the harness hooks never call the toolchain gate"
 grep -q '"SessionStart"' harness/gates/hooks/hooks.json ||
   fail "the toolchain gate is not wired to a session start event"
+
+echo "acceptance: the harness looks again where a dependency lands"
+grep -q '"Bash(bun \*)"' harness/gates/hooks/hooks.json ||
+  fail "the toolchain gate is not scoped to the commands that bring a dependency"
+test "$(grep -c '"command": "ket gate toolchain"' harness/gates/hooks/hooks.json)" -eq 3 ||
+  fail "the toolchain gate is not armed at the session start, the edit, and the command"
 
 echo "acceptance: the hidden command stays hidden"
 "$KET" --help 2>&1 | grep -q 'gate' && fail "gate is listed in the top level help"
