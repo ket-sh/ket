@@ -1,7 +1,7 @@
 import { readdir } from 'node:fs/promises';
 import { basename, resolve } from 'node:path';
 
-import { refuseProjectName } from './name.ts';
+import { refuseNameSegment } from './name.ts';
 import { deriveProjectKey } from './project-key.ts';
 
 export const KET_DIRECTORY = '.ket';
@@ -18,7 +18,7 @@ async function entriesIn(directory: string): Promise<string[]> {
 export async function planCreation(where: string): Promise<CreationPlan> {
   const root = resolve(where);
   const name = basename(root);
-  const refusal = refuseProjectName(name);
+  const refusal = refuseNameSegment(name);
 
   if (refusal !== undefined) {
     throw new Error(`${name} cannot name a project. ${refusal}`);

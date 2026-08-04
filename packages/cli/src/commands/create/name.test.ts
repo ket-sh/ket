@@ -64,4 +64,8 @@ describe('refusing a project name the scaffold cannot carry into its files', () 
   it('accepts dots, underscores, and dashes', () => {
     expect(refuseName('shop.front_2-beta')).toBeUndefined();
   });
+
+  it('accepts a trailing slash, since a path may end in one', () => {
+    expect(refuseName('my-app/')).toBeUndefined();
+  });
 });

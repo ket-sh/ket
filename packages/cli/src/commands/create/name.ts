@@ -6,8 +6,8 @@ const CARRIABLE = /^[A-Za-z0-9._-]+$/;
 
 const UNSAFE = 'A name is letters, digits, dots, underscores, and dashes.';
 
-export function refuseProjectName(name: string): string | undefined {
-  return CARRIABLE.test(name) ? undefined : UNSAFE;
+export function refuseNameSegment(segment: string): string | undefined {
+  return CARRIABLE.test(segment) ? undefined : UNSAFE;
 }
 
 export function refuseName(given: string): string | undefined {
@@ -25,6 +25,7 @@ export function refuseName(given: string): string | undefined {
 
   return given
     .split('/')
-    .map(refuseProjectName)
+    .filter((segment) => segment !== '')
+    .map(refuseNameSegment)
     .find((refusal) => refusal !== undefined);
 }

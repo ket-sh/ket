@@ -3,14 +3,16 @@ import { describe, expect, it } from 'vitest';
 
 import { refuseName } from './name.ts';
 
-const aSafePiece = fc.stringMatching(/^[a-z0-9-]{0,8}$/u);
+const UNSAFE = 'A name is letters, digits, dots, underscores, and dashes.';
+
+const aSafePiece = fc.stringMatching(/^[a-z0-9-]{1,8}$/u);
 
 const aCuttingCharacter = fc.constantFrom("'", '"', '\\', ' ', ';', '$', '`', '{', '}');
 
 const aSafeName = fc.stringMatching(/^[A-Za-z0-9_-][A-Za-z0-9._-]{0,19}$/u);
 
 function refusesTheCut(head: string, cut: string, tail: string): void {
-  expect(refuseName(`${head}${cut}${tail}`)).toBeDefined();
+  expect(refuseName(`${head}${cut}${tail}`)).toBe(UNSAFE);
 }
 
 function acceptsTheName(name: string): void {
