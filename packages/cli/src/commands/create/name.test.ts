@@ -41,3 +41,27 @@ describe('refusing a project name the working directory cannot hold', () => {
     expect(refuseName('myapp')).toBe('The name carries a character a terminal cannot print.');
   });
 });
+
+describe('refusing a project name the scaffold cannot carry into its files', () => {
+  const UNSAFE = 'A name is letters, digits, dots, underscores, and dashes.';
+
+  it('refuses a quote, which would cut the string literal the name lands in', () => {
+    expect(refuseName("x'; const z = '")).toBe(UNSAFE);
+  });
+
+  it('refuses a space', () => {
+    expect(refuseName('my app')).toBe(UNSAFE);
+  });
+
+  it('refuses a backslash', () => {
+    expect(refuseName('my\\app')).toBe(UNSAFE);
+  });
+
+  it('judges every segment of a nested name, not the slashes between them', () => {
+    expect(refuseName('packages/my cli')).toBe(UNSAFE);
+  });
+
+  it('accepts dots, underscores, and dashes', () => {
+    expect(refuseName('shop.front_2-beta')).toBeUndefined();
+  });
+});

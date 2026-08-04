@@ -39,6 +39,12 @@ describe('planning what create will make', () => {
     await expect(planCreation(where)).rejects.toThrow(/not empty/);
   });
 
+  it('refuses a name that could cut the file it lands in', async () => {
+    const where = join(await scratch(), "x'; const z = '");
+
+    await expect(planCreation(where)).rejects.toThrow(/cannot name a project/);
+  });
+
   it('leaves the key unset when the directory name yields none', async () => {
     const where = join(await scratch(), '2026');
 

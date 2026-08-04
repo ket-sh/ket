@@ -8,6 +8,7 @@ bddgen
 bunfig
 bunx
 capitalises
+carriable
 chromatic
 citty
 clack
