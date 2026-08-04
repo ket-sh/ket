@@ -1,10 +1,24 @@
 import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
-const HARNESS_SKILLS = join('harness', 'skills');
+const GATES_SKILLS = join('harness', 'gates', 'skills');
 
-export async function harnessSkillsOf(root: string): Promise<string[]> {
-  const entries = await readdir(join(root, HARNESS_SKILLS), { withFileTypes: true });
+const WORKFLOW_SKILLS = join('harness', 'workflow', 'skills');
+
+async function skillNamesIn(directory: string): Promise<string[]> {
+  const entries = await readdir(directory, { withFileTypes: true });
 
   return entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
+}
+
+export interface HarnessSkills {
+  gates: string[];
+  workflow: string[];
+}
+
+export async function harnessSkillsOf(root: string): Promise<HarnessSkills> {
+  const gates = await skillNamesIn(join(root, GATES_SKILLS));
+  const workflow = await skillNamesIn(join(root, WORKFLOW_SKILLS));
+
+  return { gates, workflow };
 }

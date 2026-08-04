@@ -11,6 +11,7 @@ of alternatives you rejected and what each one would have cost.
 ## Where it lives
 
 `.ket/items/<key>/adr.md`, beside the item whose design stage decided it.
+Without the workflow, the artifact lives under `docs/adr/` instead.
 
 The item key is the number. ket allocates keys in order already, and a second
 numbering scheme would be a hand-maintained list that has to agree with the

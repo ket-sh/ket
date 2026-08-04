@@ -1,4 +1,5 @@
 import type { PresetContents } from './contents.ts';
+import type { HarnessSkills } from './harness-skills.ts';
 import type { PresetItem } from './item.ts';
 import type { PresetSemantics } from './semantics.ts';
 
@@ -16,7 +17,7 @@ export interface PresetSubject {
   semantics: PresetSemantics;
   carried: PresetContents;
   shipped: PresetContents;
-  harnessSkills: string[];
+  harnessSkills: HarnessSkills;
 }
 
 export function brokenInvariantsOf(subject: PresetSubject): string[] {

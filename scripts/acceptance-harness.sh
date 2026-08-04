@@ -159,20 +159,20 @@ grep -q '"repo": "ket-sh/ket"' "$PROJECT/.claude/settings.json" ||
 
 echo "acceptance: the harness ships what it declares"
 for name in feature explore approve status continue review ship; do
-  test -f "harness/commands/$name.md" || fail "the harness declares no /ket:$name command"
-  grep -q '^description:' "harness/commands/$name.md" ||
+  test -f "harness/workflow/commands/$name.md" || fail "the harness declares no /ket:$name command"
+  grep -q '^description:' "harness/workflow/commands/$name.md" ||
     fail "/ket:$name has no description"
 done
 for name in triage researcher decomposer adr solution-design ui-design gherkin implementer reviewer qa; do
-  test -f "harness/agents/$name.md" || fail "the harness declares no $name agent"
+  test -f "harness/workflow/agents/$name.md" || fail "the harness declares no $name agent"
 done
 # The list of skills used to be typed in here, and a skill missing from it
 # shipped unchecked. The directory is the authority, so a new skill is held to
 # the same two rules on the day it lands.
 shipped=0
-for skill in harness/skills/*/SKILL.md; do
+for skill in harness/gates/skills/*/SKILL.md harness/workflow/skills/*/SKILL.md; do
   test -f "$skill" ||
-    fail "the harness skills directory holds nothing, so this loop reads no skill at all"
+    fail "the harness skills directories hold nothing, so this loop reads no skill at all"
   name="$(basename "$(dirname "$skill")")"
   grep -q "^name: $name$" "$skill" ||
     fail "the $name skill does not name itself, so /ket:$name would not resolve"
@@ -189,23 +189,25 @@ pinned_skills() {
 }
 
 echo "acceptance: every agent pins a model, and pins only skills the harness ships"
-for agent in harness/agents/*.md; do
+for agent in harness/gates/agents/*.md harness/workflow/agents/*.md; do
   grep -q '^model: ' "$agent" ||
     fail "$agent pins no model, so ket's model map is a claim nothing honours"
   for pinned in $(pinned_skills "$agent"); do
-    test -f "harness/skills/$pinned/SKILL.md" ||
+    test -f "harness/gates/skills/$pinned/SKILL.md" || test -f "harness/workflow/skills/$pinned/SKILL.md" ||
       fail "$agent pins the $pinned skill, and the harness ships no such skill"
   done
 done
 
-grep -q 'ket gate write' harness/hooks/hooks.json ||
+grep -q 'ket gate write' harness/gates/hooks/hooks.json ||
   fail "the harness hooks call no write gate"
-grep -q 'ket gate shell' harness/hooks/hooks.json ||
+grep -q 'ket gate shell' harness/gates/hooks/hooks.json ||
   fail "the harness hooks call no shell gate"
-grep -q '"matcher": "Bash"' harness/hooks/hooks.json ||
+grep -q '"matcher": "Bash"' harness/gates/hooks/hooks.json ||
   fail "the shell gate is wired to no bash tool call"
-grep -q '"source": "./harness"' .claude-plugin/marketplace.json ||
-  fail "the marketplace does not point at the harness"
+grep -q '"source": "./harness/gates"' .claude-plugin/marketplace.json ||
+  fail "the marketplace does not point at the gates"
+grep -q '"source": "./harness/workflow"' .claude-plugin/marketplace.json ||
+  fail "the marketplace does not point at the workflow"
 
 echo "acceptance: the review runs as a pair with a judge, not as one seat"
 # A grep for the guard's wording proves only that the sentence survived. These
@@ -214,7 +216,7 @@ echo "acceptance: the review runs as a pair with a judge, not as one seat"
 seat_rows() {
   awk '/^## 1\./ { inside = 1; next }
        inside && /^## / { inside = 0 }
-       inside && /^\| / && $0 !~ /^\| *Seat/ && $0 !~ /^\| *-/ { print }' harness/commands/review.md
+       inside && /^\| / && $0 !~ /^\| *Seat/ && $0 !~ /^\| *-/ { print }' harness/workflow/commands/review.md
 }
 
 seat_column() {
@@ -233,23 +235,23 @@ test "$(distinct 3)" -eq 2 ||
   fail "/ket:review runs its two seats on one model, so the pair is a self-review"
 test "$(distinct 4)" -eq 2 ||
   fail "/ket:review gives its two seats one lens, so the pair looks at one thing twice"
-grep -q 'differ in model and in lens' harness/commands/review.md ||
+grep -q 'differ in model and in lens' harness/workflow/commands/review.md ||
   fail "/ket:review lets two seats share a model or a lens, so the pair is one opinion"
-grep -q 'maximum effort' harness/commands/review.md ||
+grep -q 'maximum effort' harness/workflow/commands/review.md ||
   fail "/ket:review sends a dispute to no judge at maximum effort"
-grep -q 'They disagree' harness/commands/review.md ||
+grep -q 'They disagree' harness/workflow/commands/review.md ||
   fail "/ket:review judges more than what the seats dispute, or nothing at all"
-grep -q 'location and its defect' harness/commands/review.md ||
+grep -q 'location and its defect' harness/workflow/commands/review.md ||
   fail "/ket:review names no key, so the two reports cannot join"
-grep -qi 'reproduce' harness/commands/review.md ||
+grep -qi 'reproduce' harness/workflow/commands/review.md ||
   fail "/ket:review drops nothing for failing to reproduce"
-grep -q 'one seat of a pair' harness/agents/reviewer.md ||
+grep -q 'one seat of a pair' harness/workflow/agents/reviewer.md ||
   fail "the reviewer agent does not say it is one seat, so it reports as the whole review"
-grep -q 'findings' harness/agents/reviewer.md ||
+grep -q 'findings' harness/workflow/agents/reviewer.md ||
   fail "the reviewer agent follows no findings doctrine"
-grep -q 'Reproduce or drop' harness/skills/findings/SKILL.md ||
+grep -q 'Reproduce or drop' harness/workflow/skills/findings/SKILL.md ||
   fail "the findings skill carries no reproduce-or-drop rule"
-grep -q '80' harness/skills/findings/SKILL.md ||
+grep -q '80' harness/workflow/skills/findings/SKILL.md ||
   fail "the findings skill sets no confidence bar"
 
 echo "acceptance: the whole loop, through the binary only"
@@ -761,7 +763,7 @@ ends_status() {
   awk -F'|' -v wanted="\`$1\`" '
     { gsub(/^ +| +$/, "", $2); gsub(/^ +| +$/, "", $5) }
     $2 == wanted { print $5 }
-  ' harness/skills/stages/SKILL.md
+  ' harness/workflow/skills/stages/SKILL.md
 }
 
 ends_status implementing | grep -qF 'ket item verify' ||
@@ -770,11 +772,11 @@ ends_status verifying | grep -qF 'ket item deliver' ||
   fail "the stages table ends verifying with $(ends_status verifying), not ket item deliver"
 ends_status awaiting-merge | grep -qF '/ket:ship' ||
   fail "the stages table ends awaiting-merge with $(ends_status awaiting-merge), not /ket:ship"
-grep -qF 'four human gates' harness/skills/stages/SKILL.md ||
+grep -qF 'four human gates' harness/workflow/skills/stages/SKILL.md ||
   fail "the stages skill still counts three human gates, so nobody is asked about the merge"
-grep -qF 'awaiting-merge' harness/commands/status.md ||
+grep -qF 'awaiting-merge' harness/workflow/commands/status.md ||
   fail "/ket:status calls an item waiting on a merge settled, and it is in flight"
-grep -qF '/ket:ship' harness/commands/continue.md ||
+grep -qF '/ket:ship' harness/workflow/commands/continue.md ||
   fail "/ket:continue never hands an item waiting on a merge to the person who merges it"
 
 echo "acceptance: a design that cites what nobody wrote"
@@ -865,9 +867,9 @@ rm "$PROJECT/src/unformatted.ts" "$PROJECT/src/untouched.ts"
 CHECKED=$((CHECKED + 1))
 
 echo "acceptance: the harness runs ring one on every write"
-grep -q 'ket gate probe' harness/hooks/hooks.json ||
+grep -q 'ket gate probe' harness/gates/hooks/hooks.json ||
   fail "the harness hooks never call the probe gate"
-grep -q '"PostToolUse"' harness/hooks/hooks.json ||
+grep -q '"PostToolUse"' harness/gates/hooks/hooks.json ||
   fail "the probe gate is not wired to a post-tool-use event"
 
 echo "acceptance: the test-first gate reads the conversation that acted"
@@ -940,9 +942,9 @@ test -x "$PROJECT/node_modules/.bin/probity" ||
   fail "a created project installs no test-first gate"
 grep -q "'src/\*\*'" "$PROJECT/probity.config.ts" ||
   fail "the test-first config guards a source directory the project does not have"
-grep -q 'ket gate test-first' harness/hooks/hooks.json ||
+grep -q 'ket gate test-first' harness/gates/hooks/hooks.json ||
   fail "the harness hooks call no test-first gate"
-grep -q 'NotebookEdit' harness/hooks/hooks.json ||
+grep -q 'NotebookEdit' harness/gates/hooks/hooks.json ||
   fail "the test-first gate misses the notebook tool it also guards"
 
 echo "acceptance: every decision was recorded"
@@ -1057,9 +1059,9 @@ test -f "$SANDBOX/.ket/toolchain.json" &&
 CHECKED=$((CHECKED + 2))
 
 echo "acceptance: the harness looks at the toolchain when a session starts"
-grep -q 'ket gate toolchain' harness/hooks/hooks.json ||
+grep -q 'ket gate toolchain' harness/gates/hooks/hooks.json ||
   fail "the harness hooks never call the toolchain gate"
-grep -q '"SessionStart"' harness/hooks/hooks.json ||
+grep -q '"SessionStart"' harness/gates/hooks/hooks.json ||
   fail "the toolchain gate is not wired to a session start event"
 
 echo "acceptance: the hidden command stays hidden"

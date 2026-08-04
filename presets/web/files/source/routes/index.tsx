@@ -8,6 +8,10 @@ export const Route = createFileRoute('/')({ component: Home });
 
 const PROJECT = '__PROJECT_NAME__';
 
+const HERO_HINT_TEXT = '__HERO_HINT_TEXT__';
+
+const HERO_HINT_CODE = '__HERO_HINT_CODE__';
+
 function Home() {
   return (
     <div className="bg-canvas text-paper relative flex min-h-svh flex-col overflow-hidden bg-[url(/ket-bg-poster.webp)] bg-cover bg-center">
@@ -51,8 +55,7 @@ function Home() {
 
       <footer className="relative flex flex-col items-center px-6 pb-10">
         <p className="bg-scrim/35 rounded-lg px-4 py-2 font-mono text-sm backdrop-blur-sm">
-          Start your first feature in Claude Code with{' '}
-          <code className="text-glow">/ket:feature &quot;your prompt&quot;</code>
+          {HERO_HINT_TEXT} <code className="text-glow">{HERO_HINT_CODE}</code>
         </p>
       </footer>
     </div>

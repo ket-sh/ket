@@ -1,0 +1,17 @@
+{
+  "description": "The turn gate, whose whole job is the item in flight",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ket gate turn",
+            "timeout": 10,
+            "statusMessage": "asking whether the work reached a resting place"
+          }
+        ]
+      }
+    ]
+  }
+}

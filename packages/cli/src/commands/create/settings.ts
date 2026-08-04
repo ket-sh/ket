@@ -2,6 +2,8 @@ const MARKETPLACE = 'ket';
 
 const PLUGIN = 'ket@ket';
 
+const WORKFLOW_PLUGIN = 'ket-workflow@ket';
+
 const SOURCE = { source: 'github', repo: 'ket-sh/ket' };
 
 const GUARD_SCRIPT = 'scripts/protect-generated.mts';
@@ -69,7 +71,11 @@ function withGuard(
   return paths.includes(GUARD_SCRIPT) ? { hooks: withGuardHook(recordUnder(held, 'hooks')) } : {};
 }
 
-export function withHarnessRegistered(settings: string, paths: string[]): string {
+function withPluginsEnabled(
+  settings: string,
+  paths: string[],
+  plugins: Record<string, boolean>,
+): string {
   const held = existing(settings);
 
   return `${JSON.stringify(
@@ -79,10 +85,21 @@ export function withHarnessRegistered(settings: string, paths: string[]): string
         ...recordUnder(held, 'extraKnownMarketplaces'),
         [MARKETPLACE]: { source: SOURCE },
       },
-      enabledPlugins: { ...recordUnder(held, 'enabledPlugins'), [PLUGIN]: true },
+      enabledPlugins: { ...recordUnder(held, 'enabledPlugins'), ...plugins },
       ...withGuard(held, paths),
     },
     undefined,
     2,
   )}\n`;
+}
+
+export function withHarnessRegistered(settings: string, paths: string[]): string {
+  return withPluginsEnabled(settings, paths, { [PLUGIN]: true });
+}
+
+export function withHarnessAndWorkflowRegistered(settings: string, paths: string[]): string {
+  return withPluginsEnabled(settings, paths, {
+    [PLUGIN]: true,
+    [WORKFLOW_PLUGIN]: true,
+  });
 }

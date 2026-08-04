@@ -1,4 +1,4 @@
-import { chmod, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, readdir, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -77,6 +77,134 @@ describe('the ket command line', () => {
 
   it('names the command it was asked for when that command does not exist', async () => {
     await expect(runCommand('deploy', [])).rejects.toThrow(/deploy/);
+  });
+});
+
+describe('creating a project that takes the gates without the pipeline', () => {
+  it('records the refusal in the config, so every later gate reads the choice', async () => {
+    const where = join(await scratch(), 'order-service');
+
+    await runCommand('create', [where, '--no-workflow']);
+
+    await expect(readFile(join(where, '.ket/config.ts'), 'utf8')).resolves.toContain(
+      'workflow: false,',
+    );
+  });
+
+  it('opens no board, since nothing will ever file an item onto it', async () => {
+    const where = join(await scratch(), 'order-service');
+
+    await runCommand('create', [where, '--no-workflow']);
+
+    await expect(readFile(join(where, '.ket/BOARD.md'), 'utf8')).rejects.toThrow();
+  });
+
+  it('enables the gates plugin alone, leaving the pipeline bundle out', async () => {
+    const where = join(await scratch(), 'order-service');
+
+    await runCommand('create', [where, '--no-workflow']);
+
+    const settings = await readFile(join(where, '.claude/settings.json'), 'utf8');
+
+    expect(settings).toContain('ket@ket');
+    expect(settings).not.toContain('ket-workflow@ket');
+  });
+
+  it('takes the refusal beside a preset, so a headless run needs no wizard', async () => {
+    const where = join(await scratch(), 'shop-front');
+
+    await runCommand('create', [where, '--preset', 'web', '--no-workflow']);
+
+    await expect(readFile(join(where, '.ket/config.ts'), 'utf8')).resolves.toContain("'.': 'web'");
+  });
+
+  it('leaves no hint token unresolved in anything it installs', async () => {
+    const where = join(await scratch(), 'shop-front');
+
+    await runCommand('create', [where, '--preset', 'web', '--no-workflow']);
+
+    const hero = await readFile(join(where, 'src/app/routes/index.tsx'), 'utf8');
+
+    expect(hero).not.toContain('__HERO_HINT_TEXT__');
+    expect(hero).not.toContain('__HERO_HINT_CODE__');
+  });
+});
+
+describe('creating a project that drives the pipeline, the default', () => {
+  it('records the choice in the config', async () => {
+    const where = join(await scratch(), 'order-service');
+
+    await runCommand('create', [where]);
+
+    await expect(readFile(join(where, '.ket/config.ts'), 'utf8')).resolves.toContain(
+      'workflow: true,',
+    );
+  });
+
+  it('opens the board and a home for items', async () => {
+    const where = join(await scratch(), 'order-service');
+
+    await runCommand('create', [where]);
+
+    await expect(readFile(join(where, '.ket/BOARD.md'), 'utf8')).resolves.toContain('board');
+    await expect(readFile(join(where, '.ket/items/.gitkeep'), 'utf8')).resolves.toBe('');
+  });
+
+  it('enables the pipeline bundle beside the gates', async () => {
+    const where = join(await scratch(), 'order-service');
+
+    await runCommand('create', [where]);
+
+    await expect(readFile(join(where, '.claude/settings.json'), 'utf8')).resolves.toContain(
+      'ket-workflow@ket',
+    );
+  });
+});
+
+describe('the law a created project reads from CLAUDE.md', () => {
+  it('teaches the pipeline when the project takes the workflow', async () => {
+    const where = join(await scratch(), 'shop-front');
+
+    await runCommand('create', [where, '--preset', 'web']);
+
+    await expect(readFile(join(where, 'CLAUDE.md'), 'utf8')).resolves.toContain('/ket:feature');
+    expect(await readdir(where)).not.toContain('CLAUDE.plain.md');
+  });
+
+  it('teaches no pipeline when the project declines it', async () => {
+    const where = join(await scratch(), 'shop-front');
+
+    await runCommand('create', [where, '--preset', 'web', '--no-workflow']);
+
+    const law = await readFile(join(where, 'CLAUDE.md'), 'utf8');
+
+    expect(law).not.toContain('/ket:');
+    expect(await readdir(where)).not.toContain('CLAUDE.plain.md');
+  });
+});
+
+describe('the hero hint a created page shows', () => {
+  it('points at the first feature when the project takes the workflow', async () => {
+    const where = join(await scratch(), 'shop-front');
+
+    await runCommand('create', [where, '--preset', 'web']);
+
+    const hero = await readFile(join(where, 'src/app/routes/index.tsx'), 'utf8');
+
+    expect(hero).toContain('Start your first feature in Claude Code with');
+    expect(hero).toContain('/ket:feature "your prompt"');
+  });
+
+  it('points at the code when the project declines the workflow', async () => {
+    const where = join(await scratch(), 'shop-front');
+
+    await runCommand('create', [where, '--preset', 'web', '--no-workflow']);
+
+    const hero = await readFile(join(where, 'src/app/routes/index.tsx'), 'utf8');
+
+    expect(hero).toContain('Make it yours: edit');
+    expect(hero).toContain('src/entities/welcome');
+    expect(hero).not.toContain('/ket:feature');
   });
 });
 

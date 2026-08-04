@@ -5,6 +5,7 @@ import { basename, relative } from 'node:path';
 
 import type { Configuration, PresetName } from '../../shared/configuration.ts';
 import type { RegisteredPreset } from '../../shared/registry.ts';
+import type { ScaffoldFile } from '../../shared/write-files.ts';
 import type { ProjectNames } from './name-token.ts';
 import type { CreationPlan } from './plan.ts';
 
@@ -14,11 +15,14 @@ import { readTextIfPresent, writeFiles } from '../../shared/write-files.ts';
 import { announce, openCreate } from './announce.ts';
 import { filesToInstall, shippedContents } from './install.ts';
 import { chosenFrom, filesFor, installsFor, namesOffered } from './integrations.ts';
+import { keepingTheStandingLaw, landingThePlainLaw } from './law.ts';
 import { renderManifest } from './manifest.ts';
+import { heroHint } from './name-token.ts';
+import { PIPELINE_COMMANDS } from './pipeline-commands.generated.ts';
 import { planCreation } from './plan.ts';
 import { presetFrom } from './preset.ts';
 import { scaffoldFor } from './scaffold.ts';
-import { withHarnessRegistered } from './settings.ts';
+import { withHarnessAndWorkflowRegistered, withHarnessRegistered } from './settings.ts';
 import { installSkills } from './skills-install.ts';
 import { runsWizard } from './wizard-choice.ts';
 import { askName, runWizard } from './wizard.ts';
@@ -55,6 +59,7 @@ function configuredFromFlags(
   key: string | undefined,
   named: string | undefined,
   asked: string | undefined,
+  workflow: boolean,
 ): Configuration | undefined {
   const chosen = presetFrom(asked);
 
@@ -70,7 +75,7 @@ function configuredFromFlags(
 
   return key === undefined
     ? undefined
-    : { key, targets: { '.': chosen.preset }, integrations: outcome.chosen };
+    : { key, targets: { '.': chosen.preset }, integrations: outcome.chosen, workflow };
 }
 
 async function wizardConfiguration(key: string | undefined): Promise<Configuration | undefined> {
@@ -100,12 +105,16 @@ async function writeScaffold(plan: CreationPlan, configuration: Configuration): 
   const settings = await readTextIfPresent(plan.root, '.claude/settings.json');
   const targets = Object.values(configuration.targets);
   const governing = governingPreset(targets);
-  const project: ProjectNames = { name: basename(plan.root), key: configuration.key };
+  const project: ProjectNames = {
+    name: basename(plan.root),
+    key: configuration.key,
+    hint: heroHint(configuration),
+  };
 
-  const installed = [
+  const installed = lawFor(configuration)([
     ...filesToInstall(targets, project),
     ...filesFor(targets, configuration.integrations),
-  ];
+  ]);
 
   // A preset ignores what its own toolchain downloads and builds, and ket adds
   // the state it keeps. The scaffold writes last, so it appends to the file
@@ -113,20 +122,11 @@ async function writeScaffold(plan: CreationPlan, configuration: Configuration): 
   const ignored = shippedContents(installed, '.gitignore') ?? gitignore;
 
   const written = [
-    {
-      path: 'package.json',
-      contents: renderManifest(project.name, {
-        dependencies: governing.item.dependencies,
-        devDependencies: [
-          ...governing.item.devDependencies,
-          ...installsFor(targets, configuration.integrations),
-        ],
-        scripts: governing.semantics.scripts,
-      }),
-    },
+    manifestEntry(project.name, governing, targets, configuration),
     {
       path: '.claude/settings.json',
-      contents: withHarnessRegistered(
+      contents: settingsFor(
+        configuration,
         settings,
         installed.map((file) => file.path),
       ),
@@ -150,7 +150,37 @@ async function writeScaffold(plan: CreationPlan, configuration: Configuration): 
     governing.semantics.gates,
     first,
     skills,
+    configuration.workflow ? PIPELINE_COMMANDS : [],
   );
+}
+
+function settingsFor(configuration: Configuration, settings: string, paths: string[]): string {
+  return configuration.workflow
+    ? withHarnessAndWorkflowRegistered(settings, paths)
+    : withHarnessRegistered(settings, paths);
+}
+
+function lawFor(configuration: Configuration): (installed: ScaffoldFile[]) => ScaffoldFile[] {
+  return configuration.workflow ? keepingTheStandingLaw : landingThePlainLaw;
+}
+
+function manifestEntry(
+  name: string,
+  governing: RegisteredPreset,
+  targets: PresetName[],
+  configuration: Configuration,
+): ScaffoldFile {
+  return {
+    path: 'package.json',
+    contents: renderManifest(name, {
+      dependencies: governing.item.dependencies,
+      devDependencies: [
+        ...governing.item.devDependencies,
+        ...installsFor(targets, configuration.integrations),
+      ],
+      scripts: governing.semantics.scripts,
+    }),
+  };
 }
 
 const create = defineCommand({
@@ -174,6 +204,11 @@ const create = defineCommand({
       description: 'The kind of project to write',
       required: false,
     },
+    workflow: {
+      type: 'boolean',
+      description: 'Drive the project through the ket pipeline',
+      default: true,
+    },
   },
   async run({ args }) {
     const wizard = runsWizard(isInteractive(), args.preset);
@@ -188,7 +223,7 @@ const create = defineCommand({
     const plan = await planCreation(directory);
     const configuration = wizard
       ? await wizardConfiguration(plan.key)
-      : configuredFromFlags(plan.key, args.with, args.preset);
+      : configuredFromFlags(plan.key, args.with, args.preset, args.workflow);
 
     if (configuration === undefined) {
       throw new Error(`nothing was configured for ${plan.root}`);

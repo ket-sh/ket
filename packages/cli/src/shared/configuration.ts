@@ -6,6 +6,7 @@ export interface Configuration {
   key: string;
   targets: Record<string, PresetName>;
   integrations: string[];
+  workflow: boolean;
 }
 
 function renderIntegrations(names: string[]): string {
@@ -30,6 +31,7 @@ export function renderConfiguration(configuration: Configuration): string {
     `  key: '${configuration.key}',`,
     `  targets: ${renderTargets(configuration.targets)},`,
     `  integrations: ${renderIntegrations(configuration.integrations)},`,
+    `  workflow: ${String(configuration.workflow)},`,
     '};',
     '',
   ].join('\n');

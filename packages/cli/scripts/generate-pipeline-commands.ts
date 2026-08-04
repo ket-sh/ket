@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 const PACKAGE_ROOT = join(import.meta.dirname, '..');
 
-const COMMANDS = join(PACKAGE_ROOT, '..', '..', 'harness', 'commands');
+const COMMANDS = join(PACKAGE_ROOT, '..', '..', 'harness', 'workflow', 'commands');
 
 const GENERATED = join(PACKAGE_ROOT, 'src', 'commands', 'create', 'pipeline-commands.generated.ts');
 

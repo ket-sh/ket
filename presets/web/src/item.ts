@@ -55,6 +55,7 @@ export const WEB_PRESET: PresetItem = {
   ],
   files: [
     ...STANDING_FILES,
+    writes('CLAUDE.plain.md', 'CLAUDE.plain.md'),
     writes('vite.config.ts', 'vite.config.ts'),
     writes('playwright.config.ts', 'playwright.config.ts'),
     writes('steiger.config.ts', 'steiger.config.ts'),

@@ -28,7 +28,7 @@ function shadeAt(from: Shade, to: Shade, step: number, steps: number): Shade {
   ];
 }
 
-function painted(line: string, [red, green, blue]: Shade): string {
+export function painted(line: string, [red, green, blue]: Shade): string {
   return `[38;2;${String(red)};${String(green)};${String(blue)}m${line}[39m`;
 }
 
@@ -40,7 +40,7 @@ export function gradientOver(pieces: string[], from: Shade, to: Shade): string[]
 
 type Role = 'torii' | 'cat' | 'ground';
 
-const TORII_SHADE: Shade = [216, 72, 39];
+export const TORII_SHADE: Shade = [216, 72, 39];
 
 const CAT_SHADE: Shade = [255, 217, 168];
 

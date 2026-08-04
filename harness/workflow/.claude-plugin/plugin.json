@@ -1,0 +1,10 @@
+{
+  "name": "ket-workflow",
+  "displayName": "ket-workflow",
+  "description": "Drives an item from filed to shipped through the ket pipeline",
+  "author": { "name": "ket", "url": "https://github.com/ket-sh/ket" },
+  "homepage": "https://github.com/ket-sh/ket",
+  "repository": "https://github.com/ket-sh/ket",
+  "license": "MIT",
+  "keywords": ["spec-driven", "pipeline", "agents"]
+}

@@ -57,15 +57,6 @@ The `gherkin` skill carries the six checks a scenario passes.
 The `tdd` skill carries the order tests arrive in, and the `vitest` skill covers
 the runner, its config, and its coverage.
 
-## The pipeline
-
-Work is an item. An item lives in `.ket/items/<key>/`, and `.ket/BOARD.md`
-follows from those items rather than from a hand edit. Drive it with
-`/ket:feature`, `/ket:explore`, `/ket:approve`, `/ket:continue`, `/ket:review`,
-`/ket:ship`, and `/ket:status`. The `stages` skill carries the statuses, the
-commands that move an item between them, and the points where the pipeline
-stops for you.
-
 ## The gates
 
 `package.json` holds the chain, `lefthook.yml` arms part of it at commit, and
