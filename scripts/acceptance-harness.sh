@@ -1075,6 +1075,35 @@ test -z "$ARRIVED" ||
   fail "the mid-session look named the same arrival twice: $ARRIVED"
 CHECKED=$((CHECKED + 5))
 
+echo "acceptance: a recorded decision is named once"
+mkdir -p "$PROJECT/.ket/items/OS-2"
+printf '# Use Postgres over MySQL\n\nStatus: accepted\n' >"$PROJECT/.ket/items/OS-2/adr.md"
+looks_at "$PROJECT"
+echo "$LOOKED" | grep -q 'Use Postgres over MySQL' ||
+  fail "the look never named the decision the ADR recorded: ${LOOKED:-nothing}"
+looks_at "$PROJECT"
+echo "$LOOKED" | grep -q 'Use Postgres over MySQL' &&
+  fail "the look named the same decision twice"
+CHECKED=$((CHECKED + 2))
+
+echo "acceptance: a new file kind is named once"
+brought_kind() {
+  local status=0
+
+  BROUGHT="$(printf '{"hook_event_name":"PostToolUse","tool_name":"Write","tool_input":{"file_path":"%s/infra/main.tf"}}' "$PROJECT" |
+    (cd "$PROJECT" && "$KET" gate toolchain) 2>&1)" || status=$?
+  test "$status" -eq 0 ||
+    fail "the kind look failed: exit $status, said: ${BROUGHT:-nothing}"
+}
+
+brought_kind
+echo "$BROUGHT" | grep -q '\.tf' ||
+  fail "the look never named the kind the write brought: ${BROUGHT:-nothing}"
+brought_kind
+echo "$BROUGHT" | grep -q '\.tf' &&
+  fail "the look named the same kind twice"
+CHECKED=$((CHECKED + 2))
+
 echo "acceptance: a repository ket never touched hears nothing about its toolchain"
 printf '{"dependencies":{"drizzle-orm":"0.44.0"}}\n' >"$SANDBOX/package.json"
 looks_at "$SANDBOX"

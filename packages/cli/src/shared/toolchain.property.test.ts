@@ -1,7 +1,7 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
-import { arrivalsIn, recordToolchain, seenIn } from './toolchain.ts';
+import { arrivalsIn, recordAdvised, seenUnder } from './toolchain.ts';
 
 const packageName = fc.stringMatching(/^[a-z][a-z0-9-]{0,11}$/);
 
@@ -10,7 +10,7 @@ const names = fc.array(packageName, { maxLength: 12 });
 function readBack(record: string): string[] {
   const written: unknown = JSON.parse(record);
 
-  return seenIn(written);
+  return seenUnder(written, 'dependencies');
 }
 
 describe('what arrived, over arbitrary toolchains', () => {
@@ -48,7 +48,9 @@ describe('what arrived, over arbitrary toolchains', () => {
     fc.assert(
       fc.property(names, names, names, (declared, shipped, seen) => {
         const arrivals = arrivalsIn({ declared, shipped, seen });
-        const recorded = readBack(recordToolchain([...seen, ...arrivals]));
+        const recorded = readBack(
+          recordAdvised({ dependencies: [...seen, ...arrivals], decisions: [], kinds: [] }),
+        );
 
         expect(arrivalsIn({ declared, shipped, seen: recorded })).toStrictEqual([]);
       }),

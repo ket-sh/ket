@@ -1,6 +1,6 @@
 import type { PresetSemantics } from '@ket/preset';
 
-import { readFile, realpath } from 'node:fs/promises';
+import { readdir, readFile, realpath } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 
 import type { PresetName } from '../../shared/configuration.ts';
@@ -9,6 +9,7 @@ import type { Denial } from './envelope.ts';
 
 import { semanticsOf } from '../../shared/governing.ts';
 import { insideRepository, ketRootFrom, sourceRootsOf, targetsFrom } from '../../shared/locate.ts';
+import { headingIn } from '../../shared/toolchain.ts';
 import { pathFrom } from './envelope.ts';
 
 export const KET_DIRECTORY = '.ket';
@@ -125,6 +126,27 @@ export async function governedPaths(root: string, named: string[]): Promise<stri
   return settledPaths
     .map((path) => insideRepository(root, path))
     .filter((path): path is string => path !== undefined);
+}
+
+const ADR_ROOTS = [join(KET_DIRECTORY, 'items'), join('docs', 'adr')];
+
+async function markdownUnder(directory: string): Promise<string[]> {
+  const entries = await readdir(directory, { withFileTypes: true, recursive: true }).catch(
+    () => [],
+  );
+
+  return entries
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
+    .map((entry) => join(entry.parentPath, entry.name));
+}
+
+export async function adrTitlesUnder(root: string): Promise<string[]> {
+  const found = await Promise.all(ADR_ROOTS.map(async (sub) => markdownUnder(join(root, sub))));
+  const bodies = await Promise.all(
+    found.flat().map(async (path) => readFile(path, 'utf8').catch(() => '')),
+  );
+
+  return bodies.map(headingIn).filter((title): title is string => title !== undefined);
 }
 
 export async function readJson(path: string): Promise<unknown> {

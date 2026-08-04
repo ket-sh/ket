@@ -1,18 +1,19 @@
 import { describe, expect, it } from 'vitest';
 
-import { arrivalsIn, declaredIn, recordToolchain, seenIn } from './toolchain.ts';
+import {
+  arrivalsIn,
+  declaredIn,
+  decisionArrivalsIn,
+  headingIn,
+  recordAdvised,
+  seenUnder,
+} from './toolchain.ts';
 
 const MANIFEST = {
   name: 'order-service',
   dependencies: { citty: '0.2.2', 'drizzle-orm': '0.44.0' },
   devDependencies: { oxlint: '1.76.0' },
 };
-
-function readBack(record: string): string[] {
-  const written: unknown = JSON.parse(record);
-
-  return seenIn(written);
-}
 
 describe('reading the dependencies a project declares', () => {
   it('names what the project runs and what checks it, since both bring rules', () => {
@@ -40,25 +41,33 @@ describe('reading the dependencies a project declares', () => {
   });
 });
 
-describe('reading what ket has already looked at', () => {
-  it('recovers every name it recorded last time', () => {
-    expect(seenIn({ seen: ['drizzle-orm', 'redis'] })).toStrictEqual(['drizzle-orm', 'redis']);
+describe('reading what ket has already looked at, per section', () => {
+  it('recovers the names recorded under a section', () => {
+    expect(
+      seenUnder({ dependencies: ['drizzle-orm'], decisions: [], kinds: [] }, 'dependencies'),
+    ).toStrictEqual(['drizzle-orm']);
   });
 
   it('reads nothing from a record no project has written yet', () => {
-    expect(seenIn(undefined)).toStrictEqual([]);
+    expect(seenUnder(undefined, 'decisions')).toStrictEqual([]);
   });
 
-  it('reads nothing from a record that names nothing', () => {
-    expect(seenIn({})).toStrictEqual([]);
+  it('reads nothing from a section that names nothing', () => {
+    expect(seenUnder({ kinds: [] }, 'kinds')).toStrictEqual([]);
   });
 
   it('leaves out an entry that is not a name', () => {
-    expect(seenIn({ seen: ['drizzle-orm', 7] })).toStrictEqual(['drizzle-orm']);
+    expect(seenUnder({ kinds: ['.tf', 7] }, 'kinds')).toStrictEqual(['.tf']);
   });
 
-  it('reads nothing from a record whose names are not a list', () => {
-    expect(seenIn({ seen: 'drizzle-orm' })).toStrictEqual([]);
+  it('reads nothing from a section that is not a list', () => {
+    expect(seenUnder({ decisions: 'a decision' }, 'decisions')).toStrictEqual([]);
+  });
+
+  it('reads one section apart from another', () => {
+    const record = { dependencies: ['redis'], decisions: ['a choice'], kinds: ['.tf'] };
+
+    expect(seenUnder(record, 'decisions')).toStrictEqual(['a choice']);
   });
 });
 
@@ -124,27 +133,120 @@ describe('what arrived since ket last looked', () => {
   });
 });
 
-describe('recording what it has looked at', () => {
-  it('records a name so the next session finds it seen', () => {
-    expect(readBack(recordToolchain(['drizzle-orm']))).toStrictEqual(['drizzle-orm']);
+describe('the decision an ADR heading carries', () => {
+  it('reads the sentence the first heading states', () => {
+    expect(headingIn('# Use Postgres over MySQL\n\nStatus: accepted\n')).toBe(
+      'Use Postgres over MySQL',
+    );
   });
 
-  it('records one entry per name, however many times it was given one', () => {
-    expect(readBack(recordToolchain(['redis', 'redis']))).toStrictEqual(['redis']);
+  it('trims the space around the sentence', () => {
+    expect(headingIn('#   Use Postgres   \n')).toBe('Use Postgres');
   });
 
-  it('records them in a stable order, so a diff shows what changed', () => {
-    expect(readBack(recordToolchain(['redis', 'drizzle-orm']))).toStrictEqual([
-      'drizzle-orm',
-      'redis',
+  it('reads the first heading, not a later one', () => {
+    expect(headingIn('# The decision\n\n# A later heading\n')).toBe('The decision');
+  });
+
+  it('reads no decision from a subheading, which opens with more than one hash', () => {
+    expect(headingIn('## Context\n\nsome prose\n')).toBeUndefined();
+  });
+
+  it('reads no decision from a record with no heading at all', () => {
+    expect(headingIn('just prose, no heading\n')).toBeUndefined();
+  });
+});
+
+describe('the decisions that arrived since ket last looked', () => {
+  it('names a decision the project recorded', () => {
+    expect(decisionArrivalsIn({ titles: ['Use Postgres over MySQL'], seen: [] })).toStrictEqual([
+      'Use Postgres over MySQL',
     ]);
   });
 
-  it('ends the record with a newline, since a file in a repository does', () => {
-    expect(recordToolchain(['redis']).endsWith('\n')).toBe(true);
+  it('says nothing about a decision it has already named once', () => {
+    expect(
+      decisionArrivalsIn({
+        titles: ['Use Postgres over MySQL'],
+        seen: ['Use Postgres over MySQL'],
+      }),
+    ).toStrictEqual([]);
   });
 
-  it('writes a name on its own line, so a diff names what arrived', () => {
-    expect(recordToolchain(['redis'])).toContain('\n  "seen": [\n    "redis"\n  ]');
+  it('names a decision once, however many records carry the same sentence', () => {
+    expect(decisionArrivalsIn({ titles: ['A choice', 'A choice'], seen: [] })).toStrictEqual([
+      'A choice',
+    ]);
+  });
+
+  it('names them in a stable order, so two sessions read the same way', () => {
+    expect(decisionArrivalsIn({ titles: ['B choice', 'A choice'], seen: [] })).toStrictEqual([
+      'A choice',
+      'B choice',
+    ]);
+  });
+
+  it('keeps a title at the length a reply still carries', () => {
+    const atLimit = 'x'.repeat(200);
+
+    expect(decisionArrivalsIn({ titles: [atLimit], seen: [] })).toStrictEqual([atLimit]);
+  });
+
+  it('leaves out a title past the length a reply should carry', () => {
+    const tooLong = 'x'.repeat(201);
+
+    expect(decisionArrivalsIn({ titles: [tooLong, 'A choice'], seen: [] })).toStrictEqual([
+      'A choice',
+    ]);
+  });
+
+  it('leaves out a blank title, since an ADR with no heading decides nothing named', () => {
+    expect(decisionArrivalsIn({ titles: ['', '   ', 'A choice'], seen: [] })).toStrictEqual([
+      'A choice',
+    ]);
+  });
+});
+
+describe('recording what it has looked at, in three sections', () => {
+  function readBackUnder(
+    record: string,
+    section: 'dependencies' | 'decisions' | 'kinds',
+  ): string[] {
+    return seenUnder(JSON.parse(record), section);
+  }
+
+  it('records a name under the section it belongs to', () => {
+    const record = recordAdvised({ dependencies: ['drizzle-orm'], decisions: [], kinds: [] });
+
+    expect(readBackUnder(record, 'dependencies')).toStrictEqual(['drizzle-orm']);
+  });
+
+  it('keeps the sections apart', () => {
+    const record = recordAdvised({
+      dependencies: ['redis'],
+      decisions: ['a choice'],
+      kinds: ['.tf'],
+    });
+
+    expect(readBackUnder(record, 'kinds')).toStrictEqual(['.tf']);
+    expect(readBackUnder(record, 'decisions')).toStrictEqual(['a choice']);
+  });
+
+  it('records one entry per name, however many times it was given one', () => {
+    const record = recordAdvised({ dependencies: ['redis', 'redis'], decisions: [], kinds: [] });
+
+    expect(readBackUnder(record, 'dependencies')).toStrictEqual(['redis']);
+  });
+
+  it('records them in a stable order, so a diff shows what changed', () => {
+    const record = recordAdvised({ dependencies: [], decisions: [], kinds: ['.ts', '.tf'] });
+
+    expect(readBackUnder(record, 'kinds')).toStrictEqual(['.tf', '.ts']);
+  });
+
+  it('ends the record with a newline, since a file in a repository does', () => {
+    expect(
+      recordAdvised({ dependencies: ['redis'], decisions: [], kinds: [] }).endsWith('\n'),
+    ).toBe(true);
   });
 });

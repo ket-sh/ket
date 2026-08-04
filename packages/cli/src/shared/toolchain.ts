@@ -1,5 +1,3 @@
-const SEEN = 'seen';
-
 const DECLARING = ['dependencies', 'devDependencies'];
 
 const INDENT = 2;
@@ -46,8 +44,10 @@ export function declaredIn(manifest: unknown): string[] {
   return isRecord(manifest) ? DECLARING.flatMap((field) => keysOf(manifest[field])) : [];
 }
 
-export function seenIn(record: unknown): string[] {
-  return isRecord(record) ? namesOf(record[SEEN]) : [];
+export type AdvisedSection = 'dependencies' | 'decisions' | 'kinds';
+
+export function seenUnder(record: unknown, section: AdvisedSection): string[] {
+  return isRecord(record) ? namesOf(record[section]) : [];
 }
 
 export function arrivalsIn(look: ToolchainLook): string[] {
@@ -58,6 +58,50 @@ export function arrivalsIn(look: ToolchainLook): string[] {
   );
 }
 
-export function recordToolchain(names: string[]): string {
-  return `${JSON.stringify({ [SEEN]: inOneOrder(names) }, undefined, INDENT)}\n`;
+const HEADING_MARK = '# ';
+
+export function headingIn(markdown: string): string | undefined {
+  const heading = markdown.split('\n').find((line) => line.startsWith(HEADING_MARK));
+
+  return heading === undefined ? undefined : heading.slice(HEADING_MARK.length).trim();
+}
+
+const TITLE_LIMIT = 200;
+
+function carriesInAReply(title: string): boolean {
+  return title.trim() !== '' && title.length <= TITLE_LIMIT;
+}
+
+export function decisionArrivalsIn(look: { titles: string[]; seen: string[] }): string[] {
+  const seen = new Set(look.seen);
+
+  return inOneOrder(look.titles.filter((title) => !seen.has(title) && carriesInAReply(title)));
+}
+
+export function kindOf(path: string): string | undefined {
+  const dot = path.lastIndexOf('.');
+  const slash = path.lastIndexOf('/');
+
+  return dot > slash + 1 ? path.slice(dot) : undefined;
+}
+
+export function kindArrivalsIn(look: {
+  written: string | undefined;
+  shipped: string[];
+  seen: string[];
+}): string[] {
+  const kind = look.written === undefined ? undefined : kindOf(look.written);
+  const covered = new Set([...look.shipped, ...look.seen]);
+
+  return kind === undefined || covered.has(kind) ? [] : [kind];
+}
+
+export function recordAdvised(sections: Record<AdvisedSection, string[]>): string {
+  const ordered = {
+    dependencies: inOneOrder(sections.dependencies),
+    decisions: inOneOrder(sections.decisions),
+    kinds: inOneOrder(sections.kinds),
+  };
+
+  return `${JSON.stringify(ordered, undefined, INDENT)}\n`;
 }
