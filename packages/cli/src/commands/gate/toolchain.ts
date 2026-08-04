@@ -1,3 +1,5 @@
+import type { PresetItem } from '@ket/preset';
+
 import { dependencyNamesOf, fileKindsOf } from '@ket/preset';
 import { defineCommand } from 'citty';
 import { writeFile } from 'node:fs/promises';
@@ -30,24 +32,23 @@ import { proposalEventFrom, proposalReply } from './proposal.ts';
 // and only what arrived since ket last looked is worth a proposal. The record
 // is written when the gate answers, and never otherwise, so an arrival is put
 // to a session once.
-async function lookAtToolchain(
+interface Sections {
+  dependencies: string[];
+  decisions: string[];
+  kinds: string[];
+}
+
+interface Advised {
+  seen: Sections;
+  arrivals: Sections;
+}
+
+async function advisedArrivals(
+  root: string,
+  governing: PresetItem,
   envelope: unknown,
-  event: ProposalEvent,
-): Promise<ProposalReply | undefined> {
-  const root = await ketRootFrom(process.cwd());
-
-  if (root === undefined) {
-    return undefined;
-  }
-
-  const governing = await presetOf(root);
-
-  if (governing === undefined) {
-    return undefined;
-  }
-
-  const record = join(root, KET_DIRECTORY, TOOLCHAIN);
-  const held = await readJson(record);
+): Promise<Advised> {
+  const held = await readJson(join(root, KET_DIRECTORY, TOOLCHAIN));
   const seen = {
     dependencies: seenUnder(held, 'dependencies'),
     decisions: seenUnder(held, 'decisions'),
@@ -66,19 +67,44 @@ async function lookAtToolchain(
       seen: seen.kinds,
     }),
   };
-  const reply = proposalReply(arrivals, event);
+
+  return { seen, arrivals };
+}
+
+function withArrivalsRecorded(advised: Advised): Sections {
+  return {
+    dependencies: [...advised.seen.dependencies, ...advised.arrivals.dependencies],
+    decisions: [...advised.seen.decisions, ...advised.arrivals.decisions],
+    kinds: [...advised.seen.kinds, ...advised.arrivals.kinds],
+  };
+}
+
+async function lookAtToolchain(
+  envelope: unknown,
+  event: ProposalEvent,
+): Promise<ProposalReply | undefined> {
+  const root = await ketRootFrom(process.cwd());
+
+  if (root === undefined) {
+    return undefined;
+  }
+
+  const governing = await presetOf(root);
+
+  if (governing === undefined) {
+    return undefined;
+  }
+
+  const advised = await advisedArrivals(root, governing, envelope);
+  const reply = proposalReply(advised.arrivals, event);
 
   if (reply === undefined) {
     return undefined;
   }
 
   await writeFile(
-    record,
-    recordAdvised({
-      dependencies: [...seen.dependencies, ...arrivals.dependencies],
-      decisions: [...seen.decisions, ...arrivals.decisions],
-      kinds: [...seen.kinds, ...arrivals.kinds],
-    }),
+    join(root, KET_DIRECTORY, TOOLCHAIN),
+    recordAdvised(withArrivalsRecorded(advised)),
     'utf8',
   );
 

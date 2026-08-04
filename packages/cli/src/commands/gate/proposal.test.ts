@@ -25,12 +25,6 @@ function contextOf(
 }
 
 describe('proposing a machine and a skill for what a project brought', () => {
-  it('says nothing when nothing arrived, so a look about nothing stays quiet', () => {
-    expect(
-      proposalReply({ dependencies: [], decisions: [], kinds: [] }, 'SessionStart'),
-    ).toBeUndefined();
-  });
-
   it('names a dependency under its heading and sends the session down both routes', () => {
     expect(contextOf(only(['drizzle-orm']), 'SessionStart')).toBe(
       `new dependencies since ket last looked: drizzle-orm\n\n${ASKING}`,
@@ -70,6 +64,14 @@ describe('proposing a machine and a skill for what a project brought', () => {
     expect(lineWith('A choice')).not.toBe(lineWith('.tf'));
     expect(lineWith('redis')).toBeDefined();
     expect(lineWith('.tf')).toBeDefined();
+  });
+});
+
+describe('what a proposal carries and what it refuses to', () => {
+  it('says nothing when nothing arrived, so a look about nothing stays quiet', () => {
+    expect(
+      proposalReply({ dependencies: [], decisions: [], kinds: [] }, 'SessionStart'),
+    ).toBeUndefined();
   });
 
   it('answers in the shape of the event that asked', () => {
