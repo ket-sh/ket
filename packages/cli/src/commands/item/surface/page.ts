@@ -45,7 +45,12 @@ const STAGES: readonly string[] = [
 const DESIGN_STAGES = new Set(['designing', 'awaiting-approval']);
 
 const escaped = (text: string): string =>
-  text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+  text
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
 
 function defaultSection(status: string, artifacts: SurfaceArtifacts): string {
   if (status === 'triaged') {

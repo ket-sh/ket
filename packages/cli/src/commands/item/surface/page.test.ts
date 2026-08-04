@@ -91,6 +91,20 @@ describe('the navigation the artifacts decide', () => {
     expect(page).toContain('landing-shell.feature');
   });
 
+  it('keeps a quoted feature name inside the attribute it labels', () => {
+    const page = assemblePage(
+      surfaceOf({
+        artifacts: {
+          features: [{ name: 'evil" onclick="alert(1)', source: 'Feature: Evil\n' }],
+        },
+      }),
+      { sessionKey: KEY },
+    );
+
+    expect(page).not.toContain('onclick="alert(1)"');
+    expect(page).toContain('&quot;');
+  });
+
   it('gives every navigation entry a section to land on', () => {
     const page = assemblePage(surfaceOf(), { sessionKey: KEY });
     const targets = [...page.matchAll(/data-section="([a-z-]+)"/g)].map((found) => found[1]);
