@@ -3,9 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { proposalEventFrom, proposalReply } from './proposal.ts';
 
 const ASKING =
-  'Each one brings a rule this project would otherwise keep by hand. Use the ' +
-  'ket:mechanical-checks skill: research the check that would keep it, judge whether it earns ' +
-  'its cost, and propose it. ket proposes, the user decides.';
+  'Each one brings a rule this project would otherwise keep by hand, and a craft a skill can ' +
+  'teach. Use the ket:mechanical-checks skill: research the check that would keep the rule, ' +
+  'judge whether it earns its cost, and propose it. Use the find-skills skill: look for a skill ' +
+  'that teaches the dependency, and propose installing it, with skills-lock.json recording a ' +
+  'yes. Each proposal stands on its own. ket proposes, the user decides.';
 
 describe('proposing a machine for a rule a dependency brought', () => {
   it('says nothing when nothing arrived, so a session about nothing stays quiet', () => {
