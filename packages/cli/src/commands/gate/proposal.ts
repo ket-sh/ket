@@ -1,3 +1,5 @@
+import { eventNameFrom } from './envelope.ts';
+
 const HEADING = 'new since ket last looked:';
 
 const ASKING =
@@ -20,14 +22,8 @@ export interface ProposalReply {
 
 const MID_SESSION = 'PostToolUse';
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
-
 export function proposalEventFrom(envelope: unknown): ProposalEvent {
-  return isRecord(envelope) && envelope['hook_event_name'] === MID_SESSION
-    ? MID_SESSION
-    : 'SessionStart';
+  return eventNameFrom(envelope) === MID_SESSION ? MID_SESSION : 'SessionStart';
 }
 
 export function proposalReply(arrivals: string[], event: ProposalEvent): ProposalReply | undefined {

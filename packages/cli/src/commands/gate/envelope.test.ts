@@ -3,11 +3,30 @@ import { describe, expect, it } from 'vitest';
 import {
   actingTranscript,
   commandFrom,
+  eventNameFrom,
   overriddenBy,
   pathFrom,
   pointedAt,
   verdictReply,
 } from './envelope.ts';
+
+describe('reading which event a hook fired for', () => {
+  it('names the event the envelope carries', () => {
+    expect(eventNameFrom({ hook_event_name: 'PostToolUse' })).toBe('PostToolUse');
+  });
+
+  it('reads nothing from an envelope that names no event', () => {
+    expect(eventNameFrom({})).toBeUndefined();
+  });
+
+  it('reads nothing from a payload that is not an object', () => {
+    expect(eventNameFrom(undefined)).toBeUndefined();
+  });
+
+  it('reads nothing from an event spelled as anything but a string', () => {
+    expect(eventNameFrom({ hook_event_name: 7 })).toBeUndefined();
+  });
+});
 
 describe('whether the runtime has already overridden the stop hook', () => {
   it('reads the flag a stop envelope carries once a hook is driving the turn', () => {
