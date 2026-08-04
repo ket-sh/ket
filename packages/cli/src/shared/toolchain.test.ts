@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { arrivalsIn, declaredIn, recordAdvised, seenUnder } from './toolchain.ts';
+import {
+  arrivalsIn,
+  declaredIn,
+  decisionArrivalsIn,
+  recordAdvised,
+  seenUnder,
+} from './toolchain.ts';
 
 const MANIFEST = {
   name: 'order-service',
@@ -123,6 +129,50 @@ describe('what arrived since ket last looked', () => {
     const tooLong = 'a'.repeat(215);
 
     expect(arrivalsIn({ declared: [tooLong, 'ok'], shipped: [], seen: [] })).toStrictEqual(['ok']);
+  });
+});
+
+describe('the decisions that arrived since ket last looked', () => {
+  it('names a decision the project recorded', () => {
+    expect(decisionArrivalsIn({ titles: ['Use Postgres over MySQL'], seen: [] })).toStrictEqual([
+      'Use Postgres over MySQL',
+    ]);
+  });
+
+  it('says nothing about a decision it has already named once', () => {
+    expect(
+      decisionArrivalsIn({
+        titles: ['Use Postgres over MySQL'],
+        seen: ['Use Postgres over MySQL'],
+      }),
+    ).toStrictEqual([]);
+  });
+
+  it('names a decision once, however many records carry the same sentence', () => {
+    expect(decisionArrivalsIn({ titles: ['A choice', 'A choice'], seen: [] })).toStrictEqual([
+      'A choice',
+    ]);
+  });
+
+  it('names them in a stable order, so two sessions read the same way', () => {
+    expect(decisionArrivalsIn({ titles: ['B choice', 'A choice'], seen: [] })).toStrictEqual([
+      'A choice',
+      'B choice',
+    ]);
+  });
+
+  it('leaves out a title past the length a reply should carry', () => {
+    const tooLong = 'x'.repeat(201);
+
+    expect(decisionArrivalsIn({ titles: [tooLong, 'A choice'], seen: [] })).toStrictEqual([
+      'A choice',
+    ]);
+  });
+
+  it('leaves out a blank title, since an ADR with no heading decides nothing named', () => {
+    expect(decisionArrivalsIn({ titles: ['', '   ', 'A choice'], seen: [] })).toStrictEqual([
+      'A choice',
+    ]);
   });
 });
 

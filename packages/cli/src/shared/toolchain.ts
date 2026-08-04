@@ -58,6 +58,18 @@ export function arrivalsIn(look: ToolchainLook): string[] {
   );
 }
 
+const TITLE_LIMIT = 200;
+
+function carriesInAReply(title: string): boolean {
+  return title.trim() !== '' && title.length <= TITLE_LIMIT;
+}
+
+export function decisionArrivalsIn(look: { titles: string[]; seen: string[] }): string[] {
+  const seen = new Set(look.seen);
+
+  return inOneOrder(look.titles.filter((title) => !seen.has(title) && carriesInAReply(title)));
+}
+
 export function recordAdvised(sections: Record<AdvisedSection, string[]>): string {
   const ordered = {
     dependencies: inOneOrder(sections.dependencies),
