@@ -7,21 +7,35 @@ const ASKING =
 
 const BETWEEN = ', ';
 
+export type ProposalEvent = 'SessionStart' | 'PostToolUse';
+
 export interface ProposalReply {
   hookSpecificOutput: {
-    hookEventName: 'SessionStart';
+    hookEventName: ProposalEvent;
     additionalContext: string;
   };
 }
 
-export function proposalReply(arrivals: string[]): ProposalReply | undefined {
+const MID_SESSION = 'PostToolUse';
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+export function proposalEventFrom(envelope: unknown): ProposalEvent {
+  return isRecord(envelope) && envelope['hook_event_name'] === MID_SESSION
+    ? MID_SESSION
+    : 'SessionStart';
+}
+
+export function proposalReply(arrivals: string[], event: ProposalEvent): ProposalReply | undefined {
   if (arrivals.length === 0) {
     return undefined;
   }
 
   return {
     hookSpecificOutput: {
-      hookEventName: 'SessionStart',
+      hookEventName: event,
       additionalContext: `${HEADING} ${arrivals.join(BETWEEN)}\n\n${ASKING}`,
     },
   };
