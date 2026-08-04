@@ -70,6 +70,24 @@ export function decisionArrivalsIn(look: { titles: string[]; seen: string[] }): 
   return inOneOrder(look.titles.filter((title) => !seen.has(title) && carriesInAReply(title)));
 }
 
+export function kindOf(path: string): string | undefined {
+  const name = path.slice(path.lastIndexOf('/') + 1);
+  const dot = name.lastIndexOf('.');
+
+  return dot > 0 ? name.slice(dot) : undefined;
+}
+
+export function kindArrivalsIn(look: {
+  written: string | undefined;
+  shipped: string[];
+  seen: string[];
+}): string[] {
+  const kind = look.written === undefined ? undefined : kindOf(look.written);
+  const covered = new Set([...look.shipped, ...look.seen]);
+
+  return kind === undefined || covered.has(kind) ? [] : [kind];
+}
+
 export function recordAdvised(sections: Record<AdvisedSection, string[]>): string {
   const ordered = {
     dependencies: inOneOrder(sections.dependencies),
