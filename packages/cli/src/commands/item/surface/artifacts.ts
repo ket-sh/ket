@@ -1,0 +1,45 @@
+import { readFile, readdir } from 'node:fs/promises';
+import { basename, join } from 'node:path';
+
+import type { ItemSurface } from './page.ts';
+
+const yamlLine = (source: string, field: string): string | undefined =>
+  new RegExp(`^${field}: (.+)$`, 'm').exec(source)?.[1]?.trim();
+
+export async function readArtifact(itemDir: string, name: string): Promise<string | undefined> {
+  return readFile(join(itemDir, name), 'utf8').then(
+    (content) => content,
+    () => undefined,
+  );
+}
+
+async function featuresOf(itemDir: string): Promise<{ name: string; source: string }[]> {
+  const names = await readdir(join(itemDir, 'features')).catch(() => []);
+
+  return Promise.all(
+    names
+      .filter((name) => name.endsWith('.feature'))
+      .map(async (name) => ({
+        name,
+        source: (await readArtifact(itemDir, join('features', name))) ?? '',
+      })),
+  );
+}
+
+export async function readSurface(itemDir: string): Promise<ItemSurface> {
+  const manifest = (await readArtifact(itemDir, 'item.yaml')) ?? '';
+
+  return {
+    key: yamlLine(manifest, 'key') ?? basename(itemDir),
+    title: yamlLine(manifest, 'title') ?? basename(itemDir),
+    status: yamlLine(manifest, 'status') ?? 'triaged',
+    artifacts: {
+      spec: await readArtifact(itemDir, 'spec.md'),
+      design: await readArtifact(itemDir, 'solution-design.md'),
+      adr: await readArtifact(itemDir, 'adr.md'),
+      brief: await readArtifact(itemDir, 'change-brief.md'),
+      findings: await readArtifact(itemDir, 'findings.md'),
+      features: await featuresOf(itemDir),
+    },
+  };
+}
