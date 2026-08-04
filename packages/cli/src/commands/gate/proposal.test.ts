@@ -58,6 +58,10 @@ describe('reading which event asked for the look', () => {
     expect(proposalEventFrom(undefined)).toBe('SessionStart');
   });
 
+  it('falls back to session start for an envelope that is no record at all', () => {
+    expect(proposalEventFrom(null)).toBe('SessionStart');
+  });
+
   it('falls back to session start for an event the reply has no shape for', () => {
     expect(proposalEventFrom({ hook_event_name: 'Stop' })).toBe('SessionStart');
   });
