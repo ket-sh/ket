@@ -7,7 +7,15 @@ export { contentReaderFor } from './contents.ts';
 export { writeContentsModule } from './contents-module.ts';
 export { harnessSkillsOf } from './harness-skills.ts';
 export { brokenInvariantsOf } from './invariants.ts';
-export { copies, dependencyNamesOf, filesOf, installsOf, reachesNothing, writes } from './item.ts';
+export {
+  copies,
+  dependencyNamesOf,
+  fileKindsOf,
+  filesOf,
+  installsOf,
+  reachesNothing,
+  writes,
+} from './item.ts';
 export { repositoryRootFrom } from './repository-root.ts';
 export {
   adapterPatternsOf,
