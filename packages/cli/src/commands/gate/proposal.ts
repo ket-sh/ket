@@ -1,3 +1,5 @@
+import type { AdvisedSections } from '../../shared/toolchain.ts';
+
 import { eventNameFrom } from './envelope.ts';
 
 const ASKING =
@@ -18,12 +20,6 @@ export interface ProposalReply {
   };
 }
 
-interface Arrivals {
-  dependencies: string[];
-  decisions: string[];
-  kinds: string[];
-}
-
 const MID_SESSION = 'PostToolUse';
 
 export function proposalEventFrom(envelope: unknown): ProposalEvent {
@@ -34,7 +30,7 @@ function lineFor(heading: string, names: string[]): string[] {
   return names.length === 0 ? [] : [`${heading} ${names.join(BETWEEN)}`];
 }
 
-function headingsFor(arrivals: Arrivals): string {
+function headingsFor(arrivals: AdvisedSections): string {
   return [
     ...lineFor('new dependencies since ket last looked:', arrivals.dependencies),
     ...lineFor('decisions this project recorded:', arrivals.decisions),
@@ -42,7 +38,10 @@ function headingsFor(arrivals: Arrivals): string {
   ].join('\n');
 }
 
-export function proposalReply(arrivals: Arrivals, event: ProposalEvent): ProposalReply | undefined {
+export function proposalReply(
+  arrivals: AdvisedSections,
+  event: ProposalEvent,
+): ProposalReply | undefined {
   const headings = headingsFor(arrivals);
 
   if (headings === '') {

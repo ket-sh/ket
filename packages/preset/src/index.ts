@@ -10,6 +10,7 @@ export { brokenInvariantsOf } from './invariants.ts';
 export {
   copies,
   dependencyNamesOf,
+  fileKindOf,
   fileKindsOf,
   filesOf,
   installsOf,
