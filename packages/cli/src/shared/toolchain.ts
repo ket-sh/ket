@@ -1,3 +1,5 @@
+import { fileKindOf } from '@ket/preset';
+
 const DECLARING = ['dependencies', 'devDependencies'];
 
 const INDENT = 2;
@@ -46,6 +48,12 @@ export function declaredIn(manifest: unknown): string[] {
 
 export type AdvisedSection = 'dependencies' | 'decisions' | 'kinds';
 
+export interface AdvisedSections {
+  dependencies: string[];
+  decisions: string[];
+  kinds: string[];
+}
+
 export function seenUnder(record: unknown, section: AdvisedSection): string[] {
   return isRecord(record) ? namesOf(record[section]) : [];
 }
@@ -68,8 +76,26 @@ export function headingIn(markdown: string): string | undefined {
 
 const TITLE_LIMIT = 200;
 
+// A title reaches a proposal the session reads line by line, so a control
+// character or a Unicode line separator would fake structure the heading never had.
+const FIRST_PRINTABLE = 0x20;
+
+const LINE_SEPARATORS = new Set([0x2028, 0x2029]);
+
+function readsAsOneLine(title: string): boolean {
+  for (const character of title) {
+    const code = character.codePointAt(0) ?? 0;
+
+    if (code < FIRST_PRINTABLE || LINE_SEPARATORS.has(code)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 function carriesInAReply(title: string): boolean {
-  return title.trim() !== '' && title.length <= TITLE_LIMIT;
+  return title.trim() !== '' && title.length <= TITLE_LIMIT && readsAsOneLine(title);
 }
 
 export function decisionArrivalsIn(look: { titles: string[]; seen: string[] }): string[] {
@@ -78,25 +104,18 @@ export function decisionArrivalsIn(look: { titles: string[]; seen: string[] }): 
   return inOneOrder(look.titles.filter((title) => !seen.has(title) && carriesInAReply(title)));
 }
 
-export function kindOf(path: string): string | undefined {
-  const dot = path.lastIndexOf('.');
-  const slash = path.lastIndexOf('/');
-
-  return dot > slash + 1 ? path.slice(dot) : undefined;
-}
-
 export function kindArrivalsIn(look: {
   written: string | undefined;
   shipped: string[];
   seen: string[];
 }): string[] {
-  const kind = look.written === undefined ? undefined : kindOf(look.written);
+  const kind = look.written === undefined ? undefined : fileKindOf(look.written);
   const covered = new Set([...look.shipped, ...look.seen]);
 
   return kind === undefined || covered.has(kind) ? [] : [kind];
 }
 
-export function recordAdvised(sections: Record<AdvisedSection, string[]>): string {
+export function recordAdvised(sections: AdvisedSections): string {
   const ordered = {
     dependencies: inOneOrder(sections.dependencies),
     decisions: inOneOrder(sections.decisions),

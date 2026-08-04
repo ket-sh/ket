@@ -5,6 +5,7 @@ import { defineCommand } from 'citty';
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import type { AdvisedSections } from '../../shared/toolchain.ts';
 import type { ProposalEvent, ProposalReply } from './proposal.ts';
 
 import { presetOf } from '../../shared/governing.ts';
@@ -28,19 +29,9 @@ import {
 import { pathFrom } from './envelope.ts';
 import { proposalEventFrom, proposalReply } from './proposal.ts';
 
-// Each source carries rules and craft a project would otherwise keep by hand,
-// and only what arrived since ket last looked is worth a proposal. The record
-// is written when the gate answers, and never otherwise, so an arrival is put
-// to a session once.
-interface Sections {
-  dependencies: string[];
-  decisions: string[];
-  kinds: string[];
-}
-
 interface Advised {
-  seen: Sections;
-  arrivals: Sections;
+  seen: AdvisedSections;
+  arrivals: AdvisedSections;
 }
 
 async function advisedArrivals(
@@ -71,7 +62,7 @@ async function advisedArrivals(
   return { seen, arrivals };
 }
 
-function withArrivalsRecorded(advised: Advised): Sections {
+function withArrivalsRecorded(advised: Advised): AdvisedSections {
   return {
     dependencies: [...advised.seen.dependencies, ...advised.arrivals.dependencies],
     decisions: [...advised.seen.decisions, ...advised.arrivals.decisions],

@@ -66,15 +66,28 @@ export function everyFileOf(item: PresetItem): PresetFile[] {
   return [...item.files, ...item.integrations.flatMap(filesOf)];
 }
 
-function extensionOf(name: string): string | undefined {
-  const dot = name.lastIndexOf('.');
+// A kind reaches a proposal the session reads, so a write path cannot name it
+// anything the shape here does not allow.
+const EXTENSION_BODY = /^[A-Za-z0-9]+$/u;
 
-  return dot > 0 ? name.slice(dot) : undefined;
+const EXTENSION_LIMIT = 16;
+
+export function fileKindOf(path: string): string | undefined {
+  const dot = path.lastIndexOf('.');
+  const slash = path.lastIndexOf('/');
+
+  if (dot <= slash + 1) {
+    return undefined;
+  }
+
+  const body = path.slice(dot + 1);
+
+  return body.length <= EXTENSION_LIMIT && EXTENSION_BODY.test(body) ? path.slice(dot) : undefined;
 }
 
 export function fileKindsOf(item: PresetItem): string[] {
   const kinds = everyFileOf(item)
-    .map((file) => extensionOf(file.target.slice(file.target.lastIndexOf('/') + 1)))
+    .map((file) => fileKindOf(file.target))
     .filter((kind): kind is string => kind !== undefined);
 
   return [...new Set(kinds)].toSorted();
