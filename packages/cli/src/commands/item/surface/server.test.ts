@@ -89,7 +89,9 @@ describe('the key every request carries', () => {
     expect(reply.status).toBe(200);
     expect(await reply.text()).toContain('The sample item');
   });
+});
 
+describe('the diagram the page draws', () => {
   it.skipIf(spawnSync('d2', ['--version']).error !== undefined)(
     'draws the architecture beside the prose when a source exists',
     async () => {
@@ -102,6 +104,21 @@ describe('the key every request carries', () => {
     },
   );
 
+  it('answers a failing diagram render with the refusal instead of hanging', async () => {
+    await writeFile(join(itemDir, 'architecture.d2'), 'gate -> surface\n');
+
+    const handle = await startSurface(itemDir, { d2Binary: 'ket-no-such-d2' });
+
+    open.push(handle);
+
+    const reply = await fetch(handle.address);
+
+    expect(reply.status).toBe(500);
+    expect(await reply.text()).toContain('install d2');
+  });
+});
+
+describe('the wireframe the page frames', () => {
   it('serves the wireframe behind the key', async () => {
     await writeFile(join(itemDir, 'ui-design.html'), '<html><body>the mock</body></html>');
 

@@ -16,6 +16,7 @@ import { assemblePage } from './page.ts';
 
 export interface SurfaceOptions {
   idleMs?: number;
+  d2Binary?: string;
 }
 
 export interface SurfaceHandle {
@@ -78,6 +79,7 @@ async function serveWireframe(itemDir: string, response: ServerResponse): Promis
 async function respond(
   itemDir: string,
   sessionKey: string,
+  d2Binary: string,
   request: IncomingMessage,
   response: ServerResponse,
 ): Promise<void> {
@@ -97,11 +99,24 @@ async function respond(
 
   const surface = await readSurface(itemDir);
   const page = assemblePage(
-    { ...surface, artifacts: { ...surface.artifacts, diagram: await renderDiagram(itemDir) } },
+    {
+      ...surface,
+      artifacts: { ...surface.artifacts, diagram: await renderDiagram(itemDir, d2Binary) },
+    },
     { sessionKey },
   );
 
   response.writeHead(200, { 'content-type': 'text/html' }).end(page);
+}
+
+function refusedBy(response: ServerResponse): (failed: unknown) => void {
+  return (failed) => {
+    const message = failed instanceof Error ? failed.message : String(failed);
+
+    if (!response.headersSent) {
+      response.writeHead(500).end(`refused: ${message}`);
+    }
+  };
 }
 
 function watching(itemDir: string, changed: () => void): () => void {
@@ -197,7 +212,9 @@ export async function startSurface(
     }
 
     idle.rest();
-    void respond(home, sessionKey, request, response);
+    respond(home, sessionKey, options.d2Binary ?? 'd2', request, response).catch(
+      refusedBy(response),
+    );
   });
 
   attachSockets(server, sessionKey, clients);

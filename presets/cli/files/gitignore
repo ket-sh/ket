@@ -12,3 +12,6 @@ dist/
 
 # Bun build scratch
 *.bun-build
+
+# The surface session key lives here while a gate holds; a committed key is a leaked key
+.surface.json
