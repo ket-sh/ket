@@ -109,7 +109,7 @@ function headTarget(target: Element): Element | undefined {
 }
 
 function pressedHead(event: Event): Element | undefined {
-  if (!(event.target instanceof Element) || !(event instanceof PointerEvent)) {
+  if (!(event.target instanceof Element) || !(event instanceof MouseEvent)) {
     return undefined;
   }
 
@@ -175,8 +175,11 @@ function wireResizing(state: SpanState): void {
     state.grid.onResize();
   });
 
-  state.grid.on('dragstop', () => {
+  state.grid.on('dragstop', (_stopped, brick) => {
     swallowNextClick();
+    state.grid.update(brick, fitted(brick.getAttribute('gs-x'), legalSpan(spanOf(brick))));
+    paintSpans(state.grid);
+    state.grid.onResize();
   });
 }
 

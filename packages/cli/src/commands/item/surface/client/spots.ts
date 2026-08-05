@@ -66,7 +66,11 @@ export function legalSpan(w: unknown): number {
 }
 
 export function fitted(x: unknown, w: number): StoredSpot {
-  return { w, x: Math.min(Math.max(Number(x) || 0, 0), 12 - w) };
+  const bound = 12 - w;
+  const held = Math.min(Math.max(Number(x) || 0, 0), bound);
+  const slot = held < halfSpan / 2 ? 0 : halfSpan;
+
+  return { w, x: Math.min(slot, bound) };
 }
 
 export function legalLayout(saved: StoredSpot[]): StoredSpot[] {

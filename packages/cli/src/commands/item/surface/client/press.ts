@@ -25,7 +25,7 @@ export function swallowNextClick(): void {
   swallowClick = true;
 }
 
-export function stillPress(event: PointerEvent): boolean {
+export function stillPress(event: MouseEvent): boolean {
   return (
     pressAt === undefined ||
     Math.abs(event.clientX - pressAt.x) + Math.abs(event.clientY - pressAt.y) <= 3
