@@ -527,10 +527,6 @@ body.is-nav-collapsed > .page-nav {
 .panel-body.is-flush {
   padding: 0;
 }
-.panel.is-full > .panel-body > .prose {
-  max-width: 62rem;
-  margin-inline: auto;
-}
 .unwritten {
   color: var(--ink-muted);
   font-style: italic;
@@ -630,8 +626,6 @@ body.is-nav-collapsed > .page-nav {
   display: block;
 }
 .reading {
-  max-width: 62rem;
-  margin-inline: auto;
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
