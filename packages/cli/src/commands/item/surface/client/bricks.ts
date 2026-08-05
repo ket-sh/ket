@@ -52,7 +52,7 @@ function shapeBricks(grid: Bricklayer): void {
       brick,
       panel.classList.contains('is-viewport')
         ? { h: cap, sizeToContent: false }
-        : { h: undefined, sizeToContent: cap },
+        : { sizeToContent: cap },
     );
   }
 
