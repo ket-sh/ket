@@ -29,6 +29,8 @@ import {
   verificationOf,
 } from '../../shared/transition.ts';
 import { secondJobAmong } from '../../shared/write-gate.ts';
+import { show } from './surface/command.ts';
+import { closingSurface } from './surface/lifecycle.ts';
 
 const KET_DIRECTORY = '.ket';
 
@@ -247,7 +249,7 @@ const submit = stage(
 const approve = stage(
   'approve',
   'Move an approved item to implementing',
-  whileNothingElseWorks(approvalOf),
+  closingSurface(whileNothingElseWorks(approvalOf)),
 );
 
 const verify = stage(
@@ -259,16 +261,20 @@ const verify = stage(
 const deliver = stage(
   'deliver',
   'Hand verified work to the person who merges it',
-  afterRunning(mutationChecks, deliveryOf),
+  closingSurface(afterRunning(mutationChecks, deliveryOf)),
 );
 
-const ship = stage('ship', 'Record that the pull request merged', byStatus(shipmentOf));
+const ship = stage(
+  'ship',
+  'Record that the pull request merged',
+  closingSurface(byStatus(shipmentOf)),
+);
 
 const reopen = stage('reopen', 'Send reviewed work back to implementing', byStatus(reopeningOf));
 
 const item = defineCommand({
   meta: { name: 'item', description: 'Write the state a gate reads' },
-  subCommands: { file, design, submit, approve, verify, deliver, reopen, ship },
+  subCommands: { file, design, submit, approve, verify, deliver, reopen, ship, show },
 });
 
 export async function usage(): Promise<void> {
