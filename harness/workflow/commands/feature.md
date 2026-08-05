@@ -24,12 +24,21 @@ Use the `ket:triage` agent for this. It proposes; it does not decide.
 
 ## 2. Confirm
 
-Tell the user the proposed kind and size in one line, with the reason in one
-more, and wait for one word. They may override. This is deliberate: the machine
-proposes and the person decides, and the gates check the decision against what
-the change actually touches later.
+Say the proposed kind and size in one line, with the reason in one more. Then ask
+with AskUserQuestion, two questions in the one call:
 
-This is the first of the three human gates. Stop here and wait.
+| Question | Options                               |
+| -------- | ------------------------------------- |
+| Kind     | `feature`, `bug`, `refactor`, `chore` |
+| Size     | `epic`, `story`, `subtask`, `trivial` |
+
+Put the proposal first in each list and give every option one line saying what it
+costs the work: a bug owes a reproduction test, a refactor may not change a
+scenario, an epic gets children before it gets code. The machine proposes and the
+person decides, and the gates check that decision against what the change
+actually touches later.
+
+This is the first of the four human gates. Stop here and wait.
 
 ## 3. File
 

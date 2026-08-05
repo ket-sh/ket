@@ -27,6 +27,32 @@ Stop at those four and wait. Between them, keep going without asking. An agent
 that files an item and then reports back has left the job half done, and an
 agent that decides an epic's children alone has decided what the product is.
 
+Ask at a gate with AskUserQuestion rather than a sentence that hopes for a reply.
+A question carries four options at most, so a longer list arrives in groups of
+four. AskUserQuestion is unavailable inside a subagent, so a gate always resolves
+in the main session, where the commands already run.
+
+## The surface arrives at the gate
+
+Nobody remembers to run the show command, so the gate command brings it:
+
+```
+ket item show <key>
+```
+
+`/ket:approve`, `/ket:review` and `/ket:ship` each run it in the background,
+because it keeps serving until the item moves. Each one reads the address from
+`.ket/items/<key>/.surface.json`, the file the server writes beside the item with
+its port and its pid, and says the address in the chat. The browser opens by
+itself unless `--headless` says otherwise.
+
+The page shows the artifacts, and the chat holds the decision. No surface carries
+an approve button, and the only thing the browser writes back is a feature file.
+
+`ket item approve`, `ket item deliver` and `ket item ship` close the surface when
+the move succeeds. A tab the user closed reopens at the next gate, and an artifact
+revised while a gate holds reaches the open tab through the push channel.
+
 ## Before the work reaches anybody else
 
 Mutation gates the move out of `verifying`, and the review does not. But a push
@@ -47,17 +73,17 @@ exists and it leaves a mark.
 
 ## The table
 
-| Status              | Size                   | What runs here                                     | What ends it                                |
-| ------------------- | ---------------------- | -------------------------------------------------- | ------------------------------------------- |
-| not filed yet       | any                    | `ket:triage` proposes, the user confirms           | `ket item file`, filing it triaged          |
-| `triaged`           | `epic` or `story`      | nothing yet                                        | `ket item design <key>`                     |
-| `triaged`           | `subtask` or `trivial` | nothing, because design is not owed at this size   | `/ket:approve <key>`, a human gate          |
-| `designing`         | `epic`                 | research the breakdown, propose it, the user picks | the chosen children, then the first of them |
-| `designing`         | `story`                | the design artifacts                               | `ket item submit <key>`                     |
-| `awaiting-approval` | any                    | nothing                                            | `/ket:approve <key>`, a human gate          |
-| `implementing`      | any                    | the failing test, then the code that answers it    | `ket item verify <key>`                     |
-| `verifying`         | any                    | `/ket:review`, then whatever it found              | `ket item deliver <key>`                    |
-| `awaiting-merge`    | any                    | the pull request, and waiting on it                | `/ket:ship <key>`, a human gate             |
+| Status              | Size                   | What runs here                                      | What ends it                                |
+| ------------------- | ---------------------- | --------------------------------------------------- | ------------------------------------------- |
+| not filed yet       | any                    | `ket:triage` proposes, the user confirms            | `ket item file`, filing it triaged          |
+| `triaged`           | `epic` or `story`      | nothing yet                                         | `ket item design <key>`                     |
+| `triaged`           | `subtask` or `trivial` | nothing, because design is not owed at this size    | `/ket:approve <key>`, a human gate          |
+| `designing`         | `epic`                 | research the breakdown, propose it, the user picks  | the chosen children, then the first of them |
+| `designing`         | `story`                | the design artifacts                                | `ket item submit <key>`                     |
+| `awaiting-approval` | any                    | nothing                                             | `/ket:approve <key>`, a human gate          |
+| `implementing`      | any                    | the failing test, then the code that answers it     | `ket item verify <key>`                     |
+| `verifying`         | any                    | the change brief, `/ket:review`, then what it found | `ket item deliver <key>`                    |
+| `awaiting-merge`    | any                    | the pull request, and waiting on it                 | `/ket:ship <key>`, a human gate             |
 
 ## What each of the last three commands measures
 
@@ -85,6 +111,40 @@ out through the same commands it passed before.
 request, because `shipped` has to mean it landed rather than somebody thought it
 was done.
 
+## The change brief, written on the way into verifying
+
+Once `ket item verify` succeeds, write `change-brief.md` beside the item before
+anything else runs. The diff says what changed line by line, and nobody reads a
+diff to find out where to start. The brief is that navigation aid, and the model
+that wrote the change is already in the session, so it costs no external service:
+
+```markdown
+# Change brief: what this item did
+
+> **TL;DR** What changed and what a reviewer should check first, under 160
+> characters, with a verb in it.
+
+## Ships <the change, front-loaded>
+
+Two paragraphs at most. What the change does, and the count of files behind it.
+
+## Names every file that moved
+
+- `path/to/file.ts`: what changed in it and why.
+
+## Look here first
+
+- The choice that departs from the design, or the hunk carrying the risk.
+```
+
+Front-load every layer, split a sentence over 25 words, and give the number
+rather than an adjective about it. The page lifts the summary into a callout and
+each `##` section into a card, so a brief written this way reads as the page the
+reviewer opens on.
+
+A brief is not a review. It says where to look; the two-seat review says what is
+wrong, and `/ket:review` writes its survivors to `findings.md` under the brief.
+
 ## Decomposing an epic
 
 An epic is a container, not a job, and its children are the scope of the work.
@@ -99,8 +159,13 @@ answer comes from.
 
 **Then propose, and wait.** Show the user the candidate children, each with one
 line saying what it delivers, and say which ones the research suggests are
-usually needed and which are usually optional. Ask which to file. This is the
-second human gate. Do not file anything until they answer.
+usually needed and which are usually optional.
+
+Then ask with AskUserQuestion, one candidate per option, allowing more than one
+answer. A question carries four options at most, so candidates beyond four arrive
+in the next group of four, and a call carries four questions at most. Keep asking
+until every candidate has an answer. This is the second human gate. Do not file
+anything until they answer.
 
 Take the answer as given. A user who drops a candidate has decided it is out of
 scope, and a user who adds one you did not propose has told you something the
@@ -144,10 +209,24 @@ Design stays available at every size. Only the gate is conditional: run
 For a story, use the agents the harness ships and write the artifacts beside the
 item in `.ket/items/<key>/`:
 
-- `ket:solution-design` for the approach
-- `ket:adr` when a decision is load-bearing and worth recording
-- `ket:gherkin` for the acceptance criteria
-- `ket:ui-design` when a target has a surface
+- `ket:solution-design` for the approach, in `solution-design.md` with
+  `architecture.d2` beside it
+- `ket:adr` when a decision is load-bearing and worth recording, in `adr.md`
+- `ket:gherkin` for the acceptance criteria, in `features/*.feature`
+- `ket:ui-design` when a target has a surface, in `ui-design.md` with
+  `ui-design.html` beside it
+
+The `d2` binary renders the diagram for the page in both color schemes, so the
+source has to compile. Check it once before submitting:
+
+```
+d2 .ket/items/<key>/architecture.d2 - > /dev/null
+```
+
+A source `d2` cannot compile takes the page down with the diagram, and a missing
+binary refuses with the install hint that names it. Find that out here rather than
+at the gate. An item with no `architecture.d2` renders with the Architecture entry
+dimmed, which is the honest reading of a diagram nobody wrote.
 
 Prose beside an item is allowed while the item is `designing`. Source is not:
 the write gate refuses every write under a target's source path until the status

@@ -54,8 +54,8 @@ describe('the page an item assembles into', () => {
   it('marks the current stage once and every earlier stage as done', () => {
     const page = assemblePage(surfaceOf(), { sessionKey: KEY });
 
-    expect(page.match(/is-current/g)).toHaveLength(1);
-    expect(page.match(/is-done/g)).toHaveLength(4);
+    expect(page.match(/class="stage is-current"/g)).toHaveLength(1);
+    expect(page.match(/class="stage is-done"/g)).toHaveLength(4);
   });
 
   it('opens on the change section while the item verifies', () => {
@@ -135,6 +135,28 @@ describe('the architecture the page draws', () => {
     const page = assemblePage(surfaceOf(), { sessionKey: KEY });
 
     expect(page).toMatch(/data-section="architecture"[^>]*class="[^"]*is-dimmed/);
+  });
+});
+
+describe('the skin the page wears', () => {
+  it('carries the ket tokens for both color schemes', () => {
+    const page = assemblePage(surfaceOf(), { sessionKey: KEY });
+
+    expect(page).toContain('--color-canvas: oklch(0.68 0.15 40)');
+    expect(page).toContain('--color-scrim: oklch(0.18 0.01 75)');
+    expect(page).toContain("[data-scheme='light']");
+  });
+
+  it('offers the tri-state theme switcher', () => {
+    const page = assemblePage(surfaceOf(), { sessionKey: KEY });
+
+    for (const choice of ['system', 'dark', 'light']) {
+      expect(page).toContain(`data-theme-choice="${choice}"`);
+    }
+  });
+
+  it('resolves the scheme before first paint', () => {
+    expect(assemblePage(surfaceOf(), { sessionKey: KEY })).toContain('data-scheme');
   });
 });
 

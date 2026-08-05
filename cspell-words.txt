@@ -45,6 +45,7 @@ libx
 Lingui
 lockfiles
 magick
+Menlo
 Mobbin
 mobbin
 movflags

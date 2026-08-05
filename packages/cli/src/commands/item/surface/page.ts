@@ -1,4 +1,5 @@
 import { readingLayout } from './reading.ts';
+import { surfaceBoot, surfaceStyle, surfaceWiring } from './style.ts';
 
 export interface RenderedDiagram {
   light: string;
@@ -159,6 +160,14 @@ function sectionShell(section: Section): string {
   return `<section id="section-${section.id}" class="surface-section">${missing}</section>`;
 }
 
+function themeSwitch(): string {
+  const choices = ['system', 'dark', 'light'].map(
+    (choice) => `<button type="button" data-theme-choice="${choice}">${choice}</button>`,
+  );
+
+  return `<div class="theme-switch">${choices.join('')}</div>`;
+}
+
 export function assemblePage(item: ItemSurface, options: SurfaceOptions): string {
   const sections = sectionsOf(item.artifacts, options.sessionKey);
   const nav = sections.map((section) => navEntry(section, item.artifacts.features));
@@ -169,15 +178,22 @@ export function assemblePage(item: ItemSurface, options: SurfaceOptions): string
 <head>
 <meta charset="utf-8">
 <title>${escaped(item.key)} · ${escaped(item.title)}</title>
+<style>${surfaceStyle}</style>
+<script>${surfaceBoot}</script>
 </head>
 <body>
 <header class="surface-header">
+<span class="wordmark">ket</span>
 <span class="item-key">${escaped(item.key)}</span>
 <h1 class="item-title">${escaped(item.title)}</h1>
-${stepper(item.status)}
+${themeSwitch()}
 </header>
+${stepper(item.status)}
+<div class="surface-frame">
 <nav class="surface-nav">${nav.join('')}</nav>
 <main class="surface-main">${bodies.join('')}</main>
+</div>
+<script>${surfaceWiring}</script>
 <script type="module" src="/surface.js?key=${options.sessionKey}"></script>
 <script>new WebSocket(\`ws://\${location.host}/ws?key=${options.sessionKey}\`).onmessage = () => location.reload();</script>
 </body>

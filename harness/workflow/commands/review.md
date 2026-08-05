@@ -35,6 +35,18 @@ review and nothing about what the other seat is doing.
 Ask each seat for every finding it evaluated, with location, defect, failure
 scenario, confidence, whether it reproduced, verdict and reason.
 
+While they work, bring the surface up for the person who reads the outcome:
+
+```
+ket item show <key>
+```
+
+Run it in the background, because it keeps serving until the item moves. Read the
+address from `.ket/items/<key>/.surface.json` and say it in the chat. The key is
+the item in flight, found the way `/ket:continue` finds it. An item at
+`verifying` opens on its change brief, so the user reads what changed while the
+seats read the code.
+
 ## 3. Join the two reports
 
 Key every finding on its location and its defect, lowercased with runs of
@@ -75,10 +87,38 @@ Then list what was dropped, one line each with its reason. A dropped finding is
 evidence the review ran, so it belongs in the report rather than in the bin.
 
 Close with the seats you ran and every judge you called. If nothing survived,
-say so in one line and stop.
+say so in one line and go straight to the two steps below.
 
 Change nothing while reviewing. Fixing what you found is the next job, and it
 re-enters through the item that owns it.
+
+## 6. Write the findings beside the item
+
+The chat report scrolls away and the page does not, so the survivors land in
+`.ket/items/<key>/findings.md`. Write the fields the `findings` skill names,
+nothing renamed:
+
+```markdown
+# Review findings
+
+> **TL;DR** What survived and what it costs to leave it, under 160 characters.
+
+## Finding 1: one sentence naming what is wrong
+
+- **Location**: file and line, written the way the tools print it.
+- **Defect**: what is wrong.
+- **Failure scenario**: the inputs, then the wrong output.
+- **Severity**: critical, high, medium or low, with the confidence beside it.
+- **Verdict**: confirmed, and which seats or judge settled it.
+
+## Dropped
+
+- One line per dropped finding, with the reason it went.
+```
+
+One `##` section per survivor, ranked by severity, because the page lifts each
+one into its own card. A review that found nothing writes the file too, saying so
+in the summary. A dimmed Findings entry reads like a review that never ran.
 
 ## Record that it ran
 
