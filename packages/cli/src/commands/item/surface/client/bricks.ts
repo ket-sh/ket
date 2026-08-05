@@ -1,16 +1,9 @@
 import type { Bricklayer, StoredSpot } from './carried.ts';
+import type { Spot } from './slots.ts';
 
 import { stillPress, swallowNextClick, wirePress } from './press.ts';
-import {
-  fitted,
-  halfSpan,
-  layoutStore,
-  legalLayout,
-  legalSpan,
-  narrowStore,
-  storedLayout,
-  storedNarrow,
-} from './spots.ts';
+import { fitted, halfSpan, legalLayout, legalSpan, swapPartner } from './slots.ts';
+import { layoutStore, narrowStore, storedLayout, storedNarrow } from './spots.ts';
 
 const gridCell = 8;
 const grids = new Map<Element, Bricklayer>();
@@ -174,10 +167,49 @@ function wireResizing(state: SpanState): void {
     paintSpans(state.grid);
     state.grid.onResize();
   });
+}
+
+function spotOf(brick: Element): Spot {
+  return {
+    x: Number(brick.getAttribute('gs-x')) || 0,
+    y: Number(brick.getAttribute('gs-y')) || 0,
+    w: Number(brick.getAttribute('gs-w')) || 0,
+    h: Number(brick.getAttribute('gs-h')) || 0,
+  };
+}
+
+function layoutSnapshot(grid: Bricklayer): Map<Element, Spot> {
+  const layout = new Map<Element, Spot>();
+
+  for (const brick of grid.el.querySelectorAll<HTMLElement>('.grid-stack-item')) {
+    layout.set(brick, spotOf(brick));
+  }
+
+  return layout;
+}
+
+function tradePlaces(state: SpanState, layout: Map<Element, Spot>, brick: Element): void {
+  const landed = fitted(brick.getAttribute('gs-x'), legalSpan(spanOf(brick)));
+  const partner = swapPartner(layout, brick, landed.x ?? 0);
+  const grabbed = layout.get(brick);
+
+  if (partner !== undefined && grabbed !== undefined) {
+    state.grid.update(partner, { x: grabbed.x, y: grabbed.y });
+  }
+
+  state.grid.update(brick, landed);
+}
+
+function wireDragging(state: SpanState): void {
+  let layout = new Map<Element, Spot>();
+
+  state.grid.on('dragstart', () => {
+    layout = layoutSnapshot(state.grid);
+  });
 
   state.grid.on('dragstop', (_stopped, brick) => {
     swallowNextClick();
-    state.grid.update(brick, fitted(brick.getAttribute('gs-x'), legalSpan(spanOf(brick))));
+    tradePlaces(state, layout, brick);
     paintSpans(state.grid);
     state.grid.onResize();
   });
@@ -221,6 +253,7 @@ function buildGrid(section: Element, host: HTMLElement): Bricklayer | undefined 
   grids.set(host, grid);
   wireFolding(state);
   wireResizing(state);
+  wireDragging(state);
   loadLayout(state);
   wireSaving(state);
 

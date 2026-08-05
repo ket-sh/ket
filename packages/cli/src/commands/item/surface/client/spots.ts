@@ -2,8 +2,6 @@ import type { StoredSpot } from './carried.ts';
 
 import { ketSurface } from './carried.ts';
 
-export const halfSpan = 6;
-
 function isStoredSpot(shape: unknown): shape is StoredSpot {
   return shape !== null && typeof shape === 'object';
 }
@@ -59,20 +57,4 @@ export function storedNarrow(name: string): Map<string, StoredSpot> {
   } catch {
     return new Map();
   }
-}
-
-export function legalSpan(w: unknown): number {
-  return Number(w) >= 9 ? 12 : halfSpan;
-}
-
-export function fitted(x: unknown, w: number): StoredSpot {
-  const bound = 12 - w;
-  const held = Math.min(Math.max(Number(x) || 0, 0), bound);
-  const slot = held < halfSpan / 2 ? 0 : halfSpan;
-
-  return { w, x: Math.min(slot, bound) };
-}
-
-export function legalLayout(saved: StoredSpot[]): StoredSpot[] {
-  return saved.map((entry) => ({ ...entry, ...fitted(entry.x, legalSpan(entry.w)) }));
 }

@@ -13,6 +13,7 @@ export interface Bricklayer {
     brick: Element,
     spot: {
       x?: number | undefined;
+      y?: number | undefined;
       w?: number | undefined;
       h?: number | undefined;
       sizeToContent?: number | boolean | undefined;
