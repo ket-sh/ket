@@ -4,7 +4,7 @@ import { sidebarGlyph, surfaceBootstrap, themeScript, themeSwitch } from './clie
 import { diffBleed } from './fold.ts';
 import { masonry, panelOf } from './panel.ts';
 import { readingLayout } from './reading.ts';
-import { escaped } from './text.ts';
+import { escaped, scriptSafeJson } from './text.ts';
 
 export interface RenderedDiagram {
   light: string;
@@ -111,13 +111,16 @@ function diagramPanel(diagram: RenderedDiagram | undefined): Panel {
   return panelOf('Diagram', body, { frame: 'collapsible' });
 }
 
+function featureCard(feature: FeatureFile): string {
+  const name = escaped(feature.name);
+
+  return `<article class="feature-card" data-feature="${name}"><header class="feature-card-head"><span class="feature-name">${name}</span><button type="button" class="feature-save" data-feature="${name}">Save</button></header><div class="feature-editor"></div><script type="application/json" class="feature-source">${scriptSafeJson(feature.source)}</script></article>`;
+}
+
 function criteriaBleed(features: FeatureFile[]): string {
-  return features
-    .map(
-      (feature) =>
-        `<article class="feature" data-feature="${escaped(feature.name)}"><pre>${escaped(feature.source)}</pre></article>`,
-    )
-    .join('');
+  return features.length === 0
+    ? '<p class="unwritten">Not written at this stage.</p>'
+    : `<div class="feature-cards">${features.map(featureCard).join('')}</div>`;
 }
 
 function sectionOf(

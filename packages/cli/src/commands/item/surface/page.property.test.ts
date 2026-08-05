@@ -69,7 +69,7 @@ function carriedPayload(page: string): string {
   const opener = 'window.ketSurface = ';
   const start = page.indexOf(opener) + opener.length;
 
-  return page.slice(start, page.indexOf('<script src="/surface.js', start));
+  return page.slice(start, page.indexOf('<script type="module" src="/surface.js', start));
 }
 
 function navTargets(page: string): string[] {

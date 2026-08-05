@@ -1,3 +1,5 @@
+import { scriptSafeJson } from './text.ts';
+
 export const themeScript = `<script>
   const themeStore = 'ket-surface-theme';
   const themeNames = ['system', 'dark', 'light'];
@@ -45,14 +47,13 @@ export function surfaceBootstrap(
   routes: Record<string, { section: string; feature: string }>,
   firstChild: Record<string, string>,
 ): string {
-  const jsonEscapedLess = String.fromCharCode(92) + 'u003c';
-  const carried = JSON.stringify({
+  const carried = scriptSafeJson({
     live: `/ws?key=${key}`,
     itemKey,
     selected,
     routes,
     firstChild,
-  }).replaceAll('<', jsonEscapedLess);
+  });
 
-  return `<script>window.ketSurface = ${carried};</script>\n<script src="/surface.js?key=${key}"></script>`;
+  return `<script>window.ketSurface = ${carried};</script>\n<script type="module" src="/surface.js?key=${key}"></script>`;
 }

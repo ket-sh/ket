@@ -142,6 +142,42 @@ describe('the hostility the page keeps inert', () => {
 
     expect(page).not.toContain('</title><script>boom');
   });
+
+  it('keeps a script closer smuggled into a feature source inert', () => {
+    const page = assemblePage(
+      surfaceOf({
+        artifacts: {
+          features: [{ name: 'evil.feature', source: 'Feature: </script><script>boom\n' }],
+        },
+      }),
+      { sessionKey: KEY },
+    );
+
+    expect(page).not.toContain('</script><script>boom');
+  });
+});
+
+describe('the criteria the page lets you edit', () => {
+  it('mounts an editor host and a save button per feature card', () => {
+    const page = assemblePage(surfaceOf(), { sessionKey: KEY });
+
+    expect(page.match(/class="feature-card"/g)).toHaveLength(2);
+    expect(page.match(/class="feature-editor"/g)).toHaveLength(2);
+    expect(page.match(/class="feature-save"/g)).toHaveLength(2);
+  });
+
+  it('embeds each feature source as inert json for the editor', () => {
+    const page = assemblePage(surfaceOf(), { sessionKey: KEY });
+
+    expect(page.match(/class="feature-source"/g)).toHaveLength(2);
+    expect(page).toContain(JSON.stringify('Feature: Brand colors\n'));
+  });
+
+  it('loads the client script as a module so its names stay off the window', () => {
+    const page = assemblePage(surfaceOf(), { sessionKey: KEY });
+
+    expect(page).toMatch(/<script type="module" src="\/surface\.js\?key=/);
+  });
 });
 
 describe('the bricks the sections lay', () => {
