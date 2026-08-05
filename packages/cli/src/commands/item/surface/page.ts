@@ -45,16 +45,15 @@ interface SectionChild {
   feature: string;
 }
 
-interface Section {
+type SectionBody = { mode: 'masonry'; panels: Panel[] } | { mode: 'bleed'; bleed: string };
+
+type Section = SectionBody & {
   id: string;
   label: string;
   group: 'Design' | 'Verify';
-  mode: 'masonry' | 'bleed';
   written: boolean;
-  panels: Panel[];
-  bleed: string;
   children: SectionChild[];
-}
+};
 
 const STAGES: readonly string[] = [
   'triaged',
@@ -80,11 +79,11 @@ const DONE_TICK =
   '<svg class="stage-tick" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.6 6.3 5 8.7 9.4 3.9" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 function stageState(stage: string, current: string): string {
-  if (stage === current) {
-    return 'is-current';
+  if (STAGES.indexOf(stage) < STAGES.indexOf(current)) {
+    return 'is-done';
   }
 
-  return STAGES.indexOf(stage) < STAGES.indexOf(current) ? 'is-done' : 'is-ahead';
+  return stage === current ? 'is-current' : 'is-ahead';
 }
 
 function stepper(current: string): string {
@@ -128,19 +127,11 @@ function sectionOf(
   label: string,
   group: Section['group'],
   written: boolean,
-  shape: Partial<Section> = {},
+  body: SectionBody & { children?: SectionChild[] },
 ): Section {
-  return {
-    id,
-    label,
-    group,
-    mode: 'masonry',
-    written,
-    panels: [],
-    bleed: '',
-    children: [],
-    ...shape,
-  };
+  const { children = [], ...rest } = body;
+
+  return { id, label, group, written, children, ...rest };
 }
 
 function writtenProse(source: string | undefined): boolean {
@@ -152,12 +143,15 @@ function sectionsOf(artifacts: SurfaceArtifacts, sessionKey: string): Section[] 
 
   return [
     sectionOf('spec', 'Spec', 'Design', writtenProse(artifacts.spec), {
+      mode: 'masonry',
       panels: [prosePanel('Spec', artifacts.spec)],
     }),
     sectionOf('design', 'Design', 'Design', writtenProse(artifacts.design), {
+      mode: 'masonry',
       panels: [prosePanel('Design', artifacts.design), diagramPanel(artifacts.diagram)],
     }),
     sectionOf('decision', 'Decision', 'Design', writtenProse(artifacts.adr), {
+      mode: 'masonry',
       panels: [prosePanel('Decision', artifacts.adr)],
     }),
     sectionOf('criteria', 'Criteria', 'Design', artifacts.features.length > 0, {
@@ -174,6 +168,7 @@ function sectionsOf(artifacts: SurfaceArtifacts, sessionKey: string): Section[] 
       bleed: `<iframe class="wireframe" src="/wireframe?key=${sessionKey}" title="Wireframe"></iframe>`,
     }),
     sectionOf('change', 'Change', 'Verify', writtenProse(artifacts.brief), {
+      mode: 'masonry',
       panels: [prosePanel('Brief', artifacts.brief)],
     }),
     sectionOf('diff', 'Diff', 'Verify', change !== '', {
@@ -184,31 +179,26 @@ function sectionsOf(artifacts: SurfaceArtifacts, sessionKey: string): Section[] 
           : diffBleed(change),
     }),
     sectionOf('findings', 'Findings', 'Verify', writtenProse(artifacts.findings), {
+      mode: 'masonry',
       panels: [prosePanel('Findings', artifacts.findings)],
     }),
   ];
 }
 
-function navChildren(section: Section, shownRoute: string): string {
+function navChildren(section: Section): string {
   if (section.children.length === 0) {
     return '';
   }
 
-  const links = section.children.map((child) => {
-    const active = child.route === shownRoute ? ' is-selected' : '';
-
-    return `<a class="nav-child${active}" href="#${escaped(child.route)}" data-route="${escaped(child.route)}" data-feature="${escaped(child.feature)}">${escaped(child.label)}</a>`;
-  });
+  const links = section.children.map(
+    (child) =>
+      `<a class="nav-child" href="#${escaped(child.route)}" data-route="${escaped(child.route)}" data-feature="${escaped(child.feature)}">${escaped(child.label)}</a>`,
+  );
 
   return `<div class="nav-children">${links.join('')}</div>`;
 }
 
-function navGroup(
-  group: Section['group'],
-  sections: Section[],
-  selected: string,
-  shownRoute: string,
-): string {
+function navGroup(group: Section['group'], sections: Section[], selected: string): string {
   const links = sections
     .filter((entry) => entry.group === group)
     .map((entry) => {
@@ -216,7 +206,7 @@ function navGroup(
       const active = entry.id === selected ? ' is-selected' : '';
       const item = `<a class="nav-item${empty}${active}" href="#${entry.id}" data-section="${entry.id}">${entry.label}</a>`;
 
-      return item + navChildren(entry, entry.id === selected ? shownRoute : '');
+      return item + navChildren(entry);
     });
 
   return `<p class="nav-group">${group}</p>${links.join('')}`;
@@ -252,7 +242,6 @@ export function assemblePage(item: ItemSurface, options: SurfaceOptions): string
   const selected = DEFAULT_SECTION_BY_STAGE[item.status] ?? 'design';
   const routes = routesOf(sections);
   const firstRouteOf = firstRoutesOf(sections);
-  const shownRoute = firstRouteOf[selected] ?? '';
   const bodies = sections
     .map((entry) => {
       const active = entry.id === selected ? ' is-active' : '';
@@ -277,8 +266,8 @@ ${themeScript}
   ${themeSwitch}
 </header>
 <nav class="page-nav" id="page-nav">
-  ${navGroup('Design', sections, selected, shownRoute)}
-  ${navGroup('Verify', sections, selected, shownRoute)}
+  ${navGroup('Design', sections, selected)}
+  ${navGroup('Verify', sections, selected)}
 </nav>
 <main class="page-content">
 ${bodies}
