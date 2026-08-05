@@ -1,18 +1,14 @@
-import type { IncomingMessage, Server, ServerResponse } from 'node:http';
+import type { Server, ServerResponse } from 'node:http';
 import type { WebSocket } from 'ws';
 
 import { randomBytes } from 'node:crypto';
 import { watch } from 'node:fs';
-import { writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { basename, resolve } from 'node:path';
-import { text } from 'node:stream/consumers';
 import { WebSocketServer } from 'ws';
 
-import { readArtifact, readSurface } from './artifacts.ts';
-import { renderDiagram } from './diagram.ts';
 import { alive, readInfo, removeInfo, signalForeign, writeInfo } from './info.ts';
-import { assemblePage } from './page.ts';
+import { keyOf, pathOf, respond } from './routes.ts';
 
 export interface SurfaceOptions {
   idleMs?: number;
@@ -28,86 +24,6 @@ export interface SurfaceHandle {
 const FOUR_HOURS = 4 * 60 * 60 * 1000;
 
 const running = new Map<string, SurfaceHandle>();
-
-function keyOf(request: IncomingMessage): string {
-  return new URL(request.url ?? '/', 'http://surface').searchParams.get('key') ?? '';
-}
-
-function pathOf(request: IncomingMessage): string {
-  return new URL(request.url ?? '/', 'http://surface').pathname;
-}
-
-function featureTarget(itemDir: string, name: string): string | undefined {
-  const target = resolve(itemDir, name);
-  const featuresDir = resolve(itemDir, 'features');
-
-  if (!target.startsWith(`${featuresDir}/`) || !target.endsWith('.feature')) {
-    return undefined;
-  }
-
-  return target;
-}
-
-async function acceptArtifact(
-  itemDir: string,
-  request: IncomingMessage,
-  response: ServerResponse,
-): Promise<void> {
-  const name = new URL(request.url ?? '/', 'http://surface').searchParams.get('name') ?? '';
-  const target = featureTarget(itemDir, name);
-
-  if (target === undefined) {
-    response.writeHead(400).end(`refused: ${name} is not a feature file inside the item`);
-
-    return;
-  }
-
-  await writeFile(target, await text(request));
-  response.writeHead(204).end();
-}
-
-async function serveWireframe(itemDir: string, response: ServerResponse): Promise<void> {
-  const wireframe = await readArtifact(itemDir, 'ui-design.html');
-
-  if (wireframe === undefined) {
-    response.writeHead(404).end('refused: the item has no wireframe');
-  } else {
-    response.writeHead(200, { 'content-type': 'text/html' }).end(wireframe);
-  }
-}
-
-async function respond(
-  itemDir: string,
-  sessionKey: string,
-  d2Binary: string,
-  request: IncomingMessage,
-  response: ServerResponse,
-): Promise<void> {
-  const path = pathOf(request);
-
-  if (path === '/wireframe') {
-    await serveWireframe(itemDir, response);
-
-    return;
-  }
-
-  if (path === '/artifact' && request.method === 'POST') {
-    await acceptArtifact(itemDir, request, response);
-
-    return;
-  }
-
-  const surface = await readSurface(itemDir);
-  const page = assemblePage(
-    {
-      ...surface,
-      artifacts: { ...surface.artifacts, diagram: await renderDiagram(itemDir, d2Binary) },
-    },
-    { sessionKey },
-  );
-
-  response.writeHead(200, { 'content-type': 'text/html' }).end(page);
-}
 
 function refusedBy(response: ServerResponse): (failed: unknown) => void {
   return (failed) => {
