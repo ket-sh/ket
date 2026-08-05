@@ -529,6 +529,7 @@ body.is-nav-collapsed > .page-nav {
 }
 .panel.is-full > .panel-body > .prose {
   max-width: 62rem;
+  margin-inline: auto;
 }
 .unwritten {
   color: var(--ink-muted);
@@ -630,6 +631,7 @@ body.is-nav-collapsed > .page-nav {
 }
 .reading {
   max-width: 62rem;
+  margin-inline: auto;
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
