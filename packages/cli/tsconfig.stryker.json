@@ -1,6 +1,7 @@
 {
   "extends": "@ket/tsconfig/base.json",
   "compilerOptions": {
+    "lib": ["esnext", "dom", "dom.iterable"],
     "types": ["bun"],
     "allowImportingTsExtensions": true,
     "noEmit": true,
@@ -8,6 +9,5 @@
     "declaration": false,
     "declarationMap": false
   },
-  "include": ["src/**/*.ts", "scripts/**/*.ts", "vitest.config.ts"],
-  "exclude": ["src/commands/item/surface/client/**/*.ts"]
+  "include": ["src/**/*.ts"]
 }

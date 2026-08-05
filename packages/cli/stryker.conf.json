@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/stryker-mutator/stryker-js/master/packages/api/schema/stryker-core.json",
   "packageManager": "npm",
   "testRunner": "vitest",
-  "plugins": ["@stryker-mutator/vitest-runner"],
+  "plugins": ["@stryker-mutator/vitest-runner", "@stryker-mutator/typescript-checker"],
   "vitest": {
     "configFile": "vitest.mutation.config.ts"
   },
@@ -34,5 +34,9 @@
     "high": 100,
     "low": 100,
     "break": 100
-  }
+  },
+  "tsconfigFile": "tsconfig.stryker.json",
+  "disableTypeChecks": false,
+  "checkers": ["typescript"],
+  "tempDirName": "../../.stryker-tmp/cli"
 }

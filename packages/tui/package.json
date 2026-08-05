@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@anscribe/opentui": "1.0.1",
+    "@ket/tsconfig": "workspace:*",
     "@types/react": "19.2.17"
   }
 }

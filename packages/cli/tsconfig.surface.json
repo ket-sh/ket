@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "@ket/tsconfig/base.json",
   "compilerOptions": {
     "lib": ["esnext", "dom", "dom.iterable"],
     "types": [],
