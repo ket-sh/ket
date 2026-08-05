@@ -2,6 +2,7 @@ import type { PresetSemantics } from '@ket/preset';
 
 import { readdir, readFile, realpath } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
+import { text } from 'node:stream/consumers';
 
 import type { PresetName } from '../../shared/configuration.ts';
 import type { GateEvent } from '../../shared/event.ts';
@@ -27,7 +28,7 @@ export function envelopeFrom(text: string): unknown {
 }
 
 export async function readEnvelope(): Promise<unknown> {
-  return envelopeFrom(await new Response(process.stdin).text());
+  return envelopeFrom(await text(process.stdin));
 }
 
 async function readTargets(root: string): Promise<Record<string, PresetName>> {

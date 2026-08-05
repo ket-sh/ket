@@ -3,8 +3,11 @@ import { basename, join } from 'node:path';
 
 import type { ItemSurface } from './page.ts';
 
-const yamlLine = (source: string, field: string): string | undefined =>
-  new RegExp(`^${field}: (.+)$`, 'm').exec(source)?.[1]?.trim();
+const yamlLine = (source: string, field: string): string | undefined => {
+  const found = new RegExp(`^${field}: (.+)$`, 'm').exec(source);
+
+  return found === null ? undefined : String(found[1]).trim();
+};
 
 export async function readArtifact(itemDir: string, name: string): Promise<string | undefined> {
   return readFile(join(itemDir, name), 'utf8').then(

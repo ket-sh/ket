@@ -10,7 +10,7 @@ export function diffBleed(change: string): string {
   );
   const folded = files.map(
     (file) =>
-      `<details class="diff-file" id="file-${slugOf(file.newName)}"><summary>${escaped(file.newName)}<span class="diff-stat">+${String(file.addedLines)} -${String(file.deletedLines)}</span></summary>${diffHtml([file], { drawFileList: false, outputFormat: 'line-by-line' })}</details>`,
+      `<details class="diff-file" id="file-${slugOf(file.newName)}"><summary>${escaped(file.newName)}<span class="diff-stat">+${String(file.addedLines)} -${String(file.deletedLines)}</span></summary>${diffHtml([file], { drawFileList: false })}</details>`,
   );
 
   return `<ul class="diff-index">${index.join('')}</ul>${folded.join('')}`;

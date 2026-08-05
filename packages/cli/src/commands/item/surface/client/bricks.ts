@@ -147,23 +147,12 @@ function wireFolding(state: SpanState): void {
 }
 
 function wireResizing(state: SpanState): void {
-  let grabbedX: number | undefined;
-
-  state.grid.on('resizestart', (_started, brick) => {
-    grabbedX = Number(brick.getAttribute('gs-x'));
-  });
-
   state.grid.on('resizestop', (_stopped, brick) => {
     const held = Number(brick.getAttribute('gs-x'));
     const span = spanOf(brick);
     const legal = legalSpan(span);
-    const anchored = held === grabbedX ? held : held + span - legal;
-    const spot = fitted(anchored, legal);
 
-    if (spot.w !== span || spot.x !== held) {
-      state.grid.update(brick, spot);
-    }
-
+    state.grid.update(brick, fitted(held + span - legal, legal));
     paintSpans(state.grid);
     state.grid.onResize();
   });
@@ -235,7 +224,7 @@ function loadLayout(state: SpanState): void {
 }
 
 function nameOf(section: Element): string {
-  return section instanceof HTMLElement ? (section.dataset['section'] ?? '') : '';
+  return section.getAttribute('data-section') ?? '';
 }
 
 function buildGrid(section: Element, host: HTMLElement): Bricklayer | undefined {

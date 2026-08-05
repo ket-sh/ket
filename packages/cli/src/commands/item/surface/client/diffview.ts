@@ -4,7 +4,7 @@ export function wireDiffview(): void {
   if (diffPanel) {
     const formatStore = 'ket-surface-diff-format';
 
-    const showFormat = (wanted: string): void => {
+    const showFormat = (wanted: string | null): void => {
       const side = wanted === 'side';
 
       diffPanel.classList.toggle('is-side', side);
@@ -14,7 +14,7 @@ export function wireDiffview(): void {
       }
     };
 
-    showFormat(localStorage.getItem(formatStore) ?? 'unified');
+    showFormat(localStorage.getItem(formatStore));
 
     for (const node of diffPanel.querySelectorAll<HTMLElement>('.diff-format-option')) {
       node.addEventListener('click', (event) => {

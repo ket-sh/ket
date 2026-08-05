@@ -2,16 +2,16 @@ import { ketSurface } from './carried.ts';
 
 interface Shown {
   target: string;
-  route: string;
-  feature: string;
+  route: string | undefined;
+  feature: string | undefined;
 }
 
 function childOf(route: string): { section: string; feature: string } | undefined {
   return Object.hasOwn(ketSurface.routes, route) ? ketSurface.routes[route] : undefined;
 }
 
-function featureOf(route: string): string {
-  return childOf(route)?.feature ?? '';
+function featureOf(route: string | undefined): string | undefined {
+  return route === undefined ? undefined : childOf(route)?.feature;
 }
 
 function resolveShown(wanted: string): Shown {
@@ -23,14 +23,14 @@ function resolveShown(wanted: string): Shown {
 
   const target =
     document.getElementById(`section-${wanted}`) === null ? ketSurface.selected : wanted;
-  const route = ketSurface.firstChild[target] ?? '';
+  const route = ketSurface.firstChild[target];
 
   return { target, route, feature: featureOf(route) };
 }
 
-function paint(selector: string, marker: string, field: string, value: string): void {
+function paint(selector: string, marker: string, field: string, value: string | undefined): void {
   for (const node of document.querySelectorAll<HTMLElement>(selector)) {
-    node.classList.toggle(marker, node.dataset[field] === value);
+    node.classList.toggle(marker, value !== undefined && node.dataset[field] === value);
   }
 }
 
@@ -70,14 +70,14 @@ function jumpTo(target: HTMLDetailsElement): void {
 }
 
 function wireDiffJump(): void {
-  for (const node of document.querySelectorAll<HTMLElement>('.diff-index-item')) {
-    node.addEventListener('click', () => {
-      const target = document.getElementById(node.dataset['diffTarget'] ?? '');
+  for (const target of document.querySelectorAll<HTMLDetailsElement>('details.diff-file')) {
+    const opener = document.querySelector<HTMLElement>(`[data-diff-target="${target.id}"]`);
 
-      if (target instanceof HTMLDetailsElement) {
+    if (opener !== null) {
+      opener.addEventListener('click', () => {
         jumpTo(target);
-      }
-    });
+      });
+    }
   }
 }
 

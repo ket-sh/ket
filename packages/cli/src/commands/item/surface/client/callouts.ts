@@ -28,7 +28,7 @@ function wireSwitches(home: HTMLElement, switches: Iterable<HTMLElement>): void 
 }
 
 function shapesOf(home: HTMLElement, shape: string | undefined): Iterable<HTMLElement> {
-  return home.querySelectorAll<HTMLElement>(`[data-callout-shape="${shape ?? ''}"]`);
+  return home.querySelectorAll<HTMLElement>(`[data-callout-shape="${String(shape)}"]`);
 }
 
 function lightUp(home: HTMLElement, shape: string | undefined): void {

@@ -33,17 +33,8 @@ function halfLeaving(grabbed: Spot | undefined, landedX: number): grabbed is Spo
   return grabbed?.w === halfSpan && grabbed.x !== landedX;
 }
 
-function swapCandidate<Brick>(
-  entry: [Brick, Spot],
-  dragged: Brick,
-  grabbed: Spot,
-  landedX: number,
-): boolean {
-  const [brick, spot] = entry;
-
-  return (
-    brick !== dragged && spot.w === halfSpan && spot.x === landedX && overlapsRows(spot, grabbed)
-  );
+function swapCandidate(spot: Spot, grabbed: Spot, landedX: number): boolean {
+  return spot.w === halfSpan && spot.x === landedX && overlapsRows(spot, grabbed);
 }
 
 export function swapPartner<Brick>(
@@ -57,9 +48,9 @@ export function swapPartner<Brick>(
     return undefined;
   }
 
-  for (const entry of layout) {
-    if (swapCandidate(entry, dragged, grabbed, landedX)) {
-      return entry[0];
+  for (const [brick, spot] of layout) {
+    if (swapCandidate(spot, grabbed, landedX)) {
+      return brick;
     }
   }
 

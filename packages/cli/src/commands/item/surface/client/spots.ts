@@ -15,8 +15,14 @@ export function narrowStore(name: string): string {
 }
 
 export function storedLayout(name: string): StoredSpot[] | undefined {
+  const held = localStorage.getItem(layoutStore(name));
+
+  if (held === null) {
+    return undefined;
+  }
+
   try {
-    const raw: unknown = JSON.parse(localStorage.getItem(layoutStore(name)) ?? 'null');
+    const raw: unknown = JSON.parse(held);
 
     return Array.isArray(raw) && raw.length > 0 ? raw.filter(isStoredSpot) : undefined;
   } catch {
@@ -25,7 +31,7 @@ export function storedLayout(name: string): StoredSpot[] | undefined {
 }
 
 function spotRecord(raw: unknown): object | undefined {
-  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+  if (raw === null || Array.isArray(raw)) {
     return undefined;
   }
 
@@ -50,8 +56,14 @@ function keptSpots(raw: unknown): Map<string, StoredSpot> {
 }
 
 export function storedNarrow(name: string): Map<string, StoredSpot> {
+  const held = localStorage.getItem(narrowStore(name));
+
+  if (held === null) {
+    return new Map();
+  }
+
   try {
-    const raw: unknown = JSON.parse(localStorage.getItem(narrowStore(name)) ?? '{}');
+    const raw: unknown = JSON.parse(held);
 
     return keptSpots(raw);
   } catch {
