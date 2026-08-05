@@ -55,15 +55,13 @@ const MARKDOWN = new Marked({
 
 const QUOTE_MARKER = '>';
 
-const QUOTE_OPENER = /^>\s?/;
-
 const SUMMARY_LABEL = /^\*\*TL;DR\*\*\s*/;
 
-const BADGE_LINE = /^(Status|Date): (.+)$/;
+const BADGE_LINE = /^(Status|Date): (.+)/;
 
 const COST_OPENER = 'Cost: ';
 
-const ORDERED_HEADING = /^(\d+)[.)]\s+(.+)$/;
+const ORDERED_HEADING = /^(\d+)[.)]\s(.+)/;
 
 const MISSING_CALLOUT =
   '<aside class="tldr is-missing"><p class="tldr-label">TL;DR</p><p class="tldr-body">No summary written.</p></aside>';
@@ -118,14 +116,14 @@ function prose(source: string): string {
 }
 
 function inline(source: string): string {
-  return chips(MARKDOWN.parseInline(source.trim(), { async: false }));
+  return chips(MARKDOWN.parseInline(source, { async: false }));
 }
 
 function summaryOf(lead: string): string {
   return lead
     .split('\n')
     .filter((line) => line.startsWith(QUOTE_MARKER))
-    .map((line) => line.replace(QUOTE_OPENER, ''))
+    .map((line) => line.slice(QUOTE_MARKER.length).trimStart())
     .join(' ')
     .replace(SUMMARY_LABEL, '')
     .trim();
@@ -191,7 +189,7 @@ function splitCost(body: string): Costed {
     rest.push(line);
   }
 
-  return { cost: cost.join(' ').trim(), rest: rest.join('\n') };
+  return { cost: cost.join(' '), rest: rest.join('\n') };
 }
 
 function alternativeCard(part: Part): string {
@@ -206,7 +204,7 @@ function alternativeCard(part: Part): string {
 
 function orderedRun(parts: Part[]): Step[] {
   const steps = parts.flatMap((part) => {
-    const found = ORDERED_HEADING.exec(part.heading.trim());
+    const found = ORDERED_HEADING.exec(part.heading);
     const number = found?.[1];
     const heading = found?.[2];
 
@@ -229,7 +227,7 @@ function consequenceColumn(part: Part): string {
 function consequencePair(parts: Part[]): boolean {
   return (
     parts.length === 2 &&
-    parts.every((part) => ['good', 'bad'].includes(part.heading.trim().toLowerCase()))
+    parts.every((part) => ['good', 'bad'].includes(part.heading.toLowerCase()))
   );
 }
 
@@ -258,10 +256,6 @@ function sectionCard(part: Part): string {
 }
 
 export function readingLayout(source: string): string {
-  if (source.trim() === '') {
-    return '';
-  }
-
   const document = splitOnHeading(source, '#').parts[0];
 
   if (document === undefined) {
