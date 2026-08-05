@@ -42,10 +42,17 @@ export function surfaceBootstrap(
   key: string,
   itemKey: string,
   selected: string,
-  routes: string,
-  firstChild: string,
+  routes: Record<string, { section: string; feature: string }>,
+  firstChild: Record<string, string>,
 ): string {
-  const carried = `{"live":"/ws?key=${key}","itemKey":${JSON.stringify(itemKey)},"selected":${JSON.stringify(selected)},"routes":${routes},"firstChild":${firstChild}}`;
+  const jsonEscapedLess = String.fromCharCode(92) + 'u003c';
+  const carried = JSON.stringify({
+    live: `/ws?key=${key}`,
+    itemKey,
+    selected,
+    routes,
+    firstChild,
+  }).replaceAll('<', jsonEscapedLess);
 
   return `<script>window.ketSurface = ${carried};</script>\n<script src="/surface.js?key=${key}"></script>`;
 }

@@ -220,21 +220,32 @@ function sectionBody(section: Section): string {
   return section.mode === 'bleed' ? section.bleed : masonry(section.panels);
 }
 
-export function assemblePage(item: ItemSurface, options: SurfaceOptions): string {
-  const sections = sectionsOf(item.artifacts, options.sessionKey);
-  const selected = DEFAULT_SECTION_BY_STAGE[item.status] ?? 'design';
-  const routes = Object.fromEntries(
+function routesOf(sections: Section[]): Record<string, { section: string; feature: string }> {
+  return Object.fromEntries(
     sections.flatMap((entry) =>
-      entry.children.map((child) => [child.route, { section: entry.id, feature: child.feature }]),
+      entry.children.map((child): [string, { section: string; feature: string }] => [
+        child.route,
+        { section: entry.id, feature: child.feature },
+      ]),
     ),
   );
-  const firstRouteOf = Object.fromEntries(
-    sections.flatMap((entry) => {
+}
+
+function firstRoutesOf(sections: Section[]): Record<string, string> {
+  return Object.fromEntries(
+    sections.flatMap((entry): [string, string][] => {
       const first = entry.children[0];
 
       return first === undefined ? [] : [[entry.id, first.route]];
     }),
   );
+}
+
+export function assemblePage(item: ItemSurface, options: SurfaceOptions): string {
+  const sections = sectionsOf(item.artifacts, options.sessionKey);
+  const selected = DEFAULT_SECTION_BY_STAGE[item.status] ?? 'design';
+  const routes = routesOf(sections);
+  const firstRouteOf = firstRoutesOf(sections);
   const shownRoute = firstRouteOf[selected] ?? '';
   const bodies = sections
     .map((entry) => {
@@ -267,7 +278,7 @@ ${themeScript}
 ${bodies}
 </main>
 <script src="/gridstack.js?key=${options.sessionKey}"></script>
-${surfaceBootstrap(options.sessionKey, item.key, selected, JSON.stringify(routes), JSON.stringify(firstRouteOf))}
+${surfaceBootstrap(options.sessionKey, item.key, selected, routes, firstRouteOf)}
 </body>
 </html>`;
 }
