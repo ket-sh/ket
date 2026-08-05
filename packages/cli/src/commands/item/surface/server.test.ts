@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { mkdtemp, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -89,6 +89,18 @@ describe('the key every request carries', () => {
     expect(reply.status).toBe(200);
     expect(await reply.text()).toContain('The sample item');
   });
+
+  it.skipIf(spawnSync('d2', ['--version']).error !== undefined)(
+    'draws the architecture beside the prose when a source exists',
+    async () => {
+      await writeFile(join(itemDir, 'architecture.d2'), 'gate -> surface: shows\n');
+
+      const handle = await surfaceUp();
+      const page = await (await fetch(handle.address)).text();
+
+      expect(page).toContain('<svg');
+    },
+  );
 
   it('serves the wireframe behind the key', async () => {
     await writeFile(join(itemDir, 'ui-design.html'), '<html><body>the mock</body></html>');

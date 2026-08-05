@@ -115,6 +115,29 @@ describe('the navigation the artifacts decide', () => {
   });
 });
 
+describe('the architecture the page draws', () => {
+  it('shows both color schemes of the rendered diagram', () => {
+    const page = assemblePage(
+      surfaceOf({
+        artifacts: {
+          features: [],
+          diagram: { light: '<svg data-light="1"></svg>', dark: '<svg data-dark="1"></svg>' },
+        },
+      }),
+      { sessionKey: KEY },
+    );
+
+    expect(page).toContain('<svg data-light="1"></svg>');
+    expect(page).toContain('<svg data-dark="1"></svg>');
+  });
+
+  it('dims the architecture entry for an item without a diagram', () => {
+    const page = assemblePage(surfaceOf(), { sessionKey: KEY });
+
+    expect(page).toMatch(/data-section="architecture"[^>]*class="[^"]*is-dimmed/);
+  });
+});
+
 describe('the session key the page carries', () => {
   it('keys every address the page emits', () => {
     const page = assemblePage(surfaceOf(), { sessionKey: KEY });

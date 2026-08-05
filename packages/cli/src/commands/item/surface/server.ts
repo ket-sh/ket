@@ -10,6 +10,7 @@ import { text } from 'node:stream/consumers';
 import { WebSocketServer } from 'ws';
 
 import { readArtifact, readSurface } from './artifacts.ts';
+import { renderDiagram } from './diagram.ts';
 import { alive, readInfo, removeInfo, signalForeign, writeInfo } from './info.ts';
 import { assemblePage } from './page.ts';
 
@@ -94,7 +95,11 @@ async function respond(
     return;
   }
 
-  const page = assemblePage(await readSurface(itemDir), { sessionKey });
+  const surface = await readSurface(itemDir);
+  const page = assemblePage(
+    { ...surface, artifacts: { ...surface.artifacts, diagram: await renderDiagram(itemDir) } },
+    { sessionKey },
+  );
 
   response.writeHead(200, { 'content-type': 'text/html' }).end(page);
 }

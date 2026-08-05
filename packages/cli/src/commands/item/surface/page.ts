@@ -1,5 +1,10 @@
 import { readingLayout } from './reading.ts';
 
+export interface RenderedDiagram {
+  light: string;
+  dark: string;
+}
+
 interface FeatureFile {
   name: string;
   source: string;
@@ -11,6 +16,7 @@ interface SurfaceArtifacts {
   adr?: string | undefined;
   brief?: string | undefined;
   findings?: string | undefined;
+  diagram?: RenderedDiagram | undefined;
   features: FeatureFile[];
 }
 
@@ -107,10 +113,20 @@ function wireframeSection(sessionKey: string): Section {
   };
 }
 
+function diagramSection(diagram: RenderedDiagram | undefined): Section {
+  const body =
+    diagram === undefined
+      ? ''
+      : `<figure class="diagram"><div class="diagram-light">${diagram.light}</div><div class="diagram-dark">${diagram.dark}</div></figure>`;
+
+  return { id: 'architecture', label: 'Architecture', written: diagram !== undefined, body };
+}
+
 function sectionsOf(artifacts: SurfaceArtifacts, sessionKey: string): Section[] {
   return [
     proseSection('spec', 'Spec', artifacts.spec),
     proseSection('design', 'Design', artifacts.design),
+    diagramSection(artifacts.diagram),
     proseSection('decision', 'Decision', artifacts.adr),
     criteriaSection(artifacts.features),
     wireframeSection(sessionKey),
