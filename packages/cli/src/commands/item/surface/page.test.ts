@@ -128,6 +128,12 @@ describe('the navigation the artifacts decide', () => {
 
     expect(page).toMatch(/<button[^>]*class="nav-toggle"[^>]*aria-controls="page-nav"/);
   });
+
+  it('tells the reader when there is no change to diff yet', () => {
+    const page = assemblePage(surfaceOf(), { sessionKey: KEY });
+
+    expect(page).toMatch(/id="section-diff"[^>]*>\s*<p class="unwritten">/);
+  });
 });
 
 describe('the bricks the sections lay', () => {

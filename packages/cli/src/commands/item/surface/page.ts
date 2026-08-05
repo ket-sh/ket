@@ -175,7 +175,10 @@ function sectionsOf(artifacts: SurfaceArtifacts, sessionKey: string): Section[] 
     }),
     sectionOf('diff', 'Diff', 'Verify', change !== '', {
       mode: 'bleed',
-      bleed: change === '' ? '' : diffBleed(change),
+      bleed:
+        change === ''
+          ? '<p class="unwritten">No change to show at this stage.</p>'
+          : diffBleed(change),
     }),
     sectionOf('findings', 'Findings', 'Verify', writtenProse(artifacts.findings), {
       panels: [prosePanel('Findings', artifacts.findings)],
