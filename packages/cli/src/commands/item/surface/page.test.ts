@@ -51,17 +51,19 @@ describe('the page an item assembles into', () => {
     expect([...positions].sort((a, b) => a - b)).toEqual(positions);
   });
 
-  it('marks the current stage once and every earlier stage as done', () => {
+  it('marks the current stage once and ticks every earlier stage', () => {
     const page = assemblePage(surfaceOf(), { sessionKey: KEY });
 
     expect(page.match(/class="stage is-current"/g)).toHaveLength(1);
     expect(page.match(/class="stage is-done"/g)).toHaveLength(4);
+    expect(page.match(/stage-tick/g)?.length).toBeGreaterThanOrEqual(4);
   });
 
   it('opens on the change section while the item verifies', () => {
-    expect(assemblePage(surfaceOf(), { sessionKey: KEY })).toContain(
-      'data-default-section="change"',
-    );
+    const page = assemblePage(surfaceOf(), { sessionKey: KEY });
+
+    expect(page).toContain('data-default-section="change"');
+    expect(page).toMatch(/class="section is-masonry is-active" id="section-change"/);
   });
 
   it('opens on the design section while the item awaits approval', () => {
@@ -72,23 +74,30 @@ describe('the page an item assembles into', () => {
 });
 
 describe('the navigation the artifacts decide', () => {
-  it('dims the entry of an artifact nobody has written', () => {
+  it('groups the sections under Design and Verify', () => {
     const page = assemblePage(surfaceOf(), { sessionKey: KEY });
 
-    expect(page).toMatch(/data-section="findings"[^>]*class="[^"]*is-dimmed/);
+    expect(page).toContain('<p class="nav-group">Design</p>');
+    expect(page).toContain('<p class="nav-group">Verify</p>');
   });
 
-  it('keeps the entry of a written artifact undimmed', () => {
+  it('empties the entry of an artifact nobody has written', () => {
     const page = assemblePage(surfaceOf(), { sessionKey: KEY });
 
-    expect(page).not.toMatch(/data-section="design"[^>]*class="[^"]*is-dimmed/);
+    expect(page).toMatch(/class="nav-item is-empty"[^>]*data-section="findings"/);
   });
 
-  it('lists one criteria child per feature file', () => {
+  it('keeps the entry of a written artifact plain', () => {
     const page = assemblePage(surfaceOf(), { sessionKey: KEY });
 
-    expect(page).toContain('brand-colors.feature');
-    expect(page).toContain('landing-shell.feature');
+    expect(page).not.toMatch(/class="nav-item is-empty"[^>]*data-section="design"/);
+  });
+
+  it('lists one criteria child route per feature file', () => {
+    const page = assemblePage(surfaceOf(), { sessionKey: KEY });
+
+    expect(page).toContain('data-route="criteria/brand-colors.feature"');
+    expect(page).toContain('data-route="criteria/landing-shell.feature"');
   });
 
   it('keeps a quoted feature name inside the attribute it labels', () => {
@@ -113,10 +122,23 @@ describe('the navigation the artifacts decide', () => {
       expect(page).toContain(`id="section-${String(target)}"`);
     }
   });
+
+  it('offers the sidebar toggle as a real button', () => {
+    const page = assemblePage(surfaceOf(), { sessionKey: KEY });
+
+    expect(page).toMatch(/<button[^>]*class="nav-toggle"[^>]*aria-controls="page-nav"/);
+  });
 });
 
-describe('the architecture the page draws', () => {
-  it('shows both color schemes of the rendered diagram', () => {
+describe('the bricks the sections lay', () => {
+  it('lays a masonry grid inside a prose section', () => {
+    const page = assemblePage(surfaceOf(), { sessionKey: KEY });
+
+    expect(page).toContain('class="grid-stack"');
+    expect(page).toContain('class="panel-head"');
+  });
+
+  it('seats the diagram beside the design as a collapsible panel', () => {
     const page = assemblePage(
       surfaceOf({
         artifacts: {
@@ -129,12 +151,7 @@ describe('the architecture the page draws', () => {
 
     expect(page).toContain('<svg data-light="1"></svg>');
     expect(page).toContain('<svg data-dark="1"></svg>');
-  });
-
-  it('dims the architecture entry for an item without a diagram', () => {
-    const page = assemblePage(surfaceOf(), { sessionKey: KEY });
-
-    expect(page).toMatch(/data-section="architecture"[^>]*class="[^"]*is-dimmed/);
+    expect(page).toMatch(/<details[^>]*data-panel="diagram"[^>]*open>/);
   });
 });
 
@@ -160,32 +177,30 @@ describe('the diff the page folds', () => {
     expect(page.match(/src\/app\.ts/g)?.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('dims the diff entry while the change is empty', () => {
+  it('empties the diff entry while the change is empty', () => {
     const page = assemblePage(surfaceOf(), { sessionKey: KEY });
 
-    expect(page).toMatch(/data-section="diff"[^>]*class="[^"]*is-dimmed/);
+    expect(page).toMatch(/class="nav-item is-empty"[^>]*data-section="diff"/);
   });
 });
 
 describe('the skin the page wears', () => {
-  it('carries the ket tokens for both color schemes', () => {
-    const page = assemblePage(surfaceOf(), { sessionKey: KEY });
+  it('wears the styles the server hands it', () => {
+    const page = assemblePage(surfaceOf(), { sessionKey: KEY, styles: '.the-skin{color:red}' });
 
-    expect(page).toContain('--color-canvas: oklch(0.68 0.15 40)');
-    expect(page).toContain('--color-scrim: oklch(0.18 0.01 75)');
-    expect(page).toContain("[data-scheme='light']");
+    expect(page).toContain('<style>.the-skin{color:red}</style>');
   });
 
   it('offers the tri-state theme switcher', () => {
     const page = assemblePage(surfaceOf(), { sessionKey: KEY });
 
     for (const choice of ['system', 'dark', 'light']) {
-      expect(page).toContain(`data-theme-choice="${choice}"`);
+      expect(page).toContain(`data-theme="${choice}"`);
     }
   });
 
   it('resolves the scheme before first paint', () => {
-    expect(assemblePage(surfaceOf(), { sessionKey: KEY })).toContain('data-scheme');
+    expect(assemblePage(surfaceOf(), { sessionKey: KEY })).toContain('dataset.scheme');
   });
 });
 
@@ -198,10 +213,10 @@ describe('the session key the page carries', () => {
     }
   });
 
-  it('reaches the live channel and the wireframe through keyed addresses', () => {
+  it('reaches the live channel and the bricks through keyed addresses', () => {
     const page = assemblePage(surfaceOf(), { sessionKey: KEY });
 
     expect(page).toContain(`/ws?key=${KEY}`);
-    expect(page).toContain(`/wireframe?key=${KEY}`);
+    expect(page).toContain(`/gridstack.js?key=${KEY}`);
   });
 });

@@ -12,7 +12,7 @@
     "lint": "oxlint --config ../../.oxlintrc.json .",
     "fmt": "oxfmt --config ../../.oxfmtrc.json .",
     "fmt:check": "oxfmt --config ../../.oxfmtrc.json --check .",
-    "check-types": "tsc --noEmit -p tsconfig.json",
+    "check-types": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.surface.json",
     "test:mutation": "stryker run",
     "generate": "bun scripts/generate-pipeline-commands.ts && oxfmt --config ../../.oxfmtrc.json src/commands/create/pipeline-commands.generated.ts"
   },
@@ -25,7 +25,12 @@
     "citty": "0.2.2",
     "cli-table3": "0.6.5",
     "diff2html": "^3.4.56",
+    "gridstack": "^13.0.2",
     "marked": "^17",
-    "picocolors": "1.1.1"
+    "picocolors": "1.1.1",
+    "ws": "^8.21.2"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.18.1"
   }
 }

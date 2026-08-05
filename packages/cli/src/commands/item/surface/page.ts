@@ -1,7 +1,10 @@
-import { html as diffHtml, parse as parseDiff } from 'diff2html';
+import type { Panel } from './panel.ts';
 
+import { sidebarGlyph, surfaceBootstrap, themeScript, themeSwitch } from './client.ts';
+import { diffBleed } from './fold.ts';
+import { masonry, panelOf } from './panel.ts';
 import { readingLayout } from './reading.ts';
-import { surfaceBoot, surfaceStyle, surfaceWiring } from './style.ts';
+import { escaped } from './text.ts';
 
 export interface RenderedDiagram {
   light: string;
@@ -33,13 +36,24 @@ export interface ItemSurface {
 
 export interface SurfaceOptions {
   sessionKey: string;
+  styles?: string;
+}
+
+interface SectionChild {
+  route: string;
+  label: string;
+  feature: string;
 }
 
 interface Section {
   id: string;
   label: string;
+  group: 'Design' | 'Verify';
+  mode: 'masonry' | 'bleed';
   written: boolean;
-  body: string;
+  panels: Panel[];
+  bleed: string;
+  children: SectionChild[];
 }
 
 const STAGES: readonly string[] = [
@@ -52,186 +66,208 @@ const STAGES: readonly string[] = [
   'shipped',
 ];
 
-const DESIGN_STAGES = new Set(['designing', 'awaiting-approval']);
+const DEFAULT_SECTION_BY_STAGE: Record<string, string> = {
+  triaged: 'design',
+  designing: 'design',
+  'awaiting-approval': 'design',
+  implementing: 'change',
+  verifying: 'change',
+  'awaiting-merge': 'change',
+  shipped: 'change',
+};
 
-const escaped = (text: string): string =>
-  text
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
+const DONE_TICK =
+  '<svg class="stage-tick" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.6 6.3 5 8.7 9.4 3.9" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
-function defaultSection(status: string, artifacts: SurfaceArtifacts): string {
-  if (status === 'triaged') {
-    return 'spec';
+function stageState(stage: string, current: string): string {
+  if (stage === current) {
+    return 'is-current';
   }
 
-  if (DESIGN_STAGES.has(status)) {
-    return 'design';
-  }
-
-  return artifacts.brief === undefined ? 'design' : 'change';
+  return STAGES.indexOf(stage) < STAGES.indexOf(current) ? 'is-done' : 'is-ahead';
 }
 
-function stepper(status: string): string {
-  const current = STAGES.indexOf(status);
-  const nodes = STAGES.map((stage, position) => {
-    const state = position === current ? 'is-current' : position < current ? 'is-done' : 'is-next';
+function stepper(current: string): string {
+  const nodes = STAGES.map((stage) => {
+    const state = stageState(stage, current);
+    const dot = state === 'is-done' ? DONE_TICK : '';
 
-    return `<li class="stage ${state}" data-stage="${stage}">${stage}</li>`;
+    return `<li class="stage ${state}" data-stage="${stage}"><span class="stage-dot">${dot}</span><span class="stage-name">${stage}</span></li>`;
   });
 
   return `<ol class="stepper">${nodes.join('')}</ol>`;
 }
 
-function proseSection(id: string, label: string, source: string | undefined): Section {
-  return {
-    id,
-    label,
-    written: source !== undefined && source.trim() !== '',
-    body: readingLayout(source ?? ''),
-  };
+function prosePanel(label: string, source: string | undefined): Panel {
+  return panelOf(label, readingLayout(source ?? ''));
 }
 
-function criteriaSection(features: FeatureFile[]): Section {
-  const cards = features.map(
-    (feature) =>
-      `<article class="feature" data-feature="${escaped(feature.name)}"><pre>${escaped(feature.source)}</pre></article>`,
-  );
-
-  return {
-    id: 'criteria',
-    label: 'Criteria',
-    written: features.length > 0,
-    body: cards.join(''),
-  };
-}
-
-function wireframeSection(sessionKey: string): Section {
-  return {
-    id: 'wireframe',
-    label: 'Wireframe',
-    written: true,
-    body: `<iframe class="wireframe" src="/wireframe?key=${sessionKey}"></iframe>`,
-  };
-}
-
-function diagramSection(diagram: RenderedDiagram | undefined): Section {
+function diagramPanel(diagram: RenderedDiagram | undefined): Panel {
   const body =
     diagram === undefined
       ? ''
       : `<figure class="diagram"><div class="diagram-light">${diagram.light}</div><div class="diagram-dark">${diagram.dark}</div></figure>`;
 
-  return { id: 'architecture', label: 'Architecture', written: diagram !== undefined, body };
+  return panelOf('Diagram', body, { frame: 'collapsible' });
 }
 
-function diffSection(change: string | undefined): Section {
-  const trimmed = change?.trim() ?? '';
+function criteriaBleed(features: FeatureFile[]): string {
+  return features
+    .map(
+      (feature) =>
+        `<article class="feature" data-feature="${escaped(feature.name)}"><pre>${escaped(feature.source)}</pre></article>`,
+    )
+    .join('');
+}
 
-  if (trimmed === '') {
-    return { id: 'diff', label: 'Diff', written: false, body: '' };
-  }
-
-  const files = parseDiff(trimmed);
-  const index = files.map(
-    (file) =>
-      `<li><a href="#file-${slugOf(file.newName)}">${escaped(file.newName)}</a><span class="diff-stat">+${String(file.addedLines)} -${String(file.deletedLines)}</span></li>`,
-  );
-  const folded = files.map(
-    (file) =>
-      `<details class="diff-file" id="file-${slugOf(file.newName)}"><summary>${escaped(file.newName)}<span class="diff-stat">+${String(file.addedLines)} -${String(file.deletedLines)}</span></summary>${diffHtml([file], { drawFileList: false, outputFormat: 'line-by-line' })}</details>`,
-  );
-
+function sectionOf(
+  id: string,
+  label: string,
+  group: Section['group'],
+  written: boolean,
+  shape: Partial<Section> = {},
+): Section {
   return {
-    id: 'diff',
-    label: 'Diff',
-    written: true,
-    body: `<ul class="diff-index">${index.join('')}</ul>${folded.join('')}`,
+    id,
+    label,
+    group,
+    mode: 'masonry',
+    written,
+    panels: [],
+    bleed: '',
+    children: [],
+    ...shape,
   };
 }
 
-function slugOf(name: string): string {
-  return name
-    .toLowerCase()
-    .replaceAll(/[^a-z0-9]+/g, '-')
-    .replaceAll(/^-|-$/g, '');
+function writtenProse(source: string | undefined): boolean {
+  return source !== undefined && source.trim() !== '';
 }
 
 function sectionsOf(artifacts: SurfaceArtifacts, sessionKey: string): Section[] {
+  const change = artifacts.diff?.trim() ?? '';
+
   return [
-    proseSection('spec', 'Spec', artifacts.spec),
-    proseSection('design', 'Design', artifacts.design),
-    diagramSection(artifacts.diagram),
-    proseSection('decision', 'Decision', artifacts.adr),
-    criteriaSection(artifacts.features),
-    wireframeSection(sessionKey),
-    proseSection('change', 'Change', artifacts.brief),
-    diffSection(artifacts.diff),
-    proseSection('findings', 'Findings', artifacts.findings),
+    sectionOf('spec', 'Spec', 'Design', writtenProse(artifacts.spec), {
+      panels: [prosePanel('Spec', artifacts.spec)],
+    }),
+    sectionOf('design', 'Design', 'Design', writtenProse(artifacts.design), {
+      panels: [prosePanel('Design', artifacts.design), diagramPanel(artifacts.diagram)],
+    }),
+    sectionOf('decision', 'Decision', 'Design', writtenProse(artifacts.adr), {
+      panels: [prosePanel('Decision', artifacts.adr)],
+    }),
+    sectionOf('criteria', 'Criteria', 'Design', artifacts.features.length > 0, {
+      mode: 'bleed',
+      bleed: criteriaBleed(artifacts.features),
+      children: artifacts.features.map((feature) => ({
+        route: `criteria/${feature.name}`,
+        label: feature.name,
+        feature: feature.name,
+      })),
+    }),
+    sectionOf('wireframe', 'Wireframe', 'Design', true, {
+      mode: 'bleed',
+      bleed: `<iframe class="wireframe" src="/wireframe?key=${sessionKey}" title="Wireframe"></iframe>`,
+    }),
+    sectionOf('change', 'Change', 'Verify', writtenProse(artifacts.brief), {
+      panels: [prosePanel('Brief', artifacts.brief)],
+    }),
+    sectionOf('diff', 'Diff', 'Verify', change !== '', {
+      mode: 'bleed',
+      bleed: change === '' ? '' : diffBleed(change),
+    }),
+    sectionOf('findings', 'Findings', 'Verify', writtenProse(artifacts.findings), {
+      panels: [prosePanel('Findings', artifacts.findings)],
+    }),
   ];
 }
 
-function navEntry(section: Section, features: FeatureFile[]): string {
-  const dimmed = section.written ? '' : ' is-dimmed';
-  const entry = `<a data-section="${section.id}" class="nav-entry${dimmed}" href="#${section.id}">${section.label}</a>`;
-
-  if (section.id !== 'criteria') {
-    return entry;
+function navChildren(section: Section, shownRoute: string): string {
+  if (section.children.length === 0) {
+    return '';
   }
 
-  const children = features.map(
-    (feature) =>
-      `<a class="nav-child" data-feature="${escaped(feature.name)}" href="#criteria">${escaped(feature.name)}</a>`,
-  );
+  const links = section.children.map((child) => {
+    const active = child.route === shownRoute ? ' is-selected' : '';
 
-  return `${entry}${children.join('')}`;
+    return `<a class="nav-child${active}" href="#${escaped(child.route)}" data-route="${escaped(child.route)}" data-feature="${escaped(child.feature)}">${escaped(child.label)}</a>`;
+  });
+
+  return `<div class="nav-children">${links.join('')}</div>`;
 }
 
-function sectionShell(section: Section): string {
-  const missing = section.written
-    ? section.body
-    : '<p class="not-written">Not written at this stage.</p>';
+function navGroup(
+  group: Section['group'],
+  sections: Section[],
+  selected: string,
+  shownRoute: string,
+): string {
+  const links = sections
+    .filter((entry) => entry.group === group)
+    .map((entry) => {
+      const empty = entry.written ? '' : ' is-empty';
+      const active = entry.id === selected ? ' is-selected' : '';
+      const item = `<a class="nav-item${empty}${active}" href="#${entry.id}" data-section="${entry.id}">${entry.label}</a>`;
 
-  return `<section id="section-${section.id}" class="surface-section">${missing}</section>`;
+      return item + navChildren(entry, entry.id === selected ? shownRoute : '');
+    });
+
+  return `<p class="nav-group">${group}</p>${links.join('')}`;
 }
 
-function themeSwitch(): string {
-  const choices = ['system', 'dark', 'light'].map(
-    (choice) => `<button type="button" data-theme-choice="${choice}">${choice}</button>`,
-  );
-
-  return `<div class="theme-switch">${choices.join('')}</div>`;
+function sectionBody(section: Section): string {
+  return section.mode === 'bleed' ? section.bleed : masonry(section.panels);
 }
 
 export function assemblePage(item: ItemSurface, options: SurfaceOptions): string {
   const sections = sectionsOf(item.artifacts, options.sessionKey);
-  const nav = sections.map((section) => navEntry(section, item.artifacts.features));
-  const bodies = sections.map(sectionShell);
+  const selected = DEFAULT_SECTION_BY_STAGE[item.status] ?? 'design';
+  const routes = Object.fromEntries(
+    sections.flatMap((entry) =>
+      entry.children.map((child) => [child.route, { section: entry.id, feature: child.feature }]),
+    ),
+  );
+  const firstRouteOf = Object.fromEntries(
+    sections.flatMap((entry) => {
+      const first = entry.children[0];
+
+      return first === undefined ? [] : [[entry.id, first.route]];
+    }),
+  );
+  const shownRoute = firstRouteOf[selected] ?? '';
+  const bodies = sections
+    .map((entry) => {
+      const active = entry.id === selected ? ' is-active' : '';
+
+      return `<section class="section is-${entry.mode}${active}" id="section-${entry.id}" data-section="${entry.id}">${sectionBody(entry)}</section>`;
+    })
+    .join('');
 
   return `<!doctype html>
-<html lang="en" data-default-section="${defaultSection(item.status, item.artifacts)}">
+<html lang="en" data-default-section="${selected}">
 <head>
 <meta charset="utf-8">
-<title>${escaped(item.key)} · ${escaped(item.title)}</title>
-<style>${surfaceStyle}</style>
-<script>${surfaceBoot}</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${escaped(item.key)} · ${escaped(item.title)} · ${item.status}</title>
+${themeScript}
+<style>${options.styles ?? ''}</style>
 </head>
 <body>
-<header class="surface-header">
-<span class="wordmark">ket</span>
-<span class="item-key">${escaped(item.key)}</span>
-<h1 class="item-title">${escaped(item.title)}</h1>
-${themeSwitch()}
+<header class="page-header">
+  <div class="item-identity"><button type="button" class="nav-toggle" aria-controls="page-nav" aria-expanded="true" aria-label="Toggle navigation" title="Toggle navigation">${sidebarGlyph}</button><span class="logotype">ket</span><span class="item-key">${escaped(item.key)}</span><span class="item-title">${escaped(item.title)}</span></div>
+  ${stepper(item.status)}
+  ${themeSwitch}
 </header>
-${stepper(item.status)}
-<div class="surface-frame">
-<nav class="surface-nav">${nav.join('')}</nav>
-<main class="surface-main">${bodies.join('')}</main>
-</div>
-<script>${surfaceWiring}</script>
-<script type="module" src="/surface.js?key=${options.sessionKey}"></script>
-<script>new WebSocket(\`ws://\${location.host}/ws?key=${options.sessionKey}\`).onmessage = () => location.reload();</script>
+<nav class="page-nav" id="page-nav">
+  ${navGroup('Design', sections, selected, shownRoute)}
+  ${navGroup('Verify', sections, selected, shownRoute)}
+</nav>
+<main class="page-content">
+${bodies}
+</main>
+<script src="/gridstack.js?key=${options.sessionKey}"></script>
+${surfaceBootstrap(options.sessionKey, item.key, selected, JSON.stringify(routes), JSON.stringify(firstRouteOf))}
 </body>
 </html>`;
 }

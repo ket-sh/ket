@@ -75,7 +75,7 @@ describe('the key every request carries', () => {
     const handle = await surfaceUp();
     const bare = new URL(handle.address);
 
-    for (const path of ['/', '/wireframe', '/ws']) {
+    for (const path of ['/', '/wireframe', '/ws', '/gridstack.js', '/surface.js']) {
       const reply = await fetch(`${bare.origin}${path}`);
 
       expect(reply.status).toBe(403);
@@ -88,6 +88,14 @@ describe('the key every request carries', () => {
 
     expect(reply.status).toBe(200);
     expect(await reply.text()).toContain('The sample item');
+  });
+
+  it('dresses the page in the surface skin', async () => {
+    const handle = await surfaceUp();
+    const page = await (await fetch(handle.address)).text();
+
+    expect(page).toContain('--color-canvas');
+    expect(page).toContain('.d2h-');
   });
 });
 

@@ -3,6 +3,7 @@ actionlint
 anscribe
 arrayify
 artipacked
+autohide
 backoff
 bddgen
 bunfig
@@ -22,9 +23,11 @@ cva
 Datree
 dedup
 depcruise
+diffview
 difit
 dmno
 dorny
+dragstop
 electricsql
 esac
 faststart
@@ -72,6 +75,8 @@ pilotty
 pipx
 playwright
 probity
+resizestart
+resizestop
 rhysd
 sarif
 scrollbox
