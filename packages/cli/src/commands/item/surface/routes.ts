@@ -142,6 +142,7 @@ async function acceptArtifact(
   itemDir: string,
   request: IncomingMessage,
   response: ServerResponse,
+  wroteArtifact: () => void,
 ): Promise<void> {
   const name = new URL(request.url ?? '/', 'http://surface').searchParams.get('name') ?? '';
   const target = featureTarget(itemDir, name);
@@ -153,6 +154,7 @@ async function acceptArtifact(
   }
 
   await writeFile(target, await text(request));
+  wroteArtifact();
   response.writeHead(204).end();
 }
 
@@ -203,6 +205,7 @@ export async function respond(
   d2Binary: string,
   request: IncomingMessage,
   response: ServerResponse,
+  wroteArtifact: () => void,
 ): Promise<void> {
   const path = pathOf(request);
 
@@ -219,7 +222,7 @@ export async function respond(
   }
 
   if (postsArtifact(path, request)) {
-    await acceptArtifact(itemDir, request, response);
+    await acceptArtifact(itemDir, request, response, wroteArtifact);
 
     return;
   }

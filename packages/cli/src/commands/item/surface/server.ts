@@ -66,6 +66,49 @@ function idleTimer(onIdle: () => void, idleMs: number): { rest(): void; clear():
   };
 }
 
+interface QuietGate {
+  hush: () => void;
+  loud: () => boolean;
+}
+
+function quietGate(): QuietGate {
+  let hushes = 0;
+
+  return {
+    hush: () => {
+      hushes += 1;
+    },
+    loud: () => {
+      if (hushes === 0) {
+        return true;
+      }
+
+      hushes = 0;
+
+      return false;
+    },
+  };
+}
+
+function pushingChanges(
+  home: string,
+  clients: Set<WebSocket>,
+  idle: { rest(): void },
+  quiet: QuietGate,
+): () => void {
+  return watching(home, () => {
+    idle.rest();
+
+    if (!quiet.loud()) {
+      return;
+    }
+
+    for (const client of clients) {
+      client.send('changed');
+    }
+  });
+}
+
 function attachSockets(server: Server, sessionKey: string, clients: Set<WebSocket>): void {
   const sockets = new WebSocketServer({ noServer: true });
 
@@ -114,6 +157,7 @@ export async function startSurface(
   const home = resolve(itemDir);
   const sessionKey = randomBytes(24).toString('base64url');
   const clients = new Set<WebSocket>();
+  const quiet = quietGate();
   let stopped = false;
 
   const idle = idleTimer(() => {
@@ -128,20 +172,14 @@ export async function startSurface(
     }
 
     idle.rest();
-    respond(home, sessionKey, options.d2Binary ?? 'd2', request, response).catch(
+    respond(home, sessionKey, options.d2Binary ?? 'd2', request, response, quiet.hush).catch(
       refusedBy(response),
     );
   });
 
   attachSockets(server, sessionKey, clients);
 
-  const stopWatching = watching(home, () => {
-    idle.rest();
-
-    for (const client of clients) {
-      client.send('changed');
-    }
-  });
+  const stopWatching = pushingChanges(home, clients, idle, quiet);
 
   const stop = async (): Promise<void> => {
     if (stopped) {

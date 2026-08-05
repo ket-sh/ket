@@ -1,7 +1,7 @@
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { SurfaceHandle } from './server.ts';
 
@@ -60,4 +60,61 @@ describe('the assets the page pulls', () => {
       expect(await reply.text()).toContain('ketSurface');
     },
   );
+});
+
+async function listening(address: URL): Promise<{ socket: WebSocket; heard: string[] }> {
+  const key = address.searchParams.get('key') ?? '';
+  const socket = new WebSocket(`ws://127.0.0.1:${address.port}/ws?key=${key}`);
+  const heard: string[] = [];
+
+  socket.addEventListener('message', (event) => {
+    heard.push(String(event.data));
+  });
+
+  await new Promise<void>((resolveOpen, rejectOpen) => {
+    socket.addEventListener(
+      'open',
+      () => {
+        resolveOpen();
+      },
+      { once: true },
+    );
+    socket.addEventListener(
+      'error',
+      () => {
+        rejectOpen(new Error('the socket refused'));
+      },
+      { once: true },
+    );
+  });
+
+  return { socket, heard };
+}
+
+describe('the quiet the artifact route keeps', () => {
+  it('never echoes its own save back as a change', async () => {
+    const handle = await startSurface(itemDir, {});
+
+    open.push(handle);
+
+    const address = new URL(handle.address);
+    const { socket, heard } = await listening(address);
+    const key = address.searchParams.get('key') ?? '';
+    const reply = await fetch(
+      `${address.origin}/artifact?key=${key}&name=features/sample.feature`,
+      { method: 'POST', body: 'Feature: Rewritten\n' },
+    );
+
+    expect(reply.status).toBe(204);
+    await new Promise<void>((rested) => {
+      setTimeout(rested, 400);
+    });
+    expect(heard).toHaveLength(0);
+
+    await writeFile(join(itemDir, 'solution-design.md'), '# The design grew\n');
+    await vi.waitFor(() => {
+      expect(heard.length).toBeGreaterThan(0);
+    });
+    socket.close();
+  });
 });
