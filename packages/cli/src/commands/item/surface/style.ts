@@ -183,6 +183,35 @@ code { font-family: var(--font-mono); color: var(--code-ink); }
 [data-scheme='light'] .diagram-dark { display: none; }
 [data-scheme='dark'] .diagram-light { display: none; }
 .wireframe { width: 100%; height: 32rem; border: 1px solid var(--edge); border-radius: var(--radius-panel); background: var(--surface-raised); }
+.diff-index { list-style: none; margin: 0 0 1rem; padding: 0.5rem 0; border: 1px solid var(--edge); border-radius: var(--radius-panel); background: var(--surface-raised); }
+.diff-index li { display: flex; justify-content: space-between; padding: 0.15rem 1rem; }
+.diff-index a { color: var(--ink); text-decoration: none; font-family: var(--font-mono); font-size: 0.8rem; }
+.diff-stat { font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-muted); }
+.diff-file {
+  position: relative;
+  contain: layout paint;
+  overflow: hidden;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+  margin: 0 0 0.75rem;
+}
+.diff-file summary {
+  display: flex;
+  justify-content: space-between;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  padding: 0.5rem 1rem;
+}
+.diff-file .d2h-wrapper { font-family: var(--font-mono); font-size: 0.8rem; }
+.diff-file .d2h-file-header { display: none; }
+.diff-file .d2h-diff-table { width: 100%; border-collapse: collapse; }
+.diff-file .d2h-code-linenumber { position: relative; color: var(--ink-muted); background: var(--surface); }
+.diff-file .d2h-code-line { padding: 0 0.5rem; }
+.diff-file .d2h-ins { background: oklch(0.65 0.15 150 / 0.14); }
+.diff-file .d2h-del { background: oklch(0.6 0.18 27 / 0.14); }
+.diff-file td { border: none; }
 `;
 
 export const surfaceBoot = `

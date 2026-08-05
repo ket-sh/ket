@@ -138,6 +138,35 @@ describe('the architecture the page draws', () => {
   });
 });
 
+describe('the diff the page folds', () => {
+  const CHANGE = [
+    'diff --git a/src/app.ts b/src/app.ts',
+    'index 1111111..2222222 100644',
+    '--- a/src/app.ts',
+    '+++ b/src/app.ts',
+    '@@ -1,2 +1,2 @@',
+    '-const answer = 1;',
+    '+const answer = 2;',
+    '',
+  ].join('\n');
+
+  it('collapses every changed file behind its index entry', () => {
+    const page = assemblePage(surfaceOf({ artifacts: { features: [], diff: CHANGE } }), {
+      sessionKey: KEY,
+    });
+
+    expect(page).toContain('class="diff-index"');
+    expect(page).toContain('<details class="diff-file"');
+    expect(page.match(/src\/app\.ts/g)?.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('dims the diff entry while the change is empty', () => {
+    const page = assemblePage(surfaceOf(), { sessionKey: KEY });
+
+    expect(page).toMatch(/data-section="diff"[^>]*class="[^"]*is-dimmed/);
+  });
+});
+
 describe('the skin the page wears', () => {
   it('carries the ket tokens for both color schemes', () => {
     const page = assemblePage(surfaceOf(), { sessionKey: KEY });

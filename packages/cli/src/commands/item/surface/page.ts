@@ -1,3 +1,5 @@
+import { html as diffHtml, parse as parseDiff } from 'diff2html';
+
 import { readingLayout } from './reading.ts';
 import { surfaceBoot, surfaceStyle, surfaceWiring } from './style.ts';
 
@@ -18,6 +20,7 @@ interface SurfaceArtifacts {
   brief?: string | undefined;
   findings?: string | undefined;
   diagram?: RenderedDiagram | undefined;
+  diff?: string | undefined;
   features: FeatureFile[];
 }
 
@@ -123,6 +126,38 @@ function diagramSection(diagram: RenderedDiagram | undefined): Section {
   return { id: 'architecture', label: 'Architecture', written: diagram !== undefined, body };
 }
 
+function diffSection(change: string | undefined): Section {
+  const trimmed = change?.trim() ?? '';
+
+  if (trimmed === '') {
+    return { id: 'diff', label: 'Diff', written: false, body: '' };
+  }
+
+  const files = parseDiff(trimmed);
+  const index = files.map(
+    (file) =>
+      `<li><a href="#file-${slugOf(file.newName)}">${escaped(file.newName)}</a><span class="diff-stat">+${String(file.addedLines)} -${String(file.deletedLines)}</span></li>`,
+  );
+  const folded = files.map(
+    (file) =>
+      `<details class="diff-file" id="file-${slugOf(file.newName)}"><summary>${escaped(file.newName)}<span class="diff-stat">+${String(file.addedLines)} -${String(file.deletedLines)}</span></summary>${diffHtml([file], { drawFileList: false, outputFormat: 'line-by-line' })}</details>`,
+  );
+
+  return {
+    id: 'diff',
+    label: 'Diff',
+    written: true,
+    body: `<ul class="diff-index">${index.join('')}</ul>${folded.join('')}`,
+  };
+}
+
+function slugOf(name: string): string {
+  return name
+    .toLowerCase()
+    .replaceAll(/[^a-z0-9]+/g, '-')
+    .replaceAll(/^-|-$/g, '');
+}
+
 function sectionsOf(artifacts: SurfaceArtifacts, sessionKey: string): Section[] {
   return [
     proseSection('spec', 'Spec', artifacts.spec),
@@ -132,6 +167,7 @@ function sectionsOf(artifacts: SurfaceArtifacts, sessionKey: string): Section[] 
     criteriaSection(artifacts.features),
     wireframeSection(sessionKey),
     proseSection('change', 'Change', artifacts.brief),
+    diffSection(artifacts.diff),
     proseSection('findings', 'Findings', artifacts.findings),
   ];
 }
