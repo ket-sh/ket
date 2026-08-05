@@ -136,6 +136,14 @@ describe('the navigation the artifacts decide', () => {
   });
 });
 
+describe('the hostility the page keeps inert', () => {
+  it('keeps a hostile status from ending the title early', () => {
+    const page = assemblePage(surfaceOf({ status: '</title><script>boom' }), { sessionKey: KEY });
+
+    expect(page).not.toContain('</title><script>boom');
+  });
+});
+
 describe('the bricks the sections lay', () => {
   it('lays a masonry grid inside a prose section', () => {
     const page = assemblePage(surfaceOf(), { sessionKey: KEY });

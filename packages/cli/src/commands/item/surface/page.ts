@@ -263,7 +263,7 @@ export function assemblePage(item: ItemSurface, options: SurfaceOptions): string
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escaped(item.key)} · ${escaped(item.title)} · ${item.status}</title>
+<title>${escaped(item.key)} · ${escaped(item.title)} · ${escaped(item.status)}</title>
 ${themeScript}
 <style>${options.styles ?? ''}</style>
 </head>
