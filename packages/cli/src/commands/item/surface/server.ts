@@ -207,10 +207,24 @@ export async function startSurface(
   return handle;
 }
 
+async function answering(address: string): Promise<boolean> {
+  try {
+    const reply = await fetch(address, { signal: AbortSignal.timeout(1500) });
+
+    return reply.ok;
+  } catch {
+    return false;
+  }
+}
+
 async function adoptForeign(home: string): Promise<SurfaceHandle | undefined> {
   const info = await readInfo(home);
 
   if (info === undefined || info.pid === process.pid || !alive(info.pid)) {
+    return undefined;
+  }
+
+  if (!(await answering(info.address))) {
     return undefined;
   }
 

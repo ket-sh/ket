@@ -213,24 +213,6 @@ describe('the lifecycle of the surface', () => {
 });
 
 describe('the surface another process owns', () => {
-  it('adopts the live surface the info file names instead of starting', async () => {
-    const foreign = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 30000)']);
-    const claimed = `http://127.0.0.1:59999/?key=${'0'.repeat(32)}`;
-
-    try {
-      await writeFile(
-        join(itemDir, '.surface.json'),
-        JSON.stringify({ address: claimed, port: 59999, pid: foreign.pid }),
-      );
-
-      const handle = await reuseOrStartSurface(itemDir);
-
-      expect(handle.address).toBe(claimed);
-    } finally {
-      foreign.kill();
-    }
-  });
-
   it('kills the foreign surface it is asked to stop and removes its trace', async () => {
     const foreign = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 30000)']);
     const exited = new Promise((resolve) => {

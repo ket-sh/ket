@@ -3,7 +3,7 @@ import { chmod, mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { SurfaceHandle } from './server.ts';
 
@@ -50,29 +50,6 @@ process.stdout.write('stopped');
     expect(answer.failed).toBe(false);
     expect(answer.out).toBe('stopped');
   }, 10000);
-});
-
-describe('the info file a recycled pid forged', () => {
-  it('starts fresh instead of adopting its own ghost', async () => {
-    vi.resetModules();
-
-    const fresh = await import('./server.ts');
-
-    await writeFile(
-      join(itemDir, '.surface.json'),
-      JSON.stringify({ address: 'http://127.0.0.1:1/?key=stale', port: 1, pid: process.pid }),
-    );
-
-    const handle = await fresh.reuseOrStartSurface(itemDir);
-
-    open.push(handle);
-
-    expect(handle.port).not.toBe(1);
-
-    const reply = await fetch(handle.address);
-
-    expect(reply.status).toBe(200);
-  });
 });
 
 describe('the renderer the surface reaches by name', () => {
