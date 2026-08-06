@@ -43,6 +43,7 @@ export const STANDING_FILES: PresetFile[] = [
   writes('mise.toml', 'mise.toml'),
   writes('gitleaks.toml', '.gitleaks.toml'),
   writes('vale.ini', '.vale.ini'),
+  writes('vale.core.ini', '.vale.core.ini'),
   writes('vale-styles/NoEmDash.yml', '.vale/styles/ket/NoEmDash.yml'),
   writes('vale-styles/Terminology.yml', '.vale/styles/ket/Terminology.yml'),
   writes('vale-styles/Intensifiers.yml', '.vale/styles/ket/Intensifiers.yml'),

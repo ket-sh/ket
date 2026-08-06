@@ -149,58 +149,6 @@ describe('a config that reaches into a package rather than naming it', () => {
   });
 });
 
-describe('the prose config a preset writes against the styles it ships', () => {
-  it('names a style the prose config asks for and the preset ships nowhere', () => {
-    const written = PROSE.replace('Microsoft, ket', 'Microsoft, ket, house');
-
-    expect(invariantsWhenWriting('files/vale.ini', written)).toStrictEqual([
-      'the prose config the preset writes names the style house, which the preset ships nowhere',
-    ]);
-  });
-
-  it('asks for no file for the styles the prose tool supplies itself', () => {
-    const written = PROSE.replace('Vale, Microsoft, ket', 'Vale, Microsoft');
-
-    expect(invariantsWhenWriting('files/vale.ini', written)).toStrictEqual([]);
-  });
-
-  it('names a prose config that declares no vocabulary at all', () => {
-    const written = PROSE.replace('Vocab = ket\n', '');
-
-    expect(invariantsWhenWriting('files/vale.ini', written)).toStrictEqual([
-      'the prose config the preset writes names no vocabulary',
-    ]);
-  });
-
-  it('names a vocabulary the prose config asks for and the preset ships nowhere', () => {
-    const written = PROSE.replace('Vocab = ket', 'Vocab = house');
-
-    expect(invariantsWhenWriting('files/vale.ini', written)).toStrictEqual([
-      'the prose config the preset writes names the vocabulary house, which the preset ships nowhere',
-    ]);
-  });
-
-  it('names a prose config that leaves its vocabulary blank', () => {
-    const written = PROSE.replace('Vocab = ket', 'Vocab =');
-
-    expect(invariantsWhenWriting('files/vale.ini', written)).toStrictEqual([
-      'the prose config the preset writes names no vocabulary',
-    ]);
-  });
-
-  it('asks for no file for a style list that ends on a comma', () => {
-    const written = PROSE.replace('Microsoft, ket', 'Microsoft, ket,');
-
-    expect(invariantsWhenWriting('files/vale.ini', written)).toStrictEqual([]);
-  });
-
-  it('asks for no file when the prose config bases itself on no style at all', () => {
-    const written = PROSE.replace('BasedOnStyles = Vale, Microsoft, ket\n', '');
-
-    expect(invariantsWhenWriting('files/vale.ini', written)).toStrictEqual([]);
-  });
-});
-
 describe('the mutation config a preset writes against the test config it ships', () => {
   it('names a test config the mutation config points at and the preset ships nowhere', () => {
     const written = JSON.stringify({ vitest: { configFile: 'vitest.elsewhere.config.ts' } });

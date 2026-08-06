@@ -8,7 +8,7 @@ const TSCONFIG = '~/tsconfig.json';
 
 const LINT_CONFIG = '~/.oxlintrc.json';
 
-const PROSE_CONFIG = '~/.vale.ini';
+const PROSE_CONFIGS = ['~/.vale.ini', '~/.vale.core.ini'];
 
 const MUTATION_CONFIG = '~/stryker.conf.json';
 
@@ -107,12 +107,22 @@ function settingIn(configuration: string, key: string): string | undefined {
   return line === undefined ? undefined : line.slice(line.indexOf(ASSIGNMENT) + 1).trim();
 }
 
+function settingsIn(configuration: string, key: string): string[] {
+  return configuration
+    .split('\n')
+    .filter((entry) => entry.startsWith(`${key} ${ASSIGNMENT}`))
+    .map((line) => line.slice(line.indexOf(ASSIGNMENT) + 1));
+}
+
 function styleInvariants(item: PresetItem, written: string): string[] {
   const targets = item.files.map((file) => file.target);
+  const named = new Set(
+    settingsIn(written, 'BasedOnStyles')
+      .flatMap((joined) => joined.split(','))
+      .map((style) => style.trim()),
+  );
 
-  return (settingIn(written, 'BasedOnStyles') ?? '')
-    .split(',')
-    .map((style) => style.trim())
+  return [...named]
     .filter((style) => style !== '' && !PROSE_TOOL_SUPPLIES.has(style))
     .filter((style) => !targets.some((target) => target.startsWith(`~/.vale/styles/${style}/`)))
     .map(
@@ -138,11 +148,13 @@ function vocabularyInvariants(item: PresetItem, written: string): string[] {
 }
 
 function proseInvariants(item: PresetItem, shipped: PresetContents): string[] {
-  const written = writtenTo(item, shipped, PROSE_CONFIG);
+  return PROSE_CONFIGS.flatMap((config) => {
+    const written = writtenTo(item, shipped, config);
 
-  return written === undefined
-    ? []
-    : [...styleInvariants(item, written), ...vocabularyInvariants(item, written)];
+    return written === undefined
+      ? []
+      : [...styleInvariants(item, written), ...vocabularyInvariants(item, written)];
+  });
 }
 
 function testConfigNamedIn(written: string): string | undefined {
