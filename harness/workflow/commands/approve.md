@@ -35,7 +35,18 @@ The page lets the user fix a scenario's wording in place, and the save writes th
 feature file back beside the item. Nothing else on the page writes, and no status
 moves there.
 
-## 2. Say what the approval turns on
+## 2. Read the drift
+
+```
+ket item drift $ARGUMENTS
+```
+
+One line per plain-language sibling. On `stale`, `unstamped`, or `orphaned`,
+re-derive or confirm that sibling the way the `plain` skill says, stamp with
+`ket item stamp $ARGUMENTS`, and only then summarize. The page shows the same
+lag beside the audience switch, so a reviewer sees what you skipped.
+
+## 3. Say what the approval turns on
 
 The page carries the artifacts. The chat carries the decision, so lead with the
 decision:
@@ -55,7 +66,7 @@ Front-load all of it: the summary first, then the detail, in every bullet and
 every sentence. Split a sentence over 25 words. Give the number rather than an
 adjective about it.
 
-## 3. Take the decision in the chat
+## 4. Take the decision in the chat
 
 Ask with AskUserQuestion. Three options, each saying what follows from it:
 
@@ -72,7 +83,7 @@ rereads the revision without touching the browser. Then ask again.
 Take the answer as given. A user who holds an item has told you the design is not
 ready, and that is not an invitation to argue.
 
-## 4. Move it
+## 5. Move it
 
 ```
 ket item approve $ARGUMENTS

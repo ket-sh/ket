@@ -215,6 +215,8 @@ item in `.ket/items/<key>/`:
 - `ket:gherkin` for the acceptance criteria, in `features/*.feature`
 - `ket:ui-design` when a target has a surface, in `ui-design.md` with
   `ui-design.html` beside it
+- a plain-language sibling per prose artifact, the way the `plain` skill says,
+  stamped with `ket item stamp <key>` once derived
 
 The `d2` binary renders the diagram for the page in both color schemes, so the
 source has to compile. Check it once before submitting:

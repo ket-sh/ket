@@ -7,6 +7,7 @@ skills:
   - adr
   - research
   - prior-art
+  - plain
 ---
 
 You write `adr.md`. Your source is the internet, and the part that needs it is
@@ -46,3 +47,6 @@ Your research earns the matrix. The drivers come out of what you learned the
 decision must satisfy, and every option gets a verdict against every driver,
 including the chosen one. Use `?` where the internet gave no answer, because a
 guessed glyph poisons the row it sits in.
+
+Once the record settles, derive `adr.plain.md` beside it the way the `plain`
+skill says, and stamp it with `ket item stamp <key>`.
