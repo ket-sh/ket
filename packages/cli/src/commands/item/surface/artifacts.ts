@@ -46,8 +46,11 @@ export async function readSurface(itemDir: string): Promise<ItemSurface> {
     status: yamlLine(manifest, 'status') ?? 'triaged',
     artifacts: {
       spec: await readArtifact(itemDir, 'spec.md'),
+      specPlain: await readArtifact(itemDir, 'spec.plain.md'),
       design: await readArtifact(itemDir, 'solution-design.md'),
+      designPlain: await readArtifact(itemDir, 'solution-design.plain.md'),
       adr: await readArtifact(itemDir, 'adr.md'),
+      adrPlain: await readArtifact(itemDir, 'adr.plain.md'),
       brief: await readArtifact(itemDir, 'change-brief.md'),
       findings: await readArtifact(itemDir, 'findings.md'),
       features: await featuresOf(itemDir),

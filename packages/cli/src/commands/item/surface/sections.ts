@@ -1,5 +1,6 @@
 import type { Panel } from './panel.ts';
 
+import { audiencePanel } from './audience.ts';
 import { diffBleed } from './fold.ts';
 import { driverMatrix, withoutMatrixLines } from './matrix.ts';
 import { UNWRITTEN, panelOf } from './panel.ts';
@@ -18,8 +19,11 @@ interface FeatureFile {
 
 interface SurfaceArtifacts {
   spec?: string | undefined;
+  specPlain?: string | undefined;
   design?: string | undefined;
+  designPlain?: string | undefined;
   adr?: string | undefined;
+  adrPlain?: string | undefined;
   brief?: string | undefined;
   findings?: string | undefined;
   diagram?: RenderedDiagram | undefined;
@@ -54,9 +58,23 @@ function prosePanel(label: string, source: string | undefined): Panel {
   return panelOf(label, readingLayout(source ?? ''));
 }
 
-function decisionPanels(adr: string | undefined): Panel[] {
+function audienceProse(
+  label: string,
+  group: string,
+  technical: string | undefined,
+  plain: string | undefined,
+): Panel {
+  return audiencePanel(label, group, readingLayout(technical ?? ''), readingLayout(plain ?? ''));
+}
+
+function decisionPanels(adr: string | undefined, plain: string | undefined): Panel[] {
   const source = adr ?? '';
-  const prose = panelOf('Decision', readingLayout(withoutMatrixLines(source)));
+  const prose = audiencePanel(
+    'Decision',
+    'decision',
+    readingLayout(withoutMatrixLines(source)),
+    readingLayout(plain ?? ''),
+  );
   const matrix = driverMatrix(source);
 
   return matrix === undefined ? [prose] : [prose, matrix];
@@ -105,15 +123,18 @@ export function sectionsOf(artifacts: SurfaceArtifacts, sessionKey: string): Sec
   return [
     sectionOf('spec', 'Spec', 'Design', writtenProse(artifacts.spec), {
       mode: 'masonry',
-      panels: [prosePanel('Spec', artifacts.spec)],
+      panels: [audienceProse('Spec', 'spec', artifacts.spec, artifacts.specPlain)],
     }),
     sectionOf('design', 'Design', 'Design', writtenProse(artifacts.design), {
       mode: 'masonry',
-      panels: [prosePanel('Design', artifacts.design), diagramPanel(artifacts.diagram)],
+      panels: [
+        audienceProse('Design', 'design', artifacts.design, artifacts.designPlain),
+        diagramPanel(artifacts.diagram),
+      ],
     }),
     sectionOf('decision', 'Decision', 'Design', writtenProse(artifacts.adr), {
       mode: 'masonry',
-      panels: decisionPanels(artifacts.adr),
+      panels: decisionPanels(artifacts.adr, artifacts.adrPlain),
     }),
     sectionOf('criteria', 'Criteria', 'Design', artifacts.features.length > 0, {
       mode: 'bleed',

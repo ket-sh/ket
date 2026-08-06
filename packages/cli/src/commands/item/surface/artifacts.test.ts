@@ -69,6 +69,26 @@ describe('the artifacts the surface gathers', () => {
     expect(artifacts.spec).toBeUndefined();
     expect(artifacts.design).toBeUndefined();
   });
+
+  it('reads the plain-language sibling of each prose artifact', async () => {
+    await writeFile(join(itemDir, 'spec.plain.md'), 'the plain spec\n');
+    await writeFile(join(itemDir, 'solution-design.plain.md'), 'the plain design\n');
+    await writeFile(join(itemDir, 'adr.plain.md'), 'the plain adr\n');
+
+    const { artifacts } = await readSurface(itemDir);
+
+    expect(artifacts.specPlain).toBe('the plain spec\n');
+    expect(artifacts.designPlain).toBe('the plain design\n');
+    expect(artifacts.adrPlain).toBe('the plain adr\n');
+  });
+
+  it('leaves the plain slots empty until somebody translates', async () => {
+    const { artifacts } = await readSurface(itemDir);
+
+    expect(artifacts.specPlain).toBeUndefined();
+    expect(artifacts.designPlain).toBeUndefined();
+    expect(artifacts.adrPlain).toBeUndefined();
+  });
 });
 
 describe('the features the surface lists', () => {

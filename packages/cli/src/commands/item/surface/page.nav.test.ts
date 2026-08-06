@@ -137,7 +137,7 @@ describe('the children the criteria spread', () => {
 
 describe('the one section the page opens', () => {
   it('activates the default section alone', () => {
-    expect(pageOf().match(/is-active/g)).toHaveLength(1);
+    expect(pageOf().match(/class="section [^"]*is-active/g)).toHaveLength(1);
   });
 
   it('leaves the rest closed and unadorned', () => {
