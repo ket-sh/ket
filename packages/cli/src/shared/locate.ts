@@ -88,6 +88,22 @@ export function keyFrom(loaded: unknown): string | undefined {
   return typeof declared === 'string' && declared !== '' ? declared : undefined;
 }
 
+export function integrationsFrom(loaded: unknown): string[] {
+  const exported = isRecord(loaded) ? loaded['default'] : undefined;
+  const declared = isRecord(exported) ? exported['integrations'] : undefined;
+
+  return Array.isArray(declared)
+    ? declared.filter((name): name is string => typeof name === 'string')
+    : [];
+}
+
+export function workflowFrom(loaded: unknown): boolean {
+  const exported = isRecord(loaded) ? loaded['default'] : undefined;
+  const declared = isRecord(exported) ? exported['workflow'] : undefined;
+
+  return typeof declared === 'boolean' ? declared : true;
+}
+
 export function sourceRootsOf(targets: Record<string, PresetName>): string[] {
   return Object.keys(targets).map((directory) =>
     directory === REPOSITORY_ROOT ? SOURCE_DIRECTORY : `${directory}/${SOURCE_DIRECTORY}`,

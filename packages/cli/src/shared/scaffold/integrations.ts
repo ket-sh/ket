@@ -6,7 +6,7 @@ import type { PresetName } from '../../shared/configuration.ts';
 import type { ScaffoldFile } from '../../shared/write-files.ts';
 
 import { governingPresets, presetNamed } from '../../shared/registry.ts';
-import { pathInProject } from './install.ts';
+import { pathInProject } from './placement.ts';
 
 export function integrationsOffered(preset: PresetName): PresetIntegration[] {
   return presetNamed(preset)?.item.integrations ?? [];

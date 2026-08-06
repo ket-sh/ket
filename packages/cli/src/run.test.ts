@@ -4,6 +4,8 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { runCommand } from './run.ts';
+import { hashOf, parseScaffoldRecord } from './shared/scaffold-manifest.ts';
+import { KET_VERSION } from './shared/version.ts';
 
 const OBLIGING = `#!/bin/sh
 mkdir -p ".claude/skills/$5"
@@ -83,6 +85,22 @@ describe('the ket command line', () => {
     const where = join(await scratch(), "shop'; break(); const z = '");
 
     await expect(runCommand('create', [where])).rejects.toThrow(/cannot name a project/);
+  });
+});
+
+describe('creating a project that can update itself later', () => {
+  it('records what it wrote in .ket/scaffold.json, so an update compares by hash', async () => {
+    const where = join(await scratch(), 'ledger-service');
+
+    await runCommand('create', [where]);
+
+    const record = parseScaffoldRecord(await readFile(join(where, '.ket/scaffold.json'), 'utf8'));
+
+    expect(record?.ket).toBe(KET_VERSION);
+    expect(record?.files['tsconfig.json']).toBe(
+      hashOf(await readFile(join(where, 'tsconfig.json'))),
+    );
+    expect(record?.files['.gitignore']).toBeUndefined();
   });
 });
 
