@@ -65,10 +65,20 @@ jobs:
       - run: bun run lint:dup
       - run: bun run lint:spell
 
-  mutation:
+  mutation-matrix:
+    name: mutation (${{ matrix.package }})
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - packages/cli
+          - packages/oxlint-plugin-ket
+          - packages/preset
+          - presets/cli
+          - presets/web
     steps:
       - uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
@@ -80,9 +90,34 @@ jobs:
         with:
           bun-version-file: package.json
       - run: bun install --frozen-lockfile
-      # The gate this product sells. Running it anywhere but here would leave
-      # ket the one repository it is not measured in.
-      - run: bun run test:mutation
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            .turbo
+            ${{ matrix.package }}/reports/stryker-incremental.json
+          key: mutation-${{ matrix.package }}-${{ github.sha }}
+          restore-keys: |
+            mutation-${{ matrix.package }}-
+      - name: Retest what changed since the baseline
+        if: github.ref != 'refs/heads/main'
+        run: bunx turbo run test:mutation --filter=./${{ matrix.package }} -- --incremental
+      - name: Retest everything and rewrite the baseline
+        if: github.ref == 'refs/heads/main'
+        run: bunx turbo run test:mutation --filter=./${{ matrix.package }} -- --incremental --force
+
+  # The gate this product sells. Running it anywhere but here would leave
+  # ket the one repository it is not measured in.
+  mutation:
+    needs: [changes, mutation-matrix]
+    if: always() && needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+      - run: test "${RESULT}" = "success"
+        env:
+          RESULT: ${{ needs.mutation-matrix.result }}
 
   acceptance:
     needs: changes
