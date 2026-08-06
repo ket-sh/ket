@@ -98,11 +98,11 @@ jobs:
           key: mutation-${{ matrix.package }}-${{ github.sha }}
           restore-keys: |
             mutation-${{ matrix.package }}-
-      # A pull request retests only what changed since the cached baseline.
-      - if: github.ref != 'refs/heads/main'
+      - name: Retest what changed since the baseline
+        if: github.ref != 'refs/heads/main'
         run: bunx turbo run test:mutation --filter=./${{ matrix.package }} -- --incremental
-      # Main retests everything and writes the baseline the next runs restore.
-      - if: github.ref == 'refs/heads/main'
+      - name: Retest everything and rewrite the baseline
+        if: github.ref == 'refs/heads/main'
         run: bunx turbo run test:mutation --filter=./${{ matrix.package }} -- --incremental --force
 
   # The gate this product sells. Running it anywhere but here would leave
