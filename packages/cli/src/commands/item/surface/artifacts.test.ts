@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { readSurface } from './artifacts.ts';
+import { readBlast, readSurface } from './artifacts.ts';
 
 let itemDir = '';
 
@@ -96,6 +96,27 @@ describe('the artifacts the surface gathers', () => {
     const { artifacts } = await readSurface(itemDir);
 
     expect(artifacts.callouts).toBe('[{"claim":"a","shape":"b"}]');
+  });
+});
+
+describe('the blast capture the surface reads', () => {
+  it('pairs the captured graph with its measurement', async () => {
+    await writeFile(join(itemDir, 'blast.d2'), 'a -> b\n');
+    await writeFile(join(itemDir, 'blast.json'), '{"budget":20}');
+
+    expect(await readBlast(itemDir)).toEqual({ source: 'a -> b\n', measure: '{"budget":20}' });
+  });
+
+  it('carries a graph whose measurement nobody wrote', async () => {
+    await writeFile(join(itemDir, 'blast.d2'), 'a -> b\n');
+
+    expect(await readBlast(itemDir)).toEqual({ source: 'a -> b\n', measure: undefined });
+  });
+
+  it('answers no blast without a captured graph', async () => {
+    await writeFile(join(itemDir, 'blast.json'), '{"budget":20}');
+
+    expect(await readBlast(itemDir)).toBeUndefined();
   });
 });
 

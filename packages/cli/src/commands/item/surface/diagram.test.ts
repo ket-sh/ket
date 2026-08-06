@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { renderDiagram } from './diagram.ts';
+import { renderBlast, renderDiagram } from './diagram.ts';
 
 const missingD2 = spawnSync('d2', ['--version']).error !== undefined;
 
@@ -79,5 +79,62 @@ describe('the diagram an architecture source renders into', () => {
 
     expect(rendered?.light).toBe(`<svg>${source} -</svg>`);
     expect(rendered?.dark).toBe(`<svg>--theme 200 ${source} -</svg>`);
+  });
+});
+
+describe('the blast graph the renderer attempts', () => {
+  it('draws both themes of the captured graph', async () => {
+    const binary = join(itemDir, 'echo-d2');
+
+    await writeFile(binary, '#!/bin/sh\nprintf "<svg>%s</svg>" "$*"\n');
+    await chmod(binary, 0o755);
+    await writeFile(join(itemDir, 'blast.d2'), 'a -> b\n');
+
+    const source = join(itemDir, 'blast.d2');
+    const outcome = await renderBlast(itemDir, binary);
+
+    expect(outcome).toEqual({
+      drawn: { light: `<svg>${source} -</svg>`, dark: `<svg>--theme 200 ${source} -</svg>` },
+    });
+  });
+
+  it('answers the light refusal as the complaint', async () => {
+    const binary = join(itemDir, 'dark-only-d2');
+
+    await writeFile(
+      binary,
+      '#!/bin/sh\ncase "$1" in --theme) printf "<svg>dark</svg>";; *) echo "the light wound" >&2; exit 3;; esac\n',
+    );
+    await chmod(binary, 0o755);
+    await writeFile(join(itemDir, 'blast.d2'), 'a -> b\n');
+
+    const outcome = await renderBlast(itemDir, binary);
+
+    expect(outcome).toHaveProperty('complaint');
+    expect(JSON.stringify(outcome)).toContain('the light wound');
+  });
+
+  it('answers the dark refusal as the complaint', async () => {
+    const binary = join(itemDir, 'light-only-d2');
+
+    await writeFile(
+      binary,
+      '#!/bin/sh\ncase "$1" in --theme) echo "the dark wound" >&2; exit 3;; *) printf "<svg>light</svg>";; esac\n',
+    );
+    await chmod(binary, 0o755);
+    await writeFile(join(itemDir, 'blast.d2'), 'a -> b\n');
+
+    const outcome = await renderBlast(itemDir, binary);
+
+    expect(JSON.stringify(outcome)).toContain('the dark wound');
+    expect(JSON.stringify(outcome)).not.toContain('light</svg>');
+  });
+
+  it('names the install when the binary is missing', async () => {
+    await writeFile(join(itemDir, 'blast.d2'), 'a -> b\n');
+
+    const outcome = await renderBlast(itemDir, 'ket-no-such-d2');
+
+    expect(JSON.stringify(outcome)).toContain('install d2');
   });
 });
