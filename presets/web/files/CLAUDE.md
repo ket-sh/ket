@@ -85,6 +85,12 @@ A dev tool heavy enough to want its own lockfile earns a package under
 enough yet: Stryker stays in the project's own lockfile until a tool that
 genuinely needs the isolation arrives.
 
+## Gates and linting
+
+- **Never disable, override, or loosen any gate.** No `eslint-disable`, no oxlint override or `.oxlintrc` rule change, no lowered mutation or coverage threshold, no `--no-verify`, no silenced Vale or cspell rule. This covers every gate: max-lines, complexity, mutation, coverage, prose, spelling, dependency, and the rest.
+- A blocking gate is a design signal, not an obstacle. A file over `max-lines` wants splitting by single responsibility; a surviving mutant wants a better test; an unknown word wants the committed accept list. Fix the code to satisfy the rule.
+- When fixing the code genuinely can't satisfy a rule, stop and ask the maintainer before touching any gate config. Only the maintainer authorizes a gate change, and only after you ask.
+
 ## When no skill covers the question
 
 The `find-skills` skill looks for one this project has yet to install.

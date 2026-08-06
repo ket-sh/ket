@@ -32,3 +32,6 @@ __screenshots__/
 # Holds resolved values; varlock reads .env.schema, never this
 .env
 *.local
+
+# The surface session key lives here while a gate holds; a committed key is a leaked key
+.surface.json

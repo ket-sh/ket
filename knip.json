@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "ignoreBinaries": ["mise"],
+  "ignoreBinaries": ["mise", "d2"],
   "workspaces": {
     ".": {
       "entry": [
@@ -34,5 +34,5 @@
       "project": ["src/**/*.ts", "scripts/**/*.ts"]
     }
   },
-  "ignoreDependencies": ["@steiger/toolkit", "pilotty"]
+  "ignoreDependencies": ["@steiger/toolkit", "gridstack", "pilotty"]
 }

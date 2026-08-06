@@ -11,12 +11,17 @@ Read every `.ket/items/*/item.yaml` and take the ones whose status is neither
 `idea` nor `shipped`. If none is in flight, say so and stop rather than
 inventing work.
 
+The job is the item whose status has moved past `triaged`. Items still
+`triaged` are the backlog: they wait their turn and crowd nobody. When nothing
+has moved past `triaged`, the filed item with the lowest key is the one to pick
+up.
+
 An epic that lists a child in flight is not the job. The child is. Work the
 child and leave the epic where it stands.
 
-If two items are in flight and neither is the parent of the other, stop and say
-so. One job means one branch, and the write gate refuses both until one of them
-lands.
+If two items have moved past `triaged` and neither is the parent of the other,
+stop and say so. One job means one branch, and the write gate refuses both
+until one of them lands.
 
 ## 2. Carry it
 

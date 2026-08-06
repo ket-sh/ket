@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { GovernedItem, WriteAttempt } from './write-gate.ts';
 
-import { jobIn, verdictFor, workingFrom } from './write-gate.ts';
+import { jobIn, secondJobAmong, verdictFor, workingFrom } from './write-gate.ts';
 
 const EPIC: GovernedItem = {
   key: 'AUTH-1',
@@ -109,5 +109,38 @@ describe('the one job a repository has in hand', () => {
 
   it('is nobody where two items are in flight, since one job means one branch', () => {
     expect(jobIn([{ ...CHILD, key: 'AUTH-1' }, CHILD])).toBeUndefined();
+  });
+
+  it('is the item being worked while filed siblings wait their turn', () => {
+    expect(jobIn([{ ...CHILD, key: 'AUTH-3', status: 'triaged' }, CHILD])).toStrictEqual(CHILD);
+  });
+
+  it('is the first of the filed items when nothing is being worked yet', () => {
+    const filed = jobIn([
+      { ...CHILD, key: 'AUTH-3', status: 'triaged' },
+      { ...CHILD, key: 'AUTH-2', status: 'triaged' },
+    ]);
+
+    expect(filed?.key).toBe('AUTH-2');
+  });
+});
+
+describe('the job that holds the door against a second one', () => {
+  it('names the item being worked when another key tries to open', () => {
+    const held = secondJobAmong([CHILD, { ...CHILD, key: 'AUTH-3', status: 'triaged' }], 'AUTH-3');
+
+    expect(held?.key).toBe('AUTH-2');
+  });
+
+  it('holds no door against the key that is itself the job', () => {
+    expect(secondJobAmong([CHILD], 'AUTH-2')).toBeUndefined();
+  });
+
+  it('holds no door for a backlog, since filed items crowd nobody', () => {
+    expect(secondJobAmong([{ ...CHILD, status: 'triaged' }], 'AUTH-9')).toBeUndefined();
+  });
+
+  it('holds no door for the epic that delegates to the key opening', () => {
+    expect(secondJobAmong([EPIC, CHILD], 'AUTH-2')).toBeUndefined();
   });
 });

@@ -84,3 +84,21 @@ describe('putting work in front of somebody before it was reviewed', () => {
     });
   });
 });
+
+describe('the item a publish answers for', () => {
+  it('is the job, not whichever item the directory returned first', () => {
+    const verdict = shellVerdict(
+      attempt({
+        inFlight: [
+          { ...WORKING, key: 'AUTH-3', status: 'triaged' },
+          { ...WORKING, status: 'implementing' },
+        ],
+      }),
+    );
+
+    expect(verdict).toStrictEqual({
+      refused:
+        'this command publishes AUTH-1 and no review has answered for it. Run /ket:review, or record a deliberate skip with ket review skip AUTH-1 --reason.',
+    });
+  });
+});

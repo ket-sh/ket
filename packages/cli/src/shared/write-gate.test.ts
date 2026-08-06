@@ -122,21 +122,6 @@ describe('more work in flight than one branch should hold', () => {
       refused: 'AUTH-1 and AUTH-2 are both in flight. One job means one branch.',
     });
   });
-
-  it('refuses before it reads a status, since neither item is the one', () => {
-    const verdict = verdictFor(
-      attempt({
-        inFlight: [
-          { ...STORY, status: 'triaged' },
-          { ...STORY, key: 'AUTH-2', status: 'triaged' },
-        ],
-      }),
-    );
-
-    expect(verdict).toStrictEqual({
-      refused: 'AUTH-1 and AUTH-2 are both in flight. One job means one branch.',
-    });
-  });
 });
 
 describe('deciding whether a path is under a source root', () => {

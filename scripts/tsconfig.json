@@ -1,5 +1,5 @@
 {
-  "extends": "../tsconfig.base.json",
+  "extends": "@ket/tsconfig/base.json",
   "compilerOptions": {
     "module": "nodenext",
     "moduleResolution": "nodenext",

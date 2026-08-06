@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "@ket/tsconfig/base.json",
   "compilerOptions": {
     "types": ["bun"],
     "allowImportingTsExtensions": true,
@@ -8,5 +8,6 @@
     "declaration": false,
     "declarationMap": false
   },
-  "include": ["src/**/*.ts", "scripts/**/*.ts", "vitest.config.ts"]
+  "include": ["src/**/*.ts", "scripts/**/*.ts", "vitest.config.ts"],
+  "exclude": ["src/commands/item/surface/client/**/*.ts"]
 }
