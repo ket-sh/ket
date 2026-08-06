@@ -8,6 +8,7 @@ import type { Configuration, PresetName } from '../../shared/configuration.ts';
 
 import { registeredPresets } from '../../shared/registry.ts';
 import { integrationsOffered } from '../../shared/scaffold/integrations.ts';
+import { DEFAULT_LANGUAGE, refuseLanguage } from '../../shared/scaffold/language.ts';
 import { drawWorkflow } from './announce.ts';
 import { directoryLabel } from './directory-label.ts';
 import { refuseKey } from './key.ts';
@@ -47,6 +48,15 @@ async function askKey(suggested: string | undefined): Promise<string | symbol> {
   });
 }
 
+async function askLanguage(): Promise<string | symbol> {
+  return text({
+    message: 'Which language will your documentation speak?',
+    placeholder: DEFAULT_LANGUAGE,
+    defaultValue: DEFAULT_LANGUAGE,
+    validate: (given) => (given === undefined || given === '' ? undefined : refuseLanguage(given)),
+  });
+}
+
 async function askWorkflow(): Promise<boolean | symbol> {
   drawWorkflow();
 
@@ -73,47 +83,68 @@ async function askIntegrations(offered: PresetIntegration[]): Promise<string[] |
   });
 }
 
+async function askedOrCancelled<Answer>(
+  ask: () => Promise<Answer | symbol>,
+): Promise<Answer | undefined> {
+  const answer = await ask();
+
+  if (isCancel(answer)) {
+    cancel('Nothing was written.');
+
+    return undefined;
+  }
+
+  return answer;
+}
+
 export async function runWizard(suggestedKey: string | undefined): Promise<WizardOutcome> {
-  const preset = await askPreset();
+  const preset = await askedOrCancelled(askPreset);
 
-  if (isCancel(preset)) {
-    cancel('Nothing was written.');
-
+  if (preset === undefined) {
     return CANCELLED;
   }
 
-  const integrations = await askIntegrations(integrationsOffered(preset));
+  const integrations = await askedOrCancelled(async () =>
+    askIntegrations(integrationsOffered(preset)),
+  );
 
-  if (isCancel(integrations)) {
-    cancel('Nothing was written.');
-
+  if (integrations === undefined) {
     return CANCELLED;
   }
 
-  const workflow = await askWorkflow();
+  return finishedWizard(suggestedKey, { [WHOLE_REPOSITORY]: preset }, integrations);
+}
 
-  if (isCancel(workflow)) {
-    cancel('Nothing was written.');
+async function finishedWizard(
+  suggestedKey: string | undefined,
+  targets: Record<string, PresetName>,
+  integrations: string[],
+): Promise<WizardOutcome> {
+  const language = await askedOrCancelled(askLanguage);
 
+  if (language === undefined) {
     return CANCELLED;
   }
 
-  const targets = { [WHOLE_REPOSITORY]: preset };
+  const workflow = await askedOrCancelled(askWorkflow);
 
-  if (!workflow) {
-    return keylessConfiguration(suggestedKey, targets, integrations);
+  if (workflow === undefined) {
+    return CANCELLED;
   }
 
-  return keyedConfiguration(suggestedKey, targets, integrations);
+  return workflow
+    ? keyedConfiguration(suggestedKey, targets, integrations, language)
+    : keylessConfiguration(suggestedKey, targets, integrations, language);
 }
 
 function keylessConfiguration(
   suggestedKey: string | undefined,
   targets: Record<string, PresetName>,
   integrations: string[],
+  language: string,
 ): WizardOutcome {
   return {
-    configured: { key: suggestedKey ?? '', targets, integrations, workflow: false },
+    configured: { key: suggestedKey ?? '', targets, integrations, language, workflow: false },
   };
 }
 
@@ -121,6 +152,7 @@ async function keyedConfiguration(
   suggestedKey: string | undefined,
   targets: Record<string, PresetName>,
   integrations: string[],
+  language: string,
 ): Promise<WizardOutcome> {
   const key = await askKey(suggestedKey);
 
@@ -130,5 +162,5 @@ async function keyedConfiguration(
     return CANCELLED;
   }
 
-  return { configured: { key, targets, integrations, workflow: true } };
+  return { configured: { key, targets, integrations, language, workflow: true } };
 }

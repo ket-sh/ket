@@ -14,6 +14,7 @@ import { governingPresets } from '../../shared/registry.ts';
 import { recordedAmong, scaffoldRecordFile } from '../../shared/scaffold-manifest.ts';
 import { installedFor, shippedContents } from '../../shared/scaffold/install.ts';
 import { chosenFrom, installsFor, namesOffered } from '../../shared/scaffold/integrations.ts';
+import { dictionaryInstallsFor, refuseLanguage } from '../../shared/scaffold/language.ts';
 import { heroHint } from '../../shared/scaffold/name-token.ts';
 import { KET_VERSION } from '../../shared/version.ts';
 import { readTextIfPresent, writeFiles } from '../../shared/write-files.ts';
@@ -60,6 +61,7 @@ function configuredFromFlags(
   key: string | undefined,
   named: string | undefined,
   asked: string | undefined,
+  language: string,
   workflow: boolean,
 ): Configuration | undefined {
   const chosen = presetFrom(asked);
@@ -74,9 +76,15 @@ function configuredFromFlags(
     throw new Error(outcome.refused);
   }
 
+  const refused = refuseLanguage(language);
+
+  if (refused !== undefined) {
+    throw new Error(refused);
+  }
+
   return key === undefined
     ? undefined
-    : { key, targets: { '.': chosen.preset }, integrations: outcome.chosen, workflow };
+    : { key, targets: { '.': chosen.preset }, integrations: outcome.chosen, language, workflow };
 }
 
 async function wizardConfiguration(key: string | undefined): Promise<Configuration | undefined> {
@@ -172,6 +180,7 @@ function manifestEntry(
       devDependencies: [
         ...governing.item.devDependencies,
         ...installsFor(targets, configuration.integrations),
+        ...dictionaryInstallsFor(configuration.language),
       ],
       scripts: governing.semantics.scripts,
     }),
@@ -204,6 +213,11 @@ const create = defineCommand({
       description: 'Drive the project through the ket pipeline',
       default: true,
     },
+    language: {
+      type: 'string',
+      description: 'The language the documentation speaks, as a tag like en or tr',
+      default: 'en',
+    },
   },
   async run({ args }) {
     const wizard = runsWizard(isInteractive(), args.preset);
@@ -218,7 +232,7 @@ const create = defineCommand({
     const plan = await planCreation(directory);
     const configuration = wizard
       ? await wizardConfiguration(plan.key)
-      : configuredFromFlags(plan.key, args.with, args.preset, args.workflow);
+      : configuredFromFlags(plan.key, args.with, args.preset, args.language, args.workflow);
 
     if (configuration === undefined) {
       throw new Error(`nothing was configured for ${plan.root}`);

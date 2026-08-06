@@ -8,6 +8,7 @@ describe('rendering the configuration a repository owns', () => {
       key: 'OFS',
       targets: {},
       integrations: [],
+      language: 'en',
       workflow: true,
     });
 
@@ -19,6 +20,7 @@ describe('rendering the configuration a repository owns', () => {
       key: 'OFS',
       targets: { 'packages/cli': 'cli', 'packages/tui': 'tui' },
       integrations: [],
+      language: 'en',
       workflow: true,
     });
 
@@ -31,18 +33,22 @@ describe('rendering the configuration a repository owns', () => {
       key: 'OFS',
       targets: { 'packages/cli': 'cli', 'packages/tui': 'tui' },
       integrations: [],
+      language: 'en',
       workflow: true,
     });
     const lines = rendered.split('\n').filter((line) => line.includes('packages/'));
 
     expect(lines).toHaveLength(2);
   });
+});
 
+describe('the shape of the rendered module', () => {
   it('writes an empty map rather than omitting it, so the shape never surprises', () => {
     const rendered = renderConfiguration({
       key: 'OFS',
       targets: {},
       integrations: [],
+      language: 'en',
       workflow: true,
     });
 
@@ -54,6 +60,7 @@ describe('rendering the configuration a repository owns', () => {
       key: 'OFS',
       targets: { app: 'cli' },
       integrations: [],
+      language: 'en',
       workflow: true,
     });
 
@@ -69,6 +76,7 @@ describe('recording whether a project drives the ket pipeline', () => {
         key: 'SHOP',
         targets: { '.': 'cli' },
         integrations: [],
+        language: 'en',
         workflow: true,
       }),
     ).toContain('workflow: true,');
@@ -80,9 +88,36 @@ describe('recording whether a project drives the ket pipeline', () => {
         key: 'SHOP',
         targets: { '.': 'cli' },
         integrations: [],
+        language: 'en',
         workflow: false,
       }),
     ).toContain('workflow: false,');
+  });
+});
+
+describe('recording which language the documentation speaks', () => {
+  it('records the chosen language beside the workflow choice', () => {
+    expect(
+      renderConfiguration({
+        key: 'SHOP',
+        targets: { '.': 'cli' },
+        integrations: [],
+        language: 'tr',
+        workflow: true,
+      }),
+    ).toContain("language: 'tr',");
+  });
+
+  it('records English explicitly, so the default reads the same as a choice', () => {
+    expect(
+      renderConfiguration({
+        key: 'SHOP',
+        targets: { '.': 'cli' },
+        integrations: [],
+        language: 'en',
+        workflow: true,
+      }),
+    ).toContain("language: 'en',");
   });
 });
 
@@ -93,6 +128,7 @@ describe('recording which integrations a project enabled', () => {
         key: 'SHOP',
         targets: { '.': 'cli' },
         integrations: ['codecov'],
+        language: 'en',
         workflow: true,
       }),
     ).toContain("integrations: ['codecov'],");
@@ -104,6 +140,7 @@ describe('recording which integrations a project enabled', () => {
         key: 'SHOP',
         targets: { '.': 'cli' },
         integrations: [],
+        language: 'en',
         workflow: true,
       }),
     ).toContain('integrations: [],');
@@ -115,6 +152,7 @@ describe('recording which integrations a project enabled', () => {
         key: 'SHOP',
         targets: { '.': 'cli' },
         integrations: ['codecov', 'codeql', 'coderabbit'],
+        language: 'en',
         workflow: true,
       }),
     ).toContain("integrations: ['codecov', 'codeql', 'coderabbit'],");

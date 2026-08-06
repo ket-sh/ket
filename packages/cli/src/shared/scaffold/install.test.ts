@@ -142,6 +142,7 @@ describe('assembling everything an update compares against', () => {
     key: 'SHOP',
     targets: { '.': 'cli' },
     integrations: ['codecov'],
+    language: 'en',
     workflow: true,
   };
 
@@ -160,5 +161,28 @@ describe('assembling everything an update compares against', () => {
 
     expect(bare.map((file) => file.path)).not.toContain('.github/workflows/coverage.yml');
     expect(written(bare, 'CLAUDE.md')).not.toBe(written(driven, 'CLAUDE.md'));
+  });
+
+  it('keeps the full English prose package and never lands the core carrier', () => {
+    const landed = installedFor(configured, MY_APP);
+    const paths = landed.map((file) => file.path);
+
+    expect(paths).toContain('.vale.ini');
+    expect(paths).not.toContain('.vale.core.ini');
+    expect(landed.find((file) => file.path === '.vale.ini')?.contents).toContain(
+      'Microsoft.Passive = error',
+    );
+  });
+
+  it('lands the core prose gates and the dictionary for another language', () => {
+    const landed = installedFor({ ...configured, language: 'tr' }, MY_APP);
+    const valeSection = landed.find((file) => file.path === '.vale.ini')?.contents ?? '';
+
+    expect(landed.map((file) => file.path)).not.toContain('.vale.core.ini');
+    expect(valeSection).toContain('BasedOnStyles = Vale, ket');
+    expect(valeSection).toContain('[CLAUDE.md]');
+    expect(landed.find((file) => file.path === 'cspell.json')?.contents).toContain(
+      '@cspell/dict-tr-tr/cspell-ext.json',
+    );
   });
 });

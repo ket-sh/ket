@@ -6,6 +6,7 @@ export interface Configuration {
   key: string;
   targets: Record<string, PresetName>;
   integrations: string[];
+  language: string;
   workflow: boolean;
 }
 
@@ -31,6 +32,7 @@ export function renderConfiguration(configuration: Configuration): string {
     `  key: '${configuration.key}',`,
     `  targets: ${renderTargets(configuration.targets)},`,
     `  integrations: ${renderIntegrations(configuration.integrations)},`,
+    `  language: '${configuration.language}',`,
     `  workflow: ${String(configuration.workflow)},`,
     '};',
     '',

@@ -12,6 +12,7 @@ const CONFIGURED: Configuration = {
   key: 'SHOP',
   targets: { '.': 'web' },
   integrations: [],
+  language: 'en',
   workflow: true,
 };
 

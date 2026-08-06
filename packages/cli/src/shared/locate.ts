@@ -4,6 +4,7 @@ import { dirname, isAbsolute, join, relative } from 'node:path';
 import type { PresetName } from './configuration.ts';
 
 import { PRESET_NAMES } from './configuration.ts';
+import { DEFAULT_LANGUAGE } from './scaffold/language.ts';
 
 export const KET_DIRECTORY = '.ket';
 
@@ -95,6 +96,13 @@ export function integrationsFrom(loaded: unknown): string[] {
   return Array.isArray(declared)
     ? declared.filter((name): name is string => typeof name === 'string')
     : [];
+}
+
+export function languageFrom(loaded: unknown): string {
+  const exported = isRecord(loaded) ? loaded['default'] : undefined;
+  const declared = isRecord(exported) ? exported['language'] : undefined;
+
+  return typeof declared === 'string' ? declared : DEFAULT_LANGUAGE;
 }
 
 export function workflowFrom(loaded: unknown): boolean {
