@@ -195,6 +195,40 @@ describe('the matrix the decision declares', () => {
   });
 });
 
+describe('the diff panel and the blast above it', () => {
+  it('folds the change inside a full-width viewport panel wearing the format switch', () => {
+    const page = pageOf({ artifacts: { features: [], diff: CHANGE } });
+    const section = sectionMarkup(page, 'diff');
+
+    expect(section).toContain('diff-panel');
+    expect(section).toContain('<span class="panel-label">Diff</span>');
+    expect(section).toContain('is-full is-viewport');
+    expect(section).toContain(
+      '<span class="diff-format" role="group" aria-label="Diff layout"><button type="button" class="diff-format-option is-selected" data-diff-format="unified">Unified</button><button type="button" class="diff-format-option" data-diff-format="side">Side by side</button></span>',
+    );
+  });
+
+  it('seats the blast radius above the diff at full width', () => {
+    const blast = {
+      source: 'a: { class: module }\n',
+      measure: '{}',
+      render: { drawn: { light: '<svg>captured</svg>', dark: '<svg>captured</svg>' } },
+    };
+    const page = pageOf({ artifacts: { features: [], diff: CHANGE, blast } });
+    const section = sectionMarkup(page, 'diff');
+
+    expect(section).toContain('is-full is-content panel-collapsible" data-panel="blast-radius"');
+    expect(section.indexOf('blast-radius')).toBeLessThan(section.indexOf('diff-panel'));
+    expect(section).toContain('measure-line');
+  });
+
+  it('lays no blast panel without a captured graph', () => {
+    const page = pageOf({ artifacts: { features: [], diff: CHANGE } });
+
+    expect(sectionMarkup(page, 'diff')).not.toContain('blast-radius');
+  });
+});
+
 describe('the addresses the bootstrap carries', () => {
   it('routes every feature and names the first child of its section', () => {
     const page = pageOf();

@@ -135,7 +135,7 @@ describe('the navigation the artifacts decide', () => {
   it('tells the reader when there is no change to diff yet', () => {
     const page = assemblePage(surfaceOf(), { sessionKey: KEY });
 
-    expect(page).toMatch(/id="section-diff"[^>]*>\s*<p class="unwritten">/);
+    expect(page).toContain('<p class="unwritten">No change to show at this stage.</p>');
   });
 });
 

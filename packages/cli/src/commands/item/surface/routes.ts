@@ -6,9 +6,11 @@ import { basename, dirname, resolve } from 'node:path';
 import { text } from 'node:stream/consumers';
 import { fileURLToPath } from 'node:url';
 
-import { readArtifact, readSurface } from './artifacts.ts';
+import type { BlastArtifact } from './blast.ts';
+
+import { readArtifact, readBlast, readSurface } from './artifacts.ts';
 import { changeDiff } from './change.ts';
-import { renderDiagram } from './diagram.ts';
+import { renderBlast, renderDiagram } from './diagram.ts';
 import { assemblePage } from './page.ts';
 import { schemeScoped } from './skin.ts';
 
@@ -144,6 +146,16 @@ function postsArtifact(path: string, request: IncomingMessage): boolean {
   return path === '/artifact' && request.method === 'POST';
 }
 
+async function blastOf(itemDir: string, d2Binary: string): Promise<BlastArtifact | undefined> {
+  const files = await readBlast(itemDir);
+
+  if (files === undefined) {
+    return undefined;
+  }
+
+  return { ...files, render: await renderBlast(itemDir, d2Binary) };
+}
+
 async function servePage(
   itemDir: string,
   sessionKey: string,
@@ -158,6 +170,7 @@ async function servePage(
       artifacts: {
         ...surface.artifacts,
         diagram: await renderDiagram(itemDir, d2Binary),
+        blast: await blastOf(itemDir, d2Binary),
         diff: projectRoot === undefined ? undefined : await changeDiff(projectRoot),
       },
     },

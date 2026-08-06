@@ -1,6 +1,8 @@
+import type { BlastArtifact } from './blast.ts';
 import type { Panel } from './panel.ts';
 
 import { audiencePanel } from './audience.ts';
+import { blastPanel } from './blast.ts';
 import { calloutLayer, diagramFigure } from './callout.ts';
 import { diffBleed } from './fold.ts';
 import { driverMatrix, withoutMatrixLines } from './matrix.ts';
@@ -25,6 +27,7 @@ interface SurfaceArtifacts {
   adr?: string | undefined;
   adrPlain?: string | undefined;
   callouts?: string | undefined;
+  blast?: BlastArtifact | undefined;
   brief?: string | undefined;
   findings?: string | undefined;
   diagram?: RenderedDiagram | undefined;
@@ -128,6 +131,22 @@ function writtenProse(source: string | undefined): boolean {
   return source !== undefined && source.trim() !== '';
 }
 
+const FORMAT_SWITCH =
+  '<span class="diff-format" role="group" aria-label="Diff layout"><button type="button" class="diff-format-option is-selected" data-diff-format="unified">Unified</button><button type="button" class="diff-format-option" data-diff-format="side">Side by side</button></span>';
+
+function diffPanels(change: string, blast: BlastArtifact | undefined): Panel[] {
+  const body =
+    change === '' ? '<p class="unwritten">No change to show at this stage.</p>' : diffBleed(change);
+  const files = panelOf('Diff', body, {
+    controls: FORMAT_SWITCH,
+    hook: 'diff-panel',
+    width: 'full',
+    height: 'viewport',
+  });
+
+  return blast === undefined ? [files] : [{ ...blastPanel(blast), width: 'full' }, files];
+}
+
 export function sectionsOf(artifacts: SurfaceArtifacts, sessionKey: string): Section[] {
   const change = artifacts.diff?.trim() ?? '';
 
@@ -162,11 +181,8 @@ export function sectionsOf(artifacts: SurfaceArtifacts, sessionKey: string): Sec
       panels: [prosePanel('Brief', artifacts.brief)],
     }),
     sectionOf('diff', 'Diff', 'Verify', change !== '', {
-      mode: 'bleed',
-      bleed:
-        change === ''
-          ? '<p class="unwritten">No change to show at this stage.</p>'
-          : diffBleed(change),
+      mode: 'masonry',
+      panels: diffPanels(change, artifacts.blast),
     }),
     sectionOf('findings', 'Findings', 'Verify', writtenProse(artifacts.findings), {
       mode: 'masonry',
