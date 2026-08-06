@@ -83,6 +83,7 @@ describe('the files every preset writes', () => {
       '~/CLAUDE.md',
       '~/skills-lock.json',
       '~/.github/workflows/ci.yml',
+      '~/.github/workflows/mutation-weekly.yml',
     ]);
   });
 });
@@ -115,6 +116,7 @@ describe('where every preset reads the files it writes', () => {
       'files/CLAUDE.md',
       'files/skills-lock.json',
       'files/github-ci.yml',
+      'files/github-mutation-weekly.yml',
     ]);
   });
 
