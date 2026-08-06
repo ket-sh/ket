@@ -52,6 +52,7 @@ export const STANDING_FILES: PresetFile[] = [
   writes('CLAUDE.md', 'CLAUDE.md'),
   writes('skills-lock.json', 'skills-lock.json'),
   writes('github-ci.yml', '.github/workflows/ci.yml'),
+  writes('github-mutation-weekly.yml', '.github/workflows/mutation-weekly.yml'),
 ];
 
 // The tools every gate chain runs, pinned once. A preset adds what its own

@@ -99,11 +99,7 @@ jobs:
           restore-keys: |
             mutation-${{ matrix.package }}-
       - name: Retest what changed since the baseline
-        if: github.ref != 'refs/heads/main'
         run: bunx turbo run test:mutation --filter=./${{ matrix.package }} -- --incremental
-      - name: Retest everything and rewrite the baseline
-        if: github.ref == 'refs/heads/main'
-        run: bunx turbo run test:mutation --filter=./${{ matrix.package }} -- --incremental --force
 
   # The gate this product sells. Running it anywhere but here would leave
   # ket the one repository it is not measured in.

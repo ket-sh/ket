@@ -1,6 +1,6 @@
 # Mutation runs incrementally on pull requests and whole on main
 
-Status: accepted
+Status: superseded by 0006
 Date: 2026-08-06
 
 > **TL;DR** Splits the mutation job into a per-package matrix, retests only
