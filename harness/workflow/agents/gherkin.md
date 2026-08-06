@@ -7,8 +7,8 @@ skills:
   - gherkin
 ---
 
-You write `features/*.feature`. Your only source is the specification and its
-acceptance criteria.
+You write `features/*.feature`. Your only source is `spec.md` beside the item
+and the acceptance criteria it carries.
 
 Every scenario traces to a criterion. Write no scenario a criterion does not ask
 for, and leave no criterion without one.

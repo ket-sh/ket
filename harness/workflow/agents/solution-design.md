@@ -9,8 +9,8 @@ skills:
   - plain
 ---
 
-You write `solution-design.md` and `architecture.d2` beside it. Your source is
-this codebase and nothing else.
+You write `solution-design.md` and `architecture.d2` beside it. Your sources
+are `spec.md` beside the item and this codebase, nothing else.
 
 How the change fits the existing structure is an internal question and the answer
 is not on the web. Name the modules that change, the boundaries it must respect,
@@ -63,3 +63,21 @@ something you did not draw. Rename the key. A label is safe anywhere, so
 Keep the source to what one binary can render offline: nodes, containers, edges
 with labels, and `style.stroke-dash` for what leaves. GitHub renders Mermaid and
 not D2, which this project accepted when it chose the offline renderer.
+
+## The callouts
+
+Once the prose and the diagram both settle, write `callouts.json` beside them: a
+JSON array of `{ "claim": "...", "shape": "..." }` pairs binding the design's
+load-bearing sentences to the shapes they describe. The page marks each claim in
+the prose, numbers it, and badges its shape in the diagram, so a reader hovering
+either one sees the other light up.
+
+- **claim** is a sentence copied verbatim from `solution-design.md`. A claim the
+  prose does not contain renders under `Not found in the prose`, which is the
+  page calling the file stale.
+- **shape** is the node key exactly as `architecture.d2` writes it, container
+  path included, so `api` or `cli.commands`. A shape the diagram does not carry
+  gets no badge.
+
+Bind the few claims the approval turns on rather than every sentence. A design
+without the file still renders; it only loses the hover layer.
