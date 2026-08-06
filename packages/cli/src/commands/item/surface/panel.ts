@@ -24,7 +24,7 @@ const SEED_ROWS = 24;
 
 const VIEWPORT_ROWS = 76;
 
-const UNWRITTEN = '<p class="unwritten">Not written at this stage.</p>';
+export const UNWRITTEN = '<p class="unwritten">Not written at this stage.</p>';
 
 export function panelOf(label: string, body: string, extra: Partial<Panel> = {}): Panel {
   return {

@@ -1,7 +1,8 @@
 import type { Panel } from './panel.ts';
 
 import { diffBleed } from './fold.ts';
-import { panelOf } from './panel.ts';
+import { driverMatrix, withoutMatrixLines } from './matrix.ts';
+import { UNWRITTEN, panelOf } from './panel.ts';
 import { readingLayout } from './reading.ts';
 import { escaped, scriptSafeJson } from './text.ts';
 
@@ -53,6 +54,14 @@ function prosePanel(label: string, source: string | undefined): Panel {
   return panelOf(label, readingLayout(source ?? ''));
 }
 
+function decisionPanels(adr: string | undefined): Panel[] {
+  const source = adr ?? '';
+  const prose = panelOf('Decision', readingLayout(withoutMatrixLines(source)));
+  const matrix = driverMatrix(source);
+
+  return matrix === undefined ? [prose] : [prose, matrix];
+}
+
 function diagramPanel(diagram: RenderedDiagram | undefined): Panel {
   const body =
     diagram === undefined
@@ -70,7 +79,7 @@ function featureCard(feature: FeatureFile): string {
 
 function criteriaBleed(features: FeatureFile[]): string {
   return features.length === 0
-    ? '<p class="unwritten">Not written at this stage.</p>'
+    ? UNWRITTEN
     : `<div class="feature-cards">${features.map(featureCard).join('')}</div>`;
 }
 
@@ -104,7 +113,7 @@ export function sectionsOf(artifacts: SurfaceArtifacts, sessionKey: string): Sec
     }),
     sectionOf('decision', 'Decision', 'Design', writtenProse(artifacts.adr), {
       mode: 'masonry',
-      panels: [prosePanel('Decision', artifacts.adr)],
+      panels: decisionPanels(artifacts.adr),
     }),
     sectionOf('criteria', 'Criteria', 'Design', artifacts.features.length > 0, {
       mode: 'bleed',

@@ -1,6 +1,6 @@
 import { Marked } from 'marked';
 
-interface Part {
+export interface Part {
   heading: string;
   body: string;
 }
@@ -66,7 +66,7 @@ const ORDERED_HEADING = /^(\d+)[.)]\s(.+)/;
 const MISSING_CALLOUT =
   '<aside class="tldr is-missing"><p class="tldr-label">TL;DR</p><p class="tldr-body">No summary written.</p></aside>';
 
-function splitOnHeading(source: string, marker: string): Split {
+export function splitOnHeading(source: string, marker: string): Split {
   const opener = `${marker} `;
   const lead: string[] = [];
   const parts: { heading: string; body: string[] }[] = [];

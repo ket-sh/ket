@@ -162,6 +162,39 @@ describe('the emptiness the navigation admits', () => {
   });
 });
 
+describe('the matrix the decision declares', () => {
+  const MATRIX_ADR =
+    '# The record\n\n## Decision drivers\n\n- Reads well\n\n## Decision\n\nOption: Keep it\nVerdicts: ++\n\nProse stays.\n';
+
+  it('folds the driver matrix beside the decision prose', () => {
+    const page = pageOf({ artifacts: { adr: MATRIX_ADR, features: [] } });
+    const section = sectionMarkup(page, 'decision');
+
+    expect(section).toContain('<span class="panel-label">Drivers</span>');
+    expect(section).toContain('matrix-corner');
+  });
+
+  it('keeps the matrix lines out of the decision prose', () => {
+    const page = pageOf({ artifacts: { adr: MATRIX_ADR, features: [] } });
+    const section = sectionMarkup(page, 'decision');
+
+    expect(section).not.toContain('Verdicts:');
+    expect(section).toContain('Prose stays.');
+  });
+
+  it('lays no drivers panel when the record declares no matrix', () => {
+    expect(sectionMarkup(pageOf(), 'decision')).not.toContain('panel-label">Drivers');
+  });
+
+  it('tells the reader nobody wrote the decision yet', () => {
+    const page = pageOf({ artifacts: { adr: undefined, features: [] } });
+
+    expect(sectionMarkup(page, 'decision')).toContain(
+      '<p class="unwritten">Not written at this stage.</p>',
+    );
+  });
+});
+
 describe('the addresses the bootstrap carries', () => {
   it('routes every feature and names the first child of its section', () => {
     const page = pageOf();
