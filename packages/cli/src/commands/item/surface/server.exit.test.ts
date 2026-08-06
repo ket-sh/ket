@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -72,6 +72,34 @@ describe('the info file a recycled pid forged', () => {
     const reply = await fetch(handle.address);
 
     expect(reply.status).toBe(200);
+  });
+});
+
+describe('the renderer the surface reaches by name', () => {
+  it('draws through the d2 the path serves when none is named', async () => {
+    const binDir = await mkdtemp(join(tmpdir(), 'ket-d2-'));
+
+    await writeFile(join(binDir, 'd2'), '#!/bin/sh\nprintf "<svg>path-served</svg>"\n');
+    await chmod(join(binDir, 'd2'), 0o755);
+    await writeFile(join(itemDir, 'architecture.d2'), 'gate -> surface\n');
+
+    const bornPath = process.env['PATH'] ?? '';
+
+    process.env['PATH'] = `${binDir}:${bornPath}`;
+
+    try {
+      const fresh = await import('./server.ts');
+      const handle = await fresh.startSurface(itemDir);
+
+      open.push(handle);
+
+      const page = await (await fetch(handle.address)).text();
+
+      expect(page).toContain('path-served');
+    } finally {
+      process.env['PATH'] = bornPath;
+      await rm(binDir, { recursive: true, force: true });
+    }
   });
 });
 

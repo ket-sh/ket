@@ -35,7 +35,7 @@ async function captured(binary: string, flags: string[], source: string): Promis
 
 export async function renderDiagram(
   itemDir: string,
-  binary = 'd2',
+  binary: string,
 ): Promise<RenderedDiagram | undefined> {
   const written = await readArtifact(itemDir, SOURCE);
 

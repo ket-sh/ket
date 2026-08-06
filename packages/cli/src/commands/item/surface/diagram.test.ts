@@ -20,13 +20,13 @@ afterEach(async () => {
 
 describe('the diagram an architecture source renders into', () => {
   it('answers no diagram for an item without a source', async () => {
-    expect(await renderDiagram(itemDir)).toBeUndefined();
+    expect(await renderDiagram(itemDir, 'd2')).toBeUndefined();
   });
 
   it.skipIf(missingD2)('renders one source into both color schemes', async () => {
     await writeFile(join(itemDir, 'architecture.d2'), 'gate -> surface: shows\n');
 
-    const rendered = await renderDiagram(itemDir);
+    const rendered = await renderDiagram(itemDir, 'd2');
 
     expect(rendered?.light).toContain('<svg');
     expect(rendered?.dark).toContain('<svg');
@@ -65,5 +65,19 @@ describe('the diagram an architecture source renders into', () => {
     const rendered = await renderDiagram(itemDir, binary);
 
     expect(rendered?.light).toBe(wide);
+  });
+
+  it('hands the source and the theme flags to the renderer', async () => {
+    const binary = join(itemDir, 'echo-d2');
+
+    await writeFile(binary, '#!/bin/sh\nprintf "<svg>%s</svg>" "$*"\n');
+    await chmod(binary, 0o755);
+    await writeFile(join(itemDir, 'architecture.d2'), 'gate -> surface\n');
+
+    const source = join(itemDir, 'architecture.d2');
+    const rendered = await renderDiagram(itemDir, binary);
+
+    expect(rendered?.light).toBe(`<svg>${source} -</svg>`);
+    expect(rendered?.dark).toBe(`<svg>--theme 200 ${source} -</svg>`);
   });
 });

@@ -123,10 +123,13 @@ describe('the navigation the artifacts decide', () => {
     }
   });
 
-  it('offers the sidebar toggle as a real button', () => {
+  it('offers the sidebar toggle as a real button wearing its glyph', () => {
     const page = assemblePage(surfaceOf(), { sessionKey: KEY });
 
     expect(page).toMatch(/<button[^>]*class="nav-toggle"[^>]*aria-controls="page-nav"/);
+    expect(page).toContain('nav-toggle-rail');
+    expect(page).toContain('nav-toggle-frame');
+    expect(page).toContain('nav-toggle-spine');
   });
 
   it('tells the reader when there is no change to diff yet', () => {

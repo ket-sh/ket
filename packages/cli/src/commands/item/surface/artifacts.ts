@@ -3,7 +3,11 @@ import { basename, join } from 'node:path';
 
 import type { ItemSurface } from './page.ts';
 
-const yamlLine = (source: string, field: string): string | undefined => {
+const yamlLine = (source: string | undefined, field: string): string | undefined => {
+  if (source === undefined) {
+    return undefined;
+  }
+
   const found = new RegExp(`^${field}: (.+)$`, 'm').exec(source);
 
   return found === null ? undefined : String(found[1]).trim();
@@ -17,7 +21,11 @@ export async function readArtifact(itemDir: string, name: string): Promise<strin
 }
 
 async function featuresOf(itemDir: string): Promise<{ name: string; source: string }[]> {
-  const names = await readdir(join(itemDir, 'features')).catch(() => []);
+  const names = await readdir(join(itemDir, 'features')).catch(() => undefined);
+
+  if (names === undefined) {
+    return [];
+  }
 
   return Promise.all(
     names
@@ -30,7 +38,7 @@ async function featuresOf(itemDir: string): Promise<{ name: string; source: stri
 }
 
 export async function readSurface(itemDir: string): Promise<ItemSurface> {
-  const manifest = (await readArtifact(itemDir, 'item.yaml')) ?? '';
+  const manifest = await readArtifact(itemDir, 'item.yaml');
 
   return {
     key: yamlLine(manifest, 'key') ?? basename(itemDir),
