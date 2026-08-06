@@ -145,6 +145,22 @@ reviewer opens on.
 A brief is not a review. It says where to look; the two-seat review says what is
 wrong, and `/ket:review` writes its survivors to `findings.md` under the brief.
 
+## The blast capture, measured beside the brief
+
+Capture what the change reaches while the brief is being written:
+
+```
+ket item blast <key>
+```
+
+It runs the project's own dependency-cruiser against `main`, keeps the changed
+modules and everything that reaches them, and writes `blast.d2` with its
+measure in `blast.json` beside the item. The page renders the diagram and says
+when it was measured, so rerun the capture after a late fix rather than
+shipping a stale graph. `--base` names another revision, `--budget` resizes
+the node budget the diagram must fit, and `--paths` takes comma-separated
+roots when the source lives outside `src`.
+
 ## Decomposing an epic
 
 An epic is a container, not a job, and its children are the scope of the work.
