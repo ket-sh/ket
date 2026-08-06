@@ -77,6 +77,7 @@ pilotty
 pipx
 playwright
 probity
+profoundlogic
 resizestart
 resizestop
 rhysd
