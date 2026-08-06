@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { ItemSurface } from './page.ts';
 
+import { fingerprintOf } from '../plain/state.ts';
 import { assemblePage } from './page.ts';
 
 const KEY = 'the-test-session-key-000000000';
@@ -101,6 +102,54 @@ describe('the audiences the untranslated panels admit', () => {
     const wrapped = section.indexOf('</div></div>', section.indexOf('audience-variants'));
 
     expect(section.indexOf('matrix-corner')).toBeGreaterThan(wrapped);
+  });
+});
+
+describe('the lag the audience switch admits', () => {
+  const SPEC = '# The spec\n\nShort.';
+
+  it('wears the lag note when the plain sibling went stale', () => {
+    const page = pageOf({
+      artifacts: {
+        spec: SPEC,
+        specPlain: 'Source: 000000000000\n\n# The plain spec\n',
+        features: [],
+      },
+    });
+
+    expect(sectionMarkup(page, 'spec')).toContain(
+      '<span class="audience-note">Plain version lags behind its source.</span>',
+    );
+  });
+
+  it('wears the lag note when the source went missing whole', () => {
+    const page = pageOf({
+      artifacts: { specPlain: 'Source: 000000000000\n\n# The plain spec\n', features: [] },
+    });
+
+    expect(sectionMarkup(page, 'spec')).toContain('lags behind its source');
+  });
+
+  it('stays quiet for a plain sibling stamped fresh', () => {
+    const page = pageOf({
+      artifacts: {
+        spec: SPEC,
+        specPlain: `Source: ${fingerprintOf(SPEC)}\n\n# The plain spec\n`,
+        features: [],
+      },
+    });
+
+    expect(sectionMarkup(page, 'spec')).not.toContain('audience-note');
+  });
+
+  it('stays quiet for an unstamped plain sibling', () => {
+    const page = pageOf({
+      artifacts: { spec: SPEC, specPlain: '# The plain spec\n\nHand written.', features: [] },
+    });
+    const section = sectionMarkup(page, 'spec');
+
+    expect(section).not.toContain('lags behind');
+    expect(section).not.toContain('No plain version written.');
   });
 });
 

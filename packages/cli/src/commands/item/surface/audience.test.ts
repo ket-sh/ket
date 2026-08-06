@@ -9,6 +9,7 @@ describe('the audiences a panel offers', () => {
       'spec',
       '<p>the technical read</p>',
       '<p>the plain read</p>',
+      '',
     );
 
     expect(panel.body).toBe(
@@ -17,7 +18,7 @@ describe('the audiences a panel offers', () => {
   });
 
   it('offers both audiences from the panel head when a plain version exists', () => {
-    const panel = audiencePanel('Spec', 'spec', '<p>t</p>', '<p>p</p>');
+    const panel = audiencePanel('Spec', 'spec', '<p>t</p>', '<p>p</p>', '');
 
     expect(panel.label).toBe('Spec');
     expect(panel.controls).toBe(
@@ -26,7 +27,7 @@ describe('the audiences a panel offers', () => {
   });
 
   it('dims and blocks the plain option when no plain version exists, saying why', () => {
-    const panel = audiencePanel('Decision', 'decision', '<p>t</p>', '');
+    const panel = audiencePanel('Decision', 'decision', '<p>t</p>', '', '');
 
     expect(panel.controls).toBe(
       '<span class="audience-switch" data-audience-group="decision"><button type="button" class="audience-option is-selected" data-audience="technical">Technical</button><button type="button" class="audience-option is-dimmed" data-audience="plain" disabled aria-disabled="true">Plain language</button><span class="audience-note">No plain version written.</span></span>',
@@ -34,7 +35,7 @@ describe('the audiences a panel offers', () => {
   });
 
   it('fills an unwritten technical variant with the unwritten paragraph', () => {
-    const panel = audiencePanel('Spec', 'spec', '', '<p>p</p>');
+    const panel = audiencePanel('Spec', 'spec', '', '<p>p</p>', '');
 
     expect(panel.body).toContain(
       '<div class="audience-variant is-active" data-audience="technical"><p class="unwritten">Not written at this stage.</p></div>',
@@ -42,10 +43,26 @@ describe('the audiences a panel offers', () => {
   });
 
   it('fills a missing plain variant with the no-plain paragraph', () => {
-    const panel = audiencePanel('Spec', 'spec', '<p>t</p>', '');
+    const panel = audiencePanel('Spec', 'spec', '<p>t</p>', '', '');
 
     expect(panel.body).toContain(
       '<div class="audience-variant" data-audience="plain"><p class="unwritten">No plain version written.</p></div>',
+    );
+  });
+});
+
+describe('the note a lagging audience wears', () => {
+  it('hangs the lag note beside an enabled plain option', () => {
+    const panel = audiencePanel(
+      'Spec',
+      'spec',
+      '<p>t</p>',
+      '<p>p</p>',
+      'Plain version lags behind its source.',
+    );
+
+    expect(panel.controls).toBe(
+      '<span class="audience-switch" data-audience-group="spec"><button type="button" class="audience-option is-selected" data-audience="technical">Technical</button><button type="button" class="audience-option" data-audience="plain">Plain language</button><span class="audience-note">Plain version lags behind its source.</span></span>',
     );
   });
 });

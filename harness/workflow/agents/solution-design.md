@@ -6,6 +6,7 @@ model: fable
 skills:
   - clean-code
   - prior-art
+  - plain
 ---
 
 You write `solution-design.md` and `architecture.d2` beside it. Your source is
@@ -41,6 +42,9 @@ for that reading:
   else.
 - **Keep what the approval turns on in the open.** A risk, an open question, a
   step nothing undoes: those belong in the document, never in a footnote.
+
+Once the design settles, derive `solution-design.plain.md` beside it the way
+the `plain` skill says, and stamp it with `ket item stamp <key>`.
 
 ## The diagram
 

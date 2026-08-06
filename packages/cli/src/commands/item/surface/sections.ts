@@ -1,6 +1,7 @@
 import type { BlastArtifact } from './blast.ts';
 import type { Panel } from './panel.ts';
 
+import { plainState } from '../plain/state.ts';
 import { audiencePanel } from './audience.ts';
 import { blastPanel } from './blast.ts';
 import { calloutLayer, diagramFigure } from './callout.ts';
@@ -62,13 +63,28 @@ function prosePanel(label: string, source: string | undefined): Panel {
   return panelOf(label, readingLayout(source ?? ''));
 }
 
+const LAG_NOTE = 'Plain version lags behind its source.';
+
+function plainNote(technical: string | undefined, plain: string | undefined): string {
+  const lags =
+    plain !== undefined && (technical === undefined || plainState(technical, plain) === 'stale');
+
+  return lags ? LAG_NOTE : '';
+}
+
 function audienceProse(
   label: string,
   group: string,
   technical: string | undefined,
   plain: string | undefined,
 ): Panel {
-  return audiencePanel(label, group, readingLayout(technical ?? ''), readingLayout(plain ?? ''));
+  return audiencePanel(
+    label,
+    group,
+    readingLayout(technical ?? ''),
+    readingLayout(plain ?? ''),
+    plainNote(technical, plain),
+  );
 }
 
 function decisionPanels(adr: string | undefined, plain: string | undefined): Panel[] {
@@ -78,6 +94,7 @@ function decisionPanels(adr: string | undefined, plain: string | undefined): Pan
     'decision',
     readingLayout(withoutMatrixLines(source)),
     readingLayout(plain ?? ''),
+    plainNote(adr, plain),
   );
   const matrix = driverMatrix(source);
 
@@ -98,6 +115,7 @@ function designPanels(artifacts: SurfaceArtifacts): Panel[] {
     'design',
     layer.prose,
     readingLayout(artifacts.designPlain ?? ''),
+    plainNote(artifacts.design, artifacts.designPlain),
   );
 
   return [panel, layer.panel ?? diagramPanel(artifacts.diagram)];
