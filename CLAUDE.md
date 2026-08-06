@@ -47,6 +47,7 @@ outside version control, and it carries the reasoning behind every rule below.
 - **Never disable, override, or loosen any gate.** No `eslint-disable`, no oxlint override or `.oxlintrc` rule change, no lowered mutation or coverage threshold, no `--no-verify`, no silenced Vale or cspell rule. This covers every gate: max-lines, complexity, mutation, coverage, prose, spelling, dependency, and the rest.
 - A blocking gate is a design signal, not an obstacle. A file over `max-lines` wants splitting by single responsibility; a surviving mutant wants a better test; an unknown word wants the committed accept list. Fix the code to satisfy the rule.
 - When fixing the code genuinely can't satisfy a rule, stop and ask the maintainer before touching any gate config. Only the maintainer authorizes a gate change, and only after you ask.
+- An authorized gate change lands in the same diff as an ADR under `docs/adr/` recording the authorization and the reasoning. A gate-config diff without that record is a finding.
 
 ## TypeScript
 
