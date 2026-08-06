@@ -41,3 +41,8 @@ telling the truth about a record that opened with a topic sentence.
 Then the template's sections, `## Context` first. Split a sentence over 25 words,
 and name what each rejected option costs rather than dismissing it. The reader who
 reopens this decision is somebody who thinks the rejected option was better.
+
+Your research earns the matrix. The drivers come out of what you learned the
+decision must satisfy, and every option gets a verdict against every driver,
+including the chosen one. Use `?` where the internet gave no answer, because a
+guessed glyph poisons the row it sits in.

@@ -31,14 +31,35 @@ Date: the day it was decided
 Why the decision was needed. Two to four sentences about this project, not
 about software in general.
 
+## Decision drivers
+
+- What the decision must satisfy, one line each
+- The next driver
+
 ## Decision
+
+Option: The chosen option, named the way its alternatives are named
+Verdicts: ++ | +
 
 What was decided, in plain words.
 
 ## Alternatives
 
-- **The option**: what it costs, and why it lost.
-- **The next option**: what it costs, and why it lost.
+### The option
+
+Verdicts: -- | ++
+
+What it costs, and why it lost.
+
+Cost: the price, in one line.
+
+### The next option
+
+Verdicts: + | -
+
+The same, for the next option.
+
+Cost: its price, in one line.
 
 ## Consequences
 
@@ -51,6 +72,25 @@ exists.
 At least two rejected alternatives. Name what each one costs rather than
 dismissing it, because the reader who reopens this decision will be somebody
 who thinks the rejected option was better.
+
+## What the approval page folds
+
+The gate surface reads this exact shape. Each `###` alternative lifts into its
+own card, and the `Cost:` line becomes the strip under that card. The
+`## Decision drivers` bullets, the `Option:` line, and the `Verdicts:` lines
+fold into a matrix panel beside the record: one row per option, one column per
+driver, read left to right in driver order.
+
+A verdict line holds one glyph per driver, split on `|`. The vocabulary is
+`++` strongly meets, `+` meets, `0` neutral, `-` misses, `--` strongly misses,
+`X` ruled out, and `?` unknown. Verdict honestly: a row of `++` reads as
+marketing, and `?` is the honest glyph for a driver nobody measured. The page
+strips the `Option:` and `Verdicts:` lines out of the prose, and a row whose
+glyph count misses the driver count is dropped whole.
+
+The matrix stays optional. Skip the drivers and the verdict lines, and the page
+simply lays no matrix; no column is summed either way, because the matrix shows
+the reading and the decision stays in the prose.
 
 ## Never edit an accepted record
 
