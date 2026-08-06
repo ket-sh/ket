@@ -1,16 +1,16 @@
 import type { Panel } from './panel.ts';
 
 import { audiencePanel } from './audience.ts';
+import { calloutLayer, diagramFigure } from './callout.ts';
 import { diffBleed } from './fold.ts';
 import { driverMatrix, withoutMatrixLines } from './matrix.ts';
 import { UNWRITTEN, panelOf } from './panel.ts';
 import { readingLayout } from './reading.ts';
 import { escaped, scriptSafeJson } from './text.ts';
 
-export interface RenderedDiagram {
-  light: string;
-  dark: string;
-}
+export type { RenderedDiagram } from './panel.ts';
+
+import type { RenderedDiagram } from './panel.ts';
 
 interface FeatureFile {
   name: string;
@@ -24,6 +24,7 @@ interface SurfaceArtifacts {
   designPlain?: string | undefined;
   adr?: string | undefined;
   adrPlain?: string | undefined;
+  callouts?: string | undefined;
   brief?: string | undefined;
   findings?: string | undefined;
   diagram?: RenderedDiagram | undefined;
@@ -81,12 +82,22 @@ function decisionPanels(adr: string | undefined, plain: string | undefined): Pan
 }
 
 function diagramPanel(diagram: RenderedDiagram | undefined): Panel {
-  const body =
-    diagram === undefined
-      ? ''
-      : `<figure class="diagram"><div class="diagram-light">${diagram.light}</div><div class="diagram-dark">${diagram.dark}</div></figure>`;
+  const body = diagram === undefined ? '' : diagramFigure(diagram, '');
 
   return panelOf('Diagram', body, { frame: 'collapsible' });
+}
+
+function designPanels(artifacts: SurfaceArtifacts): Panel[] {
+  const prose = readingLayout(artifacts.design ?? '');
+  const layer = calloutLayer(prose, artifacts.callouts, artifacts.diagram);
+  const panel = audiencePanel(
+    'Design',
+    'design',
+    layer.prose,
+    readingLayout(artifacts.designPlain ?? ''),
+  );
+
+  return [panel, layer.panel ?? diagramPanel(artifacts.diagram)];
 }
 
 function featureCard(feature: FeatureFile): string {
@@ -127,10 +138,7 @@ export function sectionsOf(artifacts: SurfaceArtifacts, sessionKey: string): Sec
     }),
     sectionOf('design', 'Design', 'Design', writtenProse(artifacts.design), {
       mode: 'masonry',
-      panels: [
-        audienceProse('Design', 'design', artifacts.design, artifacts.designPlain),
-        diagramPanel(artifacts.diagram),
-      ],
+      panels: designPanels(artifacts),
     }),
     sectionOf('decision', 'Decision', 'Design', writtenProse(artifacts.adr), {
       mode: 'masonry',

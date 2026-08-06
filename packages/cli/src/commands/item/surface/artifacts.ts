@@ -51,6 +51,7 @@ export async function readSurface(itemDir: string): Promise<ItemSurface> {
       designPlain: await readArtifact(itemDir, 'solution-design.plain.md'),
       adr: await readArtifact(itemDir, 'adr.md'),
       adrPlain: await readArtifact(itemDir, 'adr.plain.md'),
+      callouts: await readArtifact(itemDir, 'callouts.json'),
       brief: await readArtifact(itemDir, 'change-brief.md'),
       findings: await readArtifact(itemDir, 'findings.md'),
       features: await featuresOf(itemDir),

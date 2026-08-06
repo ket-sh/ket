@@ -1,3 +1,8 @@
+export interface RenderedDiagram {
+  light: string;
+  dark: string;
+}
+
 export interface Panel {
   label: string;
   body: string;

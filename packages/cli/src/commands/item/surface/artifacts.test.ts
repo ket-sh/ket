@@ -89,6 +89,14 @@ describe('the artifacts the surface gathers', () => {
     expect(artifacts.designPlain).toBeUndefined();
     expect(artifacts.adrPlain).toBeUndefined();
   });
+
+  it('carries the callout declarations verbatim for the page to parse', async () => {
+    await writeFile(join(itemDir, 'callouts.json'), '[{"claim":"a","shape":"b"}]');
+
+    const { artifacts } = await readSurface(itemDir);
+
+    expect(artifacts.callouts).toBe('[{"claim":"a","shape":"b"}]');
+  });
 });
 
 describe('the features the surface lists', () => {
