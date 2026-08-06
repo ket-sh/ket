@@ -85,34 +85,6 @@ function wrap(cursor: RowCursor): void {
   cursor.tallest = 0;
 }
 
-function advance(cursor: RowCursor, span: number): void {
-  if (cursor.x + span >= GRID_COLUMNS) {
-    wrap(cursor);
-  } else {
-    cursor.x += span;
-  }
-}
-
-function spotsFor(panels: Panel[]): Spot[] {
-  const spots: Spot[] = [];
-  const cursor: RowCursor = { x: 0, y: 0, tallest: 0 };
-
-  for (const panel of panels) {
-    const w = panel.width === 'full' ? GRID_COLUMNS : HALF_SPAN;
-    const h = panel.height === 'viewport' ? VIEWPORT_ROWS : SEED_ROWS;
-
-    if (cursor.x + w > GRID_COLUMNS) {
-      wrap(cursor);
-    }
-
-    spots.push({ x: cursor.x, y: cursor.y, w, h });
-    cursor.tallest = Math.max(cursor.tallest, h);
-    advance(cursor, w);
-  }
-
-  return spots;
-}
-
 function brick(panel: Panel, spot: Spot): string {
   return `<div class="grid-stack-item" gs-id="${nameOf(panel.label)}" gs-x="${String(spot.x)}" gs-y="${String(spot.y)}" gs-w="${String(spot.w)}" gs-h="${String(spot.h)}" gs-min-w="${String(HALF_SPAN)}" gs-min-h="4"><div class="grid-stack-item-content">${panelMarkup(panel)}</div></div>`;
 }
@@ -120,10 +92,22 @@ function brick(panel: Panel, spot: Spot): string {
 export function masonry(panels: Panel[]): string {
   const widened: Panel[] =
     panels.length === 1 ? panels.map((entry): Panel => ({ ...entry, width: 'full' })) : panels;
-  const spots = spotsFor(widened);
-  const bricks = widened.map((panel, order) =>
-    brick(panel, spots[order] ?? { x: 0, y: 0, w: GRID_COLUMNS, h: SEED_ROWS }),
-  );
+  const cursor: RowCursor = { x: 0, y: 0, tallest: 0 };
+  const bricks = widened.map((panel) => {
+    const w = panel.width === 'full' ? GRID_COLUMNS : HALF_SPAN;
+    const h = panel.height === 'viewport' ? VIEWPORT_ROWS : SEED_ROWS;
+
+    if (cursor.x + w > GRID_COLUMNS) {
+      wrap(cursor);
+    }
+
+    const laid = brick(panel, { x: cursor.x, y: cursor.y, w, h });
+
+    cursor.tallest = Math.max(cursor.tallest, h);
+    cursor.x += w;
+
+    return laid;
+  });
 
   return `<div class="grid-stack">${bricks.join('')}</div>`;
 }

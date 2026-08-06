@@ -2,6 +2,7 @@ import type { Server, ServerResponse } from 'node:http';
 import type { WebSocket } from 'ws';
 
 import { randomBytes } from 'node:crypto';
+import { once } from 'node:events';
 import { watch } from 'node:fs';
 import { createServer } from 'node:http';
 import { basename, resolve } from 'node:path';
@@ -21,7 +22,7 @@ export interface SurfaceHandle {
   stop(): Promise<void>;
 }
 
-const FOUR_HOURS = 4 * 60 * 60 * 1000;
+const FOUR_HOURS = 14_400_000;
 
 const running = new Map<string, SurfaceHandle>();
 
@@ -35,7 +36,12 @@ function refusedBy(response: ServerResponse): (failed: unknown) => void {
   };
 }
 
-function watching(itemDir: string, changed: () => void): () => void {
+interface Watchdog {
+  close: () => void;
+  closed: Promise<unknown>;
+}
+
+function watching(itemDir: string, changed: () => void): Watchdog {
   let pending: ReturnType<typeof setTimeout> | undefined;
   const watcher = watch(itemDir, { recursive: true }, (_, filename) => {
     if (typeof filename === 'string' && basename(filename).startsWith('.')) {
@@ -46,22 +52,22 @@ function watching(itemDir: string, changed: () => void): () => void {
     pending = setTimeout(changed, 100);
   });
 
-  return () => {
-    clearTimeout(pending);
-    watcher.close();
+  return {
+    closed: once(watcher, 'close'),
+    close: () => {
+      watcher.close();
+    },
   };
 }
 
-function idleTimer(onIdle: () => void, idleMs: number): { rest(): void; clear(): void } {
+function idleTimer(onIdle: () => void, idleMs: number): { rest(): void } {
   let timer: ReturnType<typeof setTimeout> | undefined;
 
   return {
     rest() {
       clearTimeout(timer);
       timer = setTimeout(onIdle, idleMs);
-    },
-    clear() {
-      clearTimeout(timer);
+      timer.unref();
     },
   };
 }
@@ -72,18 +78,18 @@ interface QuietGate {
 }
 
 function quietGate(): QuietGate {
-  let hushes = 0;
+  let hushed = false;
 
   return {
     hush: () => {
-      hushes += 1;
+      hushed = true;
     },
     loud: () => {
-      if (hushes === 0) {
+      if (!hushed) {
         return true;
       }
 
-      hushes = 0;
+      hushed = false;
 
       return false;
     },
@@ -95,7 +101,7 @@ function pushingChanges(
   clients: Set<WebSocket>,
   idle: { rest(): void },
   quiet: QuietGate,
-): () => void {
+): Watchdog {
   return watching(home, () => {
     idle.rest();
 
@@ -122,9 +128,6 @@ function attachSockets(server: Server, sessionKey: string, clients: Set<WebSocke
 
     sockets.handleUpgrade(request, socket, head, (client) => {
       clients.add(client);
-      client.on('close', () => {
-        clients.delete(client);
-      });
     });
   });
 }
@@ -158,7 +161,6 @@ export async function startSurface(
   const sessionKey = randomBytes(24).toString('base64url');
   const clients = new Set<WebSocket>();
   const quiet = quietGate();
-  let stopped = false;
 
   const idle = idleTimer(() => {
     void stop();
@@ -182,13 +184,8 @@ export async function startSurface(
   const stopWatching = pushingChanges(home, clients, idle, quiet);
 
   const stop = async (): Promise<void> => {
-    if (stopped) {
-      return;
-    }
-
-    stopped = true;
-    idle.clear();
-    stopWatching();
+    stopWatching.close();
+    await stopWatching.closed;
 
     for (const client of clients) {
       client.terminate();
