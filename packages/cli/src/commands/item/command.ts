@@ -29,6 +29,7 @@ import {
   verificationOf,
 } from '../../shared/transition.ts';
 import { secondJobAmong } from '../../shared/write-gate.ts';
+import { drift, stamp } from './plain/command.ts';
 import { show } from './surface/command.ts';
 import { closingSurface } from './surface/lifecycle.ts';
 
@@ -274,7 +275,7 @@ const reopen = stage('reopen', 'Send reviewed work back to implementing', byStat
 
 const item = defineCommand({
   meta: { name: 'item', description: 'Write the state a gate reads' },
-  subCommands: { file, design, submit, approve, verify, deliver, reopen, ship, show },
+  subCommands: { file, design, submit, approve, verify, deliver, reopen, ship, show, drift, stamp },
 });
 
 export async function usage(): Promise<void> {
