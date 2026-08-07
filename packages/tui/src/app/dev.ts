@@ -103,6 +103,9 @@ const feed: BoardFeed = {
 
     return { moved: 'implementing' };
   },
+  saveCriteria: async () => {
+    await Promise.resolve();
+  },
   subscribe: () => () => undefined,
 };
 

@@ -8,10 +8,12 @@ import type { Frame, FrameStack } from '../model/frames.ts';
 import type { Seat } from '../model/seat.ts';
 
 import { useBoardState } from '../model/board-state.ts';
-import { crumbOf, outstayed, useFrameStack } from '../model/frames.ts';
+import { crumbOf, outstayed } from '../model/frames.ts';
 import { GATE_KEYS, press } from '../model/keys.ts';
 import { livedIn, useSeat } from '../model/seat.ts';
+import { useFrameStack } from '../model/stack.ts';
 import { BoardView } from './board.tsx';
+import { EditorPage } from './editor.tsx';
 import { GateModal } from './gate.tsx';
 import { JourneyPage } from './journey.tsx';
 import { SurfacePage, surfaceMost } from './surface.tsx';
@@ -30,8 +32,9 @@ export interface WatchPageProps {
 
 const HINTS: Record<Exclude<Frame['kind'], 'board'>, string> = {
   journey: '←↑↓→ move · ⏎ open · esc board · q quit',
-  surface: '↑↓ scroll · tab ←→ audience · esc back · q quit',
+  surface: '↑↓ scroll · tab ←→ audience · e edit · esc back · q quit',
   gate: '⏎ pass · esc cancel',
+  edit: 'type · ctrl+s save · esc back',
 };
 
 function gateHints(offers: GateActionView[]): string {
@@ -86,6 +89,10 @@ interface RoomProps {
 }
 
 function StageArea({ stack, lived, seat, now, tick, width, height }: RoomProps): ReactNode {
+  if (stack.top.kind === 'edit') {
+    return <EditorPage frame={stack.top} tick={tick} height={height - 3} />;
+  }
+
   if (stack.top.kind === 'journey') {
     return (
       <JourneyPage
@@ -143,7 +150,10 @@ export function WatchPage({
   useCeremonyCurtain(stack, tick);
 
   useKeyboard((key) => {
-    press(key.name, { onQuit, refresh, stack, seat, most, tick });
+    press(
+      { name: key.name, seq: key.sequence, ctrl: key.ctrl },
+      { onQuit, refresh, stack, seat, most, tick },
+    );
   });
 
   return (

@@ -3,7 +3,14 @@ import type { Direction } from './compass.ts';
 import type { Frame, FrameStack } from './frames.ts';
 import type { Seat } from './seat.ts';
 
+import { erased, inserted, moved, split } from '../lib/edit.ts';
 import { asDirection, DELTA } from './compass.ts';
+
+export interface Pressed {
+  name: string;
+  seq: string;
+  ctrl: boolean;
+}
 
 export const GATE_KEYS: Record<string, GateActionView> = {
   a: 'approve',
@@ -101,10 +108,64 @@ const SURFACE_MOVES: Record<string, (stack: FrameStack, most: number) => void> =
   right: (stack) => {
     stack.tune('plain');
   },
+  e: (stack) => {
+    stack.edit();
+  },
 };
 
 function surfacePress(name: string, stack: FrameStack, most: number): void {
   SURFACE_MOVES[name]?.(stack, most);
+}
+
+const EDITOR_MOVES: Record<string, (stack: FrameStack) => void> = {
+  escape: (stack) => {
+    stack.pop();
+  },
+  backspace: (stack) => {
+    stack.revise(erased);
+  },
+  return: (stack) => {
+    stack.revise(split);
+  },
+  enter: (stack) => {
+    stack.revise(split);
+  },
+  up: (stack) => {
+    stack.revise((draft) => moved(draft, 'up'));
+  },
+  down: (stack) => {
+    stack.revise((draft) => moved(draft, 'down'));
+  },
+  left: (stack) => {
+    stack.revise((draft) => moved(draft, 'left'));
+  },
+  right: (stack) => {
+    stack.revise((draft) => moved(draft, 'right'));
+  },
+};
+
+function typedInto(key: Pressed, stack: FrameStack): void {
+  if (!key.ctrl && key.seq.length === 1 && key.seq >= ' ') {
+    stack.revise((draft) => inserted(draft, key.seq));
+  }
+}
+
+function editorPress(key: Pressed, stack: FrameStack, tick: number): void {
+  if (key.ctrl && key.name === 's') {
+    stack.save(tick);
+
+    return;
+  }
+
+  const move = EDITOR_MOVES[key.name];
+
+  if (move !== undefined) {
+    move(stack);
+
+    return;
+  }
+
+  typedInto(key, stack);
 }
 
 function ceremonyPress(name: string, stack: FrameStack, tick: number): void {
@@ -141,20 +202,27 @@ const FRAME_PRESSES: Record<Frame['kind'], (name: string, deps: PressDeps) => vo
   gate: (name, deps) => {
     ceremonyPress(name, deps.stack, deps.tick);
   },
+  edit: () => undefined,
 };
 
-export function press(name: string, deps: PressDeps): void {
-  if (name === 'q') {
+export function press(key: Pressed, deps: PressDeps): void {
+  if (deps.stack.top.kind === 'edit') {
+    editorPress(key, deps.stack, deps.tick);
+
+    return;
+  }
+
+  if (key.name === 'q') {
     deps.onQuit();
 
     return;
   }
 
-  if (name === 'r') {
+  if (key.name === 'r') {
     deps.refresh();
 
     return;
   }
 
-  FRAME_PRESSES[deps.stack.top.kind](name, deps);
+  FRAME_PRESSES[deps.stack.top.kind](key.name, deps);
 }

@@ -13,6 +13,7 @@ import { foldJourney } from '../../shared/journey.ts';
 import { foldKanban } from '../../shared/kanban.ts';
 import { decisionOf, moveThrough } from '../../shared/stage.ts';
 import { docsFor } from './docs.ts';
+import { writeCriteria } from './save.ts';
 
 export interface FeedTimings {
   debounce: number;
@@ -25,6 +26,7 @@ export interface BoardFeed {
   snapshot: () => Promise<KanbanColumn[]>;
   journey: (key: string) => Promise<Journey | undefined>;
   act: (key: string, gate: GateAction) => Promise<Moved>;
+  saveCriteria: (key: string, name: string, source: string) => Promise<void>;
   subscribe: (refresh: () => void) => () => void;
 }
 
@@ -97,6 +99,7 @@ export function boardFeedFor(
       return docsFor(join(root, KET_DIRECTORY, 'items', key), log, journey);
     },
     act: async (key, gate) => moveThrough(root, key, gate, decisionOf(gate)),
+    saveCriteria: async (key, name, source) => writeCriteria(root, key, name, source),
     subscribe: (refresh) => subscription(root, timings, refresh, watching),
   };
 }

@@ -4,6 +4,7 @@ export const NOW = '2026-08-07T12:00:00.000Z';
 
 export interface ActedFeed extends BoardFeed {
   acted: string[];
+  saved: string[];
 }
 
 const COLUMNS: KanbanColumnView[] = [
@@ -111,16 +112,32 @@ const CHILD_JOURNEY: JourneyView = {
       child: undefined,
       doc: undefined,
     },
+    {
+      id: '.ket/items/K-2/locking.feature',
+      kind: 'artifact',
+      title: 'locking.feature',
+      mark: 'done',
+      at: undefined,
+      child: undefined,
+      doc: {
+        kind: 'criteria',
+        label: 'Criteria',
+        name: 'locking.feature',
+        source: 'Feature: locking\n  Scenario: five tries',
+      },
+    },
   ],
-  edges: [],
+  edges: [['triaged', '.ket/items/K-2/locking.feature']],
   standing: undefined,
 };
 
 export function feedOf(): ActedFeed {
   const acted: string[] = [];
+  const saved: string[] = [];
 
   return {
     acted,
+    saved,
     snapshot: async () => {
       await Promise.resolve();
 
@@ -140,6 +157,10 @@ export function feedOf(): ActedFeed {
       acted.push(`${key} ${gate}`);
 
       return { moved: 'implementing' };
+    },
+    saveCriteria: async (key, name, source) => {
+      await Promise.resolve();
+      saved.push(`${key} ${name} ${source}`);
     },
     subscribe: () => () => undefined,
   };
