@@ -1,8 +1,11 @@
-import { readFile, readdir } from 'node:fs/promises';
+import { readdir } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 
-import type { BlastFiles } from './blast.ts';
 import type { ItemSurface } from './page.ts';
+
+import { readArtifact, readBlast } from '../../../shared/artifact-store.ts';
+
+export { readArtifact, readBlast };
 
 const yamlLine = (source: string | undefined, field: string): string | undefined => {
   if (source === undefined) {
@@ -13,13 +16,6 @@ const yamlLine = (source: string | undefined, field: string): string | undefined
 
   return found === null ? undefined : String(found[1]).trim();
 };
-
-export async function readArtifact(itemDir: string, name: string): Promise<string | undefined> {
-  return readFile(join(itemDir, name), 'utf8').then(
-    (content) => content,
-    () => undefined,
-  );
-}
 
 async function featuresOf(itemDir: string): Promise<{ name: string; source: string }[]> {
   const names = await readdir(join(itemDir, 'features')).catch(() => undefined);
@@ -36,16 +32,6 @@ async function featuresOf(itemDir: string): Promise<{ name: string; source: stri
         source: (await readArtifact(itemDir, join('features', name))) ?? '',
       })),
   );
-}
-
-export async function readBlast(itemDir: string): Promise<BlastFiles | undefined> {
-  const source = await readArtifact(itemDir, 'blast.d2');
-
-  if (source === undefined) {
-    return undefined;
-  }
-
-  return { source, measure: await readArtifact(itemDir, 'blast.json') };
 }
 
 export async function readSurface(itemDir: string): Promise<ItemSurface> {

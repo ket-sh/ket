@@ -4,6 +4,7 @@ export interface GateEvent {
   about: string;
   item?: string;
   reason?: string;
+  at?: string;
 }
 
 export function renderEvent(event: GateEvent): string {

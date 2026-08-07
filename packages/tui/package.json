@@ -18,12 +18,12 @@
   "dependencies": {
     "@opentui/core": "0.4.5",
     "@opentui/react": "0.4.5",
-    "opentui-spinner": "^0.0.7",
     "react": "19.2.8"
   },
   "devDependencies": {
     "@anscribe/opentui": "1.0.1",
     "@ket/tsconfig": "workspace:*",
-    "@types/react": "19.2.17"
+    "@types/react": "19.2.17",
+    "fast-check": "4.5.0"
   }
 }

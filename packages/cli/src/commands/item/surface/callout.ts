@@ -1,12 +1,9 @@
+import type { DesignCallout as Callout } from '../../../shared/surface-doc.ts';
 import type { Panel, RenderedDiagram } from './panel.ts';
 
+import { calloutsOf } from '../../../shared/surface-doc.ts';
 import { panelOf } from './panel.ts';
 import { escaped } from './text.ts';
-
-interface Callout {
-  claim: string;
-  shape: string;
-}
 
 interface Marked {
   html: string;
@@ -31,32 +28,6 @@ const HINT =
 
 const SWITCH =
   '<button type="button" class="callout-switch" aria-pressed="true">Callouts on</button>';
-
-function wordAt(entry: object, field: string): boolean {
-  const held: unknown = Reflect.get(entry, field);
-
-  return typeof held === 'string' && held !== '';
-}
-
-function isCallout(entry: unknown): entry is Callout {
-  return (
-    entry !== null && typeof entry === 'object' && wordAt(entry, 'claim') && wordAt(entry, 'shape')
-  );
-}
-
-function calloutsOf(source: string | undefined): Callout[] {
-  if (source === undefined) {
-    return [];
-  }
-
-  try {
-    const parsed: unknown = JSON.parse(source);
-
-    return Array.isArray(parsed) ? parsed.filter(isCallout) : [];
-  } catch {
-    return [];
-  }
-}
 
 function shapeClass(shape: string): string {
   return btoa(shape);

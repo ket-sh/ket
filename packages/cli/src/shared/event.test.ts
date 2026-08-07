@@ -37,6 +37,22 @@ describe('recording what a gate did', () => {
   });
 });
 
+describe('when a recorded line happened', () => {
+  it('carries the moment it was stamped with, so a reader can measure time between lines', () => {
+    const parsed: unknown = JSON.parse(
+      renderEvent({
+        gate: 'transition',
+        outcome: 'allowed',
+        about: 'designing',
+        item: 'AUTH-1',
+        at: '2026-08-07T10:00:00.000Z',
+      }),
+    );
+
+    expect(parsed).toMatchObject({ at: '2026-08-07T10:00:00.000Z' });
+  });
+});
+
 describe('what a recorded line leaves out', () => {
   it('records the reason a refusal gave, since that is what a reader wants', () => {
     const parsed: unknown = JSON.parse(

@@ -1,14 +1,8 @@
 import { Marked } from 'marked';
 
-export interface Part {
-  heading: string;
-  body: string;
-}
+import type { Part } from '../../../shared/prose-parts.ts';
 
-interface Split {
-  lead: string;
-  parts: Part[];
-}
+import { splitOnHeading } from '../../../shared/prose-parts.ts';
 
 interface Badge {
   label: string;
@@ -65,32 +59,6 @@ const ORDERED_HEADING = /^(\d+)[.)]\s(.+)/;
 
 const MISSING_CALLOUT =
   '<aside class="tldr is-missing"><p class="tldr-label">TL;DR</p><p class="tldr-body">No summary written.</p></aside>';
-
-export function splitOnHeading(source: string, marker: string): Split {
-  const opener = `${marker} `;
-  const lead: string[] = [];
-  const parts: { heading: string; body: string[] }[] = [];
-
-  for (const line of source.split('\n')) {
-    if (line.startsWith(opener)) {
-      parts.push({ heading: line.slice(opener.length).trim(), body: [] });
-      continue;
-    }
-
-    const current = parts.at(-1);
-
-    if (current === undefined) {
-      lead.push(line);
-    } else {
-      current.body.push(line);
-    }
-  }
-
-  return {
-    lead: lead.join('\n'),
-    parts: parts.map((part) => ({ heading: part.heading, body: part.body.join('\n') })),
-  };
-}
 
 function slug(text: string): string {
   return text

@@ -1,8 +1,9 @@
+import { createMockKeys } from '@opentui/core/testing';
 import { testRender } from '@opentui/react/test-utils';
 import { afterEach, describe, expect, it } from 'bun:test';
 
-import { SAMPLE } from '../../../shared/model';
 import { WatchPage } from './index.tsx';
+import { feedOf, NOW } from './watch-fixtures.ts';
 
 let rendered: Awaited<ReturnType<typeof testRender>> | undefined;
 
@@ -11,39 +12,139 @@ afterEach(() => {
   rendered = undefined;
 });
 
-async function frameOf(width: number, height: number): Promise<string> {
-  rendered = await testRender(<WatchPage item={SAMPLE} />, { width, height });
+async function settled(): Promise<string> {
+  await rendered?.renderOnce();
+  await new Promise((rested) => {
+    setTimeout(rested, 25);
+  });
+  await rendered?.renderOnce();
 
-  await rendered.renderOnce();
-
-  return rendered.captureCharFrame();
+  return rendered?.captureCharFrame() ?? '';
 }
 
-describe('the watch page', () => {
-  it('names the item it is watching', async () => {
-    const frame = await frameOf(120, 30);
+async function openedAt(width: number, height: number): Promise<string> {
+  rendered = await testRender(
+    <WatchPage feed={feedOf()} clock={() => NOW} onQuit={() => undefined} />,
+    { width, height },
+  );
 
-    expect(frame).toContain('AUTH-3');
-    expect(frame).toContain('login with lockout');
+  let frame = await settled();
+
+  while (!frame.includes('K-2')) {
+    frame = await settled();
+  }
+
+  return frame;
+}
+
+function pressed(key: 'ARROW_RIGHT' | 'ARROW_LEFT' | 'RETURN' | 'ESCAPE'): void {
+  if (rendered !== undefined) {
+    createMockKeys(rendered.renderer).pressKey(key);
+  }
+}
+
+describe('the board the watch page shows', () => {
+  it('seats every card under the column its status names', async () => {
+    const frame = await openedAt(160, 30);
+
+    expect(frame).toContain('triaged');
+    expect(frame).toContain('designing');
+    expect(frame).toContain('K-2');
+    expect(frame).toContain('A quiet fix');
+    expect(frame).toContain('K-1');
+    expect(frame).toContain('The watched item');
   });
 
-  it('draws every stage the size runs', async () => {
-    const frame = await frameOf(160, 30);
-
-    for (const stage of ['triage', 'research', 'design', 'implement', 'verify', 'ship']) {
-      expect(frame).toContain(stage);
-    }
+  it('shows how long a card has sat where it is', async () => {
+    expect(await openedAt(160, 30)).toContain('2h');
   });
 
-  it('reports the loop a row of boxes cannot draw', async () => {
-    const frame = await frameOf(120, 30);
-
-    expect(frame).toContain('verify fails and returns to implement');
+  it('wears the refusal that is still standing', async () => {
+    expect(await openedAt(160, 30)).toContain('! the design names no spec');
   });
 
-  it('opens on the first stage and shows its log', async () => {
-    const frame = await frameOf(120, 30);
+  it('hides an empty column, since dead lanes are noise', async () => {
+    expect(await openedAt(160, 30)).not.toContain('awaiting-merge');
+  });
 
-    expect(frame).toContain('classified kind=feature');
+  it('stacks the board as a list where a row of columns cannot fit', async () => {
+    const frame = await openedAt(60, 40);
+
+    expect(frame).toContain('K-1');
+    expect(frame).toContain('K-2');
+  });
+
+  it('raises the banner and the live dot over the board', async () => {
+    const frame = await openedAt(160, 30);
+
+    expect(frame).toContain('▄▄█▄▄▄█▄▄');
+    expect(frame).toContain('●');
+  });
+});
+
+describe('the selection the arrows move', () => {
+  it('starts on the first card and wears the double border', async () => {
+    expect(await openedAt(160, 30)).toContain('║ K-2');
+  });
+
+  it('walks right into the next living column', async () => {
+    await openedAt(160, 30);
+    pressed('ARROW_RIGHT');
+
+    const frame = await settled();
+
+    expect(frame).toContain('║ K-1');
+    expect(frame).not.toContain('║ K-2');
+  });
+});
+
+describe('the journey a card opens', () => {
+  it('dives into the journey on enter and spells the path', async () => {
+    await openedAt(160, 40);
+    pressed('ARROW_RIGHT');
+    await settled();
+    pressed('RETURN');
+
+    const frame = await settled();
+
+    expect(frame).toContain('K-1 · journey');
+    expect(frame).toContain('board › K-1');
+    expect(frame).toContain('! no failing test covers it');
+  });
+
+  it('lands the selection on the active stage, never on an active child', async () => {
+    await openedAt(160, 40);
+    pressed('ARROW_RIGHT');
+    await settled();
+    pressed('RETURN');
+
+    expect(await settled()).toContain('║ designing');
+  });
+
+  it('walks the canvas selection with the arrows', async () => {
+    await openedAt(160, 40);
+    pressed('ARROW_RIGHT');
+    await settled();
+    pressed('RETURN');
+    await settled();
+    pressed('ARROW_LEFT');
+
+    const frame = await settled();
+
+    expect(frame).toContain('║ triaged');
+  });
+
+  it('pops back to the board on escape', async () => {
+    await openedAt(160, 40);
+    pressed('ARROW_RIGHT');
+    await settled();
+    pressed('RETURN');
+    await settled();
+    pressed('ESCAPE');
+
+    const frame = await settled();
+
+    expect(frame).not.toContain('K-1 · journey');
+    expect(frame).toContain('A quiet fix');
   });
 });

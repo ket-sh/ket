@@ -1,6 +1,8 @@
 import { defineCommand, showUsage } from 'citty';
 
 import { COMMAND_ARGS } from '../../shared/args.ts';
+import { ketRootOrThrow } from '../../shared/locate.ts';
+import { boardFeedFor } from './feed.ts';
 
 const watch = defineCommand({
   meta: {
@@ -9,9 +11,10 @@ const watch = defineCommand({
   },
   args: COMMAND_ARGS,
   async run() {
+    const root = await ketRootOrThrow(process.cwd());
     const { watch } = await import('@ket/tui');
 
-    await watch();
+    await watch(boardFeedFor(root));
   },
 });
 
