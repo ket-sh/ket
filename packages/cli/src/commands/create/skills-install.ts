@@ -45,20 +45,14 @@ function outcomeOf(installed: string[], refused: string[]): SkillsInstalled {
   return refused.length === 0 ? { installed } : { refused: refused.join('\n') };
 }
 
-export async function installSkills(
+async function landedAmong(
+  skills: PresetSkill[],
   root: string,
-  lockfile: string | undefined,
-): Promise<SkillsInstalled> {
-  const locked = skillsFrom(lockfile ?? '');
-
-  if ('unreadable' in locked) {
-    return { refused: locked.unreadable };
-  }
-
+): Promise<{ installed: string[]; refused: string[] }> {
   const installed: string[] = [];
   const refused: string[] = [];
 
-  for (const skill of locked.skills) {
+  for (const skill of skills) {
     const said = await added(skill, root);
 
     if (said === undefined) {
@@ -67,6 +61,22 @@ export async function installSkills(
       refused.push(refusalFor(skill, said));
     }
   }
+
+  return { installed, refused };
+}
+
+export async function installSkills(
+  root: string,
+  lockfile: string | undefined,
+  brought: PresetSkill[] = [],
+): Promise<SkillsInstalled> {
+  const locked = skillsFrom(lockfile ?? '');
+
+  if ('unreadable' in locked) {
+    return { refused: locked.unreadable };
+  }
+
+  const { installed, refused } = await landedAmong([...locked.skills, ...brought], root);
 
   return outcomeOf(installed, refused);
 }
