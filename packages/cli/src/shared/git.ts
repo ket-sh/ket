@@ -6,7 +6,12 @@ const SCAFFOLD_MESSAGE = 'chore: scaffold with ket';
 
 export type FirstCommit = { committed: true } | { refused: string };
 
-async function ran(argv: string[], root: string): Promise<string | undefined> {
+interface GitAnswer {
+  code: number | null;
+  said: string;
+}
+
+async function answered(argv: string[], root: string): Promise<GitAnswer> {
   return new Promise((settle) => {
     const [binary, ...rest] = argv;
     const git = spawn(binary ?? '', rest, { cwd: root });
@@ -19,13 +24,19 @@ async function ran(argv: string[], root: string): Promise<string | undefined> {
     git.stdout.on('data', gather);
     git.stderr.on('data', gather);
     git.on('error', (cause: Error) => {
-      settle(cause.message);
+      settle({ code: null, said: cause.message });
     });
 
     git.on('close', (code) => {
-      settle(code === 0 ? undefined : said.trim());
+      settle({ code, said });
     });
   });
+}
+
+async function ran(argv: string[], root: string): Promise<string | undefined> {
+  const { code, said } = await answered(argv, root);
+
+  return code === 0 ? undefined : said.trim();
 }
 
 export async function initializeRepository(root: string): Promise<void> {
@@ -34,6 +45,16 @@ export async function initializeRepository(root: string): Promise<void> {
   if (said !== undefined) {
     throw new Error(`git init failed in ${root}: ${said}`);
   }
+}
+
+export async function uncommittedIn(root: string): Promise<string[]> {
+  const { code, said } = await answered(['git', 'status', '--porcelain'], root);
+
+  if (code !== 0) {
+    throw new Error(`git status failed in ${root}: ${said.trim()}`);
+  }
+
+  return said.split('\n').filter((line) => line !== '');
 }
 
 // The commit hooks arrive with bun install, which the user runs afterwards, so

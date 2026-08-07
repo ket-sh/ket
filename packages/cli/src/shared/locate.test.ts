@@ -5,11 +5,13 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
   insideRepository,
+  integrationsFrom,
   keyFrom,
   ketRootFrom,
   ketRootOrThrow,
   sourceRootsOf,
   targetsFrom,
+  workflowFrom,
 } from './locate.ts';
 
 let root = '';
@@ -122,6 +124,35 @@ describe('reading the project key out of a config module', () => {
 
   it('reads nothing from a module that is not there', () => {
     expect(keyFrom(null)).toBeUndefined();
+  });
+});
+
+describe('reading the integrations out of a config module', () => {
+  it('reads the names a project config exports', () => {
+    expect(integrationsFrom({ default: { integrations: ['codecov', 'codeql'] } })).toStrictEqual([
+      'codecov',
+      'codeql',
+    ]);
+  });
+
+  it('reads none when the config names none, or names them in a shape it cannot read', () => {
+    expect(integrationsFrom({ default: {} })).toStrictEqual([]);
+    expect(integrationsFrom({ default: { integrations: 'codecov' } })).toStrictEqual([]);
+    expect(integrationsFrom({ default: { integrations: [7, 'codecov'] } })).toStrictEqual([
+      'codecov',
+    ]);
+  });
+});
+
+describe('reading the workflow choice out of a config module', () => {
+  it('reads the choice a project config exports', () => {
+    expect(workflowFrom({ default: { workflow: false } })).toBe(false);
+  });
+
+  it('reads a missing or unreadable choice as workflow on, the way create defaults it', () => {
+    expect(workflowFrom({ default: {} })).toBe(true);
+    expect(workflowFrom({ default: { workflow: 'yes' } })).toBe(true);
+    expect(workflowFrom(null)).toBe(true);
   });
 });
 

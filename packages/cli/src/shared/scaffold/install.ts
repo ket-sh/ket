@@ -1,18 +1,15 @@
 import type { PresetFile } from '@ket/preset';
 
-import type { PresetName } from '../../shared/configuration.ts';
+import type { Configuration, PresetName } from '../../shared/configuration.ts';
 import type { RegisteredPreset } from '../../shared/registry.ts';
 import type { ScaffoldFile } from '../../shared/write-files.ts';
 import type { ProjectNames } from './name-token.ts';
 
 import { governingPresets } from '../../shared/registry.ts';
+import { filesFor } from './integrations.ts';
+import { keepingTheStandingLaw, landingThePlainLaw } from './law.ts';
 import { withProjectNames } from './name-token.ts';
-
-const HOME_MARKER = '~/';
-
-export function pathInProject(target: string): string {
-  return target.startsWith(HOME_MARKER) ? target.slice(HOME_MARKER.length) : target;
-}
+import { pathInProject } from './placement.ts';
 
 export function scaffolded(
   file: PresetFile,
@@ -42,4 +39,16 @@ export function filesToInstall(targets: PresetName[], project: ProjectNames): Sc
   }
 
   return [...byPath.values()];
+}
+
+// Create writes this list and update compares against it, so the assembly
+// lives once: the preset files, the chosen integrations, then the law.
+export function installedFor(configuration: Configuration, project: ProjectNames): ScaffoldFile[] {
+  const targets = Object.values(configuration.targets);
+  const law = configuration.workflow ? keepingTheStandingLaw : landingThePlainLaw;
+
+  return law([
+    ...filesToInstall(targets, project),
+    ...filesFor(targets, configuration.integrations),
+  ]);
 }

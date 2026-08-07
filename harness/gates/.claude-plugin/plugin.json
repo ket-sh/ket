@@ -1,6 +1,7 @@
 {
   "name": "ket",
   "displayName": "ket",
+  "version": "0.1.0",
   "description": "Refuses a write the work has not earned, and keeps a status honest",
   "author": { "name": "ket", "url": "https://github.com/ket-sh/ket" },
   "homepage": "https://github.com/ket-sh/ket",

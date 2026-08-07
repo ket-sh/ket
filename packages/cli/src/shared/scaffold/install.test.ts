@@ -4,8 +4,11 @@ import { WEB_PRESET } from '@ket/preset-web';
 import { Buffer } from 'node:buffer';
 import { describe, expect, it } from 'vitest';
 
+import type { Configuration } from '../../shared/configuration.ts';
+
 import { registeredPresets } from '../../shared/registry.ts';
-import { filesToInstall, pathInProject, scaffolded, shippedContents } from './install.ts';
+import { filesToInstall, installedFor, scaffolded, shippedContents } from './install.ts';
+import { pathInProject } from './placement.ts';
 
 const HINT = { text: 'Make it yours: edit', code: 'src/entities/welcome' };
 
@@ -131,5 +134,31 @@ describe('reading what a preset ships for a path', () => {
 
   it('reports nothing when no preset writes anything', () => {
     expect(shippedContents([], '.gitignore')).toBeUndefined();
+  });
+});
+
+describe('assembling everything an update compares against', () => {
+  const configured: Configuration = {
+    key: 'SHOP',
+    targets: { '.': 'cli' },
+    integrations: ['codecov'],
+    workflow: true,
+  };
+
+  it('composes the preset files, the chosen integrations and the law', () => {
+    const paths = installedFor(configured, MY_APP).map((file) => file.path);
+
+    expect(paths).toContain('CLAUDE.md');
+    expect(paths).toContain('.github/workflows/coverage.yml');
+  });
+
+  it('assembles by the configuration, so declining a choice changes the files', () => {
+    const bare = installedFor({ ...configured, integrations: [], workflow: false }, MY_APP);
+    const driven = installedFor(configured, MY_APP);
+    const written = (files: { path: string; contents: string }[], path: string) =>
+      files.find((file) => file.path === path)?.contents;
+
+    expect(bare.map((file) => file.path)).not.toContain('.github/workflows/coverage.yml');
+    expect(written(bare, 'CLAUDE.md')).not.toBe(written(driven, 'CLAUDE.md'));
   });
 });

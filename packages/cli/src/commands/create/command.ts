@@ -5,19 +5,20 @@ import { basename, relative } from 'node:path';
 
 import type { Configuration, PresetName } from '../../shared/configuration.ts';
 import type { RegisteredPreset } from '../../shared/registry.ts';
+import type { ProjectNames } from '../../shared/scaffold/name-token.ts';
 import type { ScaffoldFile } from '../../shared/write-files.ts';
-import type { ProjectNames } from './name-token.ts';
 import type { CreationPlan } from './plan.ts';
 
 import { commitScaffold, initializeRepository } from '../../shared/git.ts';
 import { governingPresets } from '../../shared/registry.ts';
+import { recordedAmong, scaffoldRecordFile } from '../../shared/scaffold-manifest.ts';
+import { installedFor, shippedContents } from '../../shared/scaffold/install.ts';
+import { chosenFrom, installsFor, namesOffered } from '../../shared/scaffold/integrations.ts';
+import { heroHint } from '../../shared/scaffold/name-token.ts';
+import { KET_VERSION } from '../../shared/version.ts';
 import { readTextIfPresent, writeFiles } from '../../shared/write-files.ts';
 import { announce, openCreate } from './announce.ts';
-import { filesToInstall, shippedContents } from './install.ts';
-import { chosenFrom, filesFor, installsFor, namesOffered } from './integrations.ts';
-import { keepingTheStandingLaw, landingThePlainLaw } from './law.ts';
 import { renderManifest } from './manifest.ts';
-import { heroHint } from './name-token.ts';
 import { PIPELINE_COMMANDS } from './pipeline-commands.generated.ts';
 import { planCreation } from './plan.ts';
 import { presetFrom } from './preset.ts';
@@ -111,10 +112,7 @@ async function writeScaffold(plan: CreationPlan, configuration: Configuration): 
     hint: heroHint(configuration),
   };
 
-  const installed = lawFor(configuration)([
-    ...filesToInstall(targets, project),
-    ...filesFor(targets, configuration.integrations),
-  ]);
+  const installed = installedFor(configuration, project);
 
   // A preset ignores what its own toolchain downloads and builds, and ket adds
   // the state it keeps. The scaffold writes last, so it appends to the file
@@ -132,6 +130,7 @@ async function writeScaffold(plan: CreationPlan, configuration: Configuration): 
       ),
     },
     ...installed,
+    scaffoldRecordFile(recordedAmong(installed), KET_VERSION),
     ...scaffoldFor(configuration, ignored),
   ];
 
@@ -158,10 +157,6 @@ function settingsFor(configuration: Configuration, settings: string, paths: stri
   return configuration.workflow
     ? withHarnessAndWorkflowRegistered(settings, paths)
     : withHarnessRegistered(settings, paths);
-}
-
-function lawFor(configuration: Configuration): (installed: ScaffoldFile[]) => ScaffoldFile[] {
-  return configuration.workflow ? keepingTheStandingLaw : landingThePlainLaw;
 }
 
 function manifestEntry(

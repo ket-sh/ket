@@ -7,9 +7,9 @@ import color from 'picocolors';
 import type { Configuration, PresetName } from '../../shared/configuration.ts';
 
 import { registeredPresets } from '../../shared/registry.ts';
+import { integrationsOffered } from '../../shared/scaffold/integrations.ts';
 import { drawWorkflow } from './announce.ts';
 import { directoryLabel } from './directory-label.ts';
-import { integrationsOffered } from './integrations.ts';
 import { refuseKey } from './key.ts';
 import { refuseName } from './name.ts';
 

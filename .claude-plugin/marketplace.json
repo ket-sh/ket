@@ -8,11 +8,13 @@
     {
       "name": "ket",
       "source": "./harness/gates",
+      "version": "0.1.0",
       "description": "The gates that keep a status honest"
     },
     {
       "name": "ket-workflow",
       "source": "./harness/workflow",
+      "version": "0.1.0",
       "description": "The pipeline ket drives through those gates"
     }
   ],
