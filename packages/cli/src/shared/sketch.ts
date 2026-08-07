@@ -34,7 +34,7 @@ function splitOnce(line: string, mark: string): [string, string | undefined] {
 }
 
 function readable(line: string): boolean {
-  return line !== '' && !line.startsWith('#') && line !== '}' && !line.endsWith('{');
+  return !line.startsWith('#');
 }
 
 function deeper(depth: number, line: string): number {
@@ -51,9 +51,13 @@ function declared(nodes: Map<string, string>, id: string): void {
   }
 }
 
-function readEdge(nodes: Map<string, string>, edges: SketchEdge[], line: string): void {
-  const [left, rest] = splitOnce(line, '->');
-  const [to, label] = splitOnce(rest ?? '', ':');
+function readEdge(
+  nodes: Map<string, string>,
+  edges: SketchEdge[],
+  left: string,
+  rest: string,
+): void {
+  const [to, label] = splitOnce(rest, ':');
   const from = left.trim();
   const target = to.trim();
 
@@ -66,8 +70,8 @@ function readEdge(nodes: Map<string, string>, edges: SketchEdge[], line: string)
   edges.push({ from, to: target, label: label?.trim() });
 }
 
-function labelOf(id: string, value: string | undefined): string {
-  const label = value?.trim() ?? '';
+function labelOf(id: string, value: string): string {
+  const label = value.trim();
 
   return label === '' ? id : label;
 }
@@ -76,7 +80,7 @@ function readNode(nodes: Map<string, string>, line: string): void {
   const [key, value] = splitOnce(line, ':');
   const id = key.trim();
 
-  if (id === '' || RESERVED.has(id)) {
+  if (value === undefined || id === '' || RESERVED.has(id)) {
     return;
   }
 
@@ -84,15 +88,15 @@ function readNode(nodes: Map<string, string>, line: string): void {
 }
 
 function readLine(nodes: Map<string, string>, edges: SketchEdge[], line: string): void {
-  if (line.includes('->')) {
-    readEdge(nodes, edges, line);
+  const [left, rest] = splitOnce(line, '->');
+
+  if (rest === undefined) {
+    readNode(nodes, line);
 
     return;
   }
 
-  if (line.includes(':')) {
-    readNode(nodes, line);
-  }
+  readEdge(nodes, edges, left, rest);
 }
 
 function readRow(
@@ -104,7 +108,7 @@ function readRow(
   const line = raw.trim();
   const next = deeper(held.depth, line);
 
-  if (held.depth === 0 && next === 0 && readable(line)) {
+  if (next === 0 && readable(line)) {
     readLine(nodes, edges, line);
   }
 

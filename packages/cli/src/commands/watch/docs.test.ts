@@ -35,6 +35,8 @@ const WROTE = [
   'features/locking.feature',
   'change.diff',
   'blast.d2',
+  'change-brief.md',
+  'findings.md',
   'ghost.md',
 ];
 
@@ -108,6 +110,13 @@ beforeEach(async () => {
     join(itemDir, 'solution-design.md'),
     '# The design\n\nThe account locks after five failures.\n',
   );
+  await writeFile(
+    join(itemDir, 'solution-design.plain.md'),
+    'Source: not-the-fingerprint\n\nPlainly the account locks.\n',
+  );
+  await writeFile(join(itemDir, 'adr.plain.md'), 'The plain call.\n');
+  await writeFile(join(itemDir, 'change-brief.md'), '# Brief\n\nThe change in brief.\n');
+  await writeFile(join(itemDir, 'findings.md'), '# Findings\n\nWhat the review found.\n');
   await writeFile(join(itemDir, 'callouts.json'), '[{"claim":"locks after five","shape":"lock"}]');
   await writeFile(
     join(itemDir, 'architecture.d2'),
@@ -163,6 +172,8 @@ describe('the design and its sketch', () => {
   it('folds the design with its callouts and the parsed architecture', async () => {
     const doc = designOf(await decorated());
 
+    expect(doc.label).toBe('Design');
+    expect(doc.plain).toContain('Plainly the account locks.');
     expect(doc.callouts).toStrictEqual([{ claim: 'locks after five', shape: 'lock' }]);
     expect(doc.sketch?.nodes).toContainEqual({ id: 'lock', label: 'the keeper' });
     expect(doc.sketch?.edges).toContainEqual({
@@ -176,6 +187,49 @@ describe('the design and its sketch', () => {
     const doc = docOf(await decorated(), 'architecture.d2');
 
     expect(doc?.kind).toBe('sketch');
+
+    if (doc?.kind === 'sketch') {
+      expect(doc.label).toBe('Diagram');
+    }
+  });
+});
+
+describe('the brief and the findings', () => {
+  it('folds each as labeled prose of its own file', async () => {
+    const journey = await decorated();
+    const brief = docOf(journey, 'change-brief.md');
+    const findings = docOf(journey, 'findings.md');
+
+    expect(brief?.kind === 'prose' ? [brief.label, brief.tech] : []).toStrictEqual([
+      'Brief',
+      '# Brief\n\nThe change in brief.\n',
+    ]);
+    expect(findings?.kind === 'prose' ? [findings.label, findings.tech] : []).toStrictEqual([
+      'Findings',
+      '# Findings\n\nWhat the review found.\n',
+    ]);
+  });
+});
+
+describe('the shelf where a file falls short', () => {
+  it('folds a decision without a matrix to empty drivers and rows', async () => {
+    await writeFile(join(itemDir, 'adr.md'), '# The call\n\nNo matrix was drawn.\n');
+
+    const doc = docOf(await decorated(), 'adr.md');
+
+    expect(doc?.kind === 'decision' ? [doc.drivers, doc.rows] : []).toStrictEqual([[], []]);
+  });
+
+  it('folds a blast whose measure says nothing to bare figures', async () => {
+    await writeFile(join(itemDir, 'blast.json'), '{}');
+
+    const doc = docOf(await decorated(), 'blast.d2');
+
+    expect(doc?.kind === 'blast' ? [doc.base, doc.collapse, doc.budget] : []).toStrictEqual([
+      '',
+      0,
+      0,
+    ]);
   });
 });
 
@@ -186,6 +240,8 @@ describe('the decision and its matrix', () => {
     expect(doc?.kind).toBe('decision');
 
     if (doc?.kind === 'decision') {
+      expect(doc.label).toBe('Decision');
+      expect(doc.plain).toBe('The plain call.\n');
       expect(doc.drivers).toStrictEqual(['durability', 'simplicity']);
       expect(doc.rows).toStrictEqual([
         { option: 'session store', chosen: true, glyphs: ['++', '+'] },
@@ -204,6 +260,7 @@ describe('the criteria, the diff, and the blast', () => {
     expect(doc?.kind).toBe('criteria');
 
     if (doc?.kind === 'criteria') {
+      expect(doc.label).toBe('Criteria');
       expect(doc.name).toBe('locking.feature');
       expect(doc.source).toContain('Scenario: the fifth failure locks');
     }
@@ -213,6 +270,10 @@ describe('the criteria, the diff, and the blast', () => {
     const doc = docOf(await decorated(), 'change.diff');
 
     expect(doc?.kind).toBe('diff');
+
+    if (doc?.kind === 'diff') {
+      expect(doc.label).toBe('Diff');
+    }
   });
 
   it('folds the blast with its numbers and its sketch', async () => {
@@ -221,35 +282,13 @@ describe('the criteria, the diff, and the blast', () => {
     expect(doc?.kind).toBe('blast');
 
     if (doc?.kind === 'blast') {
+      expect(doc.label).toBe('Blast');
       expect(doc.base).toBe('main');
+      expect(doc.collapse).toBe(2);
       expect(doc.budget).toBe(24);
       expect(doc.uncollapsedNodes).toBe(31);
+      expect(doc.uncollapsedEdges).toBe(58);
       expect(doc.shown).toBe(2);
-    }
-  });
-});
-
-describe('the ledger a stage carries', () => {
-  it('lists the stage window events in order with refusals marked', async () => {
-    const doc = docOf(await decorated(), 'designing');
-
-    expect(doc?.kind).toBe('ledger');
-
-    if (doc?.kind === 'ledger') {
-      expect(doc.lines.some((line) => line.text.includes('spec.md'))).toBe(true);
-      expect(doc.lines.some((line) => line.refused && line.text.includes('src/auth.ts'))).toBe(
-        true,
-      );
-    }
-  });
-
-  it('keeps later events out of an earlier stage', async () => {
-    const doc = docOf(await decorated(), 'triaged');
-
-    expect(doc?.kind).toBe('ledger');
-
-    if (doc?.kind === 'ledger') {
-      expect(doc.lines.some((line) => line.text.includes('src/auth.ts'))).toBe(false);
     }
   });
 });

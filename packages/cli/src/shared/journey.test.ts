@@ -25,6 +25,10 @@ function turnedAway(item: string, about: string, at: string, reason: string): st
   return `${JSON.stringify({ gate: 'write', outcome: 'refused', about, item, at, reason })}\n`;
 }
 
+function heard(gate: string, outcome: string, about: string, at: string): string {
+  return `${JSON.stringify({ gate, outcome, about, item: 'K-1', at })}\n`;
+}
+
 const STORED = [{ key: 'K-1', contents: itemOf('designing') }];
 
 const WALKED =
@@ -108,50 +112,30 @@ describe('the stages a journey walks', () => {
   });
 });
 
-describe('the artifacts a journey hangs', () => {
-  it('hangs an artifact on the stage that wrote it and joins it forward', () => {
+describe('the visits a journey refuses to count', () => {
+  it('reads visits from allowed transitions alone, never another gate or a refusal', () => {
     const log =
-      WALKED + wrote('K-1', '.ket/items/K-1/solution-design.md', '2026-08-07T11:00:00.000Z');
-    const journey = foldJourney(STORED, log, 'K-1');
+      WALKED +
+      wrote('K-1', 'implementing', '2026-08-07T10:10:00.000Z') +
+      heard('transition', 'refused', 'implementing', '2026-08-07T10:20:00.000Z');
 
-    expect(journey?.nodes).toContainEqual({
-      id: '.ket/items/K-1/solution-design.md',
-      kind: 'artifact',
-      title: 'solution-design.md',
-      mark: 'done',
-      at: '2026-08-07T11:00:00.000Z',
-      child: undefined,
-      doc: undefined,
-    });
-    expect(journey?.edges).toContainEqual(['designing', '.ket/items/K-1/solution-design.md']);
-    expect(journey?.edges).toContainEqual([
-      '.ket/items/K-1/solution-design.md',
+    expect(idsOf(foldJourney(STORED, log, 'K-1'))).toStrictEqual([
+      'triaged',
+      'designing',
       'awaiting-approval',
     ]);
   });
 
-  it('keeps writes outside the item directory off the journey', () => {
+  it('numbers a pending stage the journey already visited', () => {
     const log =
-      WALKED +
-      wrote('K-1', 'src/auth.ts', '2026-08-07T11:00:00.000Z') +
-      wrote('K-1', '.ket/items/K-9/spec.md', '2026-08-07T11:30:00.000Z');
+      moved('K-1', 'triaged', '2026-08-07T08:00:00.000Z') +
+      moved('K-1', 'implementing', '2026-08-07T09:00:00.000Z') +
+      moved('K-1', 'verifying', '2026-08-07T10:00:00.000Z') +
+      moved('K-1', 'implementing', '2026-08-07T11:00:00.000Z');
+    const journey = foldJourney(STORED, log, 'K-1');
+    const pending = journey?.nodes.find((node) => node.mark === 'pending');
 
-    expect(
-      foldJourney(STORED, log, 'K-1')?.nodes.filter((node) => node.kind === 'artifact'),
-    ).toStrictEqual([]);
-  });
-
-  it('folds repeated writes of one file to a single node dated last', () => {
-    const log =
-      WALKED +
-      wrote('K-1', '.ket/items/K-1/spec.md', '2026-08-07T11:00:00.000Z') +
-      wrote('K-1', '.ket/items/K-1/spec.md', '2026-08-07T12:00:00.000Z');
-    const artifacts = foldJourney(STORED, log, 'K-1')?.nodes.filter(
-      (node) => node.kind === 'artifact',
-    );
-
-    expect(artifacts).toHaveLength(1);
-    expect(artifacts?.[0]?.at).toBe('2026-08-07T12:00:00.000Z');
+    expect(pending?.id).toBe('verifying#2');
   });
 });
 
@@ -191,6 +175,19 @@ describe('the children a journey closes on', () => {
     });
     expect(journey?.edges).toContainEqual(['designing', 'K-2']);
     expect(journey?.edges).toContainEqual(['designing', 'K-3']);
+  });
+
+  it('marks a child still at the idea stage as pending', () => {
+    const stored = [
+      { key: 'K-1', contents: itemOf('designing', ['K-4']) },
+      {
+        key: 'K-4',
+        contents: `title: A bare thought\nkind: feature\nsize: subtask\nstatus: idea\nchildren: []\n`,
+      },
+    ];
+    const child = foldJourney(stored, WALKED, 'K-1')?.nodes.find((node) => node.id === 'K-4');
+
+    expect(child?.mark).toBe('pending');
   });
 });
 

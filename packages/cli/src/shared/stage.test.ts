@@ -76,4 +76,19 @@ describe('moving an item through a gate', () => {
     });
     await expect(itemFile()).resolves.toContain('status: awaiting-approval');
   });
+
+  it('answers with the gate refusal itself, never the queue, when both stand', async () => {
+    await seeded('designing');
+    await mkdir(join(root, '.ket', 'items', 'K-2'), { recursive: true });
+    await writeFile(
+      join(root, '.ket', 'items', 'K-2', 'item.yaml'),
+      'title: The job in hand\nkind: feature\nsize: story\nstatus: implementing\n',
+    );
+
+    const outcome = await moveThrough(root, 'K-1', 'approve', decisionOf('approve'));
+
+    expect(outcome).toStrictEqual({
+      refused: 'still designing, so its artifacts are not written yet',
+    });
+  });
 });

@@ -231,50 +231,41 @@ function lineOf(event: LoggedEvent): LedgerLine | undefined {
 
 function windowed(events: LoggedEvent[], from: string, until: string | undefined): LedgerLine[] {
   return events
-    .filter((event) => event.at !== undefined && event.at >= from)
-    .filter((event) => until === undefined || (event.at ?? '') < until)
     .flatMap((event) => {
       const line = lineOf(event);
 
       return line === undefined ? [] : [line];
-    });
+    })
+    .filter((line) => line.at >= from)
+    .filter((line) => until === undefined || line.at < until);
 }
 
-function ledgerFor(
-  journey: Journey,
-  events: LoggedEvent[],
-  nodeId: string,
-): SurfaceDoc | undefined {
+function stageLedgers(journey: Journey, events: LoggedEvent[]): Map<string, SurfaceDoc> {
   const stages = journey.nodes.filter((node) => node.kind === 'stage');
-  const at = stages.findIndex((node) => node.id === nodeId);
-  const from = stages[at]?.at;
+  const ledgers = new Map<string, SurfaceDoc>();
 
-  if (from === undefined) {
-    return undefined;
-  }
+  stages.forEach((stage, at) => {
+    if (stage.at !== undefined) {
+      ledgers.set(stage.id, {
+        kind: 'ledger',
+        label: 'Ledger',
+        lines: windowed(events, stage.at, stages[at + 1]?.at),
+      });
+    }
+  });
 
-  return {
-    kind: 'ledger',
-    label: 'Ledger',
-    lines: windowed(events, from, stages[at + 1]?.at),
-  };
+  return ledgers;
 }
 
 export async function docsFor(itemDir: string, log: string, journey: Journey): Promise<Journey> {
   const shelf = await shelfOf(itemDir);
-  const events = eventsAbout(log, journey.item);
+  const ledgers = stageLedgers(journey, eventsAbout(log, journey.item));
   const nodes = await Promise.all(
-    journey.nodes.map(async (node) => {
-      if (node.kind === 'artifact') {
-        return { ...node, doc: await artifactDoc(itemDir, shelf, node.title) };
-      }
-
-      if (node.kind === 'stage') {
-        return { ...node, doc: ledgerFor(journey, events, node.id) };
-      }
-
-      return node;
-    }),
+    journey.nodes.map(async (node) =>
+      node.kind === 'artifact'
+        ? { ...node, doc: await artifactDoc(itemDir, shelf, node.title) }
+        : { ...node, doc: ledgers.get(node.id) },
+    ),
   );
 
   return { ...journey, nodes };

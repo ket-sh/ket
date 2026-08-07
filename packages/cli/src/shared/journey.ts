@@ -1,49 +1,15 @@
 import type { Item, ItemStatus } from './item.ts';
+import type { Journey, JourneyMark, JourneyNode, Pieces, Visit } from './journey-node.ts';
 import type { LoggedEvent } from './kanban.ts';
 import type { StoredItem } from './read-item.ts';
-import type { SurfaceDoc } from './surface-doc.ts';
 
 import { ITEM_STATUSES } from './item.ts';
+import { artifactPieces } from './journey-artifacts.ts';
 import { arrivalOf, eventsAbout, refusalAfter } from './kanban.ts';
 import { parseItem } from './read-item.ts';
 
+export type { Journey } from './journey-node.ts';
 export type { SurfaceDoc } from './surface-doc.ts';
-
-type JourneyMark = 'done' | 'active' | 'pending';
-
-interface JourneyNode {
-  id: string;
-  kind: 'stage' | 'artifact' | 'child';
-  title: string;
-  mark: JourneyMark;
-  at: string | undefined;
-  child: string | undefined;
-  doc: SurfaceDoc | undefined;
-}
-
-export interface Journey {
-  item: string;
-  title: string;
-  nodes: JourneyNode[];
-  edges: [string, string][];
-  standing: string | undefined;
-}
-
-interface Visit {
-  id: string;
-  status: ItemStatus;
-  at: string | undefined;
-}
-
-interface Writing {
-  path: string;
-  at: string | undefined;
-}
-
-interface Pieces {
-  nodes: JourneyNode[];
-  edges: [string, string][];
-}
 
 function statusOf(about: string | undefined): ItemStatus | undefined {
   return ITEM_STATUSES.find((status) => status === about);
@@ -118,65 +84,11 @@ function stageNodes(visits: Visit[], pending: Visit | undefined): JourneyNode[] 
 }
 
 function stageEdges(stages: Visit[]): [string, string][] {
-  return stages.slice(1).map((stage, index) => [stages[index]?.id ?? '', stage.id]);
-}
+  return stages.flatMap((stage, index) => {
+    const follower = stages[index + 1];
 
-function writingsAmong(events: LoggedEvent[], key: string): Writing[] {
-  const prefix = `.ket/items/${key}/`;
-  const written = events
-    .filter((event) => event.gate === 'write' && event.outcome === 'allowed')
-    .filter((event) => event.about?.startsWith(prefix) === true);
-  const latest = new Map(written.map((event) => [event.about ?? '', event.at]));
-
-  return [...latest.entries()].map(([path, at]) => ({ path, at }));
-}
-
-function stageBefore(stages: Visit[], at: string | undefined): Visit | undefined {
-  const dated = stages.filter((visit) => visit.at !== undefined);
-
-  if (at === undefined) {
-    return dated[dated.length - 1] ?? stages[0];
-  }
-
-  const preceding = dated.filter((visit) => (visit.at ?? '') <= at);
-
-  return preceding[preceding.length - 1] ?? stages[0];
-}
-
-function artifactNode(writing: Writing): JourneyNode {
-  return {
-    id: writing.path,
-    kind: 'artifact',
-    title: writing.path.split('/').pop() ?? writing.path,
-    mark: 'done',
-    at: writing.at,
-    child: undefined,
-    doc: undefined,
-  };
-}
-
-function artifactPieces(events: LoggedEvent[], key: string, stages: Visit[]): Pieces {
-  const nodes: JourneyNode[] = [];
-  const edges: [string, string][] = [];
-
-  for (const writing of writingsAmong(events, key)) {
-    const home = stageBefore(stages, writing.at);
-
-    if (home === undefined) {
-      continue;
-    }
-
-    nodes.push(artifactNode(writing));
-    edges.push([home.id, writing.path]);
-
-    const next = stages[stages.indexOf(home) + 1];
-
-    if (next !== undefined) {
-      edges.push([writing.path, next.id]);
-    }
-  }
-
-  return { nodes, edges };
+    return follower === undefined ? [] : [[stage.id, follower.id] satisfies [string, string]];
+  });
 }
 
 function childMark(status: ItemStatus): JourneyMark {
