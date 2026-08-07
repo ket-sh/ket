@@ -62,7 +62,21 @@ describe('what the web preset offers a project that wants its screens reviewed',
     expect(written.map((file) => file.target)).toStrictEqual([
       '~/.github/workflows/chromatic.yml',
       '~/e2e/helpers/harness.ts',
+      '~/scripts/check-bdd-binding.mts',
     ]);
+  });
+
+  it('reads the test bddgen resolved, since a harness that fails to bind stays silent', () => {
+    const checker = contentOf('files/source/chromatic/check-bdd-binding.mts');
+
+    expect(checker).toContain('.features-gen');
+    expect(checker).toContain('*.spec.js');
+  });
+
+  it('stops when bddgen wrote nothing, so an empty run never reads as a pass', () => {
+    expect(contentOf('files/source/chromatic/check-bdd-binding.mts')).toContain(
+      'no generated spec under .features-gen',
+    );
   });
 
   it('brings the official skills beside the tool', () => {
@@ -94,11 +108,21 @@ describe('the binding every generated spec resolves its test through', () => {
     expect(contentOf('files/playwright.config.ts')).toContain("'e2e/helpers/harness.ts'");
   });
 
-  it('ships the checker that fails a spec reaching around the harness', () => {
-    const checker = contentOf('files/source/scripts/check-bdd-binding.mts');
+  it('ships the rule that fails a spec reaching around the harness', () => {
+    const rule = contentOf('files/source/scripts/bdd-binding.mts');
 
-    expect(checker).toContain("'playwright-bdd'");
-    expect(checker).toContain('e2e/helpers/harness.ts');
+    expect(rule).toContain("'playwright-bdd'");
+    expect(rule).toContain('e2e/helpers/harness.ts');
+  });
+
+  it('answers that rule from one module, so swapping a harness never forks it', () => {
+    expect(WEB_PRESET.files.map((file) => file.target)).toContain('~/scripts/bdd-binding.mts');
+    expect(contentOf('files/source/scripts/check-bdd-binding.mts')).toContain(
+      "from './bdd-binding.mts'",
+    );
+    expect(contentOf('files/source/chromatic/check-bdd-binding.mts')).toContain(
+      "from './bdd-binding.mts'",
+    );
   });
 });
 

@@ -108,6 +108,7 @@ export const WEB_PRESET: PresetItem = {
     writes('source/storybook/preview.ts', '.storybook/preview.ts'),
     writes('source/scripts/check-ui-pairs.mts', 'scripts/check-ui-pairs.mts'),
     writes('source/scripts/check-env.mts', 'scripts/check-env.mts'),
+    writes('source/scripts/bdd-binding.mts', 'scripts/bdd-binding.mts'),
     writes('source/scripts/check-bdd-binding.mts', 'scripts/check-bdd-binding.mts'),
     writes('source/scripts/protect-generated.mts', 'scripts/protect-generated.mts'),
     copies('source/hero/ket-bg.mp4', 'public/ket-bg.mp4'),
@@ -130,6 +131,7 @@ export const WEB_PRESET: PresetItem = {
       files: [
         writes('github-chromatic.yml', '.github/workflows/chromatic.yml'),
         writes('source/chromatic/harness.ts', 'e2e/helpers/harness.ts'),
+        writes('source/chromatic/check-bdd-binding.mts', 'scripts/check-bdd-binding.mts'),
       ],
     },
     {
