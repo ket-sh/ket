@@ -153,6 +153,10 @@ describe('the toolchain every preset installs', () => {
       STANDING_TOOLCHAIN.some((installed) => installed.startsWith('@stryker-mutator/core@')),
     ).toBe(true);
   });
+
+  it('installs the property-test library the standing law demands an invariant be written with', () => {
+    expect(STANDING_TOOLCHAIN.some((installed) => installed.startsWith('fast-check@'))).toBe(true);
+  });
 });
 
 const EVERY_GATE: GateSemantics[] = [
