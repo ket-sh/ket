@@ -2,8 +2,14 @@ import { createMockKeys } from '@opentui/core/testing';
 import { testRender } from '@opentui/react/test-utils';
 import { afterEach, describe, expect, it } from 'bun:test';
 
+import type { ActedFeed } from './watch-fixtures.ts';
+
 import { WatchPage } from './index.tsx';
-import { feedOf, NOW } from './watch-fixtures.ts';
+import { feedOf, NOW, STAGES } from './watch-fixtures.ts';
+
+const WIDE = 200;
+
+const SNUG = 160;
 
 let rendered: Awaited<ReturnType<typeof testRender>> | undefined;
 
@@ -33,13 +39,27 @@ async function landed(done: (frame: string) => boolean): Promise<string> {
   return frame;
 }
 
-async function openedAt(width: number, height: number): Promise<string> {
+async function openedWith(feed: ActedFeed, width: number, height: number): Promise<string> {
   rendered = await testRender(
-    <WatchPage feed={feedOf()} clock={() => NOW} onQuit={() => undefined} />,
+    <WatchPage feed={feed} clock={() => NOW} onQuit={() => undefined} />,
     { width, height },
   );
 
   return landed((frame) => frame.includes('K-2'));
+}
+
+async function openedAt(width: number, height: number): Promise<string> {
+  return openedWith(feedOf(), width, height);
+}
+
+function rowWith(frame: string, text: string): string {
+  return frame.split('\n').find((row) => row.includes(text)) ?? '';
+}
+
+function bottomRow(frame: string): string {
+  const rows = frame.split('\n');
+
+  return (rows.at(-1) === '' ? rows.at(-2) : rows.at(-1)) ?? '';
 }
 
 function pressed(key: 'ARROW_RIGHT' | 'ARROW_LEFT' | 'RETURN' | 'ESCAPE'): void {
@@ -50,7 +70,7 @@ function pressed(key: 'ARROW_RIGHT' | 'ARROW_LEFT' | 'RETURN' | 'ESCAPE'): void 
 
 describe('the board the watch page shows', () => {
   it('seats every card under the column its status names', async () => {
-    const frame = await openedAt(160, 30);
+    const frame = await openedAt(WIDE, 30);
 
     expect(frame).toContain('triaged');
     expect(frame).toContain('designing');
@@ -61,26 +81,38 @@ describe('the board the watch page shows', () => {
   });
 
   it('shows how long a card has sat where it is', async () => {
-    expect(await openedAt(160, 30)).toContain('2h');
+    expect(await openedAt(WIDE, 30)).toContain('2h');
   });
 
   it('wears the refusal that is still standing', async () => {
-    expect(await openedAt(160, 30)).toContain('! the design names no spec');
+    expect(await openedAt(WIDE, 30)).toContain('! no spec named');
   });
 
-  it('hides an empty column, since dead lanes are noise', async () => {
-    expect(await openedAt(160, 30)).not.toContain('awaiting-merge');
+  it('gives every stage its own lane, even the ones no card has reached', async () => {
+    const frame = await openedAt(WIDE, 30);
+
+    for (const stage of STAGES) {
+      expect(frame).toContain(` ${stage} `);
+    }
   });
 
-  it('stacks the board as a list where a row of columns cannot fit', async () => {
-    const frame = await openedAt(60, 40);
+  it('keeps a card legible where the stacked lanes outrun the screen', async () => {
+    const frame = await openedAt(80, 24);
 
+    expect(frame).toContain('K-2');
+    expect(frame).toContain('A quiet fix');
+  });
+
+  it('stacks the lanes where a row cannot spell every status', async () => {
+    const frame = await openedAt(SNUG, 40);
+
+    expect(rowWith(frame, ' triaged ')).not.toContain('designing');
     expect(frame).toContain('K-1');
     expect(frame).toContain('K-2');
   });
 
   it('raises the banner and the live dot over the board', async () => {
-    const frame = await openedAt(160, 30);
+    const frame = await openedAt(WIDE, 30);
 
     expect(frame).toContain('▄▄█▄▄▄█▄▄');
     expect(frame).toContain('●');
@@ -89,11 +121,11 @@ describe('the board the watch page shows', () => {
 
 describe('the selection the arrows move', () => {
   it('starts on the first card and wears the double border', async () => {
-    expect(await openedAt(160, 30)).toContain('║ K-2');
+    expect(await openedAt(WIDE, 30)).toContain('║ K-2');
   });
 
-  it('walks right into the next living column', async () => {
-    await openedAt(160, 30);
+  it('walks right into the next lane that holds a card', async () => {
+    await openedAt(WIDE, 30);
     pressed('ARROW_RIGHT');
 
     const frame = await landed((seen) => seen.includes('║ K-1'));
@@ -101,10 +133,32 @@ describe('the selection the arrows move', () => {
     expect(frame).toContain('║ K-1');
     expect(frame).not.toContain('║ K-2');
   });
+
+  it('follows the pipeline onward when the selected lane empties underneath', async () => {
+    const feed = feedOf();
+
+    await openedWith(feed, WIDE, 30);
+    pressed('ARROW_RIGHT');
+    await landed((seen) => seen.includes('║ K-1'));
+    feed.shift('K-1', 'awaiting-approval');
+
+    const frame = await landed((seen) => seen.includes('awaiting-approval 1'));
+
+    expect(frame).toContain('║ K-1');
+  });
+
+  it('holds the selection on a card when no lane beyond it holds one', async () => {
+    await openedAt(WIDE, 30);
+    pressed('ARROW_RIGHT');
+    await landed((seen) => seen.includes('║ K-1'));
+    pressed('ARROW_RIGHT');
+
+    expect(await settled()).toContain('║ K-1');
+  });
 });
 
 async function landedOnJourney(): Promise<string> {
-  await openedAt(160, 40);
+  await openedAt(WIDE, 40);
   pressed('ARROW_RIGHT');
   await landed((seen) => seen.includes('║ K-1'));
   pressed('RETURN');
@@ -142,5 +196,31 @@ describe('the journey a card opens', () => {
 
     expect(frame).not.toContain('K-1 · journey');
     expect(frame).toContain('A quiet fix');
+  });
+});
+
+describe('the key bar the chrome carries', () => {
+  it('spells the keys along the bottom row of the screen', async () => {
+    const frame = await openedAt(WIDE, 30);
+
+    expect(bottomRow(frame)).toContain('q quit');
+  });
+
+  it('keeps its row clear of lanes that overrun the screen', async () => {
+    const frame = await openedAt(80, 24);
+
+    expect(bottomRow(frame)).toContain('q quit');
+  });
+
+  it('leaves the header to the breadcrumb and the worn theme', async () => {
+    const frame = await openedAt(WIDE, 30);
+
+    expect(rowWith(frame, '● board')).not.toContain('q quit');
+  });
+
+  it('names the keys the view under it answers', async () => {
+    const frame = await landedOnJourney();
+
+    expect(bottomRow(frame)).toContain('esc board');
   });
 });

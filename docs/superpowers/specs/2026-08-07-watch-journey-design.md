@@ -17,14 +17,17 @@ screen, until the owner approved the whole.
 - Two layouts share one selection model: the kanban and a flat list. The `v`
   key toggles them, and its hint names the layout you'd switch to, never the
   one you're on.
-- The kanban keeps the shipped rules: one column per status in pipeline
-  order, empty columns hidden except `triaged`, refusals in red on the card.
+- The kanban gives every status its own lane in pipeline order, empty lanes
+  included, so the whole pipeline stays on screen. Refusals sit in red on
+  the card. Where a row can't give every lane the room to spell its status,
+  the lanes stack instead.
 - Arrow keys move the selection card by card. The selected card wears a
   double border that pulses in its stage color.
 - The list shows key, stage, age, and title per row, with the refusal at the
   end of the row. Selection follows a card when a gate moves it.
 - The header carries the banner, the breadcrumb, the active theme name, and
-  a live indicator.
+  a live indicator. The key bar holds the bottom row of the screen and names
+  the keys the view above it answers.
 
 ## The journey canvas
 
