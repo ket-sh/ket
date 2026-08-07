@@ -206,11 +206,16 @@ Design stays available at every size. Only the gate is conditional: run
 
 ## What each design stage produces
 
-For a story, use the agents the harness ships and write the artifacts beside the
-item in `.ket/items/<key>/`:
+For a story, write the spec first, then use the agents the harness ships, all
+beside the item in `.ket/items/<key>/`:
 
+- `spec.md` comes from the session itself before any agent runs: what the user
+  asked for, what stays out of scope, and the acceptance criteria as testable
+  statements. The conversation that filed the item is the source, and no
+  subagent holds that conversation. `ket:gherkin` reads this file as its only
+  source, so a design stage that skips it starves the scenarios.
 - `ket:solution-design` for the approach, in `solution-design.md` with
-  `architecture.d2` beside it
+  `architecture.d2` and `callouts.json` beside it
 - `ket:adr` when a decision is load-bearing and worth recording, in `adr.md`
 - `ket:gherkin` for the acceptance criteria, in `features/*.feature`
 - `ket:ui-design` when a target has a surface, in `ui-design.md` with
