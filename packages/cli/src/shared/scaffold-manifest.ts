@@ -81,16 +81,26 @@ export function updatePlanOf(
   return [...shipped, ...departed];
 }
 
+function recordShaped(declared: unknown): declared is Record<string, unknown> {
+  return declared !== null && typeof declared === 'object' && !Array.isArray(declared);
+}
+
 function filesFrom(declared: unknown): Record<string, string> | undefined {
-  if (declared === null || typeof declared !== 'object' || Array.isArray(declared)) {
+  if (!recordShaped(declared)) {
     return undefined;
   }
 
-  const entries = Object.entries(declared);
+  const files: Record<string, string> = {};
 
-  return entries.every(([, hash]) => typeof hash === 'string')
-    ? Object.fromEntries(entries.filter(([, hash]) => typeof hash === 'string'))
-    : undefined;
+  for (const [path, hash] of Object.entries(declared)) {
+    if (typeof hash !== 'string') {
+      return undefined;
+    }
+
+    files[path] = hash;
+  }
+
+  return files;
 }
 
 function parsedOf(source: string): unknown {

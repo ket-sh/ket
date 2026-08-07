@@ -36,6 +36,14 @@ describe('recording what ket wrote', () => {
     expect(parseScaffoldRecord('not json')).toBeUndefined();
     expect(parseScaffoldRecord('{"version": 2, "ket": "0.0.0", "files": {}}')).toBeUndefined();
     expect(parseScaffoldRecord('{"version": 1, "ket": "0.0.0", "files": ["x"]}')).toBeUndefined();
+    expect(parseScaffoldRecord('{"version": 1, "ket": "0.0.0", "files": null}')).toBeUndefined();
+    expect(parseScaffoldRecord('{"version": 1, "ket": "0.0.0", "files": 7}')).toBeUndefined();
+  });
+
+  it('parses nothing from a record whose hashes are not all strings', () => {
+    const mixed = '{"version": 1, "ket": "0.0.0", "files": {"a.ts": 7, "b.ts": "0f"}}';
+
+    expect(parseScaffoldRecord(mixed)).toBeUndefined();
   });
 
   it('fingerprints a base64 file by the bytes it lands on disk', () => {
