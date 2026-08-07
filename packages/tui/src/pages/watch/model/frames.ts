@@ -15,10 +15,15 @@ export interface FrameStack {
   pop: () => void;
 }
 
-function landingOf(journey: JourneyView): string {
-  const active = [...journey.nodes].reverse().find((node) => node.mark === 'active');
+function lastOf(nodes: JourneyView['nodes']): string | undefined {
+  return nodes[nodes.length - 1]?.id;
+}
 
-  return active?.id ?? journey.nodes[journey.nodes.length - 1]?.id ?? '';
+function landingOf(journey: JourneyView): string {
+  const stages = journey.nodes.filter((node) => node.kind === 'stage');
+  const active = [...stages].reverse().find((node) => node.mark === 'active');
+
+  return active?.id ?? lastOf(stages) ?? lastOf(journey.nodes) ?? '';
 }
 
 export function crumbOf(frames: Frame[]): string {

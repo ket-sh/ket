@@ -63,8 +63,19 @@ const JOURNEY: JourneyView = {
       at: '2026-08-07T10:00:00.000Z',
       child: undefined,
     },
+    {
+      id: 'K-2',
+      kind: 'child',
+      title: 'K-2 A quiet fix',
+      mark: 'active',
+      at: undefined,
+      child: 'K-2',
+    },
   ],
-  edges: [['triaged', 'designing']],
+  edges: [
+    ['triaged', 'designing'],
+    ['designing', 'K-2'],
+  ],
   standing: 'no failing test covers it',
 };
 
@@ -176,6 +187,15 @@ describe('the journey a card opens', () => {
     expect(frame).toContain('K-1 · journey');
     expect(frame).toContain('board › K-1');
     expect(frame).toContain('! no failing test covers it');
+  });
+
+  it('lands the selection on the active stage, never on an active child', async () => {
+    await openedAt(160, 40);
+    pressed('ARROW_RIGHT');
+    await settled();
+    pressed('RETURN');
+
+    expect(await settled()).toContain('║ designing');
   });
 
   it('walks the canvas selection with the arrows', async () => {
