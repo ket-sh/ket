@@ -2,10 +2,12 @@ import { watch as watchDirectory } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import type { Journey } from '../../shared/journey.ts';
 import type { KanbanColumn } from '../../shared/kanban.ts';
 
 import { readLog } from '../../shared/event-log.ts';
 import { readStored } from '../../shared/item-store.ts';
+import { foldJourney } from '../../shared/journey.ts';
 import { foldKanban } from '../../shared/kanban.ts';
 
 export interface FeedTimings {
@@ -17,6 +19,7 @@ export type DirectoryWatch = (path: string, changed: () => void) => () => void;
 
 export interface BoardFeed {
   snapshot: () => Promise<KanbanColumn[]>;
+  journey: (key: string) => Promise<Journey | undefined>;
   subscribe: (refresh: () => void) => () => void;
 }
 
@@ -78,6 +81,7 @@ export function boardFeedFor(
 ): BoardFeed {
   return {
     snapshot: async () => foldKanban(await readStored(root), await readLog(root)),
+    journey: async (key) => foldJourney(await readStored(root), await readLog(root), key),
     subscribe: (refresh) => subscription(root, timings, refresh, watching),
   };
 }
