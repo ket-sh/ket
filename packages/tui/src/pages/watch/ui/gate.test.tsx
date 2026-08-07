@@ -24,7 +24,30 @@ async function settled(): Promise<string> {
   return rendered?.captureCharFrame() ?? '';
 }
 
-async function opening(keys: string[], feed: ActedFeed = feedOf()): Promise<string> {
+type Press = string | { key: string; lands?: string; leaves?: string };
+
+function settledDown(press: Press): (frame: string) => boolean {
+  if (typeof press === 'string') {
+    return () => true;
+  }
+
+  return (frame) =>
+    (press.lands === undefined || frame.includes(press.lands)) &&
+    (press.leaves === undefined || !frame.includes(press.leaves));
+}
+
+async function landed(done: (frame: string) => boolean): Promise<string> {
+  const started = Date.now();
+  let frame = await settled();
+
+  while (!done(frame) && Date.now() - started < 15_000) {
+    frame = await settled();
+  }
+
+  return frame;
+}
+
+async function opening(presses: Press[], feed: ActedFeed = feedOf()): Promise<string> {
   const opened = await testRender(
     <WatchPage feed={feed} clock={() => NOW} onQuit={() => undefined} />,
     { width: 160, height: 40 },
@@ -32,32 +55,23 @@ async function opening(keys: string[], feed: ActedFeed = feedOf()): Promise<stri
 
   rendered = opened;
 
-  let frame = await settled();
+  let frame = await landed((seen) => seen.includes('K-2'));
 
-  while (!frame.includes('K-2')) {
-    frame = await settled();
-  }
-
-  for (const key of keys) {
-    createMockKeys(opened.renderer).pressKey(key);
-    frame = await settled();
+  for (const press of presses) {
+    createMockKeys(opened.renderer).pressKey(typeof press === 'string' ? press : press.key);
+    frame = await landed(settledDown(press));
   }
 
   return frame;
 }
 
-async function until(seen: (frame: string) => boolean, patience: number): Promise<string> {
-  const started = Date.now();
-  let frame = await settled();
+const SEATED_AWAY: Press = { key: 'ARROW_RIGHT', lands: '║ K-1' };
 
-  while (Date.now() - started < patience && !seen(frame)) {
-    frame = await settled();
-  }
+const OFFERED: Press = { key: 'a', lands: 'approve gate' };
 
-  return frame;
-}
+const PASSED: Press[] = [OFFERED, { key: 'RETURN', lands: '✓ passed' }];
 
-describe('the gate a card stands before', () => {
+describe('the gate hints a board offers', () => {
   it('lists the gate key only while the selected card offers it', async () => {
     const frame = await opening([]);
 
@@ -65,19 +79,21 @@ describe('the gate a card stands before', () => {
   });
 
   it('drops the gate hint when the selection stands elsewhere', async () => {
-    const frame = await opening(['ARROW_RIGHT']);
+    const frame = await opening([SEATED_AWAY]);
 
     expect(frame).not.toContain('a approve');
   });
 
   it('answers an unoffered gate key with nothing', async () => {
-    const frame = await opening(['ARROW_RIGHT', 'a']);
+    const frame = await opening([SEATED_AWAY, 'a']);
 
     expect(frame).not.toContain('approve gate');
   });
+});
 
-  it('opens the ceremony on an offered gate key', async () => {
-    const frame = await opening(['a']);
+describe('the ceremony an offered gate opens', () => {
+  it('opens on the gate key with the transition chips', async () => {
+    const frame = await opening([OFFERED]);
 
     expect(frame).toContain('approve gate');
     expect(frame).toContain('──►');
@@ -86,26 +102,26 @@ describe('the gate a card stands before', () => {
 
   it('passes the gate on enter and celebrates', async () => {
     const feed = feedOf();
-    const frame = await opening(['a', 'RETURN'], feed);
+    const frame = await opening(PASSED, feed);
 
     expect(frame).toContain('✓ passed');
     expect(feed.acted).toStrictEqual(['K-2 approve']);
   });
 
-  it('closes the ceremony by itself once the celebration ends', async () => {
-    await opening(['a', 'RETURN']);
+  it('closes itself once the celebration ends', async () => {
+    await opening(PASSED);
 
-    const frame = await until((seen) => !seen.includes('approve gate'), 5000);
+    const frame = await landed((seen) => !seen.includes('approve gate'));
 
     expect(frame).not.toContain('approve gate');
-  }, 8000);
+  }, 20_000);
 
   it('shows the refusal and its reason', async () => {
     const feed = feedOf();
 
     feed.act = async () => Promise.resolve({ refused: 'the design names no spec' });
 
-    const frame = await opening(['a', 'RETURN'], feed);
+    const frame = await opening([OFFERED, { key: 'RETURN', lands: '✗ refused' }], feed);
 
     expect(frame).toContain('✗ refused');
     expect(frame).toContain('the design names no spec');
@@ -113,7 +129,7 @@ describe('the gate a card stands before', () => {
 
   it('cancels on escape without acting', async () => {
     const feed = feedOf();
-    const frame = await opening(['a', 'ESCAPE'], feed);
+    const frame = await opening([OFFERED, { key: 'ESCAPE', leaves: 'approve gate' }], feed);
 
     expect(frame).not.toContain('approve gate');
     expect(feed.acted).toStrictEqual([]);

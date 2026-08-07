@@ -22,19 +22,24 @@ async function settled(): Promise<string> {
   return rendered?.captureCharFrame() ?? '';
 }
 
+async function landed(done: (frame: string) => boolean): Promise<string> {
+  const started = Date.now();
+  let frame = await settled();
+
+  while (!done(frame) && Date.now() - started < 15_000) {
+    frame = await settled();
+  }
+
+  return frame;
+}
+
 async function openedAt(width: number, height: number): Promise<string> {
   rendered = await testRender(
     <WatchPage feed={feedOf()} clock={() => NOW} onQuit={() => undefined} />,
     { width, height },
   );
 
-  let frame = await settled();
-
-  while (!frame.includes('K-2')) {
-    frame = await settled();
-  }
-
-  return frame;
+  return landed((frame) => frame.includes('K-2'));
 }
 
 function pressed(key: 'ARROW_RIGHT' | 'ARROW_LEFT' | 'RETURN' | 'ESCAPE'): void {
@@ -91,21 +96,25 @@ describe('the selection the arrows move', () => {
     await openedAt(160, 30);
     pressed('ARROW_RIGHT');
 
-    const frame = await settled();
+    const frame = await landed((seen) => seen.includes('║ K-1'));
 
     expect(frame).toContain('║ K-1');
     expect(frame).not.toContain('║ K-2');
   });
 });
 
+async function landedOnJourney(): Promise<string> {
+  await openedAt(160, 40);
+  pressed('ARROW_RIGHT');
+  await landed((seen) => seen.includes('║ K-1'));
+  pressed('RETURN');
+
+  return landed((seen) => seen.includes('K-1 · journey'));
+}
+
 describe('the journey a card opens', () => {
   it('dives into the journey on enter and spells the path', async () => {
-    await openedAt(160, 40);
-    pressed('ARROW_RIGHT');
-    await settled();
-    pressed('RETURN');
-
-    const frame = await settled();
+    const frame = await landedOnJourney();
 
     expect(frame).toContain('K-1 · journey');
     expect(frame).toContain('board › K-1');
@@ -113,36 +122,23 @@ describe('the journey a card opens', () => {
   });
 
   it('lands the selection on the active stage, never on an active child', async () => {
-    await openedAt(160, 40);
-    pressed('ARROW_RIGHT');
-    await settled();
-    pressed('RETURN');
-
-    expect(await settled()).toContain('║ designing');
+    expect(await landedOnJourney()).toContain('║ designing');
   });
 
   it('walks the canvas selection with the arrows', async () => {
-    await openedAt(160, 40);
-    pressed('ARROW_RIGHT');
-    await settled();
-    pressed('RETURN');
-    await settled();
+    await landedOnJourney();
     pressed('ARROW_LEFT');
 
-    const frame = await settled();
+    const frame = await landed((seen) => seen.includes('║ triaged'));
 
     expect(frame).toContain('║ triaged');
   });
 
   it('pops back to the board on escape', async () => {
-    await openedAt(160, 40);
-    pressed('ARROW_RIGHT');
-    await settled();
-    pressed('RETURN');
-    await settled();
+    await landedOnJourney();
     pressed('ESCAPE');
 
-    const frame = await settled();
+    const frame = await landed((seen) => !seen.includes('K-1 · journey'));
 
     expect(frame).not.toContain('K-1 · journey');
     expect(frame).toContain('A quiet fix');
