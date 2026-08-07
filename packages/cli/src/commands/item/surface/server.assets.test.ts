@@ -40,26 +40,13 @@ describe('the assets the page pulls', () => {
     expect(await reply.text()).toContain('GridStack');
   });
 
-  it.skipIf('Bun' in globalThis)(
-    'refuses the client script when the runtime cannot bundle it',
-    async () => {
-      const reply = await fetchAsset('/surface.js');
+  it('hands out the client script behind the key under any runtime', async () => {
+    const reply = await fetchAsset('/surface.js');
 
-      expect(reply.status).toBe(501);
-      expect(await reply.text()).toContain('serves under bun');
-    },
-  );
-
-  it.skipIf(!('Bun' in globalThis))(
-    'bundles the client script behind the key under bun',
-    async () => {
-      const reply = await fetchAsset('/surface.js');
-
-      expect(reply.status).toBe(200);
-      expect(reply.headers.get('content-type')).toContain('javascript');
-      expect(await reply.text()).toContain('ketSurface');
-    },
-  );
+    expect(reply.status).toBe(200);
+    expect(reply.headers.get('content-type')).toContain('javascript');
+    expect(await reply.text()).toContain('ketSurface');
+  });
 });
 
 async function listening(address: URL): Promise<{ socket: WebSocket; heard: string[] }> {

@@ -14,7 +14,7 @@
     "fmt:check": "oxfmt --config ../../.oxfmtrc.json --check .",
     "check-types": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.surface.json",
     "test:mutation": "stryker run",
-    "generate": "bun scripts/generate-pipeline-commands.ts && oxfmt --config ../../.oxfmtrc.json src/commands/create/pipeline-commands.generated.ts"
+    "generate": "bun scripts/generate-pipeline-commands.ts && bun scripts/generate-surface-styles.ts && oxfmt --config ../../.oxfmtrc.json src/commands/create/pipeline-commands.generated.ts src/commands/item/surface/styles.generated.ts"
   },
   "dependencies": {
     "@clack/prompts": "1.7.0",
