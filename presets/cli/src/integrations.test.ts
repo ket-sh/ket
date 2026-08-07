@@ -1,13 +1,14 @@
-import type { OfferedCategory } from '@ket/preset';
-
 import { categoriesOffering, filesOf } from '@ket/preset';
 import { describe, expect, it } from 'vitest';
 
 import { CLI_PRESET } from './item.ts';
 
-function asked(offered: OfferedCategory): [string, string, string[]] {
-  return [offered.category, offered.admits, offered.offers.map((offer) => offer.name)];
-}
+const FILED = Object.fromEntries(
+  categoriesOffering(CLI_PRESET.integrations).map((offered) => [
+    offered.category,
+    offered.offers.map((offer) => offer.name),
+  ]),
+);
 
 describe('what the cli preset offers a project', () => {
   it('offers the tools a command line project can use, and no renderer tool', () => {
@@ -33,11 +34,11 @@ describe('what the cli preset offers a project', () => {
     ]);
   });
 
-  it('asks about a coverage tool and a reviewer once each, whichever answers for the slot', () => {
-    expect(categoriesOffering(CLI_PRESET.integrations).map(asked)).toStrictEqual([
-      ['AI pull-request review', 'several', ['coderabbit', 'greptile']],
-      ['coverage', 'one', ['codecov', 'qlty']],
-      ['code scanning', 'one', ['codeql']],
-    ]);
+  it('files each tool it offers under the category that tool answers for', () => {
+    expect(FILED).toStrictEqual({
+      'AI pull-request review': ['coderabbit', 'greptile'],
+      coverage: ['codecov', 'qlty'],
+      'code scanning': ['codeql'],
+    });
   });
 });

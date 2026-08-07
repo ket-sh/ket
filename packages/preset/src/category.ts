@@ -1,36 +1,40 @@
 import type { IntegrationCategory, PresetIntegration } from './item.ts';
 
-// Two visual services keep two baseline histories, and two coverage services
-// comment the same lcov twice, so those slots are substitutions. Two reviewers
-// are two GitHub Apps posting reviews of their own, and both can be read.
-export type CategoryAdmission = 'one' | 'several';
+type CategoryAdmission = 'one' | 'several';
 
-export interface OrderedCategory {
-  category: IntegrationCategory;
-  admits: CategoryAdmission;
-}
+const ADMISSIONS: Record<IntegrationCategory, CategoryAdmission> = {
+  'design reference': 'one',
+  'visual review': 'one',
+  'AI pull-request review': 'several',
+  coverage: 'one',
+  'supply chain': 'one',
+  'code scanning': 'one',
+};
 
-export const INTEGRATION_CATEGORIES: OrderedCategory[] = [
-  { category: 'design reference', admits: 'one' },
-  { category: 'visual review', admits: 'one' },
-  { category: 'AI pull-request review', admits: 'several' },
-  { category: 'coverage', admits: 'one' },
-  { category: 'supply chain', admits: 'one' },
-  { category: 'code scanning', admits: 'one' },
+const INTEGRATION_CATEGORIES: IntegrationCategory[] = [
+  'design reference',
+  'visual review',
+  'AI pull-request review',
+  'coverage',
+  'supply chain',
+  'code scanning',
 ];
 
-export function admissionOf(category: string): CategoryAdmission | undefined {
-  return INTEGRATION_CATEGORIES.find((ordered) => ordered.category === category)?.admits;
+function admissionOf(category: IntegrationCategory): CategoryAdmission {
+  return ADMISSIONS[category];
 }
 
-export interface OfferedCategory extends OrderedCategory {
+export interface OfferedCategory {
+  category: IntegrationCategory;
+  admits: CategoryAdmission;
   offers: PresetIntegration[];
 }
 
 export function categoriesOffering(integrations: PresetIntegration[]): OfferedCategory[] {
-  return INTEGRATION_CATEGORIES.map((ordered) => ({
-    ...ordered,
-    offers: integrations.filter((offered) => offered.category === ordered.category),
+  return INTEGRATION_CATEGORIES.map((category) => ({
+    category,
+    admits: admissionOf(category),
+    offers: integrations.filter((offered) => offered.category === category),
   })).filter((offered) => offered.offers.length > 0);
 }
 

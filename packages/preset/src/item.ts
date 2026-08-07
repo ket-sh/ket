@@ -14,9 +14,6 @@ export interface StageReference {
   reference: string;
 }
 
-// Every offer answers for one concern, and the concern decides whether a
-// project takes one tool or several. A tool that named no concern would be
-// asked about nowhere, because the wizard walks concerns rather than names.
 export type IntegrationCategory =
   | 'design reference'
   | 'visual review'

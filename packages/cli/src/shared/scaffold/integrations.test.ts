@@ -2,22 +2,32 @@ import { copies, writes } from '@ket/preset';
 import { Buffer } from 'node:buffer';
 import { describe, expect, it } from 'vitest';
 
+import type { PresetName } from '../configuration.ts';
+
 import {
   chosenFrom,
   filesFor,
   installsFor,
   integrationFile,
   integrationsOffered,
-  namesOffered,
+  offeredIntegrations,
   skillsFor,
 } from './integrations.ts';
+
+const CLI_OFFERS = 'codecov, qlty, codeql, coderabbit, greptile';
+
+function offeredNames(presets: PresetName[]): string[] {
+  return offeredIntegrations(presets).map((offered) => offered.name);
+}
 
 describe('what a preset offers', () => {
   it('offers the tools that suit a command line project', () => {
     expect(integrationsOffered('cli').map((offered) => offered.name)).toStrictEqual([
       'codecov',
+      'qlty',
       'codeql',
       'coderabbit',
+      'greptile',
     ]);
   });
 
@@ -27,13 +37,35 @@ describe('what a preset offers', () => {
       'chromatic',
       'scorecard',
       'codecov',
+      'qlty',
       'codeql',
       'coderabbit',
+      'greptile',
     ]);
   });
 
   it('offers nothing for a preset ket does not ship yet', () => {
     expect(integrationsOffered('mobile')).toStrictEqual([]);
+  });
+
+  it('offers one visual service, since the slot that reviews a page takes one', () => {
+    const visual = integrationsOffered('web').filter(
+      (offered) => offered.category === 'visual review',
+    );
+
+    expect(visual.map((offered) => offered.name)).toStrictEqual(['chromatic']);
+  });
+});
+
+describe('gathering what every chosen preset offers', () => {
+  it('offers each tool once when two targets share the preset that offers it', () => {
+    expect(offeredNames(['cli', 'cli'])).toStrictEqual([
+      'codecov',
+      'qlty',
+      'codeql',
+      'coderabbit',
+      'greptile',
+    ]);
   });
 });
 
@@ -104,35 +136,56 @@ describe('turning an integration file into what a project receives', () => {
 
 describe('reading the integrations named on the command line', () => {
   it('reads a single name', () => {
-    expect(chosenFrom('codecov', namesOffered(['cli']))).toStrictEqual({ chosen: ['codecov'] });
+    expect(chosenFrom('codecov', offeredIntegrations(['cli']))).toStrictEqual({
+      chosen: ['codecov'],
+    });
   });
 
   it('reads several names separated by commas', () => {
-    expect(chosenFrom('codecov,coderabbit', namesOffered(['cli']))).toStrictEqual({
+    expect(chosenFrom('codecov,coderabbit', offeredIntegrations(['cli']))).toStrictEqual({
       chosen: ['codecov', 'coderabbit'],
     });
   });
 
   it('reads nothing when the flag is absent', () => {
-    expect(chosenFrom(undefined, namesOffered(['cli']))).toStrictEqual({ chosen: [] });
+    expect(chosenFrom(undefined, offeredIntegrations(['cli']))).toStrictEqual({ chosen: [] });
   });
 
   it('ignores the space a person leaves after a comma', () => {
-    expect(chosenFrom('codecov, codeql', namesOffered(['cli']))).toStrictEqual({
+    expect(chosenFrom('codecov, codeql', offeredIntegrations(['cli']))).toStrictEqual({
       chosen: ['codecov', 'codeql'],
     });
   });
 
   it('refuses a name no chosen preset offers, and says what it does offer', () => {
-    expect(chosenFrom('chromatic', namesOffered(['cli']))).toStrictEqual({
-      refused:
-        'chromatic is not an integration this project offers. It offers codecov, codeql, coderabbit',
+    expect(chosenFrom('chromatic', offeredIntegrations(['cli']))).toStrictEqual({
+      refused: `chromatic is not an integration this project offers. It offers ${CLI_OFFERS}`,
     });
   });
 
   it('refuses an empty name rather than reading it as nothing', () => {
-    expect(chosenFrom('codecov,', namesOffered(['cli']))).toStrictEqual({
-      refused: ' is not an integration this project offers. It offers codecov, codeql, coderabbit',
+    expect(chosenFrom('codecov,', offeredIntegrations(['cli']))).toStrictEqual({
+      refused: ` is not an integration this project offers. It offers ${CLI_OFFERS}`,
+    });
+  });
+});
+
+describe('naming two tools for a slot that takes one', () => {
+  it('refuses both coverage services, since each comments the same lcov', () => {
+    expect(chosenFrom('codecov,qlty', offeredIntegrations(['cli']))).toStrictEqual({
+      refused: 'codecov and qlty each answer for coverage, and a project takes one of them',
+    });
+  });
+
+  it('reads two reviewers, since each posts a review of its own', () => {
+    expect(chosenFrom('coderabbit,greptile', offeredIntegrations(['cli']))).toStrictEqual({
+      chosen: ['coderabbit', 'greptile'],
+    });
+  });
+
+  it('reads one tool for each slot that takes one', () => {
+    expect(chosenFrom('qlty,codeql', offeredIntegrations(['cli']))).toStrictEqual({
+      chosen: ['qlty', 'codeql'],
     });
   });
 });

@@ -18,8 +18,6 @@ function fileInvariants(integration: PresetIntegration): string[] {
 // An integration may replace what the preset writes unasked: that is how one
 // swaps a spec for the version its own runner extends. Two integrations
 // reaching for one target is a different thing, and whichever ran last wins.
-// Two offers of a category that takes one tool are the exception, because a
-// project never keeps both and the second is the substitution the slot is for.
 interface Claim {
   by: PresetIntegration;
   target: string;

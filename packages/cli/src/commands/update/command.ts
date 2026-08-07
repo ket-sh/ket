@@ -27,6 +27,7 @@ import {
   updatePlanOf,
 } from '../../shared/scaffold-manifest.ts';
 import { installedFor } from '../../shared/scaffold/install.ts';
+import { crowdedRefusal, offeredIntegrations } from '../../shared/scaffold/integrations.ts';
 import { heroHint } from '../../shared/scaffold/name-token.ts';
 import { KET_VERSION } from '../../shared/version.ts';
 import { writeFiles } from '../../shared/write-files.ts';
@@ -48,10 +49,17 @@ async function configurationOf(root: string): Promise<Configuration> {
     );
   }
 
+  const integrations = integrationsFrom(loaded);
+  const crowded = crowdedRefusal(integrations, offeredIntegrations(Object.values(targets)));
+
+  if (crowded !== undefined) {
+    throw new Error(`${KET_DIRECTORY}/config.ts names ${crowded}`);
+  }
+
   return {
     key,
     targets,
-    integrations: integrationsFrom(loaded),
+    integrations,
     language: languageFrom(loaded),
     workflow: workflowFrom(loaded),
   };

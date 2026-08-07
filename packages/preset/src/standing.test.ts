@@ -34,7 +34,7 @@ describe('the integrations every preset offers', () => {
     ]);
   });
 
-  it('answers for one concern each, so a project is asked about them a concern at a time', () => {
+  it('answers for one category each, so a project is asked about them a category at a time', () => {
     expect(STANDING_INTEGRATIONS.map((offered) => [offered.name, offered.category])).toStrictEqual([
       ['codecov', 'coverage'],
       ['qlty', 'coverage'],

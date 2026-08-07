@@ -2,13 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { PresetIntegration } from './item.ts';
 
-import {
-  admissionOf,
-  categoriesOffering,
-  crowdedCategoriesOf,
-  INTEGRATION_CATEGORIES,
-  substitutes,
-} from './category.ts';
+import { categoriesOffering, crowdedCategoriesOf, substitutes } from './category.ts';
 import { writes } from './item.ts';
 
 function offers(name: string, category: PresetIntegration['category']): PresetIntegration {
@@ -30,10 +24,19 @@ const CODERABBIT = offers('coderabbit', 'AI pull-request review');
 
 const GREPTILE = offers('greptile', 'AI pull-request review');
 
+const EVERY_CATEGORY = [
+  offers('mobbin', 'design reference'),
+  offers('chromatic', 'visual review'),
+  offers('coderabbit', 'AI pull-request review'),
+  offers('codecov', 'coverage'),
+  offers('scorecard', 'supply chain'),
+  offers('codeql', 'code scanning'),
+];
+
 describe('the categories a project is asked about', () => {
-  it('asks about design before it asks about the pipeline that reviews it', () => {
+  it('asks about design first, and takes several tools for review alone', () => {
     expect(
-      INTEGRATION_CATEGORIES.map((ordered) => [ordered.category, ordered.admits]),
+      categoriesOffering(EVERY_CATEGORY).map((offered) => [offered.category, offered.admits]),
     ).toStrictEqual([
       ['design reference', 'one'],
       ['visual review', 'one'],
@@ -42,22 +45,6 @@ describe('the categories a project is asked about', () => {
       ['supply chain', 'one'],
       ['code scanning', 'one'],
     ]);
-  });
-
-  it('takes one visual service, since a second one keeps a second baseline', () => {
-    expect(admissionOf('visual review')).toBe('one');
-  });
-
-  it('takes one coverage service, since a second one comments the same lcov twice', () => {
-    expect(admissionOf('coverage')).toBe('one');
-  });
-
-  it('takes several reviewers, since each posts a review of its own', () => {
-    expect(admissionOf('AI pull-request review')).toBe('several');
-  });
-
-  it('takes no admission from a name no category goes by', () => {
-    expect(admissionOf('performance budget')).toBeUndefined();
   });
 });
 
