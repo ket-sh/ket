@@ -1,6 +1,7 @@
 import { filesOf } from '@ket/preset';
 import { describe, expect, it } from 'vitest';
 
+import { contentOf } from './contents.ts';
 import { WEB_PRESET } from './item.ts';
 
 describe('the registry shape the web preset conforms to', () => {
@@ -62,6 +63,42 @@ describe('what the web preset offers a project that wants its screens reviewed',
       '~/.github/workflows/chromatic.yml',
       '~/e2e/helpers/harness.ts',
     ]);
+  });
+
+  it('brings the official skills beside the tool', () => {
+    expect(CHROMATIC?.skills).toStrictEqual([
+      { name: 'chromatic-setup-ci', source: 'chromaui/chromatic-skills' },
+      { name: 'chromatic-workflow-debug', source: 'chromaui/chromatic-skills' },
+    ]);
+  });
+
+  it('merges the archiving test into the bdd test and binds the steps to it', () => {
+    const harness = contentOf('files/source/chromatic/harness.ts');
+
+    expect(harness).toContain('mergeTests(');
+    expect(harness).toContain('export const test');
+    expect(harness).toContain('createSteps(test)');
+  });
+});
+
+describe('the binding every generated spec resolves its test through', () => {
+  it('binds the plain harness to the bdd test it re-exports', () => {
+    const harness = contentOf('files/source/e2e/helpers/harness.ts');
+
+    expect(harness).toContain("from 'playwright-bdd'");
+    expect(harness).toContain('export { test }');
+    expect(harness).toContain('createSteps(test)');
+  });
+
+  it('names the harness in the steps glob so bddgen resolves the custom test', () => {
+    expect(contentOf('files/playwright.config.ts')).toContain("'e2e/helpers/harness.ts'");
+  });
+
+  it('ships the checker that fails a spec reaching around the harness', () => {
+    const checker = contentOf('files/source/scripts/check-bdd-binding.mts');
+
+    expect(checker).toContain("'playwright-bdd'");
+    expect(checker).toContain('e2e/helpers/harness.ts');
   });
 });
 

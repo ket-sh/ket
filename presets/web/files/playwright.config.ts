@@ -6,7 +6,9 @@ import { defineBddConfig } from 'playwright-bdd';
 // specs playwright then runs, and nothing edits those by hand.
 const testDir = defineBddConfig({
   features: ['features/**/*.feature'],
-  steps: ['e2e/steps/**/*.ts'],
+  // bddgen resolves the custom test only from files the steps glob names, so
+  // the harness sits in the list although it defines no step of its own.
+  steps: ['e2e/steps/**/*.ts', 'e2e/helpers/harness.ts'],
   outputDir: '.features-gen',
 });
 

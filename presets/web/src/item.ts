@@ -108,6 +108,7 @@ export const WEB_PRESET: PresetItem = {
     writes('source/storybook/preview.ts', '.storybook/preview.ts'),
     writes('source/scripts/check-ui-pairs.mts', 'scripts/check-ui-pairs.mts'),
     writes('source/scripts/check-env.mts', 'scripts/check-env.mts'),
+    writes('source/scripts/check-bdd-binding.mts', 'scripts/check-bdd-binding.mts'),
     writes('source/scripts/protect-generated.mts', 'scripts/protect-generated.mts'),
     copies('source/hero/ket-bg.mp4', 'public/ket-bg.mp4'),
     copies('source/hero/ket-bg-poster.webp', 'public/ket-bg-poster.webp'),
@@ -122,6 +123,10 @@ export const WEB_PRESET: PresetItem = {
       name: 'chromatic',
       asks: 'chromatic reviews what a page looks like on each push. Free to 5000 snapshots a month on a public repository or a private one, then paid.',
       installs: ['chromatic@18.1.0', '@chromatic-com/playwright@0.14.11'],
+      skills: [
+        { name: 'chromatic-setup-ci', source: 'chromaui/chromatic-skills' },
+        { name: 'chromatic-workflow-debug', source: 'chromaui/chromatic-skills' },
+      ],
       files: [
         writes('github-chromatic.yml', '.github/workflows/chromatic.yml'),
         writes('source/chromatic/harness.ts', 'e2e/helpers/harness.ts'),

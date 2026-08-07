@@ -35,6 +35,7 @@ jobs:
       - run: bun run lint:graph
       - run: bun run lint:ui
       - run: bun run lint:env
+      - run: bun run lint:bdd
       - run: bun run lint:dead
       - run: bun run lint:dup
       - run: bun run lint:spell
