@@ -1,5 +1,6 @@
 import type { PresetIntegration, PresetItem } from './item.ts';
 
+import { substitutes } from './category.ts';
 import { filesOf, reachesNothing } from './item.ts';
 
 const PUBLIC_REPOSITORY = 'public';
@@ -17,14 +18,16 @@ function fileInvariants(integration: PresetIntegration): string[] {
 // An integration may replace what the preset writes unasked: that is how one
 // swaps a spec for the version its own runner extends. Two integrations
 // reaching for one target is a different thing, and whichever ran last wins.
+// Two offers of a category that takes one tool are the exception, because a
+// project never keeps both and the second is the substitution the slot is for.
 interface Claim {
-  by: string;
+  by: PresetIntegration;
   target: string;
 }
 
 function claimsOf(integrations: PresetIntegration[]): Claim[] {
   return integrations.flatMap((integration) =>
-    filesOf(integration).map((file) => ({ by: integration.name, target: file.target })),
+    filesOf(integration).map((file) => ({ by: integration, target: file.target })),
   );
 }
 
@@ -35,9 +38,10 @@ function contestedTargets(integrations: PresetIntegration[]): string[] {
     claims
       .slice(0, at)
       .filter((earlier) => earlier.target === claim.target)
+      .filter((earlier) => !substitutes(earlier.by, claim.by))
       .map(
         (earlier) =>
-          `${claim.target} is claimed by ${earlier.by} and by ${claim.by}, so one of them never arrives`,
+          `${claim.target} is claimed by ${earlier.by.name} and by ${claim.by.name}, so one of them never arrives`,
       ),
   );
 }

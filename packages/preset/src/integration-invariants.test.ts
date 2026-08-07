@@ -7,6 +7,7 @@ import { writes } from './item.ts';
 
 const CODECOV: PresetIntegration = {
   name: 'codecov',
+  category: 'coverage',
   asks: 'codecov, coverage on each pull request. Free on a public repo, paid on a private one.',
   files: [writes('github-coverage.yml', '.github/workflows/coverage.yml')],
 };
@@ -53,6 +54,7 @@ describe('two integrations reaching for one file', () => {
   it('names the target, since which of them lands is whichever ran last', () => {
     const chromatic: PresetIntegration = {
       name: 'chromatic',
+      category: 'visual review',
       asks: 'chromatic, on a public repository and a private one.',
       files: [writes('github-chromatic.yml', '.github/workflows/coverage.yml')],
     };
@@ -65,6 +67,7 @@ describe('two integrations reaching for one file', () => {
   it('names a target one integration claims twice, since it wrote itself over', () => {
     const twice: PresetIntegration = {
       name: 'chromatic',
+      category: 'visual review',
       asks: 'chromatic, on a public repository and a private one.',
       files: [
         writes('github-chromatic.yml', '.github/workflows/chromatic.yml'),
@@ -80,11 +83,44 @@ describe('two integrations reaching for one file', () => {
   it('breaks nothing when two integrations write different files', () => {
     const chromatic: PresetIntegration = {
       name: 'chromatic',
+      category: 'visual review',
       asks: 'chromatic, on a public repository and a private one.',
       files: [writes('github-chromatic.yml', '.github/workflows/chromatic.yml')],
     };
 
     expect(integrationInvariantsOf(itemOffering([CODECOV, chromatic]))).toStrictEqual([]);
+  });
+});
+
+describe('a category that takes one tool, whose offers stand in for each other', () => {
+  it('lets two tools of one substitution slot claim one target, since a project keeps one', () => {
+    const qlty: PresetIntegration = {
+      name: 'qlty',
+      category: 'coverage',
+      asks: 'qlty, on a public repository and a private one.',
+      files: [writes('github-qlty-coverage.yml', '.github/workflows/coverage.yml')],
+    };
+
+    expect(integrationInvariantsOf(itemOffering([CODECOV, qlty]))).toStrictEqual([]);
+  });
+
+  it('names a target two reviewers both claim, since a project can keep both', () => {
+    const coderabbit: PresetIntegration = {
+      name: 'coderabbit',
+      category: 'AI pull-request review',
+      asks: 'coderabbit, on a public repository and a private one.',
+      files: [writes('coderabbit.yaml', '.review.yaml')],
+    };
+    const greptile: PresetIntegration = {
+      name: 'greptile',
+      category: 'AI pull-request review',
+      asks: 'greptile, on a public repository and a private one.',
+      files: [writes('greptile-config.json', '.review.yaml')],
+    };
+
+    expect(integrationInvariantsOf(itemOffering([coderabbit, greptile]))).toStrictEqual([
+      '~/.review.yaml is claimed by coderabbit and by greptile, so one of them never arrives',
+    ]);
   });
 });
 
@@ -123,6 +159,7 @@ describe('what an integration has to say about itself', () => {
         itemOffering([
           {
             name: '',
+            category: 'coverage',
             asks: 'a tool, free on a public repository and paid on a private one.',
             files: [writes('github-coverage.yml', '.github/workflows/coverage.yml')],
           },
@@ -137,6 +174,7 @@ describe('what an integration has to say about itself', () => {
         itemOffering([
           {
             name: 'codecov',
+            category: 'coverage',
             asks: 'codecov, free on a public repository and paid on a private one.',
             files: [{ path: 'files/github-coverage.yml', type: 'registry:file', target: '' }],
           },
@@ -151,6 +189,7 @@ describe('what an integration has to say about itself', () => {
         itemOffering([
           {
             name: 'mobbin',
+            category: 'design reference',
             asks: 'mobbin, free on a public repository and paid on a private one.',
             reaches: { stage: 'designing', reference: 'https://mobbin.com' },
           },
@@ -167,6 +206,7 @@ describe('where an integration lands what it writes', () => {
         itemOffering([
           {
             name: 'codecov',
+            category: 'coverage',
             asks: 'codecov, free on a public repository and paid on a private one.',
             files: [writes('github-coverage.yml', '')],
           },
@@ -183,6 +223,7 @@ describe('what a reaching integration has to name', () => {
         itemOffering([
           {
             name: 'mobbin',
+            category: 'design reference',
             asks: 'mobbin, free on a public repository and paid on a private one.',
             reaches: { stage: '', reference: 'https://mobbin.com' },
           },
@@ -197,6 +238,7 @@ describe('what a reaching integration has to name', () => {
         itemOffering([
           {
             name: 'mobbin',
+            category: 'design reference',
             asks: 'mobbin, free on a public repository and paid on a private one.',
             reaches: { stage: '   ', reference: 'https://mobbin.com' },
           },
@@ -213,6 +255,7 @@ describe('what a reaching integration points at', () => {
         itemOffering([
           {
             name: 'mobbin',
+            category: 'design reference',
             asks: 'mobbin, free on a public repository and paid on a private one.',
             reaches: { stage: 'designing', reference: '  ' },
           },
@@ -227,6 +270,7 @@ describe('what a reaching integration points at', () => {
         itemOffering([
           {
             name: 'mobbin',
+            category: 'design reference',
             asks: 'mobbin, free on a public repository and paid on a private one.',
             reaches: { stage: 'designing', reference: '' },
           },

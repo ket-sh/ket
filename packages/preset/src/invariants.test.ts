@@ -34,6 +34,7 @@ const SOUND: PresetSubject = {
     integrations: [
       {
         name: 'codecov',
+        category: 'coverage',
         asks: 'codecov, free on a public repo and paid on a private one.',
         files: [writes('github-coverage.yml', '.github/workflows/coverage.yml')],
       },
@@ -98,6 +99,7 @@ const BROKEN_EVERYWHERE: PresetSubject = {
     integrations: [
       {
         name: 'codecov',
+        category: 'coverage',
         asks: 'codecov, free on a public repo.',
         files: [writes('github-coverage.yml', '.github/workflows/coverage.yml')],
       },

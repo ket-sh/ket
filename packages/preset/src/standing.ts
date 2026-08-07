@@ -9,18 +9,36 @@ import { writes } from './item.ts';
 export const STANDING_INTEGRATIONS: PresetIntegration[] = [
   {
     name: 'codecov',
+    category: 'coverage',
     asks: 'codecov, coverage on each pull request. Free on a public repository, paid on a private one past 250 uploads a month.',
     files: [writes('github-coverage.yml', '.github/workflows/coverage.yml')],
   },
   {
+    name: 'qlty',
+    category: 'coverage',
+    asks: 'qlty uploads coverage and gates the diff on each pull request with no secret to store, through GitHub OIDC. Free on a public repository and a private one to 1000 analysis minutes a month, then $20 a contributor.',
+    files: [writes('github-qlty-coverage.yml', '.github/workflows/coverage.yml')],
+  },
+  {
     name: 'codeql',
+    category: 'code scanning',
     asks: 'codeql, security scanning on each push. Free on a public repository, and on a private one it needs GitHub Code Security at $30 an active committer each month.',
     files: [writes('github-codeql.yml', '.github/workflows/codeql.yml')],
   },
   {
     name: 'coderabbit',
+    category: 'AI pull-request review',
     asks: 'coderabbit, a review on each pull request. Free on a public repository and on a private one, and $24 a user each month for the paid tier.',
     files: [writes('coderabbit.yaml', '.coderabbit.yaml')],
+  },
+  {
+    name: 'greptile',
+    category: 'AI pull-request review',
+    asks: 'greptile reviews each pull request against a whole-repository index and the rules committed under .greptile. Installing its GitHub App is what switches it on, since no workflow arrives with it. Free for one developer at 50 reviews a month on a public repository or a private one, then $30 a seat.',
+    files: [
+      writes('greptile-config.json', '.greptile/config.json'),
+      writes('greptile-rules.md', '.greptile/rules.md'),
+    ],
   },
 ];
 

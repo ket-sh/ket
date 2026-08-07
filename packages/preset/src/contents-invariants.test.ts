@@ -61,12 +61,19 @@ describe('what a preset carries against what it promises', () => {
       'the preset promises files/knip.json but carries no such file',
     ]);
   });
+});
 
+describe('what an integration adds to what a preset promises', () => {
   it('reads the files an integration promises as well as the ones it always writes', () => {
-    const item = {
+    const item: PresetItem = {
       ...ITEM,
       integrations: [
-        { name: 'codecov', asks: 'codecov?', files: [writes('coverage.yml', 'coverage.yml')] },
+        {
+          name: 'codecov',
+          category: 'coverage',
+          asks: 'codecov?',
+          files: [writes('coverage.yml', 'coverage.yml')],
+        },
       ],
     };
 

@@ -1,0 +1,26 @@
+{
+  "strictness": 3,
+  "commentTypes": ["logic", "syntax"],
+  "rules": [
+    {
+      "id": "test-first",
+      "rule": "Production code arrives with the failing test that drove it. A source change with no test beside it is a finding.",
+      "severity": "high"
+    },
+    {
+      "id": "gates-stay-shut",
+      "rule": "No gate is disabled, overridden or loosened: no lint suppression comment, no lowered mutation or coverage threshold, no silenced spelling or prose rule. A gate change lands only with a decision record beside it.",
+      "severity": "high"
+    },
+    {
+      "id": "no-comments",
+      "rule": "Code carries no comments. The one exception is a constraint the code cannot express through naming or structure.",
+      "severity": "medium"
+    },
+    {
+      "id": "typed-failures",
+      "rule": "An expected failure is a typed result the caller reads, not a thrown surprise. An error message names the operation that failed and why.",
+      "severity": "medium"
+    }
+  ]
+}

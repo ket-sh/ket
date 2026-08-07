@@ -1,8 +1,10 @@
+export type { OfferedCategory } from './category.ts';
 export type { PresetSubject } from './invariants.ts';
 export type { PresetFile, PresetIntegration, PresetItem, StageReference } from './item.ts';
 export type { GateSemantics, PresetSemantics, RingCheck } from './semantics.ts';
 export type { LockedSkills, PresetSkill } from './skills.ts';
 
+export { categoriesOffering, crowdedCategoriesOf } from './category.ts';
 export { contentReaderFor } from './contents.ts';
 export { writeContentsModule } from './contents-module.ts';
 export { harnessSkillsOf } from './harness-skills.ts';

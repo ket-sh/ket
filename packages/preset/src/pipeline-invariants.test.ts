@@ -145,11 +145,12 @@ describe('a pipeline job no gate claims', () => {
   });
 
   it('reads no workflow an integration writes, since a project may never ask for it', () => {
-    const item = {
+    const item: PresetItem = {
       ...ITEM,
       integrations: [
         {
           name: 'codecov',
+          category: 'coverage',
           asks: 'codecov?',
           files: [writes('github-coverage.yml', '.github/workflows/coverage.yml')],
         },
