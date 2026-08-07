@@ -13,6 +13,8 @@ export interface FeedTimings {
   poll: number;
 }
 
+export type DirectoryWatch = (path: string, changed: () => void) => () => void;
+
 export interface BoardFeed {
   snapshot: () => Promise<KanbanColumn[]>;
   subscribe: (refresh: () => void) => () => void;
@@ -22,9 +24,22 @@ const KET_DIRECTORY = '.ket';
 
 const EVENTS = 'events.jsonl';
 
+const watchingTheDirectory: DirectoryWatch = (path, changed) => {
+  const watcher = watchDirectory(path, { recursive: true }, changed);
+
+  return () => {
+    watcher.close();
+  };
+};
+
 // The watcher is the fast path and the size poll is the backstop, because
 // Bun's fs.watch has a history of missed events across platforms.
-function subscription(root: string, timings: FeedTimings, refresh: () => void): () => void {
+function subscription(
+  root: string,
+  timings: FeedTimings,
+  refresh: () => void,
+  watching: DirectoryWatch,
+): () => void {
   let bounce: ReturnType<typeof setTimeout> | undefined;
   let lastSize = -1;
 
@@ -33,13 +48,16 @@ function subscription(root: string, timings: FeedTimings, refresh: () => void): 
     bounce = setTimeout(refresh, timings.debounce);
   };
 
-  const watcher = watchDirectory(join(root, KET_DIRECTORY), { recursive: true }, bump);
+  const letGo = watching(join(root, KET_DIRECTORY), bump);
 
   const polling = setInterval(() => {
     void stat(join(root, KET_DIRECTORY, EVENTS))
       .then((found) => {
-        if (found.size !== lastSize) {
-          lastSize = found.size;
+        const grown = lastSize >= 0 && found.size !== lastSize;
+
+        lastSize = found.size;
+
+        if (grown) {
           bump();
         }
       })
@@ -47,7 +65,7 @@ function subscription(root: string, timings: FeedTimings, refresh: () => void): 
   }, timings.poll);
 
   return () => {
-    watcher.close();
+    letGo();
     clearInterval(polling);
     clearTimeout(bounce);
   };
@@ -56,9 +74,10 @@ function subscription(root: string, timings: FeedTimings, refresh: () => void): 
 export function boardFeedFor(
   root: string,
   timings: FeedTimings = { debounce: 150, poll: 5000 },
+  watching: DirectoryWatch = watchingTheDirectory,
 ): BoardFeed {
   return {
     snapshot: async () => foldKanban(await readStored(root), await readLog(root)),
-    subscribe: (refresh) => subscription(root, timings, refresh),
+    subscribe: (refresh) => subscription(root, timings, refresh, watching),
   };
 }

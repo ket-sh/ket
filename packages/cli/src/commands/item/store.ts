@@ -57,7 +57,8 @@ export async function write(root: string, key: string, item: Item): Promise<void
 
 export async function read(root: string, key: string): Promise<Item> {
   const path = join(root, KET_DIRECTORY, 'items', key, ITEM_FILE);
-  const item = parseItem(await readFile(path, 'utf8').catch(() => ''));
+  const source = await readFile(path, 'utf8').catch(() => undefined);
+  const item = source === undefined ? undefined : parseItem(source);
 
   if (item === undefined) {
     throw new Error(`${key} has no item this repository can read`);

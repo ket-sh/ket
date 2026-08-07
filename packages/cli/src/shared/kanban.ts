@@ -24,9 +24,9 @@ export interface KanbanColumn {
 }
 
 interface LoggedEvent {
-  outcome: string;
-  gate: string;
-  about: string;
+  outcome: string | undefined;
+  gate: string | undefined;
+  about: string | undefined;
   item: string;
   reason: string | undefined;
   at: string | undefined;
@@ -54,9 +54,9 @@ function shapedEvent(parsed: object): LoggedEvent | undefined {
   }
 
   return {
-    outcome: wordAt(parsed, 'outcome') ?? '',
-    gate: wordAt(parsed, 'gate') ?? '',
-    about: wordAt(parsed, 'about') ?? '',
+    outcome: wordAt(parsed, 'outcome'),
+    gate: wordAt(parsed, 'gate'),
+    about: wordAt(parsed, 'about'),
     item,
     reason: wordAt(parsed, 'reason'),
     at: wordAt(parsed, 'at'),
@@ -84,17 +84,17 @@ function arrivalOf(events: LoggedEvent[], status: ItemStatus): string | undefine
     .at(-1)?.at;
 }
 
-function refusalAfter(events: LoggedEvent[], since: string | undefined): KanbanRefusal | undefined {
+function refusalAfter(events: LoggedEvent[], since: string): KanbanRefusal | undefined {
   const refused = events
-    .filter((event) => event.outcome === 'refused' && event.at !== undefined)
-    .filter((event) => since === undefined || (event.at ?? '') >= since)
+    .filter((event) => event.outcome === 'refused')
+    .filter((event) => event.at !== undefined && event.at >= since)
     .at(-1);
 
   if (refused?.at === undefined) {
     return undefined;
   }
 
-  return { reason: refused.reason ?? refused.about, at: refused.at };
+  return { reason: refused.reason ?? refused.about ?? '', at: refused.at };
 }
 
 function cardOf(stored: StoredItem, log: string): KanbanCard | undefined {

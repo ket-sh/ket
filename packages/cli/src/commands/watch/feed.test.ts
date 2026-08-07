@@ -67,6 +67,78 @@ describe('the feed the board drinks from', () => {
     expect(await settled(() => told > 0, 2000)).toBe(true);
   });
 
+  it('hears a change deep inside the item tree, then nothing once let go', async () => {
+    let told = 0;
+    const letGo = boardFeedFor(root, { debounce: 10, poll: 10_000 }).subscribe(() => {
+      told += 1;
+    });
+
+    await writeFile(
+      join(root, '.ket', 'items', 'K-1', 'item.yaml'),
+      'title: The watched item\nkind: feature\nsize: story\nstatus: implementing\n',
+    );
+
+    const heardTheChange = await settled(() => told > 0, 2000);
+
+    letGo();
+
+    const heard = told;
+
+    await writeFile(
+      join(root, '.ket', 'items', 'K-1', 'item.yaml'),
+      'title: The watched item\nkind: feature\nsize: story\nstatus: verifying\n',
+    );
+
+    expect(heardTheChange).toBe(true);
+    expect(await settled(() => told > heard, 300)).toBe(false);
+  });
+});
+
+describe('the poll that backstops the watcher', () => {
+  it('wakes for growth in a log that began empty', async () => {
+    let told = 0;
+    const deafWatcher = () => () => undefined;
+
+    await writeFile(join(root, '.ket', 'events.jsonl'), '');
+    stop = boardFeedFor(root, { debounce: 10, poll: 30 }, deafWatcher).subscribe(() => {
+      told += 1;
+    });
+
+    await new Promise((tick) => {
+      setTimeout(tick, 80);
+    });
+    await appendFile(join(root, '.ket', 'events.jsonl'), '{"gate":"turn"}\n');
+
+    expect(await settled(() => told > 0, 2000)).toBe(true);
+  });
+
+  it('hears the log grow through the size poll alone, when the watcher misses', async () => {
+    let told = 0;
+    const deafWatcher = () => () => undefined;
+
+    stop = boardFeedFor(root, { debounce: 10, poll: 30 }, deafWatcher).subscribe(() => {
+      told += 1;
+    });
+
+    await new Promise((tick) => {
+      setTimeout(tick, 80);
+    });
+    await appendFile(join(root, '.ket', 'events.jsonl'), '{"gate":"turn"}\n');
+
+    expect(await settled(() => told > 0, 2000)).toBe(true);
+  });
+
+  it('polls without crying wolf: an unchanged log wakes nobody', async () => {
+    let told = 0;
+    const deafWatcher = () => () => undefined;
+
+    stop = boardFeedFor(root, { debounce: 10, poll: 30 }, deafWatcher).subscribe(() => {
+      told += 1;
+    });
+
+    expect(await settled(() => told > 0, 300)).toBe(false);
+  });
+
   it('stays quiet after the subscriber lets go', async () => {
     let told = 0;
     const feed = boardFeedFor(root, { debounce: 10, poll: 40 });
