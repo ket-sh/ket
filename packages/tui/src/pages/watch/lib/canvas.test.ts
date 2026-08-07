@@ -10,7 +10,16 @@ const NOW = '2026-08-07T12:00:00.000Z';
 const WIDE = { width: 200, height: 40 };
 
 function nodeOf(id: string, patch: Partial<JourneyNodeView> = {}): JourneyNodeView {
-  return { id, kind: 'stage', title: id, mark: 'done', at: undefined, child: undefined, ...patch };
+  return {
+    id,
+    kind: 'stage',
+    title: id,
+    mark: 'done',
+    at: undefined,
+    child: undefined,
+    doc: undefined,
+    ...patch,
+  };
 }
 
 const WALKED: JourneyView = {

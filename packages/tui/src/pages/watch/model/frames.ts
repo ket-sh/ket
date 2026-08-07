@@ -1,17 +1,26 @@
 import { useCallback, useState } from 'react';
 
-import type { BoardFeed, JourneyView, KanbanCardView } from '../../../shared/model';
+import type { BoardFeed, JourneyView, SurfaceDocView } from '../../../shared/model';
+import type { Audience } from '../lib/lines.ts';
 import type { Direction } from './compass.ts';
 
 import { neighborOf, placedOf } from '../lib/layout.ts';
 
-export type Frame = { kind: 'board' } | { kind: 'journey'; journey: JourneyView; sel: string };
+export type Frame =
+  | { kind: 'board' }
+  | { kind: 'journey'; journey: JourneyView; sel: string }
+  | { kind: 'surface'; title: string; doc: SurfaceDocView; aud: Audience; off: number };
+
+type Tuning = 'toggle' | 'technical' | 'plain';
 
 export interface FrameStack {
   frames: Frame[];
   top: Frame;
-  dive: (card: KanbanCardView | undefined) => void;
+  dive: (key: string | undefined) => void;
+  enter: () => void;
   walk: (direction: Direction) => void;
+  scroll: (delta: number, most: number) => void;
+  tune: (tuning: Tuning) => void;
   pop: () => void;
 }
 
@@ -27,7 +36,15 @@ function landingOf(journey: JourneyView): string {
 }
 
 export function crumbOf(frames: Frame[]): string {
-  return frames.map((frame) => (frame.kind === 'board' ? 'board' : frame.journey.item)).join(' › ');
+  return frames
+    .map((frame) => {
+      if (frame.kind === 'board') {
+        return 'board';
+      }
+
+      return frame.kind === 'journey' ? frame.journey.item : frame.title.split(' · ')[0];
+    })
+    .join(' › ');
 }
 
 function walked(stack: Frame[], direction: Direction): Frame[] {
@@ -42,16 +59,73 @@ function walked(stack: Frame[], direction: Direction): Frame[] {
   return [...stack.slice(0, -1), { ...above, sel }];
 }
 
+function scrolled(stack: Frame[], delta: number, most: number): Frame[] {
+  const above = stack[stack.length - 1];
+
+  if (above?.kind !== 'surface') {
+    return stack;
+  }
+
+  const seated = Math.min(Math.max(above.off, 0), most);
+  const off = Math.min(most, Math.max(0, seated + delta));
+
+  return [...stack.slice(0, -1), { ...above, off }];
+}
+
+function tunedSide(aud: Audience, tuning: Tuning): Audience {
+  if (tuning === 'toggle') {
+    return aud === 'technical' ? 'plain' : 'technical';
+  }
+
+  return tuning;
+}
+
+function tuned(stack: Frame[], tuning: Tuning): Frame[] {
+  const above = stack[stack.length - 1];
+
+  if (above?.kind !== 'surface' || !('plain' in above.doc) || above.doc.plain === undefined) {
+    return stack;
+  }
+
+  return [...stack.slice(0, -1), { ...above, aud: tunedSide(above.aud, tuning), off: 0 }];
+}
+
+interface Seated {
+  journey: JourneyView;
+  node: JourneyView['nodes'][number];
+}
+
+function selectedNodeOf(frame: Frame): Seated | undefined {
+  if (frame.kind !== 'journey') {
+    return undefined;
+  }
+
+  const node = frame.journey.nodes.find((one) => one.id === frame.sel);
+
+  return node === undefined ? undefined : { journey: frame.journey, node };
+}
+
+function surfaceFrame(journey: JourneyView, doc: SurfaceDocView): Frame {
+  return {
+    kind: 'surface',
+    title: `${journey.item} · ${doc.label}`,
+    doc,
+    aud: 'technical',
+    off: 0,
+  };
+}
+
 export function useFrameStack(feed: BoardFeed): FrameStack {
   const [frames, setFrames] = useState<Frame[]>([{ kind: 'board' }]);
+  const top = frames[frames.length - 1] ?? ({ kind: 'board' } as const);
 
   const dive = useCallback(
-    (card: KanbanCardView | undefined) => {
-      if (card === undefined) {
+    (key: string | undefined) => {
+      if (key === undefined) {
         return;
       }
 
-      void feed.journey(card.key).then((journey) => {
+      void feed.journey(key).then((journey) => {
         if (journey !== undefined) {
           setFrames((stack) => [...stack, { kind: 'journey', journey, sel: landingOf(journey) }]);
         }
@@ -60,19 +134,43 @@ export function useFrameStack(feed: BoardFeed): FrameStack {
     [feed],
   );
 
+  const open = useCallback((journey: JourneyView, doc: SurfaceDocView) => {
+    setFrames((stack) => [...stack, surfaceFrame(journey, doc)]);
+  }, []);
+
+  const enter = useCallback(() => {
+    const seated = selectedNodeOf(top);
+
+    if (seated === undefined) {
+      return;
+    }
+
+    if (seated.node.child !== undefined) {
+      dive(seated.node.child);
+
+      return;
+    }
+
+    if (seated.node.doc !== undefined) {
+      open(seated.journey, seated.node.doc);
+    }
+  }, [top, dive, open]);
+
   const walk = useCallback((direction: Direction) => {
     setFrames((stack) => walked(stack, direction));
+  }, []);
+
+  const scroll = useCallback((delta: number, most: number) => {
+    setFrames((stack) => scrolled(stack, delta, most));
+  }, []);
+
+  const tune = useCallback((tuning: Tuning) => {
+    setFrames((stack) => tuned(stack, tuning));
   }, []);
 
   const pop = useCallback(() => {
     setFrames((stack) => (stack.length > 1 ? stack.slice(0, -1) : stack));
   }, []);
 
-  return {
-    frames,
-    top: frames[frames.length - 1] ?? { kind: 'board' },
-    dive,
-    walk,
-    pop,
-  };
+  return { frames, top, dive, enter, walk, scroll, tune, pop };
 }

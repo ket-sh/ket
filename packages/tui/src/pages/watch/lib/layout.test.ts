@@ -5,7 +5,15 @@ import type { JourneyNodeView, JourneyView } from '../../../shared/model';
 import { NODE_H, NODE_W, neighborOf, placedOf } from './layout.ts';
 
 function nodeOf(id: string): JourneyNodeView {
-  return { id, kind: 'stage', title: id, mark: 'done', at: undefined, child: undefined };
+  return {
+    id,
+    kind: 'stage',
+    title: id,
+    mark: 'done',
+    at: undefined,
+    child: undefined,
+    doc: undefined,
+  };
 }
 
 function journeyOf(ids: string[], edges: [string, string][]): JourneyView {

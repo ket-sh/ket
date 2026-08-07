@@ -47,6 +47,7 @@ const WALKED: JourneyView = {
       mark: 'done',
       at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
       child: undefined,
+      doc: undefined,
     },
     {
       id: 'designing',
@@ -55,6 +56,7 @@ const WALKED: JourneyView = {
       mark: 'done',
       at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
       child: undefined,
+      doc: undefined,
     },
     {
       id: '.ket/items/DEV-1/spec.md',
@@ -63,6 +65,7 @@ const WALKED: JourneyView = {
       mark: 'done',
       at: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
       child: undefined,
+      doc: undefined,
     },
     {
       id: 'implementing',
@@ -71,6 +74,7 @@ const WALKED: JourneyView = {
       mark: 'active',
       at: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
       child: undefined,
+      doc: undefined,
     },
   ],
   edges: [

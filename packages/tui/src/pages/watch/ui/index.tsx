@@ -10,6 +10,7 @@ import { press } from '../model/keys.ts';
 import { livedIn, useSeat } from '../model/seat.ts';
 import { BoardView } from './board.tsx';
 import { JourneyPage } from './journey.tsx';
+import { SurfacePage, surfaceMost } from './surface.tsx';
 
 const MUTED = '#5f5f5f';
 
@@ -25,8 +26,13 @@ export interface WatchPageProps {
 
 const HINTS = {
   board: '←↑↓→ move · ⏎ journey · r refresh · q quit',
-  journey: '←↑↓→ move · esc board · q quit',
+  journey: '←↑↓→ move · ⏎ open · esc board · q quit',
+  surface: '↑↓ scroll · tab ←→ audience · esc back · q quit',
 };
+
+function hintOf(kind: 'board' | 'journey' | 'surface'): string {
+  return HINTS[kind];
+}
 
 export function WatchPage({
   feed,
@@ -38,9 +44,10 @@ export function WatchPage({
   const lived = livedIn(columns);
   const seat = useSeat(lived);
   const { width, height } = useTerminalDimensions();
+  const most = stack.top.kind === 'surface' ? surfaceMost(stack.top, height - 3) : 0;
 
   useKeyboard((key) => {
-    press(key.name, { onQuit, refresh, stack, seat });
+    press(key.name, { onQuit, refresh, stack, seat, most });
   });
 
   return (
@@ -51,7 +58,7 @@ export function WatchPage({
           <span fg={MUTED}>{`  ${crumbOf(stack.frames)}`}</span>
         </text>
         <text fg={FAINT} wrapMode="none">
-          {stack.top.kind === 'journey' ? HINTS.journey : HINTS.board}
+          {hintOf(stack.top.kind)}
         </text>
       </box>
       {stack.top.kind === 'journey' ? (
@@ -63,6 +70,8 @@ export function WatchPage({
           width={width - 2}
           height={height - 3}
         />
+      ) : stack.top.kind === 'surface' ? (
+        <SurfacePage frame={stack.top} height={height - 3} />
       ) : (
         <BoardView lived={lived} now={now} wide={width >= NARROW} seat={seat} />
       )}

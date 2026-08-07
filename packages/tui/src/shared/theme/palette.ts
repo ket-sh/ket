@@ -24,7 +24,7 @@ const AQUA = '#7aa89f';
 
 const ORANGE = '#ffa066';
 
-const VIOLET = '#957fb8';
+export const VIOLET = '#957fb8';
 
 const VIOLET_MUTED = '#938aa9';
 

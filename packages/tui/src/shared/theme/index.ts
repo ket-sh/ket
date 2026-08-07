@@ -9,5 +9,6 @@ export {
   SUBTEXT,
   SURFACE1,
   TEXT,
+  VIOLET,
   YELLOW,
 } from './palette.ts';

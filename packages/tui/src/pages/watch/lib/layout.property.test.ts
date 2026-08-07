@@ -27,6 +27,7 @@ const someJourney = fc
       mark: 'done',
       at: undefined,
       child: undefined,
+      doc: undefined,
     }));
     const edges: [string, string][] = picks
       .filter((pick) => pick.from < pick.to)
