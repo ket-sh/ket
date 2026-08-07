@@ -10,7 +10,7 @@
     "prepare": "lefthook install",
     "build": "turbo run build",
     "test": "turbo run test",
-    "test:acceptance": "./scripts/acceptance-create.sh && ./scripts/acceptance-harness.sh && ./scripts/acceptance-watch.sh",
+    "test:acceptance": "./scripts/acceptance-create.sh && ./scripts/acceptance-harness.sh && ./scripts/acceptance-watch.sh && ./scripts/acceptance-map.sh",
     "test:mutation": "turbo run test:mutation",
     "lint": "turbo run lint",
     "check-types": "turbo run check-types && bun run check-types:workflows && bun run check-types:root-configs && bun run check-types:scripts",
