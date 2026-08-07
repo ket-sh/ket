@@ -1,23 +1,8 @@
-import { globSync, readFileSync } from 'node:fs';
 import process from 'node:process';
 
-const HARNESS = 'e2e/helpers/harness.ts';
-
-// A type-only import binds nothing at runtime, so it may name the package.
-const REACHES_PAST = /^import (?!type ).*from 'playwright-bdd'/mu;
+import { HARNESS, readAt, reachingPast } from './bdd-binding.mts';
 
 const BINDS = /create(?:Steps|Bdd)\(test\)/u;
-
-function readAt(path: string): string {
-  return readFileSync(path, 'utf8');
-}
-
-function reachingPast(): string[] {
-  return globSync('e2e/**/*.ts')
-    .filter((file) => file !== HARNESS)
-    .filter((file) => REACHES_PAST.test(readAt(file)))
-    .map((file) => `${file} imports playwright-bdd instead of ${HARNESS}`);
-}
 
 function unbound(): string[] {
   return BINDS.test(readAt(HARNESS))

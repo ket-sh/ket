@@ -19,6 +19,13 @@ async function commitJobsItWrites(): Promise<string[]> {
   return [...upToCommitMsg.matchAll(/- name: (\S+)/gu)].map(([, job]) => job ?? '');
 }
 
+async function bddJobItArms(): Promise<string> {
+  const written = await readsPresetFile('lefthook.yml');
+  const opens = written.indexOf('- name: bdd');
+
+  return written.slice(opens, written.indexOf('- name: ', opens + 1));
+}
+
 describe('the gate chain the web preset arms at commit time', () => {
   it('claims every job the hook file runs, so no gate hides from the chain', async () => {
     const claimed = new Set(WEB_SEMANTICS.gates.map((gate) => gate.commitJob));
@@ -83,8 +90,8 @@ describe('what the web preset declares about a project', () => {
 });
 
 describe('the gate that keeps every spec on the harness test', () => {
-  it('checks every spec binds to the harness test, where a bare binding turns a scenario silent', () => {
-    expect(WEB_SEMANTICS.scripts['lint:bdd']).toBe('bun scripts/check-bdd-binding.mts');
+  it('writes the specs before reading them, since what bddgen resolved is the answer', () => {
+    expect(WEB_SEMANTICS.scripts['lint:bdd']).toBe('bddgen && bun scripts/check-bdd-binding.mts');
   });
 
   it('gates a commit and the pipeline on the binding', () => {
@@ -94,6 +101,14 @@ describe('the gate that keeps every spec on the harness test', () => {
       commitJob: 'bdd',
       ciJob: 'check',
     });
+  });
+
+  it('arms the gate on a feature file, since a scenario is what a spec gets written from', async () => {
+    expect(await bddJobItArms()).toContain('features/**/*');
+  });
+
+  it('arms the gate through the script that writes the specs first', async () => {
+    expect(await bddJobItArms()).toContain('bun run lint:bdd');
   });
 });
 
