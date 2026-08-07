@@ -183,6 +183,32 @@ function mutationInvariants(item: PresetItem, shipped: PresetContents): string[]
     : [`the mutation config the preset writes names ${named}, which the preset ships nowhere`];
 }
 
+const AGENT_DIRECTORIES = ['.claude', '.agents'];
+
+function ignoredIn(written: string): string[] {
+  const parsed: unknown = JSON.parse(written);
+  const declared = isRecord(parsed) ? parsed['ignorePatterns'] : undefined;
+
+  return isStringArray(declared) ? declared : [];
+}
+
+// Stryker copies the project into its sandbox before mutating, and the agent
+// directories carry skills and settings no mutant ever runs. Copying them slows
+// every run and breaks on links the copier cannot follow.
+function sandboxInvariants(item: PresetItem, shipped: PresetContents): string[] {
+  const written = writtenTo(item, shipped, MUTATION_CONFIG);
+
+  if (written === undefined) {
+    return [];
+  }
+
+  const ignored = new Set(ignoredIn(written));
+
+  return AGENT_DIRECTORIES.filter((directory) => !ignored.has(directory)).map(
+    (directory) => `the mutation config the preset writes lets the sandbox copy ${directory}`,
+  );
+}
+
 const SHIPPED_SOURCE = 'files/source/';
 
 const IMPORTED = /(?<=from ')[^']+(?=')/gu;
@@ -227,5 +253,6 @@ export function configInvariantsOf(item: PresetItem, shipped: PresetContents): s
     ...lintInvariants(item, shipped),
     ...proseInvariants(item, shipped),
     ...mutationInvariants(item, shipped),
+    ...sandboxInvariants(item, shipped),
   ];
 }

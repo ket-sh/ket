@@ -161,6 +161,8 @@ describe('a preset against the pipeline and the configs it writes', () => {
       'the gate lint names the pipeline job prose, which no workflow the preset writes declares',
       'the pipeline job check belongs to no gate the preset declares',
       'the mutation config the preset writes names no test config',
+      'the mutation config the preset writes lets the sandbox copy .claude',
+      'the mutation config the preset writes lets the sandbox copy .agents',
       'the preset declares src/commands/*/command.ts an adapter, and the mutation config it writes never excludes it',
       'the preset declares src/commands/*/io/** an adapter, and the mutation config it writes never excludes it',
     ]);

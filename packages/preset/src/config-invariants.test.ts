@@ -39,6 +39,7 @@ const SHIPPED: PresetContents = {
   'files/vale-vocabulary/accept.txt': 'ket\n',
   'files/stryker.conf.json': JSON.stringify({
     vitest: { configFile: 'vitest.mutation.config.ts' },
+    ignorePatterns: ['.claude', '.agents'],
   }),
   'files/vitest.mutation.config.ts': 'export default {};\n',
 };
@@ -151,7 +152,10 @@ describe('a config that reaches into a package rather than naming it', () => {
 
 describe('the mutation config a preset writes against the test config it ships', () => {
   it('names a test config the mutation config points at and the preset ships nowhere', () => {
-    const written = JSON.stringify({ vitest: { configFile: 'vitest.elsewhere.config.ts' } });
+    const written = JSON.stringify({
+      vitest: { configFile: 'vitest.elsewhere.config.ts' },
+      ignorePatterns: ['.claude', '.agents'],
+    });
 
     expect(invariantsWhenWriting('files/stryker.conf.json', written)).toStrictEqual([
       'the mutation config the preset writes names vitest.elsewhere.config.ts, which the preset ships nowhere',
@@ -159,17 +163,53 @@ describe('the mutation config a preset writes against the test config it ships',
   });
 
   it('names a mutation config that points at no test config at all', () => {
-    expect(invariantsWhenWriting('files/stryker.conf.json', JSON.stringify({}))).toStrictEqual([
+    const written = JSON.stringify({ ignorePatterns: ['.claude', '.agents'] });
+
+    expect(invariantsWhenWriting('files/stryker.conf.json', written)).toStrictEqual([
       'the mutation config the preset writes names no test config',
     ]);
   });
 
   it('names a mutation config whose runner section holds no file name', () => {
-    const written = JSON.stringify({ vitest: { configFile: 42 } });
+    const written = JSON.stringify({
+      vitest: { configFile: 42 },
+      ignorePatterns: ['.claude', '.agents'],
+    });
 
     expect(invariantsWhenWriting('files/stryker.conf.json', written)).toStrictEqual([
       'the mutation config the preset writes names no test config',
     ]);
+  });
+});
+
+describe('the agent directories the mutation sandbox leaves alone', () => {
+  it('names each agent directory the sandbox would copy', () => {
+    const written = JSON.stringify({ vitest: { configFile: 'vitest.mutation.config.ts' } });
+
+    expect(invariantsWhenWriting('files/stryker.conf.json', written)).toStrictEqual([
+      'the mutation config the preset writes lets the sandbox copy .claude',
+      'the mutation config the preset writes lets the sandbox copy .agents',
+    ]);
+  });
+
+  it('names only the directory still missing', () => {
+    const written = JSON.stringify({
+      vitest: { configFile: 'vitest.mutation.config.ts' },
+      ignorePatterns: ['.claude'],
+    });
+
+    expect(invariantsWhenWriting('files/stryker.conf.json', written)).toStrictEqual([
+      'the mutation config the preset writes lets the sandbox copy .agents',
+    ]);
+  });
+
+  it('stays quiet when the sandbox ignores every agent directory', () => {
+    const written = JSON.stringify({
+      vitest: { configFile: 'vitest.mutation.config.ts' },
+      ignorePatterns: ['.claude', '.agents'],
+    });
+
+    expect(invariantsWhenWriting('files/stryker.conf.json', written)).toStrictEqual([]);
   });
 });
 

@@ -22,6 +22,7 @@
     "!src/entities/*/api/**"
   ],
   "reporters": ["progress", "clear-text"],
+  "ignorePatterns": [".claude", ".agents"],
   "coverageAnalysis": "perTest",
   "thresholds": {
     "high": 100,
