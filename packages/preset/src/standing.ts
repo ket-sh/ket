@@ -48,6 +48,7 @@ export const STANDING_FILES: PresetFile[] = [
   writes('vale-styles/Terminology.yml', '.vale/styles/ket/Terminology.yml'),
   writes('vale-styles/Intensifiers.yml', '.vale/styles/ket/Intensifiers.yml'),
   writes('vale-styles/WeakOpeners.yml', '.vale/styles/ket/WeakOpeners.yml'),
+  writes('vale-styles/PlainReadability.yml', '.vale/styles/ket/PlainReadability.yml'),
   writes('vale-vocabulary/accept.txt', '.vale/styles/config/vocabularies/ket/accept.txt'),
   writes('gitignore', '.gitignore'),
   writes('CLAUDE.md', 'CLAUDE.md'),
