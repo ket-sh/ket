@@ -36,6 +36,10 @@ async function opening(presses: Press[], feed: ActedFeed = feedOf()): Promise<st
 
   let frame = await settled();
 
+  while (!frame.includes('K-2')) {
+    frame = await settled();
+  }
+
   for (const press of presses) {
     if (typeof press === 'string') {
       createMockKeys(opened.renderer).pressKey(press);

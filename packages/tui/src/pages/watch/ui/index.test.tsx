@@ -28,7 +28,13 @@ async function openedAt(width: number, height: number): Promise<string> {
     { width, height },
   );
 
-  return settled();
+  let frame = await settled();
+
+  while (!frame.includes('K-2')) {
+    frame = await settled();
+  }
+
+  return frame;
 }
 
 function pressed(key: 'ARROW_RIGHT' | 'ARROW_LEFT' | 'RETURN' | 'ESCAPE'): void {

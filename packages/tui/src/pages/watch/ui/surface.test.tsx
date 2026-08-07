@@ -34,6 +34,10 @@ async function opening(keys: Key[]): Promise<string> {
 
   let frame = await settled();
 
+  while (!frame.includes('K-2')) {
+    frame = await settled();
+  }
+
   for (const key of keys) {
     createMockKeys(opened.renderer).pressKey(key);
     frame = await settled();
