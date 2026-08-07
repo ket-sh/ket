@@ -6,6 +6,7 @@ import type { Seat } from '../model/seat.ts';
 
 import { stageColorOf, useTheme } from '../../../shared/theme';
 import { agedOf } from '../lib/aged.ts';
+import { laneTitle } from '../lib/lanes.ts';
 
 interface CardFrame {
   style: 'rounded' | 'double';
@@ -58,12 +59,12 @@ function Card({
 function Column({
   column,
   now,
-  wide,
+  inRow,
   selectedRow,
 }: {
   column: KanbanColumnView;
   now: string;
-  wide: boolean;
+  inRow: boolean;
   selectedRow: number | undefined;
 }): ReactNode {
   const { theme } = useTheme();
@@ -71,12 +72,13 @@ function Column({
   return (
     <box
       flexDirection="column"
-      flexGrow={wide ? 1 : 0}
-      flexBasis={wide ? 1 : 'auto'}
+      flexGrow={inRow ? 1 : 0}
+      flexBasis={inRow ? 1 : 'auto'}
+      flexShrink={0}
       border
       borderStyle="rounded"
       borderColor={theme.surface1}
-      title={` ${column.status} ${String(column.cards.length)} `}
+      title={laneTitle(column)}
       paddingLeft={1}
       paddingRight={1}
     >
@@ -95,25 +97,25 @@ function Column({
 }
 
 export function BoardView({
-  lived,
+  columns,
   now,
-  wide,
+  inRow,
   seat,
 }: {
-  lived: KanbanColumnView[];
+  columns: KanbanColumnView[];
   now: string;
-  wide: boolean;
+  inRow: boolean;
   seat: Seat;
 }): ReactNode {
   return (
-    <box flexDirection={wide ? 'row' : 'column'}>
-      {lived.map(
+    <box flexDirection={inRow ? 'row' : 'column'}>
+      {columns.map(
         (column, columnAt): ReactNode => (
           <Column
             key={column.status}
             column={column}
             now={now}
-            wide={wide}
+            inRow={inRow}
             selectedRow={columnAt === seat.col ? seat.row : undefined}
           />
         ),

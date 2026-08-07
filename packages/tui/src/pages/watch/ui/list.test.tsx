@@ -92,7 +92,7 @@ describe('the list the board also wears', () => {
     expect(frame).toContain('designing');
     expect(frame).toContain('2h');
     expect(frame).toContain('The watched item');
-    expect(frame).toContain('the design names no spec');
+    expect(frame).toContain('no spec named');
   });
 
   it('walks the flat list with up and down', async () => {

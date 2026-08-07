@@ -1,48 +1,58 @@
-import type { BoardFeed, JourneyView, KanbanColumnView } from '../../../shared/model';
+import type {
+  BoardFeed,
+  JourneyView,
+  KanbanCardView,
+  KanbanColumnView,
+} from '../../../shared/model';
 
 export const NOW = '2026-08-07T12:00:00.000Z';
 
 export interface ActedFeed extends BoardFeed {
   acted: string[];
   saved: string[];
+  shift: (key: string, status: string) => void;
 }
 
-const COLUMNS: KanbanColumnView[] = [
-  { status: 'idea', cards: [] },
-  {
-    status: 'triaged',
-    cards: [
-      {
-        key: 'K-2',
-        title: 'A quiet fix',
-        size: 'subtask',
-        status: 'triaged',
-        since: undefined,
-        refusal: undefined,
-        offers: ['approve'],
-      },
-    ],
-  },
-  {
-    status: 'designing',
-    cards: [
-      {
-        key: 'K-1',
-        title: 'The watched item',
-        size: 'story',
-        status: 'designing',
-        since: '2026-08-07T10:00:00.000Z',
-        refusal: { reason: 'the design names no spec', at: '2026-08-07T11:00:00.000Z' },
-        offers: [],
-      },
-    ],
-  },
-  { status: 'awaiting-approval', cards: [] },
-  { status: 'implementing', cards: [] },
-  { status: 'verifying', cards: [] },
-  { status: 'awaiting-merge', cards: [] },
-  { status: 'shipped', cards: [] },
+export const STAGES = [
+  'idea',
+  'triaged',
+  'designing',
+  'awaiting-approval',
+  'implementing',
+  'verifying',
+  'awaiting-merge',
+  'shipped',
 ];
+
+const SEATED: Record<string, KanbanCardView[]> = {
+  triaged: [
+    {
+      key: 'K-2',
+      title: 'A quiet fix',
+      size: 'subtask',
+      status: 'triaged',
+      since: undefined,
+      refusal: undefined,
+      offers: ['approve'],
+    },
+  ],
+  designing: [
+    {
+      key: 'K-1',
+      title: 'The watched item',
+      size: 'story',
+      status: 'designing',
+      since: '2026-08-07T10:00:00.000Z',
+      refusal: { reason: 'no spec named', at: '2026-08-07T11:00:00.000Z' },
+      offers: [],
+    },
+  ],
+};
+
+const COLUMNS: KanbanColumnView[] = STAGES.map((status) => ({
+  status,
+  cards: SEATED[status] ?? [],
+}));
 
 const JOURNEY: JourneyView = {
   item: 'K-1',
@@ -131,7 +141,7 @@ const CHILD_JOURNEY: JourneyView = {
   standing: undefined,
 };
 
-function movedInto(columns: KanbanColumnView[], key: string): void {
+function movedInto(columns: KanbanColumnView[], key: string, status: string): void {
   const card = columns.flatMap((column) => column.cards).find((one) => one.key === key);
 
   if (card === undefined) {
@@ -142,9 +152,9 @@ function movedInto(columns: KanbanColumnView[], key: string): void {
     column.cards = column.cards.filter((one) => one.key !== key);
   }
 
-  card.status = 'implementing';
+  card.status = status;
   card.offers = [];
-  columns.find((column) => column.status === 'implementing')?.cards.push(card);
+  columns.find((column) => column.status === status)?.cards.push(card);
 }
 
 export function feedOf(): ActedFeed {
@@ -156,6 +166,10 @@ export function feedOf(): ActedFeed {
   return {
     acted,
     saved,
+    shift: (key, status) => {
+      movedInto(columns, key, status);
+      told?.();
+    },
     snapshot: async () => {
       await Promise.resolve();
 
@@ -173,7 +187,7 @@ export function feedOf(): ActedFeed {
     act: async (key, gate) => {
       await Promise.resolve();
       acted.push(`${key} ${gate}`);
-      movedInto(columns, key);
+      movedInto(columns, key, 'implementing');
       told?.();
 
       return { moved: 'implementing' };

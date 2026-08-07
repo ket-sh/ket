@@ -39,15 +39,15 @@ function Row({
 }
 
 export function ListView({
-  lived,
+  columns,
   now,
   chosenKey,
 }: {
-  lived: KanbanColumnView[];
+  columns: KanbanColumnView[];
   now: string;
   chosenKey: string | undefined;
 }): ReactNode {
-  const cards = lived.flatMap((column) => column.cards);
+  const cards = columns.flatMap((column) => column.cards);
 
   return (
     <box flexDirection="column" paddingTop={1}>
