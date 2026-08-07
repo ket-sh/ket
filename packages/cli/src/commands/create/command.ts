@@ -13,7 +13,12 @@ import { commitScaffold, initializeRepository } from '../../shared/git.ts';
 import { governingPresets } from '../../shared/registry.ts';
 import { recordedAmong, scaffoldRecordFile } from '../../shared/scaffold-manifest.ts';
 import { installedFor, shippedContents } from '../../shared/scaffold/install.ts';
-import { chosenFrom, installsFor, namesOffered } from '../../shared/scaffold/integrations.ts';
+import {
+  chosenFrom,
+  installsFor,
+  namesOffered,
+  skillsFor,
+} from '../../shared/scaffold/integrations.ts';
 import { dictionaryInstallsFor, refuseLanguage } from '../../shared/scaffold/language.ts';
 import { heroHint } from '../../shared/scaffold/name-token.ts';
 import { KET_VERSION } from '../../shared/version.ts';
@@ -147,7 +152,11 @@ async function writeScaffold(plan: CreationPlan, configuration: Configuration): 
   // The skills land before the commit so the project is handed over whole,
   // and a refusal is reported rather than thrown: the scaffold is worth
   // keeping even when the tool cannot reach the sources it clones from.
-  const skills = await installSkills(plan.root, shippedContents(installed, LOCKFILE));
+  const skills = await installSkills(
+    plan.root,
+    shippedContents(installed, LOCKFILE),
+    skillsFor(targets, configuration.integrations),
+  );
 
   const first = await commitScaffold(plan.root);
 

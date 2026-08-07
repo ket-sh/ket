@@ -1,6 +1,6 @@
-import type { PresetFile, PresetIntegration } from '@ket/preset';
+import type { PresetFile, PresetIntegration, PresetSkill } from '@ket/preset';
 
-import { filesOf, installsOf } from '@ket/preset';
+import { filesOf, installsOf, skillsOf } from '@ket/preset';
 
 import type { PresetName } from '../../shared/configuration.ts';
 import type { ScaffoldFile } from '../../shared/write-files.ts';
@@ -75,4 +75,16 @@ export function installsFor(presets: PresetName[], chosen: string[]): string[] {
   }
 
   return [...installed];
+}
+
+export function skillsFor(presets: PresetName[], chosen: string[]): PresetSkill[] {
+  const brought = new Map<string, PresetSkill>();
+
+  for (const preset of governingPresets(presets)) {
+    for (const skill of chosenIn(preset.name, chosen).flatMap(skillsOf)) {
+      brought.set(skill.name, skill);
+    }
+  }
+
+  return [...brought.values()];
 }
