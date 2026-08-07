@@ -131,9 +131,27 @@ const CHILD_JOURNEY: JourneyView = {
   standing: undefined,
 };
 
+function movedInto(columns: KanbanColumnView[], key: string): void {
+  const card = columns.flatMap((column) => column.cards).find((one) => one.key === key);
+
+  if (card === undefined) {
+    return;
+  }
+
+  for (const column of columns) {
+    column.cards = column.cards.filter((one) => one.key !== key);
+  }
+
+  card.status = 'implementing';
+  card.offers = [];
+  columns.find((column) => column.status === 'implementing')?.cards.push(card);
+}
+
 export function feedOf(): ActedFeed {
   const acted: string[] = [];
   const saved: string[] = [];
+  const columns = structuredClone(COLUMNS);
+  let told: (() => void) | undefined;
 
   return {
     acted,
@@ -141,7 +159,7 @@ export function feedOf(): ActedFeed {
     snapshot: async () => {
       await Promise.resolve();
 
-      return COLUMNS;
+      return columns;
     },
     journey: async (key) => {
       await Promise.resolve();
@@ -155,6 +173,8 @@ export function feedOf(): ActedFeed {
     act: async (key, gate) => {
       await Promise.resolve();
       acted.push(`${key} ${gate}`);
+      movedInto(columns, key);
+      told?.();
 
       return { moved: 'implementing' };
     },
@@ -162,6 +182,12 @@ export function feedOf(): ActedFeed {
       await Promise.resolve();
       saved.push(`${key} ${name} ${source}`);
     },
-    subscribe: () => () => undefined,
+    subscribe: (refresh) => {
+      told = refresh;
+
+      return () => {
+        told = undefined;
+      };
+    },
   };
 }

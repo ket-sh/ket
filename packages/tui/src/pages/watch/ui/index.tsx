@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react';
 
 import { useKeyboard, useTerminalDimensions } from '@opentui/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import type { BoardFeed, GateActionView, KanbanColumnView } from '../../../shared/model';
 import type { Frame, FrameStack } from '../model/frames.ts';
+import type { BoardLayout } from '../model/keys.ts';
 import type { Seat } from '../model/seat.ts';
 
 import { useBoardState } from '../model/board-state.ts';
@@ -16,6 +17,7 @@ import { BoardView } from './board.tsx';
 import { EditorPage } from './editor.tsx';
 import { GateModal } from './gate.tsx';
 import { JourneyPage } from './journey.tsx';
+import { ListView } from './list.tsx';
 import { SurfacePage, surfaceMost } from './surface.tsx';
 
 const MUTED = '#5f5f5f';
@@ -44,9 +46,11 @@ function gateHints(offers: GateActionView[]): string {
     .join('');
 }
 
-function hintOf(kind: Frame['kind'], offers: GateActionView[]): string {
+function hintOf(kind: Frame['kind'], offers: GateActionView[], layout: BoardLayout): string {
   if (kind === 'board') {
-    return `←↑↓→ move · ⏎ journey${gateHints(offers)} · r refresh · q quit`;
+    const other = layout === 'kanban' ? 'list' : 'kanban';
+
+    return `←↑↓→ move · ⏎ journey${gateHints(offers)} · v ${other} · r refresh · q quit`;
   }
 
   return HINTS[kind];
@@ -64,7 +68,15 @@ function useCeremonyCurtain(stack: FrameStack, tick: number): void {
   }, [stack, tick]);
 }
 
-function HeaderRow({ stack, seat }: { stack: FrameStack; seat: Seat }): ReactNode {
+function HeaderRow({
+  stack,
+  seat,
+  layout,
+}: {
+  stack: FrameStack;
+  seat: Seat;
+  layout: BoardLayout;
+}): ReactNode {
   return (
     <box flexDirection="row" justifyContent="space-between">
       <text wrapMode="none">
@@ -72,7 +84,7 @@ function HeaderRow({ stack, seat }: { stack: FrameStack; seat: Seat }): ReactNod
         <span fg={MUTED}>{`  ${crumbOf(stack.frames)}`}</span>
       </text>
       <text fg={FAINT} wrapMode="none">
-        {hintOf(stack.top.kind, seat.chosen?.offers ?? [])}
+        {hintOf(stack.top.kind, seat.chosen?.offers ?? [], layout)}
       </text>
     </box>
   );
@@ -86,9 +98,20 @@ interface RoomProps {
   tick: number;
   width: number;
   height: number;
+  layout: BoardLayout;
 }
 
-function StageArea({ stack, lived, seat, now, tick, width, height }: RoomProps): ReactNode {
+function BoardArea({ lived, seat, now, width, layout }: Omit<RoomProps, 'stack'>): ReactNode {
+  if (layout === 'list') {
+    return <ListView lived={lived} now={now} seat={seat} />;
+  }
+
+  return <BoardView lived={lived} now={now} wide={width >= NARROW} seat={seat} />;
+}
+
+function StageArea(room: RoomProps): ReactNode {
+  const { stack, now, tick, width, height } = room;
+
   if (stack.top.kind === 'edit') {
     return <EditorPage frame={stack.top} tick={tick} height={height - 3} />;
   }
@@ -110,7 +133,7 @@ function StageArea({ stack, lived, seat, now, tick, width, height }: RoomProps):
     return <SurfacePage frame={stack.top} height={height - 3} />;
   }
 
-  return <BoardView lived={lived} now={now} wide={width >= NARROW} seat={seat} />;
+  return <BoardArea {...room} />;
 }
 
 function CeremonyOverlay({
@@ -119,7 +142,9 @@ function CeremonyOverlay({
   tick,
   width,
   height,
-}: Omit<RoomProps, 'lived' | 'seat' | 'now'> & { columns: KanbanColumnView[] }): ReactNode {
+}: Omit<RoomProps, 'lived' | 'seat' | 'now' | 'layout'> & {
+  columns: KanbanColumnView[];
+}): ReactNode {
   if (stack.top.kind !== 'gate') {
     return null;
   }
@@ -135,6 +160,14 @@ function CeremonyOverlay({
   );
 }
 
+function useMovedCardFollow(stack: FrameStack, seat: Seat, columns: KanbanColumnView[]): void {
+  useEffect(() => {
+    if (stack.top.kind === 'gate' && stack.top.phase === 'pass') {
+      seat.seek(stack.top.cardKey);
+    }
+  }, [columns, stack, seat]);
+}
+
 export function WatchPage({
   feed,
   onQuit,
@@ -145,20 +178,33 @@ export function WatchPage({
   const lived = livedIn(columns);
   const seat = useSeat(lived);
   const { width, height } = useTerminalDimensions();
+  const [layout, setLayout] = useState<BoardLayout>('kanban');
   const most = stack.top.kind === 'surface' ? surfaceMost(stack.top, height - 3) : 0;
 
   useCeremonyCurtain(stack, tick);
+  useMovedCardFollow(stack, seat, columns);
 
   useKeyboard((key) => {
     press(
       { name: key.name, seq: key.sequence, ctrl: key.ctrl },
-      { onQuit, refresh, stack, seat, most, tick },
+      {
+        onQuit,
+        refresh,
+        stack,
+        seat,
+        most,
+        tick,
+        layout,
+        swap: () => {
+          setLayout((worn) => (worn === 'kanban' ? 'list' : 'kanban'));
+        },
+      },
     );
   });
 
   return (
     <box flexDirection="column" paddingTop={1} paddingLeft={1} paddingRight={1}>
-      <HeaderRow stack={stack} seat={seat} />
+      <HeaderRow stack={stack} seat={seat} layout={layout} />
       <StageArea
         stack={stack}
         lived={lived}
@@ -167,6 +213,7 @@ export function WatchPage({
         tick={tick}
         width={width}
         height={height}
+        layout={layout}
       />
       <CeremonyOverlay stack={stack} columns={columns} tick={tick} width={width} height={height} />
     </box>

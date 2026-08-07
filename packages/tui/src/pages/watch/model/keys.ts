@@ -12,6 +12,8 @@ export interface Pressed {
   ctrl: boolean;
 }
 
+export type BoardLayout = 'kanban' | 'list';
+
 export const GATE_KEYS: Record<string, GateActionView> = {
   a: 'approve',
   s: 'ship',
@@ -73,19 +75,37 @@ function divedIn(name: string, stack: FrameStack, seat: Seat): boolean {
   return true;
 }
 
-function boardPress(name: string, stack: FrameStack, seat: Seat, tick: number): void {
-  if (divedIn(name, stack, seat)) {
+function walkedBoard(direction: Direction, seat: Seat, layout: BoardLayout): void {
+  if (layout === 'kanban') {
+    seat.move(DELTA[direction]);
+
     return;
   }
 
-  if (ceremonyOpened(name, stack, seat, tick)) {
+  if (direction === 'up' || direction === 'down') {
+    seat.slide(direction === 'up' ? -1 : 1);
+  }
+}
+
+function boardPress(name: string, deps: PressDeps): void {
+  if (divedIn(name, deps.stack, deps.seat)) {
+    return;
+  }
+
+  if (ceremonyOpened(name, deps.stack, deps.seat, deps.tick)) {
+    return;
+  }
+
+  if (name === 'v') {
+    deps.swap();
+
     return;
   }
 
   const direction = asDirection(name);
 
   if (direction !== undefined) {
-    seat.move(DELTA[direction]);
+    walkedBoard(direction, deps.seat, deps.layout);
   }
 }
 
@@ -187,11 +207,13 @@ export interface PressDeps {
   seat: Seat;
   most: number;
   tick: number;
+  layout: BoardLayout;
+  swap: () => void;
 }
 
 const FRAME_PRESSES: Record<Frame['kind'], (name: string, deps: PressDeps) => void> = {
   board: (name, deps) => {
-    boardPress(name, deps.stack, deps.seat, deps.tick);
+    boardPress(name, deps);
   },
   journey: (name, deps) => {
     journeyPress(name, deps.stack);
