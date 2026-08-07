@@ -1,3 +1,1 @@
-export type { ItemView, StageView } from './view.ts';
-
-export { SAMPLE } from './sample.ts';
+export type { BoardFeed, KanbanCardView, KanbanColumnView, KanbanRefusalView } from './board.ts';

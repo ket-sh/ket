@@ -1,1 +1,1 @@
-export { WatchPage } from './ui/index.tsx';
+export { KanbanPage } from './ui/index.tsx';
