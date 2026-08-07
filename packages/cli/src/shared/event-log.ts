@@ -17,6 +17,10 @@ export async function readLog(root: string): Promise<string> {
   return readFile(logIn(root), 'utf8').catch(() => '');
 }
 
-export async function record(root: string, event: GateEvent): Promise<void> {
-  await appendFile(logIn(root), renderEvent(event), 'utf8');
+export async function record(
+  root: string,
+  event: GateEvent,
+  at = new Date().toISOString(),
+): Promise<void> {
+  await appendFile(logIn(root), renderEvent({ ...event, at }), 'utf8');
 }

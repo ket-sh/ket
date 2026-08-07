@@ -1,8 +1,6 @@
 import type { PresetSemantics, RingCheck } from '@ket/preset';
 
 import { defineCommand, showUsage } from 'citty';
-import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
 
 import type { PlannedCheck } from '../../shared/checks.ts';
 import type { Filing } from '../../shared/decompose.ts';
@@ -10,14 +8,13 @@ import type { Item, ItemKind, ItemSize } from '../../shared/item.ts';
 import type { RingFailure } from '../../shared/ring.ts';
 import type { Transition } from '../../shared/transition.ts';
 
-import { renderBoard } from '../../shared/board.ts';
 import { failuresAmong } from '../../shared/checks.ts';
-import { decompositionOf } from '../../shared/decompose.ts';
+import { record } from '../../shared/event-log.ts';
 import { semanticsOf } from '../../shared/governing.ts';
 import { readStored } from '../../shared/item-store.ts';
-import { ITEM_KINDS, ITEM_SIZES, nextKey, renderItem, titleRefusal } from '../../shared/item.ts';
-import { keyFrom, ketRootOrThrow } from '../../shared/locate.ts';
-import { inFlightFrom, parseItem } from '../../shared/read-item.ts';
+import { ITEM_KINDS, ITEM_SIZES, nextKey, titleRefusal } from '../../shared/item.ts';
+import { ketRootOrThrow } from '../../shared/locate.ts';
+import { inFlightFrom } from '../../shared/read-item.ts';
 import { argvOf } from '../../shared/ring.ts';
 import {
   approvalOf,
@@ -31,14 +28,9 @@ import {
 import { secondJobAmong } from '../../shared/write-gate.ts';
 import { blast } from './blast/command.ts';
 import { drift, stamp } from './plain/command.ts';
+import { fileAlone, fileUnder, itemsIn, keyOf, read, write } from './store.ts';
 import { show } from './surface/command.ts';
 import { closingSurface } from './surface/lifecycle.ts';
-
-const KET_DIRECTORY = '.ket';
-
-const BOARD_FILE = 'BOARD.md';
-
-const ITEM_FILE = 'item.yaml';
 
 function oneOf<Known extends string>(known: readonly Known[], given: string): Known {
   const found = known.find((candidate) => candidate === given);
@@ -48,77 +40,6 @@ function oneOf<Known extends string>(known: readonly Known[], given: string): Kn
   }
 
   return found;
-}
-
-async function keyOf(root: string): Promise<string> {
-  const loaded: unknown = await import(join(root, KET_DIRECTORY, 'config.ts'));
-  const key = keyFrom(loaded);
-
-  if (key === undefined) {
-    throw new Error(`${KET_DIRECTORY}/config.ts declares no project key`);
-  }
-
-  return key;
-}
-
-async function itemsIn(root: string): Promise<string[]> {
-  const entries = await readdir(join(root, KET_DIRECTORY, 'items'), {
-    withFileTypes: true,
-  }).catch(() => []);
-
-  return entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
-}
-
-// The board is derived from the items, so it is rewritten wherever they are.
-// Written once at create and never again, it went on saying the project had no
-// items long after it had them, and a board that lies is worse than none.
-async function refreshBoard(root: string): Promise<void> {
-  await writeFile(
-    join(root, KET_DIRECTORY, BOARD_FILE),
-    renderBoard(await keyOf(root), await readStored(root)),
-    'utf8',
-  );
-}
-
-async function write(root: string, key: string, item: Item): Promise<void> {
-  const directory = join(root, KET_DIRECTORY, 'items', key);
-
-  await mkdir(directory, { recursive: true });
-  await writeFile(join(directory, ITEM_FILE), renderItem(item), 'utf8');
-  await refreshBoard(root);
-}
-
-async function read(root: string, key: string): Promise<Item> {
-  const path = join(root, KET_DIRECTORY, 'items', key, ITEM_FILE);
-  const item = parseItem(await readFile(path, 'utf8').catch(() => ''));
-
-  if (item === undefined) {
-    throw new Error(`${key} has no item this repository can read`);
-  }
-
-  return item;
-}
-
-async function fileAlone(root: string, filing: Filing): Promise<void> {
-  await write(root, filing.key, {
-    title: filing.title,
-    kind: filing.kind,
-    size: filing.size,
-    status: 'triaged',
-    parent: undefined,
-    children: [],
-  });
-}
-
-async function fileUnder(root: string, filing: Filing, parentKey: string): Promise<void> {
-  const outcome = decompositionOf({ key: parentKey, item: await read(root, parentKey) }, filing);
-
-  if ('refused' in outcome) {
-    throw new Error(outcome.refused);
-  }
-
-  await write(root, filing.key, outcome.child);
-  await write(root, parentKey, outcome.parent);
 }
 
 const file = defineCommand({
@@ -149,6 +70,12 @@ const file = defineCommand({
       await fileUnder(root, filing, args.parent);
     }
 
+    await record(root, {
+      gate: 'transition',
+      outcome: 'allowed',
+      about: 'triaged',
+      item: allocated,
+    });
     process.stdout.write(`${allocated}\n`);
   },
 });
@@ -166,10 +93,24 @@ function stage(name: string, description: string, decide: Decision) {
       const outcome = await decide(await read(root, args.key), root, args.key);
 
       if ('refused' in outcome) {
+        await record(root, {
+          gate: 'transition',
+          outcome: 'refused',
+          about: name,
+          item: args.key,
+          reason: outcome.refused,
+        });
+
         throw new Error(`${args.key} is ${outcome.refused}`);
       }
 
       await write(root, args.key, outcome.moved);
+      await record(root, {
+        gate: 'transition',
+        outcome: 'allowed',
+        about: outcome.moved.status,
+        item: args.key,
+      });
       process.stdout.write(`${args.key} ${outcome.moved.status}\n`);
     },
   });

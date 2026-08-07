@@ -14,14 +14,31 @@ async function repository(): Promise<string> {
 }
 
 describe('recording what a gate decided', () => {
-  it('reads back the decision it wrote', async () => {
+  it('reads back the decision it wrote, stamped with the given moment', async () => {
     const root = await repository();
 
-    await record(root, { gate: 'write', outcome: 'refused', about: 'src/auth.ts' });
+    await record(
+      root,
+      { gate: 'write', outcome: 'refused', about: 'src/auth.ts' },
+      '2026-08-07T10:00:00.000Z',
+    );
 
     await expect(readLog(root)).resolves.toBe(
-      '{"gate":"write","outcome":"refused","about":"src/auth.ts"}\n',
+      '{"gate":"write","outcome":"refused","about":"src/auth.ts","at":"2026-08-07T10:00:00.000Z"}\n',
     );
+  });
+
+  it('stamps the moment itself when nobody supplies one', async () => {
+    const root = await repository();
+
+    await record(root, { gate: 'write', outcome: 'allowed', about: 'src/auth.ts' });
+
+    const written: unknown = JSON.parse((await readLog(root)).trim());
+    const at: unknown =
+      written !== null && typeof written === 'object' ? Reflect.get(written, 'at') : undefined;
+
+    expect(typeof at).toBe('string');
+    expect(Number.isNaN(Date.parse(String(at)))).toBe(false);
   });
 
   it('appends, since the log is a history rather than the latest answer', async () => {
