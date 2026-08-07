@@ -1157,4 +1157,38 @@ looks_for_toolchain 3 ||
 echo "acceptance: the hidden command stays hidden"
 "$KET" --help 2>&1 | grep -q 'gate' && fail "gate is listed in the top level help"
 
+echo "acceptance: the compiled binary serves the surface chrome"
+mkdir -p "$PROJECT/.ket/items/ORD-1"
+cat >"$PROJECT/.ket/items/ORD-1/item.yaml" <<'ITEM'
+title: The surface item
+kind: feature
+size: story
+status: designing
+children: []
+ITEM
+cat >"$PROJECT/.ket/items/ORD-1/solution-design.md" <<'DESIGN'
+# Solution design
+
+The chrome arrives embedded, so the compiled binary serves it anywhere.
+DESIGN
+SHOWN_LOG="$SANDBOX/surface-show.log"
+(cd "$PROJECT" && "$KET" item show ORD-1 --headless >"$SHOWN_LOG" 2>&1) &
+SHOW_PID=$!
+for _ in $(seq 1 50); do
+  grep -q 'address' "$SHOWN_LOG" 2>/dev/null && break
+  sleep 0.2
+done
+grep -q 'address' "$SHOWN_LOG" || fail "the surface never announced its address"
+ADDRESS="$(python3 -c 'import json,sys; print(json.loads(list(open(sys.argv[1]))[-1])["address"])' "$SHOWN_LOG")"
+CHROME="$(curl -fsS "$ADDRESS" || true)"
+kill "$SHOW_PID" 2>/dev/null || true
+wait "$SHOW_PID" 2>/dev/null || true
+case "$CHROME" in
+*ResolveMessage*) fail "the surface chrome resolves modules at runtime" ;;
+esac
+case "$CHROME" in
+*d2h*) ;;
+*) fail "the surface chrome carries no diff styles" ;;
+esac
+
 echo "acceptance: $CHECKED gate decisions checked, all as specified"

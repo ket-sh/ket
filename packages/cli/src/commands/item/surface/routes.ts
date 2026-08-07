@@ -1,10 +1,8 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
-import { readFile, writeFile } from 'node:fs/promises';
-import { createRequire } from 'node:module';
+import { writeFile } from 'node:fs/promises';
 import { basename, dirname, resolve } from 'node:path';
 import { text } from 'node:stream/consumers';
-import { fileURLToPath } from 'node:url';
 
 import type { BlastArtifact } from './blast.ts';
 
@@ -22,79 +20,32 @@ export function pathOf(request: IncomingMessage): string {
   return new URL(String(request.url), 'http://surface').pathname;
 }
 
-const resolveModulePath = createRequire(import.meta.url).resolve;
+// The embedded assets weigh close to a megabyte, so only the requests that
+// serve them pay for loading the module the generator bakes them into.
+let carriedAssets: Promise<typeof import('./styles.generated.ts')> | undefined;
+
+async function assetsCarried(): Promise<typeof import('./styles.generated.ts')> {
+  carriedAssets ??= import('./styles.generated.ts');
+
+  return carriedAssets;
+}
 
 let chromeStyles: Promise<string> | undefined;
 
 async function stylesChrome(): Promise<string> {
-  chromeStyles ??= Promise.all([
-    readFile(fileURLToPath(new URL('surface.css', import.meta.url)), 'utf8'),
-    readFile(resolveModulePath('diff2html/bundles/css/diff2html.min.css'), 'utf8'),
-    readFile(resolveModulePath('gridstack/dist/gridstack.min.css'), 'utf8'),
-  ]).then(([surface, diff, grid]) => `${schemeScoped(diff)}\n${grid}\n${surface}`);
+  chromeStyles ??= assetsCarried().then(
+    (carried) =>
+      `${schemeScoped(carried.DIFF_STYLES)}\n${carried.GRID_STYLES}\n${carried.SURFACE_STYLES}`,
+  );
 
   return chromeStyles;
 }
 
-const scripts = new Map<string, Promise<string>>();
-
-interface BundleMaker {
-  build(options: { entrypoints: string[]; target: string }): Promise<{
-    outputs: { text(): Promise<string> }[];
-  }>;
-}
-
-function isBundleMaker(held: unknown): held is BundleMaker {
-  return (
-    typeof held === 'object' && held !== null && 'build' in held && typeof held.build === 'function'
-  );
-}
-
-function bundleMaker(): BundleMaker | undefined {
-  const held: unknown = Reflect.get(globalThis, 'Bun');
-
-  return isBundleMaker(held) ? held : undefined;
-}
-
-async function bundledClient(maker: BundleMaker): Promise<string> {
-  const entry = fileURLToPath(new URL('client/main.ts', import.meta.url));
-  const built = await maker.build({ entrypoints: [entry], target: 'browser' });
-  const output = built.outputs[0];
-
-  if (output === undefined) {
-    throw new Error('refused: the client bundle came out empty');
-  }
-
-  return output.text();
-}
-
-async function serveClient(response: ServerResponse): Promise<void> {
-  const maker = bundleMaker();
-
-  if (maker === undefined) {
-    response.writeHead(501).end('refused: the surface client serves under bun');
-
-    return;
-  }
-
-  const held = scripts.get('/surface.js') ?? bundledClient(maker);
-
-  scripts.set('/surface.js', held);
-  response.writeHead(200, { 'content-type': 'text/javascript; charset=utf-8' }).end(await held);
-}
-
 async function serveAsset(path: string, response: ServerResponse): Promise<void> {
-  if (path === '/surface.js') {
-    await serveClient(response);
+  const assets = await assetsCarried();
+  const carried = path === '/surface.js' ? assets.CLIENT_SCRIPT : assets.GRID_SCRIPT;
 
-    return;
-  }
-
-  const source = resolveModulePath('gridstack/dist/gridstack-all.js');
-  const held = scripts.get(path) ?? readFile(source, 'utf8');
-
-  scripts.set(path, held);
-  response.writeHead(200, { 'content-type': 'text/javascript; charset=utf-8' }).end(await held);
+  response.writeHead(200, { 'content-type': 'text/javascript; charset=utf-8' }).end(carried);
 }
 
 function featureTarget(itemDir: string, name: string): string | undefined {

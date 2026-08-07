@@ -9,6 +9,7 @@
   "mutate": [
     "src/**/*.ts",
     "!src/**/*.test.ts",
+    "!src/commands/item/surface/styles.generated.ts",
     "!src/main.ts",
     "!src/run.ts",
     "!src/commands/*/command.ts",

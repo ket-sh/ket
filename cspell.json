@@ -26,7 +26,8 @@
     "cspell-words.txt",
     "**/*.mp4",
     "**/*.webp",
-    "presets/*/src/contents.generated.ts"
+    "presets/*/src/contents.generated.ts",
+    "packages/cli/src/commands/item/surface/styles.generated.ts"
   ],
   "useGitignore": true,
   "overrides": [
