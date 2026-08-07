@@ -27,7 +27,14 @@ can. The product sentence: the map that can't go stale.
 
 ## The map file
 
-One product, one map, one home: `.ket/story-map.yaml`. The owner's ruling on
+One product, one map, one home: `.ket/story-map.yaml`. YAML because the map
+is a document a person edits by hand in a pull request, and a hand-edited
+document earns comments and quiet diffs. The owner's companion ruling: the
+rest of `.ket`'s structured documents move to YAML with it, so the directory
+speaks one document format. The event log stays a stream, and the board
+stays prose. That conversion is its own branch, not this one.
+
+The owner's ruling on
 separate web and API repositories: don't solve it now. A web project keeps
 its map in the web repository. The future monorepo preset gives the map its
 obvious root home, and someone who splits surfaces across repositories is on
