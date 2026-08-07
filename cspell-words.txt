@@ -49,10 +49,12 @@ gsub
 jscpd
 kanagawa
 ket
+keycap
 knip
 kubeconform
 labelledby
 lefthook
+lerp
 libx
 lockfiles
 magick
