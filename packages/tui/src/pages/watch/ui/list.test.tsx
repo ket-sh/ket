@@ -24,13 +24,23 @@ async function settled(): Promise<string> {
   return rendered?.captureCharFrame() ?? '';
 }
 
-type Press = string | { key: string; lands: string };
+type Press = string | { key: string; lands?: string; leaves?: string };
 
-async function landed(marker: string | undefined): Promise<string> {
+function settledDown(press: Press): (frame: string) => boolean {
+  if (typeof press === 'string') {
+    return () => true;
+  }
+
+  return (frame) =>
+    (press.lands === undefined || frame.includes(press.lands)) &&
+    (press.leaves === undefined || !frame.includes(press.leaves));
+}
+
+async function landed(done: (frame: string) => boolean): Promise<string> {
   const started = Date.now();
   let frame = await settled();
 
-  while (marker !== undefined && !frame.includes(marker) && Date.now() - started < 5000) {
+  while (!done(frame) && Date.now() - started < 15_000) {
     frame = await settled();
   }
 
@@ -45,22 +55,11 @@ async function opening(presses: Press[], feed: ActedFeed = feedOf()): Promise<st
 
   rendered = opened;
 
-  let frame = await landed('K-2');
+  let frame = await landed((seen) => seen.includes('K-2'));
 
   for (const press of presses) {
     createMockKeys(opened.renderer).pressKey(typeof press === 'string' ? press : press.key);
-    frame = await landed(typeof press === 'string' ? undefined : press.lands);
-  }
-
-  return frame;
-}
-
-async function until(seen: (frame: string) => boolean, patience: number): Promise<string> {
-  const started = Date.now();
-  let frame = await settled();
-
-  while (Date.now() - started < patience && !seen(frame)) {
-    frame = await settled();
+    frame = await landed(settledDown(press));
   }
 
   return frame;
@@ -70,6 +69,8 @@ function chosenRow(frame: string): string {
   return frame.split('\n').find((row) => row.includes('►')) ?? '';
 }
 
+const LAID_FLAT: Press = { key: 'v', lands: 'v kanban' };
+
 describe('the list the board also wears', () => {
   it('offers the list from the kanban and names it', async () => {
     const frame = await opening([]);
@@ -78,14 +79,14 @@ describe('the list the board also wears', () => {
   });
 
   it('swaps to the list on v and names the kanban', async () => {
-    const frame = await opening(['v']);
+    const frame = await opening([LAID_FLAT]);
 
     expect(frame).toContain('v kanban');
     expect(frame).not.toContain('v list');
   });
 
   it('shows key, stage, age, title and the refusal at the end of a row', async () => {
-    const frame = await opening(['v']);
+    const frame = await opening([LAID_FLAT]);
 
     expect(frame).toContain('K-1');
     expect(frame).toContain('designing');
@@ -95,30 +96,34 @@ describe('the list the board also wears', () => {
   });
 
   it('walks the flat list with up and down', async () => {
-    const frame = await opening(['v', 'ARROW_DOWN']);
+    const frame = await opening([LAID_FLAT, { key: 'ARROW_DOWN', lands: '► K-1' }]);
 
     expect(chosenRow(frame)).toContain('K-1');
   });
 
   it('opens the journey from a list row', async () => {
-    const frame = await opening(['v', { key: 'RETURN', lands: 'K-2 · journey' }]);
+    const frame = await opening([LAID_FLAT, { key: 'RETURN', lands: 'K-2 · journey' }]);
 
     expect(frame).toContain('K-2 · journey');
   });
 
   it('offers the same gates from a list row', async () => {
-    const frame = await opening(['v', 'a']);
+    const frame = await opening([LAID_FLAT, { key: 'a', lands: 'approve gate' }]);
 
     expect(frame).toContain('approve gate');
   });
 
   it('keeps the selection on a card a gate just moved', async () => {
-    await opening(['v', 'a', 'RETURN']);
+    await opening([
+      LAID_FLAT,
+      { key: 'a', lands: 'approve gate' },
+      { key: 'RETURN', lands: '✓ passed' },
+    ]);
 
-    const frame = await until((seen) => !seen.includes('approve gate'), 5000);
+    const frame = await landed((seen) => !seen.includes('approve gate'));
     const row = chosenRow(frame);
 
     expect(row).toContain('K-2');
     expect(row).toContain('implementing');
-  }, 8000);
+  }, 20_000);
 });

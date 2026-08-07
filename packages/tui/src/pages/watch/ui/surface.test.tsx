@@ -7,7 +7,7 @@ import { feedOf, NOW } from './watch-fixtures.ts';
 
 type Key = 'ARROW_RIGHT' | 'ARROW_LEFT' | 'ARROW_UP' | 'ARROW_DOWN' | 'RETURN' | 'ESCAPE' | 'TAB';
 
-type Press = Key | { key: Key; lands: string };
+type Press = Key | { key: Key; lands?: string; leaves?: string };
 
 let rendered: Awaited<ReturnType<typeof testRender>> | undefined;
 
@@ -26,11 +26,21 @@ async function settled(): Promise<string> {
   return rendered?.captureCharFrame() ?? '';
 }
 
-async function landed(marker: string | undefined): Promise<string> {
+function settledDown(press: Press): (frame: string) => boolean {
+  if (typeof press === 'string') {
+    return () => true;
+  }
+
+  return (frame) =>
+    (press.lands === undefined || frame.includes(press.lands)) &&
+    (press.leaves === undefined || !frame.includes(press.leaves));
+}
+
+async function landed(done: (frame: string) => boolean): Promise<string> {
   const started = Date.now();
   let frame = await settled();
 
-  while (marker !== undefined && !frame.includes(marker) && Date.now() - started < 5000) {
+  while (!done(frame) && Date.now() - started < 15_000) {
     frame = await settled();
   }
 
@@ -45,20 +55,20 @@ async function opening(presses: Press[]): Promise<string> {
 
   rendered = opened;
 
-  let frame = await landed('K-2');
+  let frame = await landed((seen) => seen.includes('K-2'));
 
   for (const press of presses) {
     createMockKeys(opened.renderer).pressKey(typeof press === 'string' ? press : press.key);
-    frame = await landed(typeof press === 'string' ? undefined : press.lands);
+    frame = await landed(settledDown(press));
   }
 
   return frame;
 }
 
 const SPEC_PATH: Press[] = [
-  'ARROW_RIGHT',
+  { key: 'ARROW_RIGHT', lands: '║ K-1' },
   { key: 'RETURN', lands: 'K-1 · journey' },
-  'ARROW_DOWN',
+  { key: 'ARROW_DOWN', lands: '║ spec.md' },
   { key: 'RETURN', lands: 'K-1 · Spec' },
 ];
 
@@ -85,9 +95,9 @@ describe('the surface a node opens', () => {
 
   it('dives into a child journey and grows the path', async () => {
     const frame = await opening([
-      'ARROW_RIGHT',
+      { key: 'ARROW_RIGHT', lands: '║ K-1' },
       { key: 'RETURN', lands: 'K-1 · journey' },
-      'ARROW_UP',
+      { key: 'ARROW_UP', lands: '║ K-2' },
       { key: 'RETURN', lands: 'K-2 · journey' },
     ]);
 
