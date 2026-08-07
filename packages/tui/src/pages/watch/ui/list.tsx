@@ -1,24 +1,15 @@
 import type { ReactNode } from 'react';
 
 import type { KanbanCardView, KanbanColumnView } from '../../../shared/model';
-import type { Seat } from '../model/seat.ts';
 
-import { ageOf } from '../../../shared/lib';
-import { STAGE_COLOR, SUBTEXT, TEXT } from '../../../shared/theme';
-
-const MUTED = '#5f5f5f';
-
-const REFUSED = '#d75f5f';
+import { stageColorOf, useTheme } from '../../../shared/theme';
+import { agedOf } from '../lib/aged.ts';
 
 const KEY_ROOM = 7;
 
 const STAGE_ROOM = 19;
 
 const AGE_ROOM = 5;
-
-function agedOf(card: KanbanCardView, now: string): string {
-  return card.since === undefined ? '' : ageOf(card.since, now);
-}
 
 function Row({
   card,
@@ -29,15 +20,19 @@ function Row({
   now: string;
   chosen: boolean;
 }): ReactNode {
+  const { theme } = useTheme();
+
   return (
     <text wrapMode="none">
-      <span fg={TEXT}>{chosen ? '► ' : '  '}</span>
+      <span fg={theme.text}>{chosen ? '► ' : '  '}</span>
       <strong>{card.key.padEnd(KEY_ROOM)}</strong>
-      <span fg={STAGE_COLOR[card.status] ?? SUBTEXT}>{card.status.padEnd(STAGE_ROOM)}</span>
-      <span fg={MUTED}>{agedOf(card, now).padEnd(AGE_ROOM)}</span>
-      <span fg={chosen ? TEXT : SUBTEXT}>{card.title}</span>
+      <span fg={stageColorOf(theme)[card.status] ?? theme.subtext}>
+        {card.status.padEnd(STAGE_ROOM)}
+      </span>
+      <span fg={theme.gray}>{agedOf(card, now).padEnd(AGE_ROOM)}</span>
+      <span fg={chosen ? theme.text : theme.subtext}>{card.title}</span>
       {card.refusal === undefined ? null : (
-        <span fg={REFUSED}>{`   ! ${card.refusal.reason}`}</span>
+        <span fg={theme.red}>{`   ! ${card.refusal.reason}`}</span>
       )}
     </text>
   );
@@ -46,11 +41,11 @@ function Row({
 export function ListView({
   lived,
   now,
-  seat,
+  chosenKey,
 }: {
   lived: KanbanColumnView[];
   now: string;
-  seat: Seat;
+  chosenKey: string | undefined;
 }): ReactNode {
   const cards = lived.flatMap((column) => column.cards);
 
@@ -58,7 +53,7 @@ export function ListView({
     <box flexDirection="column" paddingTop={1}>
       {cards.map(
         (card): ReactNode => (
-          <Row key={card.key} card={card} now={now} chosen={card.key === seat.chosen?.key} />
+          <Row key={card.key} card={card} now={now} chosen={card.key === chosenKey} />
         ),
       )}
     </box>

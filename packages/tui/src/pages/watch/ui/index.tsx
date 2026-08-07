@@ -5,9 +5,10 @@ import { useEffect, useState } from 'react';
 
 import type { BoardFeed, GateActionView, KanbanColumnView } from '../../../shared/model';
 import type { Frame, FrameStack } from '../model/frames.ts';
-import type { BoardLayout } from '../model/keys.ts';
+import type { BoardLayout, Picker, PressDeps } from '../model/keys.ts';
 import type { Seat } from '../model/seat.ts';
 
+import { ThemeProvider, THEMES, useTheme } from '../../../shared/theme';
 import { useBoardState } from '../model/board-state.ts';
 import { crumbOf, outstayed } from '../model/frames.ts';
 import { GATE_KEYS, press } from '../model/keys.ts';
@@ -19,10 +20,7 @@ import { GateModal } from './gate.tsx';
 import { JourneyPage } from './journey.tsx';
 import { ListView } from './list.tsx';
 import { SurfacePage, surfaceMost } from './surface.tsx';
-
-const MUTED = '#5f5f5f';
-
-const FAINT = '#464646';
+import { ThemePicker } from './theme.tsx';
 
 const NARROW = 80;
 
@@ -77,14 +75,19 @@ function HeaderRow({
   seat: Seat;
   layout: BoardLayout;
 }): ReactNode {
+  const { theme, name } = useTheme();
+
   return (
     <box flexDirection="row" justifyContent="space-between">
       <text wrapMode="none">
         <strong>ket</strong>
-        <span fg={MUTED}>{`  ${crumbOf(stack.frames)}`}</span>
+        <span fg={theme.gray}>{`  ${crumbOf(stack.frames)}`}</span>
       </text>
-      <text fg={FAINT} wrapMode="none">
-        {hintOf(stack.top.kind, seat.chosen?.offers ?? [], layout)}
+      <text wrapMode="none">
+        <span fg={theme.subtext}>{name}</span>
+        <span
+          fg={theme.overlay}
+        >{`  ${hintOf(stack.top.kind, seat.chosen?.offers ?? [], layout)}`}</span>
       </text>
     </box>
   );
@@ -103,7 +106,7 @@ interface RoomProps {
 
 function BoardArea({ lived, seat, now, width, layout }: Omit<RoomProps, 'stack'>): ReactNode {
   if (layout === 'list') {
-    return <ListView lived={lived} now={now} seat={seat} />;
+    return <ListView lived={lived} now={now} chosenKey={seat.chosen?.key} />;
   }
 
   return <BoardView lived={lived} now={now} wide={width >= NARROW} seat={seat} />;
@@ -168,7 +171,46 @@ function useMovedCardFollow(stack: FrameStack, seat: Seat, columns: KanbanColumn
   }, [columns, stack, seat]);
 }
 
-export function WatchPage({
+function usePicker(stack: FrameStack): Picker {
+  const wardrobe = useTheme();
+  const [at, setAt] = useState<number | undefined>(undefined);
+
+  const open = (): void => {
+    if (stack.top.kind !== 'gate') {
+      setAt(THEMES.findIndex(([name]) => name === wardrobe.name));
+    }
+  };
+
+  const move = (delta: number): void => {
+    const landing = Math.min(Math.max((at ?? 0) + delta, 0), THEMES.length - 1);
+
+    setAt(landing);
+    wardrobe.preview(landing);
+  };
+
+  const keep = (): void => {
+    if (at !== undefined) {
+      wardrobe.keep(at);
+    }
+
+    setAt(undefined);
+  };
+
+  const close = (): void => {
+    wardrobe.revert();
+    setAt(undefined);
+  };
+
+  return { at, open, move, keep, close };
+}
+
+function useWatchKeys(deps: PressDeps): void {
+  useKeyboard((key) => {
+    press({ name: key.name, seq: key.sequence, ctrl: key.ctrl }, deps);
+  });
+}
+
+function WatchRoom({
   feed,
   onQuit,
   clock = () => new Date().toISOString(),
@@ -179,28 +221,15 @@ export function WatchPage({
   const seat = useSeat(lived);
   const { width, height } = useTerminalDimensions();
   const [layout, setLayout] = useState<BoardLayout>('kanban');
+  const picker = usePicker(stack);
   const most = stack.top.kind === 'surface' ? surfaceMost(stack.top, height - 3) : 0;
+  const swap = (): void => {
+    setLayout((worn) => (worn === 'kanban' ? 'list' : 'kanban'));
+  };
 
   useCeremonyCurtain(stack, tick);
   useMovedCardFollow(stack, seat, columns);
-
-  useKeyboard((key) => {
-    press(
-      { name: key.name, seq: key.sequence, ctrl: key.ctrl },
-      {
-        onQuit,
-        refresh,
-        stack,
-        seat,
-        most,
-        tick,
-        layout,
-        swap: () => {
-          setLayout((worn) => (worn === 'kanban' ? 'list' : 'kanban'));
-        },
-      },
-    );
-  });
+  useWatchKeys({ onQuit, refresh, stack, seat, most, tick, layout, swap, picker });
 
   return (
     <box flexDirection="column" paddingTop={1} paddingLeft={1} paddingRight={1}>
@@ -216,6 +245,17 @@ export function WatchPage({
         layout={layout}
       />
       <CeremonyOverlay stack={stack} columns={columns} tick={tick} width={width} height={height} />
+      {picker.at === undefined ? null : (
+        <ThemePicker at={picker.at} width={width} height={height} />
+      )}
     </box>
+  );
+}
+
+export function WatchPage(props: WatchPageProps): ReactNode {
+  return (
+    <ThemeProvider>
+      <WatchRoom {...props} />
+    </ThemeProvider>
   );
 }

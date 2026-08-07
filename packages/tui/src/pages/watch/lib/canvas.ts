@@ -1,20 +1,10 @@
 import type { Cell, Ln } from '../../../shared/lib';
 import type { JourneyView } from '../../../shared/model';
+import type { Theme } from '../../../shared/theme';
 import type { PlacedNode } from './layout.ts';
 
 import { ageOf, boxAt, gridOf, lerpHex, put, spansOf, writeText } from '../../../shared/lib';
-import {
-  BASE,
-  BLUE,
-  GREEN,
-  OVERLAY,
-  PINK,
-  STAGE_COLOR,
-  SUBTEXT,
-  SURFACE1,
-  TEXT,
-  YELLOW,
-} from '../../../shared/theme';
+import { KANAGAWA, stageColorOf } from '../../../shared/theme';
 import { NODE_H, NODE_W, placedOf } from './layout.ts';
 
 const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
@@ -24,16 +14,16 @@ export interface Viewport {
   height: number;
 }
 
-function frameColorOf(node: PlacedNode): string {
+function frameColorOf(node: PlacedNode, theme: Theme): string {
   if (node.kind === 'stage') {
-    return STAGE_COLOR[node.title] ?? OVERLAY;
+    return stageColorOf(theme)[node.title] ?? theme.overlay;
   }
 
-  return node.kind === 'artifact' ? BLUE : PINK;
+  return node.kind === 'artifact' ? theme.blue : theme.pink;
 }
 
-function pulseOf(color: string, tick: number): string {
-  return lerpHex(color, TEXT, 0.3 + 0.3 * Math.sin(tick * 0.7));
+function pulseOf(color: string, tick: number, theme: Theme): string {
+  return lerpHex(color, theme.text, 0.3 + 0.3 * Math.sin(tick * 0.7));
 }
 
 function markGlyphOf(node: PlacedNode, tick: number): string {
@@ -44,12 +34,12 @@ function markGlyphOf(node: PlacedNode, tick: number): string {
   return node.mark === 'active' ? (SPINNER[tick % SPINNER.length] ?? '●') : '○';
 }
 
-function markColorOf(node: PlacedNode): string {
+function markColorOf(node: PlacedNode, theme: Theme): string {
   if (node.mark === 'done') {
-    return GREEN;
+    return theme.green;
   }
 
-  return node.mark === 'active' ? YELLOW : OVERLAY;
+  return node.mark === 'active' ? theme.yellow : theme.overlay;
 }
 
 interface Border {
@@ -57,12 +47,12 @@ interface Border {
   fg: string;
 }
 
-function borderOf(node: PlacedNode, selectedId: string, tick: number): Border {
-  const frame = frameColorOf(node);
+function borderOf(node: PlacedNode, selectedId: string, tick: number, theme: Theme): Border {
+  const frame = frameColorOf(node, theme);
 
   return node.id === selectedId
-    ? { style: 'double', fg: pulseOf(frame, tick) }
-    : { style: 'rounded', fg: lerpHex(frame, BASE, 0.55) };
+    ? { style: 'double', fg: pulseOf(frame, tick, theme) }
+    : { style: 'rounded', fg: lerpHex(frame, theme.base, 0.55) };
 }
 
 function trimmedTo(title: string, room: number): string {
@@ -73,12 +63,17 @@ function subOf(node: PlacedNode, now: string, tick: number): string {
   return `${markGlyphOf(node, tick)} ${node.at === undefined ? 'waiting' : ageOf(node.at, now)}`;
 }
 
+interface Clock {
+  now: string;
+  tick: number;
+}
+
 function drawNode(
   grid: Cell[][],
   node: PlacedNode,
   border: Border,
-  now: string,
-  tick: number,
+  clock: Clock,
+  theme: Theme,
 ): void {
   boxAt(grid, node.x, node.y, NODE_W, NODE_H, border.style, border.fg);
 
@@ -89,12 +84,18 @@ function drawNode(
     node.x + 2,
     node.y + 1,
     trimmedTo(node.title, room),
-    node.mark === 'pending' ? SUBTEXT : TEXT,
+    node.mark === 'pending' ? theme.subtext : theme.text,
   );
-  writeText(grid, node.x + 2, node.y + 2, subOf(node, now, tick), markColorOf(node));
+  writeText(
+    grid,
+    node.x + 2,
+    node.y + 2,
+    subOf(node, clock.now, clock.tick),
+    markColorOf(node, theme),
+  );
 
   if (node.kind === 'child') {
-    writeText(grid, node.x + NODE_W - 3, node.y + 1, '»', PINK);
+    writeText(grid, node.x + NODE_W - 3, node.y + 1, '»', theme.pink);
   }
 }
 
@@ -155,6 +156,7 @@ function drawnFlows(
   journey: JourneyView,
   nodes: PlacedNode[],
   selectedId: string,
+  theme: Theme,
 ): [number, number][][] {
   const byId = new Map(nodes.map((node) => [node.id, node]));
   const warm = journey.edges.filter(([from, to]) => from === selectedId || to === selectedId);
@@ -170,11 +172,11 @@ function drawnFlows(
   };
 
   for (const edge of cold) {
-    drawn(edge, SURFACE1);
+    drawn(edge, theme.surface1);
   }
 
   for (const edge of warm) {
-    const cells = drawn(edge, OVERLAY);
+    const cells = drawn(edge, theme.overlay);
 
     if (cells !== undefined) {
       flows.push(cells);
@@ -196,12 +198,12 @@ function centerOf(selected: PlacedNode | undefined): { x: number; y: number } {
   return { x: selected.x + NODE_W / 2, y: selected.y + NODE_H / 2 };
 }
 
-function dotted(grid: Cell[][], flows: [number, number][][], tick: number): void {
+function dotted(grid: Cell[][], flows: [number, number][][], tick: number, theme: Theme): void {
   for (const cells of flows) {
     const dot = cells[tick % cells.length];
 
     if (dot !== undefined) {
-      writeText(grid, dot[0], dot[1], '●', BLUE);
+      writeText(grid, dot[0], dot[1], '●', theme.blue);
     }
   }
 }
@@ -212,14 +214,15 @@ export function journeyRows(
   now: string,
   tick: number,
   view: Viewport,
+  theme: Theme = KANAGAWA,
 ): Ln[] {
   const placed = placedOf(journey);
   const grid = gridOf(Math.max(placed.width, view.width), Math.max(placed.height, view.height));
 
-  dotted(grid, drawnFlows(grid, journey, placed.nodes, selectedId), tick);
+  dotted(grid, drawnFlows(grid, journey, placed.nodes, selectedId, theme), tick, theme);
 
   for (const node of placed.nodes) {
-    drawNode(grid, node, borderOf(node, selectedId, tick), now, tick);
+    drawNode(grid, node, borderOf(node, selectedId, tick, theme), { now, tick }, theme);
   }
 
   const center = centerOf(placed.nodes.find((node) => node.id === selectedId));

@@ -1,14 +1,3 @@
-export {
-  BASE,
-  BLUE,
-  GREEN,
-  OVERLAY,
-  PINK,
-  RED,
-  STAGE_COLOR,
-  SUBTEXT,
-  SURFACE1,
-  TEXT,
-  VIOLET,
-  YELLOW,
-} from './palette.ts';
+export { ThemeProvider, useTheme } from './context.tsx';
+export type { Theme } from './themes.ts';
+export { KANAGAWA, stageColorOf, THEMES } from './themes.ts';

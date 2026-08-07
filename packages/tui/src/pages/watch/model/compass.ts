@@ -17,3 +17,9 @@ export const DELTA: Record<Direction, Nudge> = {
 export function asDirection(name: string): Direction | undefined {
   return DIRECTIONS.find((direction) => direction === name);
 }
+
+export interface Pressed {
+  name: string;
+  seq: string;
+  ctrl: boolean;
+}

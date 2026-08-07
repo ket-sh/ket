@@ -1,16 +1,8 @@
 import type { Ln } from '../../../shared/lib';
 import type { CalloutView } from '../../../shared/model';
+import type { Theme } from '../../../shared/theme';
 
-import {
-  BASE,
-  BLUE,
-  OVERLAY,
-  SUBTEXT,
-  SURFACE1,
-  TEXT,
-  VIOLET,
-  YELLOW,
-} from '../../../shared/theme';
+import { KANAGAWA } from '../../../shared/theme';
 
 export const SUPERSCRIPT = ['¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'];
 
@@ -18,11 +10,11 @@ export function blank(): Ln {
   return [{ text: ' ' }];
 }
 
-function chipSpan(piece: string): Ln[number] {
-  return { text: ` ${piece} `, fg: BLUE, bg: SURFACE1 };
+function chipSpan(piece: string, theme: Theme): Ln[number] {
+  return { text: ` ${piece} `, fg: theme.blue, bg: theme.surface1 };
 }
 
-function chipsOf(text: string, base: string): Ln {
+function chipsOf(text: string, base: string, theme: Theme): Ln {
   const spans: Ln = [];
 
   text.split('`').forEach((piece, index) => {
@@ -30,7 +22,7 @@ function chipsOf(text: string, base: string): Ln {
       return;
     }
 
-    spans.push(index % 2 === 1 ? chipSpan(piece) : { text: piece, fg: base });
+    spans.push(index % 2 === 1 ? chipSpan(piece, theme) : { text: piece, fg: base });
   });
 
   return spans.length === 0 ? blank() : spans;
@@ -45,7 +37,12 @@ function trimmedEnds(span: Ln[number], at: number, length: number): { lead: Ln; 
   };
 }
 
-function claimed(span: Ln[number], callout: CalloutView, order: number): Ln | undefined {
+function claimed(
+  span: Ln[number],
+  callout: CalloutView,
+  order: number,
+  theme: Theme,
+): Ln | undefined {
   const at = span.bg === undefined ? span.text.indexOf(callout.claim) : -1;
 
   if (at < 0) {
@@ -56,17 +53,17 @@ function claimed(span: Ln[number], callout: CalloutView, order: number): Ln | un
 
   return [
     ...lead,
-    { text: callout.claim, fg: YELLOW },
-    { text: SUPERSCRIPT[order] ?? '¹', fg: YELLOW },
+    { text: callout.claim, fg: theme.yellow },
+    { text: SUPERSCRIPT[order] ?? '¹', fg: theme.yellow },
     ...tail,
   ];
 }
 
-function markClaims(line: Ln, callouts: CalloutView[]): Ln {
+function markClaims(line: Ln, callouts: CalloutView[], theme: Theme): Ln {
   let current = line;
 
   callouts.forEach((callout, order) => {
-    current = current.flatMap((span) => claimed(span, callout, order) ?? [span]);
+    current = current.flatMap((span) => claimed(span, callout, order, theme) ?? [span]);
   });
 
   return current;
@@ -74,15 +71,15 @@ function markClaims(line: Ln, callouts: CalloutView[]): Ln {
 
 const BADGE_LINE = /^(Status|Date): (.+)/;
 
-function headed(line: string): Ln | undefined {
+function headed(line: string, theme: Theme): Ln | undefined {
   if (line.startsWith('## ')) {
-    return [{ text: line.slice(3), fg: BLUE }];
+    return [{ text: line.slice(3), fg: theme.blue }];
   }
 
-  return line.startsWith('# ') ? [{ text: line.slice(2), fg: VIOLET }] : undefined;
+  return line.startsWith('# ') ? [{ text: line.slice(2), fg: theme.violet }] : undefined;
 }
 
-function badged(line: string): Ln | undefined {
+function badged(line: string, theme: Theme): Ln | undefined {
   const badge = BADGE_LINE.exec(line.trim());
 
   if (badge === null) {
@@ -90,29 +87,37 @@ function badged(line: string): Ln | undefined {
   }
 
   return [
-    { text: ` ${badge[1] ?? ''} `, fg: BASE, bg: OVERLAY },
-    { text: ` ${badge[2] ?? ''}`, fg: YELLOW },
+    { text: ` ${badge[1] ?? ''} `, fg: theme.base, bg: theme.overlay },
+    { text: ` ${badge[2] ?? ''}`, fg: theme.yellow },
   ];
 }
 
-function proseLine(line: string, callouts: CalloutView[]): Ln {
+function proseLine(line: string, callouts: CalloutView[], theme: Theme): Ln {
   if (line === '') {
     return blank();
   }
 
-  const special = badged(line) ?? headed(line);
+  const special = badged(line, theme) ?? headed(line, theme);
 
   if (special !== undefined) {
     return special;
   }
 
   if (line.startsWith('- ')) {
-    return markClaims([{ text: '• ', fg: OVERLAY }, ...chipsOf(line.slice(2), SUBTEXT)], callouts);
+    return markClaims(
+      [{ text: '• ', fg: theme.overlay }, ...chipsOf(line.slice(2), theme.subtext, theme)],
+      callouts,
+      theme,
+    );
   }
 
-  return markClaims(chipsOf(line, TEXT), callouts);
+  return markClaims(chipsOf(line, theme.text, theme), callouts, theme);
 }
 
-export function proseLn(source: string, callouts: CalloutView[] = []): Ln[] {
-  return source.split('\n').map((line) => proseLine(line, callouts));
+export function proseLn(
+  source: string,
+  callouts: CalloutView[] = [],
+  theme: Theme = KANAGAWA,
+): Ln[] {
+  return source.split('\n').map((line) => proseLine(line, callouts, theme));
 }

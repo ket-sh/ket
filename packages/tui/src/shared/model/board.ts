@@ -78,18 +78,16 @@ export type SurfaceDocView =
       rows: VerdictRowView[];
     }
   | { kind: 'diff'; label: string; text: string }
-  | {
-      kind: 'blast';
-      label: string;
-      base: string;
-      collapse: number;
-      budget: number;
-      shown: number;
-      uncollapsedNodes: number;
-      uncollapsedEdges: number;
-      sketch: SketchView;
-    }
+  | ({ kind: 'blast'; label: string; base: string; sketch: SketchView } & BlastFiguresView)
   | { kind: 'ledger'; label: string; lines: LedgerLineView[] };
+
+interface BlastFiguresView {
+  collapse: number;
+  budget: number;
+  shown: number;
+  uncollapsedNodes: number;
+  uncollapsedEdges: number;
+}
 
 export interface JourneyNodeView {
   id: string;

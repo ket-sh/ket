@@ -3,14 +3,22 @@ import type { ReactNode } from 'react';
 import type { Frame } from '../model/frames.ts';
 
 import { lerpHex } from '../../../shared/lib';
-import { BASE, BLUE } from '../../../shared/theme';
+import { useTheme } from '../../../shared/theme';
 import { SpanRow } from '../../../shared/ui';
 import { docLines } from '../lib/lines.ts';
 
 type SurfaceFrame = Extract<Frame, { kind: 'surface' }>;
 
+export function pageRoom(height: number, least: number): number {
+  return Math.max(least, height - 5);
+}
+
+export function pageTone(color: string, ground: { base: string }): string {
+  return lerpHex(color, ground.base, 0.35);
+}
+
 function surfaceRoom(height: number): number {
-  return Math.max(4, height - 5);
+  return pageRoom(height, 4);
 }
 
 export function surfaceMost(frame: SurfaceFrame, height: number): number {
@@ -22,7 +30,8 @@ function clamp(value: number, low: number, high: number): number {
 }
 
 export function SurfacePage({ frame, height }: { frame: SurfaceFrame; height: number }): ReactNode {
-  const lines = docLines(frame.doc, frame.aud);
+  const { theme } = useTheme();
+  const lines = docLines(frame.doc, frame.aud, theme);
   const room = surfaceRoom(height);
   const off = clamp(frame.off, 0, Math.max(0, lines.length - room));
   const shown = lines.slice(off, off + room);
@@ -35,7 +44,7 @@ export function SurfacePage({ frame, height }: { frame: SurfaceFrame; height: nu
     <box
       border
       borderStyle="rounded"
-      borderColor={lerpHex(BLUE, BASE, 0.35)}
+      borderColor={pageTone(theme.blue, theme)}
       title={` ${frame.title}${range} `}
       flexDirection="column"
       flexGrow={1}

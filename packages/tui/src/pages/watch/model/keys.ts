@@ -1,18 +1,20 @@
 import type { GateActionView, KanbanCardView } from '../../../shared/model';
-import type { Direction } from './compass.ts';
+import type { Direction, Pressed } from './compass.ts';
 import type { Frame, FrameStack } from './frames.ts';
 import type { Seat } from './seat.ts';
 
-import { erased, inserted, moved, split } from '../lib/edit.ts';
 import { asDirection, DELTA } from './compass.ts';
-
-export interface Pressed {
-  name: string;
-  seq: string;
-  ctrl: boolean;
-}
+import { editorPress } from './editor-keys.ts';
 
 export type BoardLayout = 'kanban' | 'list';
+
+export interface Picker {
+  at: number | undefined;
+  open: () => void;
+  move: (delta: number) => void;
+  keep: () => void;
+  close: () => void;
+}
 
 export const GATE_KEYS: Record<string, GateActionView> = {
   a: 'approve',
@@ -137,57 +139,6 @@ function surfacePress(name: string, stack: FrameStack, most: number): void {
   SURFACE_MOVES[name]?.(stack, most);
 }
 
-const EDITOR_MOVES: Record<string, (stack: FrameStack) => void> = {
-  escape: (stack) => {
-    stack.pop();
-  },
-  backspace: (stack) => {
-    stack.revise(erased);
-  },
-  return: (stack) => {
-    stack.revise(split);
-  },
-  enter: (stack) => {
-    stack.revise(split);
-  },
-  up: (stack) => {
-    stack.revise((draft) => moved(draft, 'up'));
-  },
-  down: (stack) => {
-    stack.revise((draft) => moved(draft, 'down'));
-  },
-  left: (stack) => {
-    stack.revise((draft) => moved(draft, 'left'));
-  },
-  right: (stack) => {
-    stack.revise((draft) => moved(draft, 'right'));
-  },
-};
-
-function typedInto(key: Pressed, stack: FrameStack): void {
-  if (!key.ctrl && key.seq.length === 1 && key.seq >= ' ') {
-    stack.revise((draft) => inserted(draft, key.seq));
-  }
-}
-
-function editorPress(key: Pressed, stack: FrameStack, tick: number): void {
-  if (key.ctrl && key.name === 's') {
-    stack.save(tick);
-
-    return;
-  }
-
-  const move = EDITOR_MOVES[key.name];
-
-  if (move !== undefined) {
-    move(stack);
-
-    return;
-  }
-
-  typedInto(key, stack);
-}
-
 function ceremonyPress(name: string, stack: FrameStack, tick: number): void {
   if (name === 'escape') {
     stack.pop();
@@ -200,6 +151,28 @@ function ceremonyPress(name: string, stack: FrameStack, tick: number): void {
   }
 }
 
+const PICKER_MOVES: Record<string, (picker: Picker) => void> = {
+  up: (picker) => {
+    picker.move(-1);
+  },
+  down: (picker) => {
+    picker.move(1);
+  },
+  return: (picker) => {
+    picker.keep();
+  },
+  enter: (picker) => {
+    picker.keep();
+  },
+  escape: (picker) => {
+    picker.close();
+  },
+};
+
+function pickerPress(name: string, picker: Picker): void {
+  PICKER_MOVES[name]?.(picker);
+}
+
 export interface PressDeps {
   onQuit: () => void;
   refresh: () => void;
@@ -209,6 +182,7 @@ export interface PressDeps {
   tick: number;
   layout: BoardLayout;
   swap: () => void;
+  picker: Picker;
 }
 
 const FRAME_PRESSES: Record<Frame['kind'], (name: string, deps: PressDeps) => void> = {
@@ -227,10 +201,24 @@ const FRAME_PRESSES: Record<Frame['kind'], (name: string, deps: PressDeps) => vo
   edit: () => undefined,
 };
 
-export function press(key: Pressed, deps: PressDeps): void {
+function heldPress(key: Pressed, deps: PressDeps): boolean {
+  if (deps.picker.at !== undefined) {
+    pickerPress(key.name, deps.picker);
+
+    return true;
+  }
+
   if (deps.stack.top.kind === 'edit') {
     editorPress(key, deps.stack, deps.tick);
 
+    return true;
+  }
+
+  return false;
+}
+
+export function press(key: Pressed, deps: PressDeps): void {
+  if (heldPress(key, deps)) {
     return;
   }
 
@@ -242,6 +230,12 @@ export function press(key: Pressed, deps: PressDeps): void {
 
   if (key.name === 'r') {
     deps.refresh();
+
+    return;
+  }
+
+  if (key.name === 't') {
+    deps.picker.open();
 
     return;
   }

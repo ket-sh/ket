@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 import type { JourneyView } from '../../../shared/model';
 
-import { OVERLAY, RED } from '../../../shared/theme';
+import { useTheme } from '../../../shared/theme';
 import { SpanRow } from '../../../shared/ui';
 import { journeyRows } from '../lib/canvas.ts';
 
@@ -23,18 +23,26 @@ export function JourneyPage({
   width,
   height,
 }: JourneyPageProps): ReactNode {
+  const { theme } = useTheme();
   const room = journey.standing === undefined ? 2 : 3;
-  const rows = journeyRows(journey, sel, now, tick, {
-    width: Math.max(20, width - 2),
-    height: Math.max(6, height - room),
-  });
+  const rows = journeyRows(
+    journey,
+    sel,
+    now,
+    tick,
+    {
+      width: Math.max(20, width - 2),
+      height: Math.max(6, height - room),
+    },
+    theme,
+  );
 
   return (
     <box flexDirection="column">
       <box
         border
         borderStyle="rounded"
-        borderColor={OVERLAY}
+        borderColor={theme.overlay}
         title={` ${journey.item} · journey `}
         flexDirection="column"
       >
@@ -45,7 +53,7 @@ export function JourneyPage({
         )}
       </box>
       {journey.standing === undefined ? null : (
-        <text fg={RED} wrapMode="none">{`! ${journey.standing}`}</text>
+        <text fg={theme.red} wrapMode="none">{`! ${journey.standing}`}</text>
       )}
     </box>
   );
