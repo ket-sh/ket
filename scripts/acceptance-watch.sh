@@ -52,6 +52,11 @@ status: triaged
 parent: KWA-1
 children: []
 ITEM
+cat >"$BOARD/.ket/items/KWA-1/solution-design.md" <<'DESIGN'
+# Solution design
+
+The keeper locks the account after five failures.
+DESIGN
 cat >"$BOARD/.ket/events.jsonl" <<'EVENTS'
 {"gate":"transition","outcome":"allowed","about":"triaged","item":"KWA-1","at":"2026-08-07T08:00:00.000Z"}
 {"gate":"transition","outcome":"allowed","about":"designing","item":"KWA-1","at":"2026-08-07T08:05:00.000Z"}
@@ -100,4 +105,32 @@ printf '%s\n' '{"gate":"transition","outcome":"allowed","about":"awaiting-approv
 
 "$PILOTTY" wait-for -s "$SESSION" "awaiting-approval 1" >/dev/null || fail "the board never followed the move"
 
-echo "acceptance: watch walks the canvas and follows the board live"
+"$PILOTTY" key -s "$SESSION" Enter >/dev/null
+"$PILOTTY" wait-for -s "$SESSION" "KWA-1 · journey" >/dev/null || fail "the journey never reopened"
+"$PILOTTY" key -s "$SESSION" Left >/dev/null
+"$PILOTTY" key -s "$SESSION" Enter >/dev/null
+"$PILOTTY" wait-for -s "$SESSION" "KWA-1 · Design" >/dev/null || fail "the surface never opened"
+
+SHOWN="$(screen)"
+shows "Technical" || fail "the surface never showed its audience tabs"
+shows "locks the account after five failures" || fail "the design prose is missing"
+
+"$PILOTTY" key -s "$SESSION" Escape >/dev/null
+"$PILOTTY" wait-for -s "$SESSION" "KWA-1 · journey" >/dev/null || fail "escape never left the surface"
+"$PILOTTY" key -s "$SESSION" Escape >/dev/null
+"$PILOTTY" wait-for -s "$SESSION" "awaiting-approval 1" >/dev/null || fail "escape never returned to the board"
+
+SHOWN="$(screen)"
+shows "a approve" || fail "the board never offered the approve gate"
+
+"$PILOTTY" key -s "$SESSION" a >/dev/null
+"$PILOTTY" wait-for -s "$SESSION" "approve gate" >/dev/null || fail "the ceremony never opened"
+"$PILOTTY" key -s "$SESSION" Enter >/dev/null
+"$PILOTTY" wait-for -s "$SESSION" "passed" >/dev/null || fail "the gate never celebrated"
+"$PILOTTY" wait-for -s "$SESSION" "implementing 1" >/dev/null || fail "the board never showed the move"
+
+sleep 3
+SHOWN="$(screen)"
+shows "approve gate" && fail "the ceremony never closed itself"
+
+echo "acceptance: watch walks the canvas, opens the surfaces, and passes the gate"

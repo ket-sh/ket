@@ -8,7 +8,9 @@ import type { Frame, FrameStack } from '../model/frames.ts';
 import type { BoardLayout, Picker, PressDeps } from '../model/keys.ts';
 import type { Seat } from '../model/seat.ts';
 
+import { lerpHex } from '../../../shared/lib';
 import { ThemeProvider, THEMES, useTheme } from '../../../shared/theme';
+import { Banner } from '../../../shared/ui';
 import { useBoardState } from '../model/board-state.ts';
 import { crumbOf, outstayed } from '../model/frames.ts';
 import { GATE_KEYS, press } from '../model/keys.ts';
@@ -70,18 +72,21 @@ function HeaderRow({
   stack,
   seat,
   layout,
+  tick,
 }: {
   stack: FrameStack;
   seat: Seat;
   layout: BoardLayout;
+  tick: number;
 }): ReactNode {
   const { theme, name } = useTheme();
+  const beat = lerpHex(theme.green, theme.base, tick % 8 < 4 ? 0.1 : 0.5);
 
   return (
     <box flexDirection="row" justifyContent="space-between">
       <text wrapMode="none">
-        <strong>ket</strong>
-        <span fg={theme.gray}>{`  ${crumbOf(stack.frames)}`}</span>
+        <span fg={beat}>{'● '}</span>
+        <span fg={theme.gray}>{crumbOf(stack.frames)}</span>
       </text>
       <text wrapMode="none">
         <span fg={theme.subtext}>{name}</span>
@@ -222,7 +227,7 @@ function WatchRoom({
   const { width, height } = useTerminalDimensions();
   const [layout, setLayout] = useState<BoardLayout>('kanban');
   const picker = usePicker(stack);
-  const most = stack.top.kind === 'surface' ? surfaceMost(stack.top, height - 3) : 0;
+  const most = stack.top.kind === 'surface' ? surfaceMost(stack.top, height - 6) : 0;
   const swap = (): void => {
     setLayout((worn) => (worn === 'kanban' ? 'list' : 'kanban'));
   };
@@ -233,7 +238,8 @@ function WatchRoom({
 
   return (
     <box flexDirection="column" paddingTop={1} paddingLeft={1} paddingRight={1}>
-      <HeaderRow stack={stack} seat={seat} layout={layout} />
+      <Banner tick={tick} />
+      <HeaderRow stack={stack} seat={seat} layout={layout} tick={tick} />
       <StageArea
         stack={stack}
         lived={lived}
@@ -241,7 +247,7 @@ function WatchRoom({
         now={now}
         tick={tick}
         width={width}
-        height={height}
+        height={height - 3}
         layout={layout}
       />
       <CeremonyOverlay stack={stack} columns={columns} tick={tick} width={width} height={height} />

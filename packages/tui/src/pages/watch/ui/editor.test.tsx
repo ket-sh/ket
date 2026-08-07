@@ -68,7 +68,7 @@ describe('the criteria a keeper edits in place', () => {
   it('wears the unsaved mark once typing starts', async () => {
     const frame = await opening([...CRITERIA_PATH, 'e', 'x']);
 
-    expect(frame).toContain('●');
+    expect(frame).toContain('locking.feature ●');
   });
 
   it('saves through the feed and flashes the confirmation', async () => {
@@ -76,7 +76,7 @@ describe('the criteria a keeper edits in place', () => {
     const frame = await opening([...CRITERIA_PATH, 'e', 'x', { key: 's', ctrl: true }], feed);
 
     expect(frame).toContain('saved ✓');
-    expect(frame).not.toContain('●');
+    expect(frame).not.toContain('locking.feature ●');
     expect(feed.saved).toStrictEqual([
       'K-2 locking.feature xFeature: locking\n  Scenario: five tries',
     ]);

@@ -67,6 +67,13 @@ describe('the board the watch page shows', () => {
     expect(frame).toContain('K-1');
     expect(frame).toContain('K-2');
   });
+
+  it('raises the banner and the live dot over the board', async () => {
+    const frame = await openedAt(160, 30);
+
+    expect(frame).toContain('▄▄█▄▄▄█▄▄');
+    expect(frame).toContain('●');
+  });
 });
 
 describe('the selection the arrows move', () => {

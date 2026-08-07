@@ -61,7 +61,7 @@ describe('the theme picker over the watch', () => {
   it('previews the selection while the picker is open', async () => {
     const frame = await opening(['t', 'ARROW_DOWN']);
 
-    const header = frame.split('\n')[1] ?? '';
+    const header = frame.split('\n').find((row) => row.includes('●')) ?? '';
 
     expect(header).toContain(SECOND);
   });

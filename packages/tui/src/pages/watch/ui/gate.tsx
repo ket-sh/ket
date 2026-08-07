@@ -5,11 +5,9 @@ import type { Frame } from '../model/frames.ts';
 
 import { confettiRows, lerpHex } from '../../../shared/lib';
 import { stageColorOf, useTheme } from '../../../shared/theme';
-import { SpanRow } from '../../../shared/ui';
+import { SpanRow, TORII } from '../../../shared/ui';
 
 type GateFrame = Extract<Frame, { kind: 'gate' }>;
-
-const TORII = ['▄▄█▄▄▄█▄▄', '  █▀▀▀█  ', '  █   █  '];
 
 const WIDE = 52;
 
