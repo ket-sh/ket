@@ -1,132 +1,71 @@
 import type { ReactNode } from 'react';
 
 import { useKeyboard, useTerminalDimensions } from '@opentui/react';
-import { useCallback, useEffect, useState } from 'react';
 
-import type { BoardFeed, KanbanCardView, KanbanColumnView } from '../../../shared/model';
+import type { BoardFeed } from '../../../shared/model';
 
-import { AGE_TICK, ageOf } from '../../../shared/lib';
+import { useBoardState } from '../model/board-state.ts';
+import { crumbOf, useFrameStack } from '../model/frames.ts';
+import { press } from '../model/keys.ts';
+import { livedIn, useSeat } from '../model/seat.ts';
+import { BoardView } from './board.tsx';
+import { JourneyPage } from './journey.tsx';
 
 const MUTED = '#5f5f5f';
 
 const FAINT = '#464646';
 
-const REFUSED = '#d75f5f';
-
 const NARROW = 80;
 
-export interface KanbanPageProps {
+export interface WatchPageProps {
   feed: BoardFeed;
   onQuit: () => void;
   clock?: () => string;
 }
 
-function Card({ card, now }: { card: KanbanCardView; now: string }): ReactNode {
-  const age = card.since === undefined ? '' : ageOf(card.since, now);
+const HINTS = {
+  board: '←↑↓→ move · ⏎ journey · r refresh · q quit',
+  journey: '←↑↓→ move · esc board · q quit',
+};
 
-  return (
-    <box flexDirection="column" paddingBottom={1}>
-      <text wrapMode="none">
-        <strong>{card.key}</strong>
-        <span fg={MUTED}>{age === '' ? '' : `  ${age}`}</span>
-      </text>
-      <text wrapMode="none">{card.title}</text>
-      {card.refusal === undefined ? null : (
-        <text fg={REFUSED} wrapMode="word">{`! ${card.refusal.reason}`}</text>
-      )}
-    </box>
-  );
-}
-
-function Column({
-  column,
-  now,
-  wide,
-}: {
-  column: KanbanColumnView;
-  now: string;
-  wide: boolean;
-}): ReactNode {
-  return (
-    <box
-      flexDirection="column"
-      flexGrow={wide ? 1 : 0}
-      flexBasis={wide ? 1 : 'auto'}
-      border
-      borderStyle="rounded"
-      borderColor={FAINT}
-      title={` ${column.status} ${String(column.cards.length)} `}
-      paddingLeft={1}
-      paddingRight={1}
-    >
-      {column.cards.map(
-        (card): ReactNode => (
-          <Card key={card.key} card={card} now={now} />
-        ),
-      )}
-    </box>
-  );
-}
-
-function livedIn(columns: KanbanColumnView[]): KanbanColumnView[] {
-  return columns.filter((column) => column.cards.length > 0 || column.status === 'triaged');
-}
-
-export function KanbanPage({
+export function WatchPage({
   feed,
   onQuit,
   clock = () => new Date().toISOString(),
-}: KanbanPageProps): ReactNode {
-  const [columns, setColumns] = useState<KanbanColumnView[]>([]);
-  const [now, setNow] = useState(clock());
-  const { width } = useTerminalDimensions();
-
-  const refresh = useCallback(() => {
-    void feed.snapshot().then(setColumns);
-  }, [feed]);
-
-  useEffect(() => {
-    refresh();
-
-    return feed.subscribe(refresh);
-  }, [feed, refresh]);
-
-  useEffect(() => {
-    const ticking = setInterval(() => {
-      setNow(clock());
-    }, AGE_TICK);
-
-    return () => {
-      clearInterval(ticking);
-    };
-  }, [clock]);
+}: WatchPageProps): ReactNode {
+  const { columns, now, tick, refresh } = useBoardState(feed, clock);
+  const stack = useFrameStack(feed);
+  const lived = livedIn(columns);
+  const seat = useSeat(lived);
+  const { width, height } = useTerminalDimensions();
 
   useKeyboard((key) => {
-    if (key.name === 'r') {
-      refresh();
-    }
-
-    if (key.name === 'q') {
-      onQuit();
-    }
+    press(key.name, { onQuit, refresh, stack, seat });
   });
 
   return (
     <box flexDirection="column" paddingTop={1} paddingLeft={1} paddingRight={1}>
       <box flexDirection="row" justifyContent="space-between">
-        <text>
+        <text wrapMode="none">
           <strong>ket</strong>
-          <span fg={MUTED}>{'  the board over .ket/events.jsonl'}</span>
+          <span fg={MUTED}>{`  ${crumbOf(stack.frames)}`}</span>
         </text>
-        <text fg={FAINT}>r refresh · q quit</text>
+        <text fg={FAINT} wrapMode="none">
+          {stack.top.kind === 'journey' ? HINTS.journey : HINTS.board}
+        </text>
       </box>
-      <box flexDirection={width < NARROW ? 'column' : 'row'}>
-        {livedIn(columns).map(
-          (column): ReactNode => (
-            <Column key={column.status} column={column} now={now} wide={width >= NARROW} />
-          ),
-        )}
-      </box>
+      {stack.top.kind === 'journey' ? (
+        <JourneyPage
+          journey={stack.top.journey}
+          sel={stack.top.sel}
+          now={now}
+          tick={tick}
+          width={width - 2}
+          height={height - 3}
+        />
+      ) : (
+        <BoardView lived={lived} now={now} wide={width >= NARROW} seat={seat} />
+      )}
     </box>
   );
 }

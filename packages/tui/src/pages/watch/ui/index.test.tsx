@@ -1,9 +1,10 @@
+import { createMockKeys } from '@opentui/core/testing';
 import { testRender } from '@opentui/react/test-utils';
 import { afterEach, describe, expect, it } from 'bun:test';
 
-import type { BoardFeed } from '../../../shared/model';
+import type { BoardFeed, JourneyView } from '../../../shared/model';
 
-import { KanbanPage } from './index.tsx';
+import { WatchPage } from './index.tsx';
 
 const NOW = '2026-08-07T12:00:00.000Z';
 
@@ -42,12 +43,42 @@ const COLUMNS = [
   { status: 'shipped', cards: [] },
 ];
 
+const JOURNEY: JourneyView = {
+  item: 'K-1',
+  title: 'The watched item',
+  nodes: [
+    {
+      id: 'triaged',
+      kind: 'stage',
+      title: 'triaged',
+      mark: 'done',
+      at: '2026-08-07T09:00:00.000Z',
+      child: undefined,
+    },
+    {
+      id: 'designing',
+      kind: 'stage',
+      title: 'designing',
+      mark: 'active',
+      at: '2026-08-07T10:00:00.000Z',
+      child: undefined,
+    },
+  ],
+  edges: [['triaged', 'designing']],
+  standing: 'no failing test covers it',
+};
+
 function feedOf(): BoardFeed {
   return {
     snapshot: async () => {
       await Promise.resolve();
 
       return COLUMNS;
+    },
+    journey: async (key) => {
+      await Promise.resolve();
+
+      return key === 'K-1' ? JOURNEY : undefined;
     },
     subscribe: () => () => undefined,
   };
@@ -60,24 +91,34 @@ afterEach(() => {
   rendered = undefined;
 });
 
-async function frameOf(width: number, height: number): Promise<string> {
+async function settled(): Promise<string> {
+  await rendered?.renderOnce();
+  await new Promise((rested) => {
+    setTimeout(rested, 25);
+  });
+  await rendered?.renderOnce();
+
+  return rendered?.captureCharFrame() ?? '';
+}
+
+async function openedAt(width: number, height: number): Promise<string> {
   rendered = await testRender(
-    <KanbanPage feed={feedOf()} clock={() => NOW} onQuit={() => undefined} />,
+    <WatchPage feed={feedOf()} clock={() => NOW} onQuit={() => undefined} />,
     { width, height },
   );
 
-  await rendered.renderOnce();
-  await new Promise((settle) => {
-    setTimeout(settle, 25);
-  });
-  await rendered.renderOnce();
-
-  return rendered.captureCharFrame();
+  return settled();
 }
 
-describe('the kanban page', () => {
+function pressed(key: 'ARROW_RIGHT' | 'ARROW_LEFT' | 'RETURN' | 'ESCAPE'): void {
+  if (rendered !== undefined) {
+    createMockKeys(rendered.renderer).pressKey(key);
+  }
+}
+
+describe('the board the watch page shows', () => {
   it('seats every card under the column its status names', async () => {
-    const frame = await frameOf(160, 30);
+    const frame = await openedAt(160, 30);
 
     expect(frame).toContain('triaged');
     expect(frame).toContain('designing');
@@ -88,27 +129,79 @@ describe('the kanban page', () => {
   });
 
   it('shows how long a card has sat where it is', async () => {
-    const frame = await frameOf(160, 30);
-
-    expect(frame).toContain('2h');
+    expect(await openedAt(160, 30)).toContain('2h');
   });
 
   it('wears the refusal that is still standing', async () => {
-    const frame = await frameOf(160, 30);
-
-    expect(frame).toContain('! the design names no spec');
+    expect(await openedAt(160, 30)).toContain('! the design names no spec');
   });
 
   it('hides an empty column, since dead lanes are noise', async () => {
-    const frame = await frameOf(160, 30);
-
-    expect(frame).not.toContain('awaiting-merge');
+    expect(await openedAt(160, 30)).not.toContain('awaiting-merge');
   });
 
   it('stacks the board as a list where a row of columns cannot fit', async () => {
-    const frame = await frameOf(60, 40);
+    const frame = await openedAt(60, 40);
 
     expect(frame).toContain('K-1');
     expect(frame).toContain('K-2');
+  });
+});
+
+describe('the selection the arrows move', () => {
+  it('starts on the first card and wears the double border', async () => {
+    expect(await openedAt(160, 30)).toContain('║ K-2');
+  });
+
+  it('walks right into the next living column', async () => {
+    await openedAt(160, 30);
+    pressed('ARROW_RIGHT');
+
+    const frame = await settled();
+
+    expect(frame).toContain('║ K-1');
+    expect(frame).not.toContain('║ K-2');
+  });
+});
+
+describe('the journey a card opens', () => {
+  it('dives into the journey on enter and spells the path', async () => {
+    await openedAt(160, 40);
+    pressed('ARROW_RIGHT');
+    await settled();
+    pressed('RETURN');
+
+    const frame = await settled();
+
+    expect(frame).toContain('K-1 · journey');
+    expect(frame).toContain('board › K-1');
+    expect(frame).toContain('! no failing test covers it');
+  });
+
+  it('walks the canvas selection with the arrows', async () => {
+    await openedAt(160, 40);
+    pressed('ARROW_RIGHT');
+    await settled();
+    pressed('RETURN');
+    await settled();
+    pressed('ARROW_LEFT');
+
+    const frame = await settled();
+
+    expect(frame).toContain('║ triaged');
+  });
+
+  it('pops back to the board on escape', async () => {
+    await openedAt(160, 40);
+    pressed('ARROW_RIGHT');
+    await settled();
+    pressed('RETURN');
+    await settled();
+    pressed('ESCAPE');
+
+    const frame = await settled();
+
+    expect(frame).not.toContain('K-1 · journey');
+    expect(frame).toContain('A quiet fix');
   });
 });

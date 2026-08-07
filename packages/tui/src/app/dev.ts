@@ -1,6 +1,6 @@
 import { installCapture } from '@anscribe/opentui';
 
-import type { BoardFeed, KanbanColumnView } from '../shared/model';
+import type { BoardFeed, JourneyView, KanbanColumnView } from '../shared/model';
 
 import { watch } from './index.ts';
 
@@ -36,11 +36,61 @@ const REHEARSAL: KanbanColumnView[] = [
   },
 ];
 
+const WALKED: JourneyView = {
+  item: 'DEV-1',
+  title: 'Login with lockout',
+  nodes: [
+    {
+      id: 'triaged',
+      kind: 'stage',
+      title: 'triaged',
+      mark: 'done',
+      at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+      child: undefined,
+    },
+    {
+      id: 'designing',
+      kind: 'stage',
+      title: 'designing',
+      mark: 'done',
+      at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      child: undefined,
+    },
+    {
+      id: '.ket/items/DEV-1/spec.md',
+      kind: 'artifact',
+      title: 'spec.md',
+      mark: 'done',
+      at: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
+      child: undefined,
+    },
+    {
+      id: 'implementing',
+      kind: 'stage',
+      title: 'implementing',
+      mark: 'active',
+      at: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+      child: undefined,
+    },
+  ],
+  edges: [
+    ['triaged', 'designing'],
+    ['designing', '.ket/items/DEV-1/spec.md'],
+    ['.ket/items/DEV-1/spec.md', 'implementing'],
+  ],
+  standing: 'no failing test covers src/auth.ts',
+};
+
 const feed: BoardFeed = {
   snapshot: async () => {
     await Promise.resolve();
 
     return REHEARSAL;
+  },
+  journey: async (key) => {
+    await Promise.resolve();
+
+    return key === 'DEV-1' ? WALKED : undefined;
   },
   subscribe: () => () => undefined,
 };

@@ -17,7 +17,25 @@ export interface KanbanColumnView {
   cards: KanbanCardView[];
 }
 
+export interface JourneyNodeView {
+  id: string;
+  kind: 'stage' | 'artifact' | 'child';
+  title: string;
+  mark: 'done' | 'active' | 'pending';
+  at: string | undefined;
+  child: string | undefined;
+}
+
+export interface JourneyView {
+  item: string;
+  title: string;
+  nodes: JourneyNodeView[];
+  edges: [string, string][];
+  standing: string | undefined;
+}
+
 export interface BoardFeed {
   snapshot: () => Promise<KanbanColumnView[]>;
+  journey: (key: string) => Promise<JourneyView | undefined>;
   subscribe: (refresh: () => void) => () => void;
 }

@@ -6,7 +6,7 @@ import { createElement } from 'react';
 
 import type { BoardFeed } from '../shared/model';
 
-import { KanbanPage } from '../pages/watch';
+import { WatchPage } from '../pages/watch';
 
 export interface WatchOptions {
   enhance?: (renderer: CliRenderer) => void;
@@ -22,5 +22,5 @@ export async function watch(feed: BoardFeed, options: WatchOptions = {}): Promis
     process.exit(0);
   };
 
-  createRoot(renderer).render(createElement(KanbanPage, { feed, onQuit }));
+  createRoot(renderer).render(createElement(WatchPage, { feed, onQuit }));
 }

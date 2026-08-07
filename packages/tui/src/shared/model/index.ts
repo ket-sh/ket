@@ -1,1 +1,8 @@
-export type { BoardFeed, KanbanCardView, KanbanColumnView, KanbanRefusalView } from './board.ts';
+export type {
+  BoardFeed,
+  JourneyNodeView,
+  JourneyView,
+  KanbanCardView,
+  KanbanColumnView,
+  KanbanRefusalView,
+} from './board.ts';
