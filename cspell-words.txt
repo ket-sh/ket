@@ -41,11 +41,13 @@ esac
 faststart
 frontmatter
 fulfilment
+ghostty
 gitdir
 gitleaks
 gridstack
 gsub
 jscpd
+kanagawa
 ket
 knip
 kubeconform
