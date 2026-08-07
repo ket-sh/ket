@@ -15,6 +15,7 @@ const REHEARSAL: KanbanColumnView[] = [
         status: 'triaged',
         since: new Date(Date.now() - 45_000).toISOString(),
         refusal: undefined,
+        offers: ['approve'],
       },
     ],
   },
@@ -31,6 +32,7 @@ const REHEARSAL: KanbanColumnView[] = [
           reason: 'no failing test covers src/auth.ts',
           at: new Date(Date.now() - 60_000).toISOString(),
         },
+        offers: [],
       },
     ],
   },
@@ -95,6 +97,11 @@ const feed: BoardFeed = {
     await Promise.resolve();
 
     return key === 'DEV-1' ? WALKED : undefined;
+  },
+  act: async () => {
+    await Promise.resolve();
+
+    return { moved: 'implementing' };
   },
   subscribe: () => () => undefined,
 };

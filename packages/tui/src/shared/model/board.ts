@@ -3,6 +3,8 @@ export interface KanbanRefusalView {
   at: string;
 }
 
+export type GateActionView = 'approve' | 'ship' | 'reopen';
+
 export interface KanbanCardView {
   key: string;
   title: string;
@@ -10,6 +12,7 @@ export interface KanbanCardView {
   status: string;
   since: string | undefined;
   refusal: KanbanRefusalView | undefined;
+  offers: GateActionView[];
 }
 
 export interface KanbanColumnView {
@@ -106,8 +109,11 @@ export interface JourneyView {
   standing: string | undefined;
 }
 
+export type MovedView = { moved: string } | { refused: string };
+
 export interface BoardFeed {
   snapshot: () => Promise<KanbanColumnView[]>;
   journey: (key: string) => Promise<JourneyView | undefined>;
+  act: (key: string, gate: GateActionView) => Promise<MovedView>;
   subscribe: (refresh: () => void) => () => void;
 }

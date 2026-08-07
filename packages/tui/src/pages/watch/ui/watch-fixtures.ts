@@ -2,6 +2,10 @@ import type { BoardFeed, JourneyView, KanbanColumnView } from '../../../shared/m
 
 export const NOW = '2026-08-07T12:00:00.000Z';
 
+export interface ActedFeed extends BoardFeed {
+  acted: string[];
+}
+
 const COLUMNS: KanbanColumnView[] = [
   { status: 'idea', cards: [] },
   {
@@ -14,6 +18,7 @@ const COLUMNS: KanbanColumnView[] = [
         status: 'triaged',
         since: undefined,
         refusal: undefined,
+        offers: ['approve'],
       },
     ],
   },
@@ -27,6 +32,7 @@ const COLUMNS: KanbanColumnView[] = [
         status: 'designing',
         since: '2026-08-07T10:00:00.000Z',
         refusal: { reason: 'the design names no spec', at: '2026-08-07T11:00:00.000Z' },
+        offers: [],
       },
     ],
   },
@@ -110,8 +116,11 @@ const CHILD_JOURNEY: JourneyView = {
   standing: undefined,
 };
 
-export function feedOf(): BoardFeed {
+export function feedOf(): ActedFeed {
+  const acted: string[] = [];
+
   return {
+    acted,
     snapshot: async () => {
       await Promise.resolve();
 
@@ -125,6 +134,12 @@ export function feedOf(): BoardFeed {
       }
 
       return key === 'K-1' ? JOURNEY : undefined;
+    },
+    act: async (key, gate) => {
+      await Promise.resolve();
+      acted.push(`${key} ${gate}`);
+
+      return { moved: 'implementing' };
     },
     subscribe: () => () => undefined,
   };
