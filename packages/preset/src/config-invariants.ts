@@ -185,11 +185,11 @@ function mutationInvariants(item: PresetItem, shipped: PresetContents): string[]
 
 const AGENT_DIRECTORIES = ['.claude', '.agents'];
 
-function ignoredIn(written: string): string[] {
+function namesIgnored(written: string, directory: string): boolean {
   const parsed: unknown = JSON.parse(written);
   const declared = isRecord(parsed) ? parsed['ignorePatterns'] : undefined;
 
-  return isStringArray(declared) ? declared : [];
+  return isStringArray(declared) && declared.includes(directory);
 }
 
 // Stryker copies the project into its sandbox before mutating, and the agent
@@ -202,9 +202,7 @@ function sandboxInvariants(item: PresetItem, shipped: PresetContents): string[] 
     return [];
   }
 
-  const ignored = new Set(ignoredIn(written));
-
-  return AGENT_DIRECTORIES.filter((directory) => !ignored.has(directory)).map(
+  return AGENT_DIRECTORIES.filter((directory) => !namesIgnored(written, directory)).map(
     (directory) => `the mutation config the preset writes lets the sandbox copy ${directory}`,
   );
 }
