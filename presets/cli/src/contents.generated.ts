@@ -26,7 +26,7 @@ export const PRESET_CONTENTS: Record<string, string> = {
   'files/gitignore':
     'node_modules/\n.stryker-tmp/\nreports/\n*.log\n.DS_Store\n.turbo\ndist/\n*.tsbuildinfo\n\n# Downloaded by `vale sync`\n.vale/styles/Microsoft\n\n# Bun build scratch\n*.bun-build\n\n# The surface session key lives here while a gate holds; a committed key is a leaked key\n.surface.json\n',
   'files/gitleaks.toml':
-    "[extend]\nuseDefault = true\n\n[[allowlists]]\ntargetRules = [\"generic-api-key\"]\npaths = ['''^\\.agents/skills/''']\n",
+    "[extend]\nuseDefault = true\n\n[[allowlists]]\ntargetRules = [\"generic-api-key\"]\npaths = ['''^\\.agents/skills/''']\n\n# gitleaks ships no Chromatic rule of its own, and the project token guards a\n# snapshot quota worth keeping out of a commit.\n[[rules]]\nid = \"chromatic-project-token\"\ndescription = \"Chromatic project token\"\nregex = '''\\bchpt_[a-f0-9]{12,40}\\b'''\nkeywords = [\"chpt_\"]\n",
   'files/jscpd.json':
     '{\n  "format": ["typescript"],\n  "formatsExts": {\n    "typescript": ["ts", "tsx", "mts"]\n  },\n  "ignore": [\n    "**/node_modules/**",\n    "**/dist/**",\n    "**/*.gen.ts",\n    "**/*.test.ts",\n    "**/*.test.tsx",\n    "**/shared/ui/**"\n  ],\n  "minTokens": 50,\n  "minLines": 5,\n  "threshold": 0,\n  "reporters": ["console"]\n}\n',
   'files/knip.json':
