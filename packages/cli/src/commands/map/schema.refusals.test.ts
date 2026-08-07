@@ -135,6 +135,14 @@ describe('a story the map cannot place', () => {
   });
 });
 
+describe('a user the cast cannot introduce', () => {
+  it('names the user who was given an id and no name', () => {
+    expect(refusalsOf(VALID.replace('    name: shopper\n', ''))).toStrictEqual([
+      'the user u-shopper carries no name',
+    ]);
+  });
+});
+
 describe('a backbone node the map cannot title', () => {
   it('keeps a step refusal even when every story under it reads', () => {
     expect(refusalsOf(VALID.replace('        name: browse the catalog\n', ''))).toStrictEqual([
