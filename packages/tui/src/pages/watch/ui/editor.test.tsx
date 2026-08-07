@@ -7,7 +7,7 @@ import type { ActedFeed } from './watch-fixtures.ts';
 import { WatchPage } from './index.tsx';
 import { feedOf, NOW } from './watch-fixtures.ts';
 
-type Press = string | { key: string; ctrl: boolean };
+type Press = string | { key: string; ctrl?: boolean; lands?: string };
 
 let rendered: Awaited<ReturnType<typeof testRender>> | undefined;
 
@@ -26,6 +26,25 @@ async function settled(): Promise<string> {
   return rendered?.captureCharFrame() ?? '';
 }
 
+async function landed(marker: string | undefined): Promise<string> {
+  const started = Date.now();
+  let frame = await settled();
+
+  while (marker !== undefined && !frame.includes(marker) && Date.now() - started < 5000) {
+    frame = await settled();
+  }
+
+  return frame;
+}
+
+function pressedOf(press: Press): { key: string; ctrl: boolean; lands: string | undefined } {
+  if (typeof press === 'string') {
+    return { key: press, ctrl: false, lands: undefined };
+  }
+
+  return { key: press.key, ctrl: press.ctrl ?? false, lands: press.lands };
+}
+
 async function opening(presses: Press[], feed: ActedFeed = feedOf()): Promise<string> {
   const opened = await testRender(
     <WatchPage feed={feed} clock={() => NOW} onQuit={() => undefined} />,
@@ -34,26 +53,23 @@ async function opening(presses: Press[], feed: ActedFeed = feedOf()): Promise<st
 
   rendered = opened;
 
-  let frame = await settled();
-
-  while (!frame.includes('K-2')) {
-    frame = await settled();
-  }
+  let frame = await landed('K-2');
 
   for (const press of presses) {
-    if (typeof press === 'string') {
-      createMockKeys(opened.renderer).pressKey(press);
-    } else {
-      createMockKeys(opened.renderer).pressKey(press.key, { ctrl: press.ctrl });
-    }
+    const { key, ctrl, lands } = pressedOf(press);
 
-    frame = await settled();
+    createMockKeys(opened.renderer).pressKey(key, { ctrl });
+    frame = await landed(lands);
   }
 
   return frame;
 }
 
-const CRITERIA_PATH: Press[] = ['RETURN', 'ARROW_RIGHT', 'RETURN'];
+const CRITERIA_PATH: Press[] = [
+  { key: 'RETURN', lands: 'K-2 · journey' },
+  'ARROW_RIGHT',
+  { key: 'RETURN', lands: 'K-2 · Criteria' },
+];
 
 describe('the criteria a keeper edits in place', () => {
   it('opens the editor with e on a criteria surface', async () => {

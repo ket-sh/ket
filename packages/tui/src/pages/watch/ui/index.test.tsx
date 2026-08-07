@@ -98,14 +98,25 @@ describe('the selection the arrows move', () => {
   });
 });
 
+async function landedOnJourney(): Promise<string> {
+  await openedAt(160, 40);
+  pressed('ARROW_RIGHT');
+  await settled();
+  pressed('RETURN');
+
+  const started = Date.now();
+  let frame = await settled();
+
+  while (!frame.includes('K-1 · journey') && Date.now() - started < 5000) {
+    frame = await settled();
+  }
+
+  return frame;
+}
+
 describe('the journey a card opens', () => {
   it('dives into the journey on enter and spells the path', async () => {
-    await openedAt(160, 40);
-    pressed('ARROW_RIGHT');
-    await settled();
-    pressed('RETURN');
-
-    const frame = await settled();
+    const frame = await landedOnJourney();
 
     expect(frame).toContain('K-1 · journey');
     expect(frame).toContain('board › K-1');
@@ -113,20 +124,11 @@ describe('the journey a card opens', () => {
   });
 
   it('lands the selection on the active stage, never on an active child', async () => {
-    await openedAt(160, 40);
-    pressed('ARROW_RIGHT');
-    await settled();
-    pressed('RETURN');
-
-    expect(await settled()).toContain('║ designing');
+    expect(await landedOnJourney()).toContain('║ designing');
   });
 
   it('walks the canvas selection with the arrows', async () => {
-    await openedAt(160, 40);
-    pressed('ARROW_RIGHT');
-    await settled();
-    pressed('RETURN');
-    await settled();
+    await landedOnJourney();
     pressed('ARROW_LEFT');
 
     const frame = await settled();
@@ -135,11 +137,7 @@ describe('the journey a card opens', () => {
   });
 
   it('pops back to the board on escape', async () => {
-    await openedAt(160, 40);
-    pressed('ARROW_RIGHT');
-    await settled();
-    pressed('RETURN');
-    await settled();
+    await landedOnJourney();
     pressed('ESCAPE');
 
     const frame = await settled();

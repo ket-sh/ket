@@ -24,7 +24,20 @@ async function settled(): Promise<string> {
   return rendered?.captureCharFrame() ?? '';
 }
 
-async function opening(keys: string[], feed: ActedFeed = feedOf()): Promise<string> {
+type Press = string | { key: string; lands: string };
+
+async function landed(marker: string | undefined): Promise<string> {
+  const started = Date.now();
+  let frame = await settled();
+
+  while (marker !== undefined && !frame.includes(marker) && Date.now() - started < 5000) {
+    frame = await settled();
+  }
+
+  return frame;
+}
+
+async function opening(presses: Press[], feed: ActedFeed = feedOf()): Promise<string> {
   const opened = await testRender(
     <WatchPage feed={feed} clock={() => NOW} onQuit={() => undefined} />,
     { width: 160, height: 40 },
@@ -32,15 +45,11 @@ async function opening(keys: string[], feed: ActedFeed = feedOf()): Promise<stri
 
   rendered = opened;
 
-  let frame = await settled();
+  let frame = await landed('K-2');
 
-  while (!frame.includes('K-2')) {
-    frame = await settled();
-  }
-
-  for (const key of keys) {
-    createMockKeys(opened.renderer).pressKey(key);
-    frame = await settled();
+  for (const press of presses) {
+    createMockKeys(opened.renderer).pressKey(typeof press === 'string' ? press : press.key);
+    frame = await landed(typeof press === 'string' ? undefined : press.lands);
   }
 
   return frame;
@@ -86,7 +95,7 @@ describe('the gate a card stands before', () => {
 
   it('passes the gate on enter and celebrates', async () => {
     const feed = feedOf();
-    const frame = await opening(['a', 'RETURN'], feed);
+    const frame = await opening(['a', { key: 'RETURN', lands: '✓ passed' }], feed);
 
     expect(frame).toContain('✓ passed');
     expect(feed.acted).toStrictEqual(['K-2 approve']);
@@ -105,7 +114,7 @@ describe('the gate a card stands before', () => {
 
     feed.act = async () => Promise.resolve({ refused: 'the design names no spec' });
 
-    const frame = await opening(['a', 'RETURN'], feed);
+    const frame = await opening(['a', { key: 'RETURN', lands: '✗ refused' }], feed);
 
     expect(frame).toContain('✗ refused');
     expect(frame).toContain('the design names no spec');
