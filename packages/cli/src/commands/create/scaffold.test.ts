@@ -4,7 +4,13 @@ import type { Configuration } from '../../shared/configuration.ts';
 
 import { scaffoldFiles, scaffoldFor, withEventsIgnored } from './scaffold.ts';
 
-const DRIVEN: Configuration = { key: 'OFS', targets: {}, integrations: [], workflow: true };
+const DRIVEN: Configuration = {
+  key: 'OFS',
+  targets: {},
+  integrations: [],
+  language: 'en',
+  workflow: true,
+};
 
 const GATED_ONLY: Configuration = { ...DRIVEN, workflow: false };
 

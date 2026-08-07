@@ -104,6 +104,47 @@ describe('creating a project that can update itself later', () => {
   });
 });
 
+describe('creating a project that documents in another language', () => {
+  it('lands the core prose gates, records the choice, and pins the dictionary', async () => {
+    const where = join(await scratch(), 'sube-defteri');
+
+    await runCommand('create', [where, '--language', 'tr']);
+
+    await expect(readFile(join(where, '.ket/config.ts'), 'utf8')).resolves.toContain(
+      "language: 'tr'",
+    );
+
+    const vale = await readFile(join(where, '.vale.ini'), 'utf8');
+
+    expect(vale).toContain('BasedOnStyles = Vale, ket');
+    expect(vale).toContain('[CLAUDE.md]');
+    await expect(readFile(join(where, '.vale.core.ini'), 'utf8')).rejects.toThrow();
+    await expect(readFile(join(where, 'package.json'), 'utf8')).resolves.toContain(
+      '@cspell/dict-tr-tr',
+    );
+    await expect(readFile(join(where, 'cspell.json'), 'utf8')).resolves.toContain(
+      'cspell-ext.json',
+    );
+  });
+
+  it('keeps English as today, byte for byte, and never lands the core carrier', async () => {
+    const where = join(await scratch(), 'order-service');
+
+    await runCommand('create', [where]);
+
+    await expect(readFile(join(where, '.ket/config.ts'), 'utf8')).resolves.toContain(
+      "language: 'en'",
+    );
+    await expect(readFile(join(where, '.vale.core.ini'), 'utf8')).rejects.toThrow();
+    await expect(readFile(join(where, '.vale.ini'), 'utf8')).resolves.toContain(
+      'Microsoft.Passive = error',
+    );
+    await expect(readFile(join(where, 'cspell.json'), 'utf8')).resolves.not.toContain(
+      'cspell-ext.json',
+    );
+  });
+});
+
 describe('creating a project that takes the gates without the pipeline', () => {
   it('records the refusal in the config, so every later gate reads the choice', async () => {
     const where = join(await scratch(), 'order-service');

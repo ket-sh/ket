@@ -13,6 +13,7 @@ import {
   KET_DIRECTORY,
   keyFrom,
   ketRootOrThrow,
+  languageFrom,
   targetsFrom,
   workflowFrom,
 } from '../../shared/locate.ts';
@@ -47,7 +48,13 @@ async function configurationOf(root: string): Promise<Configuration> {
     );
   }
 
-  return { key, targets, integrations: integrationsFrom(loaded), workflow: workflowFrom(loaded) };
+  return {
+    key,
+    targets,
+    integrations: integrationsFrom(loaded),
+    language: languageFrom(loaded),
+    workflow: workflowFrom(loaded),
+  };
 }
 
 async function recordOf(root: string): Promise<ScaffoldRecord> {

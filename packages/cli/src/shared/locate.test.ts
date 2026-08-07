@@ -9,6 +9,7 @@ import {
   keyFrom,
   ketRootFrom,
   ketRootOrThrow,
+  languageFrom,
   sourceRootsOf,
   targetsFrom,
   workflowFrom,
@@ -141,6 +142,18 @@ describe('reading the integrations out of a config module', () => {
     expect(integrationsFrom({ default: { integrations: [7, 'codecov'] } })).toStrictEqual([
       'codecov',
     ]);
+  });
+});
+
+describe('reading the documentation language out of a config module', () => {
+  it('reads the tag a project config exports', () => {
+    expect(languageFrom({ default: { language: 'tr' } })).toBe('tr');
+  });
+
+  it('reads a missing or unreadable tag as English, the way create defaults it', () => {
+    expect(languageFrom({ default: {} })).toBe('en');
+    expect(languageFrom({ default: { language: 7 } })).toBe('en');
+    expect(languageFrom(null)).toBe('en');
   });
 });
 
