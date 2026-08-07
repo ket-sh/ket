@@ -129,6 +129,16 @@ Guardrails the skill states outright:
 watch architecture: the command parses arguments and builds the data, the TUI
 renders it through the lazy import, and the TUI parses nothing.
 
+The owner's home-screen rulings sit beside it:
+
+- Bare `ket` on a terminal opens the board, so watch is the home screen.
+  Without a terminal it keeps printing usage, so a script never hangs on a
+  render.
+- From the board, the `m` key opens the map view, and escape returns.
+- A project without a map gets a polished empty state on that screen: what
+  a story map is in one sentence, and the `/ket:map` session that starts
+  one.
+
 - The backbone runs across the top: activities as column groups, steps as
   columns beneath them.
 - Story cards hang under their step in map order.
