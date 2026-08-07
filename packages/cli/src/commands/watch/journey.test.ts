@@ -45,4 +45,16 @@ describe('the journey the feed serves', () => {
   it('serves nothing for a key the store never held', async () => {
     expect(await boardFeedFor(root).journey('GONE-9')).toBeUndefined();
   });
+
+  it('rides the artifact docs along', async () => {
+    await writeFile(
+      join(root, '.ket', 'items', 'K-1', 'spec.md'),
+      '# The spec\n\nFive failures lock the account.\n',
+    );
+
+    const journey = await boardFeedFor(root).journey('K-1');
+    const doc = journey?.nodes.find((node) => node.title === 'spec.md')?.doc;
+
+    expect(doc?.kind).toBe('prose');
+  });
 });

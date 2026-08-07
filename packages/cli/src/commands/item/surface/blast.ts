@@ -6,10 +6,7 @@ import { escaped } from './text.ts';
 
 export type BlastRender = { drawn: RenderedDiagram } | { complaint: string };
 
-export interface BlastFiles {
-  source: string;
-  measure: string | undefined;
-}
+import type { BlastFiles } from '../../../shared/artifact-store.ts';
 
 export type BlastArtifact = BlastFiles & { render: BlastRender };
 

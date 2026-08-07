@@ -1,10 +1,13 @@
 import type { Item, ItemStatus } from './item.ts';
 import type { LoggedEvent } from './kanban.ts';
 import type { StoredItem } from './read-item.ts';
+import type { SurfaceDoc } from './surface-doc.ts';
 
 import { ITEM_STATUSES } from './item.ts';
 import { arrivalOf, eventsAbout, refusalAfter } from './kanban.ts';
 import { parseItem } from './read-item.ts';
+
+export type { SurfaceDoc } from './surface-doc.ts';
 
 type JourneyMark = 'done' | 'active' | 'pending';
 
@@ -15,6 +18,7 @@ interface JourneyNode {
   mark: JourneyMark;
   at: string | undefined;
   child: string | undefined;
+  doc: SurfaceDoc | undefined;
 }
 
 export interface Journey {
@@ -94,7 +98,15 @@ function pendingAfter(visits: Visit[]): Visit | undefined {
 }
 
 function stageNode(visit: Visit, mark: JourneyMark): JourneyNode {
-  return { id: visit.id, kind: 'stage', title: visit.status, mark, at: visit.at, child: undefined };
+  return {
+    id: visit.id,
+    kind: 'stage',
+    title: visit.status,
+    mark,
+    at: visit.at,
+    child: undefined,
+    doc: undefined,
+  };
 }
 
 function stageNodes(visits: Visit[], pending: Visit | undefined): JourneyNode[] {
@@ -139,6 +151,7 @@ function artifactNode(writing: Writing): JourneyNode {
     mark: 'done',
     at: writing.at,
     child: undefined,
+    doc: undefined,
   };
 }
 
@@ -179,7 +192,15 @@ function childNode(stored: StoredItem[], log: string, key: string): JourneyNode 
   const item = entry === undefined ? undefined : parseItem(entry.contents);
 
   if (item === undefined) {
-    return { id: key, kind: 'child', title: key, mark: 'pending', at: undefined, child: key };
+    return {
+      id: key,
+      kind: 'child',
+      title: key,
+      mark: 'pending',
+      at: undefined,
+      child: key,
+      doc: undefined,
+    };
   }
 
   return {
@@ -189,6 +210,7 @@ function childNode(stored: StoredItem[], log: string, key: string): JourneyNode 
     mark: childMark(item.status),
     at: arrivalOf(eventsAbout(log, key), item.status),
     child: key,
+    doc: undefined,
   };
 }
 

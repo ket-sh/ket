@@ -9,6 +9,7 @@ import { readLog } from '../../shared/event-log.ts';
 import { readStored } from '../../shared/item-store.ts';
 import { foldJourney } from '../../shared/journey.ts';
 import { foldKanban } from '../../shared/kanban.ts';
+import { docsFor } from './docs.ts';
 
 export interface FeedTimings {
   debounce: number;
@@ -81,7 +82,16 @@ export function boardFeedFor(
 ): BoardFeed {
   return {
     snapshot: async () => foldKanban(await readStored(root), await readLog(root)),
-    journey: async (key) => foldJourney(await readStored(root), await readLog(root), key),
+    journey: async (key) => {
+      const log = await readLog(root);
+      const journey = foldJourney(await readStored(root), log, key);
+
+      if (journey === undefined) {
+        return undefined;
+      }
+
+      return docsFor(join(root, KET_DIRECTORY, 'items', key), log, journey);
+    },
     subscribe: (refresh) => subscription(root, timings, refresh, watching),
   };
 }

@@ -66,6 +66,7 @@ describe('the stages a journey walks', () => {
         mark: 'active',
         at: undefined,
         child: undefined,
+        doc: undefined,
       },
     ]);
     expect(journey?.edges).toStrictEqual([]);
@@ -120,6 +121,7 @@ describe('the artifacts a journey hangs', () => {
       mark: 'done',
       at: '2026-08-07T11:00:00.000Z',
       child: undefined,
+      doc: undefined,
     });
     expect(journey?.edges).toContainEqual(['designing', '.ket/items/K-1/solution-design.md']);
     expect(journey?.edges).toContainEqual([
@@ -176,6 +178,7 @@ describe('the children a journey closes on', () => {
       mark: 'active',
       at: '2026-08-07T10:30:00.000Z',
       child: 'K-2',
+      doc: undefined,
     });
     expect(journey?.nodes).toContainEqual({
       id: 'K-3',
@@ -184,6 +187,7 @@ describe('the children a journey closes on', () => {
       mark: 'done',
       at: undefined,
       child: 'K-3',
+      doc: undefined,
     });
     expect(journey?.edges).toContainEqual(['designing', 'K-2']);
     expect(journey?.edges).toContainEqual(['designing', 'K-3']);
