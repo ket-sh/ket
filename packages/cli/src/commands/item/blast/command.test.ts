@@ -1,4 +1,13 @@
-import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import {
+  chmod,
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  realpath,
+  rm,
+  writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -21,19 +30,33 @@ let lines: string[] = [];
 
 async function stubBinary(name: string, body: string): Promise<void> {
   const binary = join(root, 'node_modules', '.bin', name);
+  const recording = `pwd > "${root}/${name}-cwd.txt"\nprintf '[%s]\\n' "$@" > "${root}/${name}-args.txt"`;
 
-  await writeFile(binary, `#!/bin/sh\nprintf '%s\\n' "$@" > "${root}/${name}-args.txt"\n${body}\n`);
+  await writeFile(binary, `#!/bin/sh\n${recording}\n${body}\n`);
   await chmod(binary, 0o755);
 }
 
 async function argvGiven(name: string): Promise<string[]> {
   const written = await readFile(join(root, `${name}-args.txt`), 'utf8');
 
-  return written.split('\n').filter((argument) => argument !== '');
+  return written
+    .split('\n')
+    .filter((line) => line.startsWith('[') && line.endsWith(']'))
+    .map((line) => line.slice(1, -1));
+}
+
+async function ranIn(name: string): Promise<string> {
+  return (await readFile(join(root, `${name}-cwd.txt`), 'utf8')).trim();
+}
+
+async function scratchesLeft(): Promise<string[]> {
+  return (await readdir(tmpdir()))
+    .filter((entry) => entry.startsWith('ket-blast-') && !entry.startsWith('ket-blast-home-'))
+    .sort();
 }
 
 beforeEach(async () => {
-  root = await mkdtemp(join(tmpdir(), 'ket-blast-'));
+  root = await mkdtemp(join(tmpdir(), 'ket-blast-home-'));
   itemDir = join(root, '.ket', 'items', 'K-1');
   await mkdir(itemDir, { recursive: true });
   await mkdir(join(root, 'node_modules', '.bin'), { recursive: true });
@@ -73,10 +96,10 @@ describe('the blast command', () => {
       description: 'Capture the modules a change reaches, as a diagram with its measure',
     });
     expect(blast.args).toMatchObject({
-      key: { type: 'positional', required: true },
-      base: { default: 'main' },
-      budget: { default: '30' },
-      paths: { default: 'src' },
+      key: { type: 'positional', required: true, description: 'The item the capture sits beside' },
+      base: { default: 'main', description: 'The git revision to measure against' },
+      budget: { default: '30', description: 'The node budget the diagram must fit' },
+      paths: { default: 'src', description: 'Comma-separated roots to cruise' },
     });
   });
 
@@ -114,10 +137,10 @@ describe('the blast command', () => {
 });
 
 describe('what the capture asks the cruiser', () => {
-  it('cruises the declared paths against the declared base', async () => {
+  it('cruises the declared paths against the declared base, in the project root', async () => {
     await stubCapture();
 
-    await runBlast({ paths: ' src , packages ', base: 'origin/main' });
+    await runBlast({ paths: ' src ,, packages ', base: 'origin/main' });
 
     expect(await argvGiven('depcruise')).toEqual([
       'src',
@@ -127,6 +150,7 @@ describe('what the capture asks the cruiser', () => {
       '--output-type',
       'json',
     ]);
+    expect(await ranIn('depcruise')).toBe(await realpath(root));
   });
 
   it('collapses the diagram exactly when the budget demands it', async () => {
@@ -134,12 +158,29 @@ describe('what the capture asks the cruiser', () => {
 
     await runBlast({ budget: '2' });
 
-    expect(await argvGiven('depcruise-fmt')).toContain('--collapse');
-    expect(await argvGiven('depcruise-fmt')).toContain('3');
+    const collapsed = await argvGiven('depcruise-fmt');
+
+    expect(collapsed.slice(0, 4)).toEqual(['--output-type', 'd2', '--collapse', '3']);
+    expect(collapsed).toHaveLength(5);
+    expect(collapsed[4]?.endsWith('cruise.json')).toBe(true);
 
     await runBlast({ budget: '30' });
 
-    expect(await argvGiven('depcruise-fmt')).not.toContain('--collapse');
+    const uncollapsed = await argvGiven('depcruise-fmt');
+
+    expect(uncollapsed.slice(0, 2)).toEqual(['--output-type', 'd2']);
+    expect(uncollapsed).toHaveLength(3);
+    expect(uncollapsed[2]?.endsWith('cruise.json')).toBe(true);
+  });
+
+  it('sweeps its scratch out of the temp directory after the capture', async () => {
+    await stubCapture();
+
+    const before = await scratchesLeft();
+
+    await runBlast();
+
+    expect(await scratchesLeft()).toEqual(before);
   });
 
   it('accepts the tightest budget there is', async () => {

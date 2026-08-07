@@ -52,6 +52,10 @@ describe('choosing the collapse depth', () => {
   it('falls back to the shallowest depth when even that exceeds the budget', () => {
     expect(collapseDepth(['a/x.ts', 'b/y.ts', 'c/z.ts'], 2)).toBe(1);
   });
+
+  it('groups by whole segments, never by the characters they happen to share', () => {
+    expect(collapseDepth(['a/bc.ts', 'ab/c.ts'], 1)).toBe(1);
+  });
 });
 
 describe('assembling the measure', () => {

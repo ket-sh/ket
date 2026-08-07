@@ -63,7 +63,7 @@ async function drawn(root: string, cruise: string, collapse: number): Promise<st
 
     return answer.said;
   } finally {
-    await rm(held, { recursive: true, force: true });
+    await rm(held, { recursive: true });
   }
 }
 

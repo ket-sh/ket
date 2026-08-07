@@ -83,8 +83,8 @@ export function graphOf(source: string): BlastGraph | undefined {
   };
 }
 
-function distinctAt(paths: string[], depth: number): number {
-  return new Set(paths.map((path) => path.split('/').slice(0, depth).join('/'))).size;
+function distinctAt(segments: string[][], depth: number): number {
+  return new Set(segments.map((parts) => parts.slice(0, depth).join('/'))).size;
 }
 
 export function collapseDepth(paths: string[], budget: number): number | undefined {
@@ -92,15 +92,14 @@ export function collapseDepth(paths: string[], budget: number): number | undefin
     return undefined;
   }
 
-  const deepest = Math.max(...paths.map((path) => path.split('/').length));
+  const segments = paths.map((path) => path.split('/'));
+  let depth = Math.max(...segments.map((parts) => parts.length));
 
-  for (let depth = deepest; depth >= 1; depth -= 1) {
-    if (distinctAt(paths, depth) <= budget) {
-      return depth;
-    }
+  while (depth > 1 && distinctAt(segments, depth) > budget) {
+    depth -= 1;
   }
 
-  return 1;
+  return depth;
 }
 
 export function measureOf(graph: BlastGraph, choice: MeasureChoice): BlastMeasure {
