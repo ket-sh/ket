@@ -6,16 +6,16 @@ import type { PlannedCheck } from '../../shared/checks.ts';
 import type { Filing } from '../../shared/decompose.ts';
 import type { Item, ItemKind, ItemSize } from '../../shared/item.ts';
 import type { RingFailure } from '../../shared/ring.ts';
+import type { Decision } from '../../shared/stage.ts';
 import type { Transition } from '../../shared/transition.ts';
 
 import { failuresAmong } from '../../shared/checks.ts';
 import { record } from '../../shared/event-log.ts';
 import { semanticsOf } from '../../shared/governing.ts';
-import { readStored } from '../../shared/item-store.ts';
 import { ITEM_KINDS, ITEM_SIZES, nextKey, titleRefusal } from '../../shared/item.ts';
 import { ketRootOrThrow } from '../../shared/locate.ts';
-import { inFlightFrom } from '../../shared/read-item.ts';
 import { argvOf } from '../../shared/ring.ts';
+import { byStatus, moveThrough, whileNothingElseWorks } from '../../shared/stage.ts';
 import {
   approvalOf,
   deliveryOf,
@@ -25,10 +25,9 @@ import {
   submissionOf,
   verificationOf,
 } from '../../shared/transition.ts';
-import { secondJobAmong } from '../../shared/write-gate.ts';
 import { blast } from './blast/command.ts';
 import { drift, stamp } from './plain/command.ts';
-import { fileAlone, fileUnder, itemsIn, keyOf, read, write } from './store.ts';
+import { fileAlone, fileUnder, itemsIn, keyOf } from './store.ts';
 import { show } from './surface/command.ts';
 import { closingSurface } from './surface/lifecycle.ts';
 
@@ -80,8 +79,6 @@ const file = defineCommand({
   },
 });
 
-type Decision = (item: Item, root: string, key: string) => Promise<Transition>;
-
 function stage(name: string, description: string, decide: Decision) {
   return defineCommand({
     meta: { name, description },
@@ -90,55 +87,15 @@ function stage(name: string, description: string, decide: Decision) {
     },
     async run({ args }) {
       const root = await ketRootOrThrow(process.cwd());
-      const outcome = await decide(await read(root, args.key), root, args.key);
+      const outcome = await moveThrough(root, args.key, name, decide);
 
       if ('refused' in outcome) {
-        await record(root, {
-          gate: 'transition',
-          outcome: 'refused',
-          about: name,
-          item: args.key,
-          reason: outcome.refused,
-        });
-
         throw new Error(`${args.key} is ${outcome.refused}`);
       }
 
-      await write(root, args.key, outcome.moved);
-      await record(root, {
-        gate: 'transition',
-        outcome: 'allowed',
-        about: outcome.moved.status,
-        item: args.key,
-      });
-      process.stdout.write(`${args.key} ${outcome.moved.status}\n`);
+      process.stdout.write(`${args.key} ${outcome.moved}\n`);
     },
   });
-}
-
-function byStatus(move: (item: Item) => Transition): Decision {
-  return async (item) => Promise.resolve(move(item));
-}
-
-// Refusing here beats hearing it from the write gate one edit into the job.
-function whileNothingElseWorks(move: (item: Item) => Transition): Decision {
-  return async (item, root, key) => {
-    const opened = move(item);
-
-    if ('refused' in opened) {
-      return opened;
-    }
-
-    const held = secondJobAmong(inFlightFrom(await readStored(root)), key);
-
-    if (held !== undefined) {
-      return {
-        refused: `waiting its turn: ${held.key} is the job in hand, and one job means one branch`,
-      };
-    }
-
-    return opened;
-  };
 }
 
 function plannedOnProject(checks: RingCheck[]): PlannedCheck[] {

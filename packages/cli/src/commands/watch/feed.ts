@@ -4,11 +4,14 @@ import { join } from 'node:path';
 
 import type { Journey } from '../../shared/journey.ts';
 import type { KanbanColumn } from '../../shared/kanban.ts';
+import type { Moved } from '../../shared/stage.ts';
+import type { GateAction } from '../../shared/transition.ts';
 
 import { readLog } from '../../shared/event-log.ts';
 import { readStored } from '../../shared/item-store.ts';
 import { foldJourney } from '../../shared/journey.ts';
 import { foldKanban } from '../../shared/kanban.ts';
+import { decisionOf, moveThrough } from '../../shared/stage.ts';
 import { docsFor } from './docs.ts';
 
 export interface FeedTimings {
@@ -21,6 +24,7 @@ export type DirectoryWatch = (path: string, changed: () => void) => () => void;
 export interface BoardFeed {
   snapshot: () => Promise<KanbanColumn[]>;
   journey: (key: string) => Promise<Journey | undefined>;
+  act: (key: string, gate: GateAction) => Promise<Moved>;
   subscribe: (refresh: () => void) => () => void;
 }
 
@@ -92,6 +96,7 @@ export function boardFeedFor(
 
       return docsFor(join(root, KET_DIRECTORY, 'items', key), log, journey);
     },
+    act: async (key, gate) => moveThrough(root, key, gate, decisionOf(gate)),
     subscribe: (refresh) => subscription(root, timings, refresh, watching),
   };
 }

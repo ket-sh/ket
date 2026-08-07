@@ -55,6 +55,20 @@ describe('the columns a board always shows', () => {
 
     expect(columns.flatMap((column) => column.cards)).toStrictEqual([]);
   });
+
+  it('hands every card the gates its status offers', () => {
+    const stored = [
+      {
+        key: 'K-3',
+        contents: 'title: The merged work\nkind: feature\nsize: story\nstatus: awaiting-merge\n',
+      },
+    ];
+
+    expect(cardsAt(foldKanban(stored, ''), 'awaiting-merge')[0]?.offers).toStrictEqual([
+      'ship',
+      'reopen',
+    ]);
+  });
 });
 
 describe('the moment a card is dated from', () => {

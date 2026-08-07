@@ -151,6 +151,20 @@ export function reopeningOf(item: Item): Transition {
   return moveTo(item, 'implementing', WHY_NOT_REOPEN);
 }
 
+export type GateAction = 'approve' | 'ship' | 'reopen';
+
+const GATE_MOVES: Record<GateAction, (item: Item) => Transition> = {
+  approve: approvalOf,
+  ship: shipmentOf,
+  reopen: reopeningOf,
+};
+
+const GATE_ACTIONS: GateAction[] = ['approve', 'ship', 'reopen'];
+
+export function offeredBy(item: Item): GateAction[] {
+  return GATE_ACTIONS.filter((gate) => 'moved' in GATE_MOVES[gate](item));
+}
+
 interface MachineStep {
   runs: string;
   whyNot: Refusals;

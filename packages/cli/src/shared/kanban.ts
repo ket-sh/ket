@@ -1,8 +1,10 @@
 import type { ItemStatus } from './item.ts';
 import type { StoredItem } from './read-item.ts';
+import type { GateAction } from './transition.ts';
 
 import { ITEM_STATUSES } from './item.ts';
 import { parseItem } from './read-item.ts';
+import { offeredBy } from './transition.ts';
 
 interface KanbanRefusal {
   reason: string;
@@ -16,6 +18,7 @@ interface KanbanCard {
   status: ItemStatus;
   since: string | undefined;
   refusal: KanbanRefusal | undefined;
+  offers: GateAction[];
 }
 
 export interface KanbanColumn {
@@ -114,6 +117,7 @@ function cardOf(stored: StoredItem, log: string): KanbanCard | undefined {
     status: item.status,
     since,
     refusal: since === undefined ? undefined : refusalAfter(events, since),
+    offers: offeredBy(item),
   };
 }
 

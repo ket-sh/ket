@@ -94,6 +94,38 @@ describe('the feed the board drinks from', () => {
   });
 });
 
+describe('the gate a feed acts through', () => {
+  it('moves an eligible item and the next snapshot shows it', async () => {
+    await writeFile(join(root, '.ket', 'config.ts'), "export default { key: 'K' };\n");
+    await writeFile(
+      join(root, '.ket', 'items', 'K-1', 'item.yaml'),
+      'title: The watched item\nkind: feature\nsize: story\nstatus: awaiting-approval\n',
+    );
+
+    const feed = boardFeedFor(root);
+
+    await expect(feed.act('K-1', 'approve')).resolves.toStrictEqual({ moved: 'implementing' });
+
+    const columns = await feed.snapshot();
+    const seated = columns.find((column) => column.status === 'implementing')?.cards ?? [];
+
+    expect(seated.map((card) => card.key)).toStrictEqual(['K-1']);
+  });
+
+  it('returns the refusal and the next snapshot wears it', async () => {
+    const feed = boardFeedFor(root);
+
+    await expect(feed.act('K-1', 'ship')).resolves.toStrictEqual({
+      refused: 'still designing, so nothing has merged',
+    });
+
+    const columns = await feed.snapshot();
+    const seated = columns.find((column) => column.status === 'designing')?.cards ?? [];
+
+    expect(seated[0]?.refusal?.reason).toBe('still designing, so nothing has merged');
+  });
+});
+
 describe('the poll that backstops the watcher', () => {
   it('wakes for growth in a log that began empty', async () => {
     let told = 0;
