@@ -23,7 +23,7 @@ export interface KanbanColumn {
   cards: KanbanCard[];
 }
 
-interface LoggedEvent {
+export interface LoggedEvent {
   outcome: string | undefined;
   gate: string | undefined;
   about: string | undefined;
@@ -69,7 +69,7 @@ function eventOf(line: string): LoggedEvent | undefined {
   return parsed !== null && typeof parsed === 'object' ? shapedEvent(parsed) : undefined;
 }
 
-function eventsAbout(log: string, key: string): LoggedEvent[] {
+export function eventsAbout(log: string, key: string): LoggedEvent[] {
   return log
     .split('\n')
     .map((line) => eventOf(line))
@@ -77,14 +77,14 @@ function eventsAbout(log: string, key: string): LoggedEvent[] {
     .filter((event) => event.item === key);
 }
 
-function arrivalOf(events: LoggedEvent[], status: ItemStatus): string | undefined {
+export function arrivalOf(events: LoggedEvent[], status: ItemStatus): string | undefined {
   return events
     .filter((event) => event.gate === 'transition' && event.outcome === 'allowed')
     .filter((event) => event.about === status)
     .at(-1)?.at;
 }
 
-function refusalAfter(events: LoggedEvent[], since: string): KanbanRefusal | undefined {
+export function refusalAfter(events: LoggedEvent[], since: string): KanbanRefusal | undefined {
   const refused = events
     .filter((event) => event.outcome === 'refused')
     .filter((event) => event.at !== undefined && event.at >= since)
