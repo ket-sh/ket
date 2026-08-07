@@ -82,6 +82,21 @@ describe('what the web preset declares about a project', () => {
   });
 });
 
+describe('the gate that keeps every spec on the harness test', () => {
+  it('checks every spec binds to the harness test, where a bare binding turns a scenario silent', () => {
+    expect(WEB_SEMANTICS.scripts['lint:bdd']).toBe('bun scripts/check-bdd-binding.mts');
+  });
+
+  it('gates a commit and the pipeline on the binding', () => {
+    expect(WEB_SEMANTICS.gates).toContainEqual({
+      script: 'lint:bdd',
+      guards: 'It checks a step binds to the harness.',
+      commitJob: 'bdd',
+      ciJob: 'check',
+    });
+  });
+});
+
 describe('the rings the web preset closes a write and a stage with', () => {
   it('formats the file before any check reads it', () => {
     expect(WEB_SEMANTICS.rings.formats).toStrictEqual([{ runs: 'oxfmt', scope: 'file' }]);

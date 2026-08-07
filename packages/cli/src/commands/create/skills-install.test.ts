@@ -69,6 +69,18 @@ describe('installing the skills a preset locks', () => {
     });
   });
 
+  it('installs the skills a chosen integration brings beside the locked ones', async () => {
+    await installerThat(OBLIGING);
+
+    const outcome = await installSkills(await project(), LOCKFILE, [
+      { name: 'chromatic-setup-ci', source: 'chromaui/skills' },
+    ]);
+
+    expect(outcome).toStrictEqual({
+      installed: ['find-skills', 'vitest', 'chromatic-setup-ci'],
+    });
+  });
+
   it('leaves each skill where the agent looks for it', async () => {
     await installerThat(OBLIGING);
 

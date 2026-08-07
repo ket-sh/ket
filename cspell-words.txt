@@ -9,9 +9,12 @@ bddgen
 bunfig
 bunx
 capitalises
+bchpt
 carriable
 catppuccin
+chpt
 chromatic
+chromaui
 citty
 clack
 codegen

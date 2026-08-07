@@ -41,6 +41,10 @@ pre-commit:
       priority: 1
       glob: '.env.schema'
       run: bun run lint:env
+    - name: bdd
+      priority: 1
+      glob: '{e2e/**/*.ts,playwright.config.ts}'
+      run: bun scripts/check-bdd-binding.mts
     - name: fmt
       priority: 2
       glob: '*.{ts,tsx,mts,js,jsx,mjs,cjs,json,md,yaml,yml}'

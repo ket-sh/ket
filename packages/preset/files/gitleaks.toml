@@ -4,3 +4,11 @@ useDefault = true
 [[allowlists]]
 targetRules = ["generic-api-key"]
 paths = ['''^\.agents/skills/''']
+
+# gitleaks ships no Chromatic rule of its own, and the project token guards a
+# snapshot quota worth keeping out of a commit.
+[[rules]]
+id = "chromatic-project-token"
+description = "Chromatic project token"
+regex = '''\bchpt_[a-f0-9]{12,40}\b'''
+keywords = ["chpt_"]

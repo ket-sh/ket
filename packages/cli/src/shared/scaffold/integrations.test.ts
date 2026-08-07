@@ -9,6 +9,7 @@ import {
   integrationFile,
   integrationsOffered,
   namesOffered,
+  skillsFor,
 } from './integrations.ts';
 
 describe('what a preset offers', () => {
@@ -60,6 +61,23 @@ describe('the files a chosen integration installs', () => {
 
   it('installs a file once when two targets offer the same integration', () => {
     expect(filesFor(['cli', 'cli'], ['codeql'])).toHaveLength(1);
+  });
+});
+
+describe('the skills a chosen integration brings', () => {
+  it('brings the official skills of the chosen integration', () => {
+    expect(skillsFor(['web'], ['chromatic'])).toStrictEqual([
+      { name: 'chromatic-setup-ci', source: 'chromaui/chromatic-skills' },
+      { name: 'chromatic-workflow-debug', source: 'chromaui/chromatic-skills' },
+    ]);
+  });
+
+  it('brings nothing when a project chose nothing', () => {
+    expect(skillsFor(['web'], [])).toStrictEqual([]);
+  });
+
+  it('brings a skill once when two targets offer the same integration', () => {
+    expect(skillsFor(['web', 'web'], ['chromatic'])).toHaveLength(2);
   });
 });
 

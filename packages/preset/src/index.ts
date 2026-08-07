@@ -15,6 +15,7 @@ export {
   filesOf,
   installsOf,
   reachesNothing,
+  skillsOf,
   writes,
 } from './item.ts';
 export { repositoryRootFrom } from './repository-root.ts';

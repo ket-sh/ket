@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { PresetItem } from './item.ts';
 
-import { copies, dependencyNamesOf, everyFileOf, writes } from './item.ts';
+import { copies, dependencyNamesOf, everyFileOf, skillsOf, writes } from './item.ts';
 
 function itemThat(offering: Partial<PresetItem>): PresetItem {
   return {
@@ -89,6 +89,31 @@ describe('every file a preset can write', () => {
     const item = itemThat({ files: [writes('knip.json', 'knip.json')] });
 
     expect(everyFileOf(item).map((file) => file.path)).toStrictEqual(['files/knip.json']);
+  });
+});
+
+describe('the skills an integration brings', () => {
+  it('names the skills a chosen integration installs', () => {
+    const integration = {
+      name: 'chromatic',
+      asks: 'reviews what a page looks like',
+      skills: [{ name: 'chromatic-setup-ci', source: 'chromaui/skills' }],
+      files: [],
+    };
+
+    expect(skillsOf(integration)).toStrictEqual([
+      { name: 'chromatic-setup-ci', source: 'chromaui/skills' },
+    ]);
+  });
+
+  it('brings no skills where the integration declares none', () => {
+    const integration = {
+      name: 'mobbin',
+      asks: 'a gallery of shipped screens',
+      reaches: { stage: 'designing', reference: 'https://mobbin.com' },
+    };
+
+    expect(skillsOf(integration)).toStrictEqual([]);
   });
 });
 

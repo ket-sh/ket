@@ -120,8 +120,13 @@ Two habits go with a hand-written check:
 
 - **Record the tool gap in the file.** Which tool owns this category, and why it
   was not used. That paragraph is what lets somebody delete your rule later.
-- **Arm it both ways.** A rule that matches nothing passes forever. Keep a
-  fixture it must reject and one it must accept, and run them in the suite.
+- **Arm it both ways, with the real tool.** A rule that matches nothing passes
+  forever. Keep a fixture it must reject and one it must accept, and run them
+  through the tool that owns the rule. Never re-implement the tool's engine in
+  a unit test: a gitleaks regex re-parsed into a test's own `RegExp` arms the
+  re-implementation, drifts the moment the rule changes, and gitleaks never
+  reads it. A config entry for a tool a gate already runs is exercised by that
+  gate, and it earns no second test.
 
 ## 5. Propose it. Never install it.
 

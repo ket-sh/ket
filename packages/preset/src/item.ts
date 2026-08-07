@@ -1,3 +1,5 @@
+import type { PresetSkill } from './skills.ts';
+
 export interface PresetFile {
   path: string;
   type: 'registry:file';
@@ -16,6 +18,7 @@ interface OfferedIntegration {
   name: string;
   asks: string;
   installs?: string[];
+  skills?: PresetSkill[];
 }
 
 // An integration either puts files in a project or changes what an agent
@@ -27,6 +30,10 @@ export type PresetIntegration =
 
 export function installsOf(integration: PresetIntegration): string[] {
   return integration.installs ?? [];
+}
+
+export function skillsOf(integration: PresetIntegration): PresetSkill[] {
+  return integration.skills ?? [];
 }
 
 export function filesOf(integration: PresetIntegration): PresetFile[] {
