@@ -1,7 +1,7 @@
 import { runCommand as runCittyCommand, showUsage } from 'citty';
 
 import { commands, hidden, main, showUsageOf } from './main.ts';
-import { usageRequest } from './shared/usage.ts';
+import { homeArgv, usageRequest } from './shared/usage.ts';
 
 function isKnownCommand(name: string): name is keyof typeof commands {
   return Object.hasOwn(commands, name);
@@ -63,7 +63,9 @@ function describeFailure(cause: unknown): string {
   return cause instanceof Error ? cause.message : String(cause);
 }
 
-export async function runMain(argv: string[] = process.argv.slice(2)): Promise<void> {
+export async function runMain(raw: string[] = process.argv.slice(2)): Promise<void> {
+  const argv = homeArgv(raw, process.stdout.isTTY);
+
   try {
     if (await runHidden(argv)) {
       return;

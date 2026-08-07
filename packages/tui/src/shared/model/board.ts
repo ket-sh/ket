@@ -1,3 +1,5 @@
+import type { MapReadingView } from './story-map.ts';
+
 export interface KanbanRefusalView {
   reason: string;
   at: string;
@@ -111,6 +113,7 @@ export type MovedView = { moved: string } | { refused: string };
 
 export interface BoardFeed {
   snapshot: () => Promise<KanbanColumnView[]>;
+  storyMap: () => Promise<MapReadingView>;
   journey: (key: string) => Promise<JourneyView | undefined>;
   act: (key: string, gate: GateActionView) => Promise<MovedView>;
   saveCriteria: (key: string, name: string, source: string) => Promise<void>;

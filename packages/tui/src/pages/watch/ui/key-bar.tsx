@@ -8,6 +8,7 @@ import { useTheme } from '../../../shared/theme';
 import { GATE_KEYS } from '../model/keys.ts';
 
 const HINTS: Record<Exclude<Frame['kind'], 'board'>, string> = {
+  map: '←↑↓→ move · esc board · q quit',
   journey: '←↑↓→ move · ⏎ open · esc board · q quit',
   surface: '↑↓ scroll · tab ←→ audience · e edit · esc back · q quit',
   gate: '⏎ pass · esc cancel',
@@ -25,7 +26,7 @@ function hintOf(kind: Frame['kind'], offers: GateActionView[], layout: BoardLayo
   if (kind === 'board') {
     const other = layout === 'kanban' ? 'list' : 'kanban';
 
-    return `←↑↓→ move · ⏎ journey${gateHints(offers)} · v ${other} · r refresh · q quit`;
+    return `←↑↓→ move · ⏎ journey${gateHints(offers)} · m map · v ${other} · r refresh · q quit`;
   }
 
   return HINTS[kind];

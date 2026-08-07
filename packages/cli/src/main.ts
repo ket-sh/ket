@@ -4,6 +4,7 @@ const load = {
   create: async () => import('./commands/create/command.ts'),
   update: async () => import('./commands/update/command.ts'),
   watch: async () => import('./commands/watch/command.ts'),
+  map: async () => import('./commands/map/command.ts'),
   gate: async () => import('./commands/gate/command.ts'),
   item: async () => import('./commands/item/command.ts'),
   review: async () => import('./commands/review/command.ts'),
@@ -14,6 +15,7 @@ export const commands = {
   create: async () => (await load.create()).default,
   update: async () => (await load.update()).default,
   watch: async () => (await load.watch()).default,
+  map: async () => (await load.map()).default,
 };
 
 export const hidden = {

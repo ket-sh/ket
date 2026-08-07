@@ -4,8 +4,9 @@ import { createCliRenderer } from '@opentui/core';
 import { createRoot } from '@opentui/react';
 import { createElement } from 'react';
 
-import type { BoardFeed } from '../shared/model';
+import type { BoardFeed, MapReadingView } from '../shared/model';
 
+import { MapScreen } from '../pages/map';
 import { WatchPage } from '../pages/watch';
 
 export interface WatchOptions {
@@ -23,4 +24,15 @@ export async function watch(feed: BoardFeed, options: WatchOptions = {}): Promis
   };
 
   createRoot(renderer).render(createElement(WatchPage, { feed, onQuit }));
+}
+
+export async function storyMap(reading: MapReadingView): Promise<void> {
+  const renderer = await createCliRenderer({ exitOnCtrlC: true });
+
+  const onQuit = (): void => {
+    renderer.destroy();
+    process.exit(0);
+  };
+
+  createRoot(renderer).render(createElement(MapScreen, { reading, onQuit }));
 }
