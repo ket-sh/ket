@@ -6,8 +6,10 @@ anscribe
 arrayify
 artipacked
 backoff
+bchpt
 bddgen
 bunx
+chpt
 chromatic
 citty
 clack
