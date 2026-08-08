@@ -1,0 +1,5 @@
+[user]
+	name = ket suite
+	email = suite@ket.invalid
+[commit]
+	gpgsign = false

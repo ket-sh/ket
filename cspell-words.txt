@@ -43,6 +43,7 @@ fulfilment
 ghostty
 gitdir
 gitleaks
+gpgsign
 greptile
 gridstack
 gsub
