@@ -36,13 +36,13 @@ function reportOf(dormant: DormantGate): string {
 describe('the action a report asks for when no gate refused anything', () => {
   it('names a gate the log has never recorded, and asks for a look rather than a removal', () => {
     expect(reportOf(DUP)).toContain(
-      '## The one action\n\nNo gate refused anything in this window, and the log has never recorded `lint:dup`. It finds knowledge written twice. Examine whether the rule still earns its place.\n',
+      '## The one action\n\nNo gate refused anything in this window, and the log has never recorded `lint:dup`. It finds knowledge written twice. The log sees a gate only when a session runs its script, so a run at commit time or in CI leaves no line here. Examine whether the rule still earns its place.\n',
     );
   });
 
   it('names the moment a gate was last recorded, when history holds one', () => {
     expect(reportOf({ ...DUP, seen: Date.parse('2026-07-02T09:00:00.000Z') })).toContain(
-      'the log last recorded `lint:dup` at 2026-07-02T09:00:00.000Z. It finds knowledge written twice. Examine whether the rule still earns its place.\n',
+      'the log last recorded `lint:dup` at 2026-07-02T09:00:00.000Z. It finds knowledge written twice. The log sees a gate only when a session runs its script, so a run at commit time or in CI leaves no line here. Examine whether the rule still earns its place.\n',
     );
   });
 });

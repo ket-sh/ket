@@ -7,6 +7,13 @@ export interface GateEvent {
   at?: string;
 }
 
+export interface DeclaredGateEvent {
+  gate: string;
+  outcome: 'allowed';
+  about: string;
+  at?: string;
+}
+
 export interface NoteEvent {
   note: string;
   actor: string;
@@ -14,6 +21,6 @@ export interface NoteEvent {
   at?: string;
 }
 
-export function renderEvent(event: GateEvent | NoteEvent): string {
+export function renderEvent(event: DeclaredGateEvent | GateEvent | NoteEvent): string {
   return `${JSON.stringify(event)}\n`;
 }
