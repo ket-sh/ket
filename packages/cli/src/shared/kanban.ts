@@ -1,4 +1,4 @@
-import type { ItemStatus } from './item.ts';
+import type { ItemKind, ItemStatus } from './item.ts';
 import type { StoredItem } from './read-item.ts';
 import type { GateAction } from './transition.ts';
 
@@ -23,6 +23,7 @@ interface KanbanCard {
   key: string;
   title: string;
   size: string;
+  kind: ItemKind;
   status: ItemStatus;
   parent: string | undefined;
   since: string | undefined;
@@ -106,6 +107,7 @@ function cardOf(stored: StoredItem, log: string): KanbanCard | undefined {
     key: stored.key,
     title: item.title,
     size: item.size,
+    kind: item.kind,
     status: item.status,
     parent: item.parent,
     since,
