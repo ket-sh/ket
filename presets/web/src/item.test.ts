@@ -95,6 +95,17 @@ describe('what the web preset offers a project that wants its screens reviewed',
   });
 });
 
+describe('the spell gate a scaffold turns on itself', () => {
+  it('keeps the machine state out of it, and the human documents in it', () => {
+    const spell = contentOf('files/cspell.json');
+
+    expect(spell).toContain('.ket/scaffold.json');
+    expect(spell).toContain('.ket/events.jsonl');
+    expect(spell).toContain('.ket/toolchain.json');
+    expect(spell).not.toContain('".ket"');
+  });
+});
+
 describe('the binding every generated spec resolves its test through', () => {
   it('binds the plain harness to the bdd test it re-exports', () => {
     const harness = contentOf('files/source/e2e/helpers/harness.ts');

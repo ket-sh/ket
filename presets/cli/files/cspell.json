@@ -22,7 +22,10 @@
     ".git",
     "bun.lock",
     "skills-lock.json",
-    "cspell-words.txt"
+    "cspell-words.txt",
+    ".ket/scaffold.json",
+    ".ket/events.jsonl",
+    ".ket/toolchain.json"
   ],
   "useGitignore": true,
   "overrides": [
