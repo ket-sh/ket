@@ -32,7 +32,7 @@
   "useGitignore": true,
   "overrides": [
     {
-      "filename": "**/*.test.ts",
+      "filename": "**/*.test.{ts,mts}",
       "ignoreRegExpList": ["/'[^'\\s]{4,}'/g"]
     },
     {
