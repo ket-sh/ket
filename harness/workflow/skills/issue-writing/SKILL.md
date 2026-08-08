@@ -10,10 +10,19 @@ The title is what they see on the board, and the description is everything else
 they get. Both are written before the item is filed, and both are checked
 against the refusal list at the bottom of this page first.
 
-The text lands through the filing command and nowhere else:
+The text lands through a command and never through an editor:
 
 ```
 ket item file --title '<title>' --kind <kind> --size <size> --description '<description>'
+```
+
+A description written after the filing lands the same way, through the command
+that replaces it. An epic filed before its breakdown existed is the usual case,
+because its slice rationale and its children are `unknown:` until the user picks
+them:
+
+```
+ket item describe <key> --file <path to the prose>
 ```
 
 Wrap the description at 72 columns. It is stored as a block in

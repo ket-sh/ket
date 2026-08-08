@@ -121,6 +121,16 @@ describe('filing an item with the description somebody wrote for it', () => {
     });
   });
 
+  it('rewrites the description of an item already filed, when asked to describe it', async () => {
+    await runItem(['describe', 'K-1', '--description', 'Slice rationale\n\nK-2 cuts first.']);
+
+    await expect(filed('K-1')).resolves.toMatchObject({
+      title: 'The watched item',
+      status: 'triaged',
+      description: 'Slice rationale\n\nK-2 cuts first.',
+    });
+  });
+
   it('lands no description for a filing nobody described', async () => {
     await runItem([
       'file',

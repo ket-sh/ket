@@ -90,6 +90,7 @@ probity
 profoundlogic
 qlty
 qltysh
+redescription
 resizestart
 resizestop
 rhysd

@@ -64,7 +64,13 @@ You write two kinds of description in one pass:
 ## Return, and stop
 
 Return the candidates with their descriptions, and nothing else. Do not run
-`ket item file`, do not move a status, and do not pick a subset yourself.
+`ket item file` or `ket item describe`, do not move a status, and do not pick a
+subset yourself.
+
+The parent description you wrote replaces the one the epic was filed with, where
+the slice rationale and the children still read `unknown:`. The caller lands it
+with `ket item describe <epic key> --file <path>` once the user has picked the
+children, so write it as the finished text rather than as notes toward one.
 
 The caller shows your list to the user, who chooses. That choice is a human gate
 and it is not yours to close.
