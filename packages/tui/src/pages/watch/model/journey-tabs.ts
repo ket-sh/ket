@@ -104,6 +104,16 @@ export function tabbedTo(stack: Frame[], tab: JourneyTab): Frame[] {
   return [...stack.slice(0, -1), { ...above, tab, pick: 0, focus: 'canvas' }];
 }
 
+export function aimedAt(stack: Frame[], sel: string): Frame[] {
+  const above = stack[stack.length - 1];
+
+  if (above?.kind !== 'journey' || !above.journey.nodes.some((node) => node.id === sel)) {
+    return stack;
+  }
+
+  return [...stack.slice(0, -1), { ...above, sel, focus: 'canvas' }];
+}
+
 export interface Doors {
   dive: (key: string | undefined) => void;
   open: (journey: JourneyView, doc: SurfaceDocView) => void;

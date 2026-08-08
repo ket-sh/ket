@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { MapBandView } from '../../../shared/model';
 
-import { detailOf, seatsOf, walkedTo } from './spot.ts';
+import { detailOf, seatIndexOf, seatsOf, walkedTo } from './spot.ts';
 
 const BANDS: MapBandView[] = [
   {
@@ -42,6 +42,18 @@ describe('the seats a map offers the selection', () => {
 
   it('offers no seat at all on a map with nothing on it', () => {
     expect(seatsOf([])).toStrictEqual([]);
+  });
+});
+
+describe('the seat a clicked card names', () => {
+  it('finds the seat of a card wherever its band sits', () => {
+    expect(seatIndexOf(BANDS, 'st-see')).toBe(0);
+    expect(seatIndexOf(BANDS, 'st-card')).toBe(1);
+    expect(seatIndexOf(BANDS, 'st-search')).toBe(2);
+  });
+
+  it('finds no seat for a card the map never held', () => {
+    expect(seatIndexOf(BANDS, 'st-ghost')).toBeUndefined();
   });
 });
 

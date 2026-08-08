@@ -17,6 +17,7 @@ import {
   editing,
   judged,
   landingOf,
+  mapSeated,
   mapWalked,
   revisedIn,
   savedMark,
@@ -24,7 +25,7 @@ import {
   surfaceFrame,
   tuned,
 } from './frames.ts';
-import { enteredIn, tabbedTo, tabbed, walked } from './journey-tabs.ts';
+import { aimedAt, enteredIn, tabbedTo, tabbed, walked } from './journey-tabs.ts';
 
 type Grow = (grow: (stack: Frame[]) => Frame[]) => void;
 
@@ -84,7 +85,7 @@ function useEditing(feed: BoardFeed, top: Frame, setFrames: Grow): Editing {
   return { edit, revise, save };
 }
 
-type Mapping = Pick<FrameStack, 'mapWalk' | 'openMap'>;
+type Mapping = Pick<FrameStack, 'mapWalk' | 'openMap' | 'mapSeat'>;
 
 function useMapping(feed: BoardFeed, setFrames: Grow): Mapping {
   const openMap = useCallback(() => {
@@ -100,7 +101,14 @@ function useMapping(feed: BoardFeed, setFrames: Grow): Mapping {
     [setFrames],
   );
 
-  return { openMap, mapWalk };
+  const mapSeat = useCallback(
+    (at: number) => {
+      setFrames((stack) => mapSeated(stack, at));
+    },
+    [setFrames],
+  );
+
+  return { openMap, mapWalk, mapSeat };
 }
 
 function useEntering(top: Frame, doors: Doors) {
@@ -113,7 +121,12 @@ function useEntering(top: Frame, doors: Doors) {
 
 type Diving = Pick<FrameStack, 'dive' | 'enter'>;
 
-function useDiving(feed: BoardFeed, top: Frame, setFrames: Grow): Diving {
+function useDiving(
+  feed: BoardFeed,
+  top: Frame,
+  setFrames: Grow,
+  showTab: (tab: JourneyTab) => void,
+): Diving {
   const dive = useCallback(
     (key: string | undefined, tab: JourneyTab = 'overview') => {
       if (key === undefined) {
@@ -146,13 +159,6 @@ function useDiving(feed: BoardFeed, top: Frame, setFrames: Grow): Diving {
     [setFrames],
   );
 
-  const showTab = useCallback(
-    (tab: JourneyTab) => {
-      setFrames((stack) => tabbedTo(stack, tab));
-    },
-    [setFrames],
-  );
-
   const enter = useEntering(
     top,
     useMemo(() => ({ dive, open, showTab }), [dive, open, showTab]),
@@ -161,21 +167,45 @@ function useDiving(feed: BoardFeed, top: Frame, setFrames: Grow): Diving {
   return { dive, enter };
 }
 
+type Steering = Pick<FrameStack, 'showTab' | 'aim' | 'walk' | 'tab'>;
+
+function useSteering(setFrames: Grow): Steering {
+  const showTab = useCallback(
+    (tab: JourneyTab) => {
+      setFrames((stack) => tabbedTo(stack, tab));
+    },
+    [setFrames],
+  );
+
+  const aim = useCallback(
+    (sel: string) => {
+      setFrames((stack) => aimedAt(stack, sel));
+    },
+    [setFrames],
+  );
+
+  const walk = useCallback(
+    (direction: Direction) => {
+      setFrames((stack) => walked(stack, direction));
+    },
+    [setFrames],
+  );
+
+  const tab = useCallback(() => {
+    setFrames((stack) => tabbed(stack));
+  }, [setFrames]);
+
+  return { showTab, aim, walk, tab };
+}
+
 export function useFrameStack(feed: BoardFeed): FrameStack {
   const [frames, setFrames] = useState<Frame[]>([{ kind: 'board' }]);
   const top = frames[frames.length - 1] ?? ({ kind: 'board' } as const);
   const { gate, pass } = useCeremony(feed, top, setFrames);
   const { edit, revise, save } = useEditing(feed, top, setFrames);
-  const { openMap, mapWalk } = useMapping(feed, setFrames);
-  const { dive, enter } = useDiving(feed, top, setFrames);
-
-  const walk = useCallback((direction: Direction) => {
-    setFrames((stack) => walked(stack, direction));
-  }, []);
-
-  const tab = useCallback(() => {
-    setFrames((stack) => tabbed(stack));
-  }, []);
+  const { openMap, mapWalk, mapSeat } = useMapping(feed, setFrames);
+  const { showTab, aim, walk, tab } = useSteering(setFrames);
+  const { dive, enter } = useDiving(feed, top, setFrames, showTab);
 
   const scroll = useCallback((delta: number, most: number) => {
     setFrames((stack) => scrolled(stack, delta, most));
@@ -198,8 +228,11 @@ export function useFrameStack(feed: BoardFeed): FrameStack {
     top,
     dive,
     tab,
+    showTab,
+    aim,
     openMap,
     mapWalk,
+    mapSeat,
     enter,
     walk,
     scroll,

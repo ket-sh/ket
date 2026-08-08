@@ -1,11 +1,16 @@
+import type { BoxRenderable, MouseEvent } from '@opentui/core';
 import type { ReactNode } from 'react';
 
+import { useRef } from 'react';
+
 import type { JourneyView } from '../../../shared/model';
+import type { CanvasSpot } from '../lib/canvas.ts';
 import type { JourneyFocus, JourneyTab } from '../model/frames.ts';
+import type { WatchMouse } from '../model/mouse.ts';
 
 import { useTheme } from '../../../shared/theme';
 import { SpanRow } from '../../../shared/ui';
-import { journeyRows } from '../lib/canvas.ts';
+import { journeyRows, overflowsAcross, stageAt } from '../lib/canvas.ts';
 import { paneFitOf, panePlaceOf } from '../lib/pane-place.ts';
 import { paneLinesOf } from '../lib/pane.ts';
 import { tabsOf } from '../model/journey-tabs.ts';
@@ -24,9 +29,18 @@ export interface JourneyPageProps {
   tick: number;
   width: number;
   height: number;
+  mouse: WatchMouse;
 }
 
-function TabBar({ journey, tab }: { journey: JourneyView; tab: JourneyTab }): ReactNode {
+function TabBar({
+  journey,
+  tab,
+  mouse,
+}: {
+  journey: JourneyView;
+  tab: JourneyTab;
+  mouse: WatchMouse;
+}): ReactNode {
   const { theme } = useTheme();
 
   return (
@@ -38,6 +52,10 @@ function TabBar({ journey, tab }: { journey: JourneyView; tab: JourneyTab }): Re
             fg={name === tab ? theme.base : theme.subtext}
             bg={name === tab ? theme.blue : theme.base}
             wrapMode="none"
+            onMouseDown={(event: MouseEvent) => {
+              event.stopPropagation();
+              mouse.tabLabel(name);
+            }}
           >
             {` ${name} `}
           </text>
@@ -47,26 +65,41 @@ function TabBar({ journey, tab }: { journey: JourneyView; tab: JourneyTab }): Re
   );
 }
 
-function CanvasRows({
-  journey,
-  sel,
-  now,
-  tick,
-  width,
-  height,
-}: Omit<JourneyPageProps, 'tab' | 'pick' | 'focus'>): ReactNode {
+type CanvasProps = Omit<JourneyPageProps, 'tab' | 'pick' | 'focus'>;
+
+function viewOf(width: number, height: number): { width: number; height: number } {
+  return { width: Math.max(20, width - 2), height: Math.max(6, height) };
+}
+
+function spotWithin(box: BoxRenderable | null, event: MouseEvent): CanvasSpot {
+  return { x: event.x - (box?.x ?? 0), y: event.y - (box?.y ?? 0) };
+}
+
+function CanvasRows({ journey, sel, now, tick, width, height, mouse }: CanvasProps): ReactNode {
   const { theme } = useTheme();
-  const rows = journeyRows(
-    journey,
-    sel,
-    now,
-    tick,
-    { width: Math.max(20, width - 2), height: Math.max(6, height) },
-    theme,
-  );
+  const canvasRef = useRef<BoxRenderable>(null);
+  const view = viewOf(width, height);
+  const rows = journeyRows(journey, sel, now, tick, view, theme);
+
+  const chooseAt = (event: MouseEvent): void => {
+    const id = stageAt(journey, sel, view, spotWithin(canvasRef.current, event));
+
+    if (id !== undefined) {
+      event.stopPropagation();
+      mouse.stage(id);
+    }
+  };
+
+  const wheelAt = (event: MouseEvent): void => {
+    const direction = event.scroll?.direction;
+
+    if (direction !== undefined && overflowsAcross(journey, view.width)) {
+      mouse.canvasWheel(direction);
+    }
+  };
 
   return (
-    <box flexDirection="column">
+    <box ref={canvasRef} flexDirection="column" onMouseDown={chooseAt} onMouseScroll={wheelAt}>
       {rows.map(
         (spans, index): ReactNode => (
           <SpanRow key={String(index)} spans={spans} />
@@ -86,7 +119,12 @@ function WorkflowPanel(props: Omit<JourneyPageProps, 'tab' | 'pick'>): ReactNode
     return (
       <box flexDirection="row">
         <CanvasRows {...props} width={place.canvasWidth} height={Math.max(6, props.height)} />
-        <SidePane lines={lines} focus={props.focus} width={place.paneWidth} />
+        <SidePane
+          lines={lines}
+          focus={props.focus}
+          width={place.paneWidth}
+          onChildren={props.mouse.paneChildren}
+        />
       </box>
     );
   }
@@ -101,6 +139,7 @@ function WorkflowPanel(props: Omit<JourneyPageProps, 'tab' | 'pick'>): ReactNode
           lines={lines.slice(0, fit.paneLines)}
           focus={props.focus}
           width={place.paneWidth}
+          onChildren={props.mouse.paneChildren}
         />
       )}
     </box>
@@ -136,7 +175,7 @@ export function JourneyPage(props: JourneyPageProps): ReactNode {
         title={` ${journey.item} · journey `}
         flexDirection="column"
       >
-        <TabBar journey={journey} tab={props.tab} />
+        <TabBar journey={journey} tab={props.tab} mouse={props.mouse} />
         <PanelFor {...props} height={Math.max(6, props.height - 5)} />
       </box>
       {journey.standing === undefined ? null : (

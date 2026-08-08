@@ -1,3 +1,4 @@
+import type { MouseEvent } from '@opentui/core';
 import type { ReactNode } from 'react';
 
 import type { Theme } from '../../../shared/theme';
@@ -142,6 +143,9 @@ export function GateModal({ frame, from, tick, width, height }: GateModalProps):
       paddingTop={1}
       paddingBottom={1}
       title={` ${frame.action} gate `}
+      onMouseDown={(event: MouseEvent) => {
+        event.stopPropagation();
+      }}
     >
       <ToriiMark accent={accent} tick={tick} />
       <text> </text>

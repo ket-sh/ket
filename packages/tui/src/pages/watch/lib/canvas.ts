@@ -1,7 +1,7 @@
 import type { Cell, Ln } from '../../../shared/lib';
 import type { JourneyView, StageStateView } from '../../../shared/model';
 import type { Theme } from '../../../shared/theme';
-import type { PlacedNode } from './layout.ts';
+import type { Placed, PlacedNode } from './layout.ts';
 
 import { ageOf, boxAt, gridOf, lerpHex, put, spansOf, writeText } from '../../../shared/lib';
 import { KANAGAWA, stageColorOf } from '../../../shared/theme';
@@ -224,6 +224,45 @@ function panOf(center: number, view: number, size: number): number {
   return Math.floor(Math.min(Math.max(center - view / 2, 0), Math.max(0, size - view)));
 }
 
+export interface CanvasSpot {
+  x: number;
+  y: number;
+}
+
+interface Pans {
+  panX: number;
+  panY: number;
+}
+
+function pansOf(placed: Placed, selectedId: string, view: Viewport): Pans {
+  const center = centerOf(placed.nodes.find((node) => node.id === selectedId));
+
+  return {
+    panX: panOf(center.x, view.width, placed.width),
+    panY: panOf(center.y, view.height, placed.height),
+  };
+}
+
+function holds(node: PlacedNode, x: number, y: number): boolean {
+  return x >= node.x && x < node.x + NODE_W && y >= node.y && y < node.y + NODE_H;
+}
+
+export function stageAt(
+  journey: JourneyView,
+  selectedId: string,
+  view: Viewport,
+  spot: CanvasSpot,
+): string | undefined {
+  const placed = placedOf(journey);
+  const pans = pansOf(placed, selectedId, view);
+
+  return placed.nodes.find((node) => holds(node, spot.x + pans.panX, spot.y + pans.panY))?.id;
+}
+
+export function overflowsAcross(journey: JourneyView, width: number): boolean {
+  return placedOf(journey).width > width;
+}
+
 function centerOf(selected: PlacedNode | undefined): { x: number; y: number } {
   if (selected === undefined) {
     return { x: 0, y: 0 };
@@ -249,11 +288,9 @@ export function journeyRows(
     drawNode(grid, node, borderOf(node, selectedId, theme), { now, tick }, theme);
   }
 
-  const center = centerOf(placed.nodes.find((node) => node.id === selectedId));
-  const panX = panOf(center.x, view.width, placed.width);
-  const panY = panOf(center.y, view.height, placed.height);
+  const pans = pansOf(placed, selectedId, view);
 
   return grid
-    .slice(panY, panY + view.height)
-    .map((row) => spansOf(row.slice(panX, panX + view.width)));
+    .slice(pans.panY, pans.panY + view.height)
+    .map((row) => spansOf(row.slice(pans.panX, pans.panX + view.width)));
 }

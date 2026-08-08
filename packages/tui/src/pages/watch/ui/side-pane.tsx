@@ -1,3 +1,4 @@
+import type { MouseEvent } from '@opentui/core';
 import type { ReactNode } from 'react';
 
 import type { Theme } from '../../../shared/theme';
@@ -29,14 +30,50 @@ function markOf(line: PaneLine, focus: JourneyFocus): string {
   return line.tone === 'link' && focus === 'pane' ? SEATED : RESTING;
 }
 
+function PaneRow({
+  line,
+  focus,
+  onChildren,
+}: {
+  line: PaneLine;
+  focus: JourneyFocus;
+  onChildren: () => void;
+}): ReactNode {
+  const { theme } = useTheme();
+  const spoken = `${markOf(line, focus)}${line.text}`;
+
+  if (line.tone !== 'link') {
+    return (
+      <text wrapMode="none" fg={toneColorOf(line.tone, theme)}>
+        {spoken}
+      </text>
+    );
+  }
+
+  return (
+    <text
+      wrapMode="none"
+      fg={toneColorOf(line.tone, theme)}
+      onMouseDown={(event: MouseEvent) => {
+        event.stopPropagation();
+        onChildren();
+      }}
+    >
+      {spoken}
+    </text>
+  );
+}
+
 export function SidePane({
   lines,
   focus,
   width,
+  onChildren,
 }: {
   lines: PaneLine[];
   focus: JourneyFocus;
   width: number;
+  onChildren: () => void;
 }): ReactNode {
   const { theme } = useTheme();
 
@@ -54,9 +91,7 @@ export function SidePane({
     >
       {lines.map(
         (line, index): ReactNode => (
-          <text key={String(index)} wrapMode="none" fg={toneColorOf(line.tone, theme)}>
-            {`${markOf(line, focus)}${line.text}`}
-          </text>
+          <PaneRow key={String(index)} line={line} focus={focus} onChildren={onChildren} />
         ),
       )}
     </box>

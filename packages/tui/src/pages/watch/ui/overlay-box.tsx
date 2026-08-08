@@ -1,3 +1,4 @@
+import type { MouseEvent } from '@opentui/core';
 import type { ReactNode } from 'react';
 
 import { useTheme } from '../../../shared/theme';
@@ -37,6 +38,9 @@ export function OverlayBox({
       paddingRight={1}
       paddingTop={1}
       title={title}
+      onMouseDown={(event: MouseEvent) => {
+        event.stopPropagation();
+      }}
     >
       {children}
     </box>

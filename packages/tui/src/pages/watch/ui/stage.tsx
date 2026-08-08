@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import type { KanbanColumnView } from '../../../shared/model';
 import type { BoardLayout } from '../model/board-layout.ts';
 import type { FrameStack } from '../model/frames.ts';
+import type { WatchMouse } from '../model/mouse.ts';
 import type { Seat } from '../model/seat.ts';
 
 import { MapPane } from '../../../widgets/story-map';
@@ -14,7 +15,7 @@ import { JourneyPage } from './journey.tsx';
 import { ListView } from './list.tsx';
 import { SurfacePage } from './surface.tsx';
 
-const PAGE_SIDE = 1;
+export const PAGE_SIDE = 1;
 
 export interface RoomProps {
   stack: FrameStack;
@@ -25,15 +26,31 @@ export interface RoomProps {
   width: number;
   height: number;
   layout: BoardLayout;
+  mouse: WatchMouse;
 }
 
-function BoardArea({ columns, seat, now, width, layout }: Omit<RoomProps, 'stack'>): ReactNode {
+function BoardArea({
+  columns,
+  seat,
+  now,
+  width,
+  layout,
+  mouse,
+}: Omit<RoomProps, 'stack'>): ReactNode {
   if (layout === 'backlog') {
-    return <BacklogView columns={columns} chosenKey={seat.chosen?.key} />;
+    return <BacklogView columns={columns} chosenKey={seat.chosen?.key} mouse={mouse} />;
   }
 
   if (layout === 'list') {
-    return <ListView columns={columns} now={now} chosenKey={seat.chosen?.key} />;
+    return (
+      <ListView
+        columns={columns}
+        now={now}
+        chosenKey={seat.chosen?.key}
+        onRow={mouse.listRow}
+        onWheel={mouse.listWheel}
+      />
+    );
   }
 
   return (
@@ -42,19 +59,27 @@ function BoardArea({ columns, seat, now, width, layout }: Omit<RoomProps, 'stack
       now={now}
       inRow={laidInRow(columns, width - PAGE_SIDE * 2)}
       seat={seat}
+      mouse={mouse}
     />
   );
 }
 
 export function StageArea(room: RoomProps): ReactNode {
-  const { stack, now, tick, width, height } = room;
+  const { stack, now, tick, width, height, mouse } = room;
 
   if (stack.top.kind === 'edit') {
     return <EditorPage frame={stack.top} tick={tick} height={height} />;
   }
 
   if (stack.top.kind === 'map') {
-    return <MapPane reading={stack.top.reading} at={stack.top.at} />;
+    return (
+      <MapPane
+        reading={stack.top.reading}
+        at={stack.top.at}
+        onSeat={mouse.mapSeat}
+        onWheel={mouse.mapWheel}
+      />
+    );
   }
 
   if (stack.top.kind === 'journey') {
@@ -69,6 +94,7 @@ export function StageArea(room: RoomProps): ReactNode {
         tick={tick}
         width={width - 2}
         height={height}
+        mouse={mouse}
       />
     );
   }

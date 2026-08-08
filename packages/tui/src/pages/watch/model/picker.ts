@@ -9,6 +9,7 @@ export interface Picker {
   open: () => void;
   move: (delta: number) => void;
   keep: () => void;
+  pick: (at: number) => void;
   close: () => void;
 }
 
@@ -37,10 +38,15 @@ export function usePicker(stack: FrameStack): Picker {
     setAt(undefined);
   };
 
+  const pick = (chosen: number): void => {
+    wardrobe.keep(chosen);
+    setAt(undefined);
+  };
+
   const close = (): void => {
     wardrobe.revert();
     setAt(undefined);
   };
 
-  return { at, open, move, keep, close };
+  return { at, open, move, keep, pick, close };
 }
