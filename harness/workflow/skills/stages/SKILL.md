@@ -197,10 +197,20 @@ The title and the description come from `ket:decomposer` already written to the
 `ket:issue-writing` skill, so carry them through rather than paraphrasing them
 into the command.
 
-The epic's own description was written when the epic was filed, and no command
-rewrites it. Where it says `unknown:` about the cut, the answer is the proposal
-you just showed the user, so say it in the chat and let the children carry the
-detail.
+**Then describe the epic you just cut.** Its own description was written before
+the breakdown existed, so wherever it says `unknown:` about the slice rationale
+or the children, the answer is the proposal the user just chose. Write the
+revised description to a temporary file and land it:
+
+```
+ket item describe <epic key> --file <path to the prose>
+```
+
+A file rather than `--description`, because slice rationale and a children list
+carry blank lines and punctuation no shell quoting survives. The command
+rewrites the description and nothing else, so the status and the links the
+filing recorded stay exactly as they are. Say the rationale in the chat too, and
+let the children carry the acceptance criteria.
 
 Each child has to be smaller than the epic, and only an epic or a story takes
 children at all. The command records the link on both ends and prints the key it
