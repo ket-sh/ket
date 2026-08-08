@@ -28,6 +28,20 @@ screen, until the owner approved the whole.
 - The header carries the banner, the breadcrumb, the active theme name, and
   a live indicator. The key bar holds the bottom row of the screen and names
   the keys the view above it answers.
+- The key bar keeps to one row. Where the hints outrun the width, it gives
+  up the least useful first and never the way out, so `q quit` survives the
+  narrowest terminal.
+
+## The backlog
+
+- The board carries every lane, so the whole pipeline stays on screen. The
+  backlog is a second reading of the same snapshot, not a filter of it.
+- `b` swaps the board for a full-width list of everything nothing has
+  started: the idea and triaged items, queued epic children among them.
+  A second press gives the board back.
+- Rows read key, stage, size and title, and a queued child names the epic
+  it hangs under. The list leads with the triaged items, because a reader
+  opens a backlog to find what to pull next.
 
 ## The drill-in
 
@@ -37,7 +51,7 @@ single graph the first cut drew.
 
 - Overview comes first and holds the title and the description at full
   width. An item without a description reads "No description written."
-- Workflow holds the flow canvas.
+- Workflow holds the flow canvas and the item pane beside it.
 - Children exists only while the item has children. Its rows read like the
   board's flat list, and enter drills into the child.
 - Artifacts lists what the item wrote beside the chosen one, rendered
@@ -65,6 +79,31 @@ single graph the first cut drew.
   fan-ins draw junctions instead of overwriting each other.
 - Views stack: board, then journey, then a surface or a child journey.
   Escape pops one layer. The breadcrumb spells the path.
+
+## The item pane
+
+The canvas says which stage the item stands in and nothing about the item,
+so a pane sits beside it on the workflow tab.
+
+- It takes a quarter of the width and drops under the canvas the moment the
+  canvas would fall under eighty columns.
+- Fields hide when empty. In order: the key with the kind and size, the
+  title wrapped over at most three lines rather than cut to one, the status
+  with its place on the machine path, an alert line while refusals stand,
+  who filed the item and when, how long the stage has held it, how long
+  ago the log last heard from it, the parent, a one-line children summary,
+  the artifact basenames, and the branch with its commit count.
+- Times are relative and short: minutes and hours under a day, days above.
+- Every line clips to the column on display width across grapheme
+  clusters, so it drops a wide character or a joined emoji whole rather
+  than cutting one in half.
+- Filing and branch come from git, at the adapter. The fold stays pure and
+  takes them as facts. The branch is the checkout's own while no item
+  records a branch of its own, so the line hides on the default branch.
+- The pane is reachable: right past the last node moves the selection into
+  it, left hands it back, and enter on the children summary opens the
+  children tab. The canvas keeps enter for the stage it sits on. The key
+  bar names the move at the moment it becomes available.
 
 ## What the log already carries
 

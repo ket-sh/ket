@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import type {
   BoardFeed,
@@ -9,8 +9,8 @@ import type {
 } from '../../../shared/model';
 import type { Draft } from '../lib/edit.ts';
 import type { Direction } from './compass.ts';
-import type { Frame, FrameStack, Tuning } from './frames.ts';
-import type { Opened } from './journey-tabs.ts';
+import type { Frame, FrameStack, JourneyTab, Tuning } from './frames.ts';
+import type { Doors } from './journey-tabs.ts';
 
 import {
   askFrameOf,
@@ -21,11 +21,10 @@ import {
   revisedIn,
   savedMark,
   scrolled,
-  selectedNodeOf,
   surfaceFrame,
   tuned,
 } from './frames.ts';
-import { tabbed, walked } from './journey-tabs.ts';
+import { enteredIn, tabbedTo, tabbed, walked } from './journey-tabs.ts';
 
 type Grow = (grow: (stack: Frame[]) => Frame[]) => void;
 
@@ -104,50 +103,12 @@ function useMapping(feed: BoardFeed, setFrames: Grow): Mapping {
   return { openMap, mapWalk };
 }
 
-type Opening = (journey: JourneyView, doc: SurfaceDocView) => void;
-
-function useEntering(top: Frame, dive: (key: string | undefined) => void, open: Opening) {
-  const enterArtifact = useCallback(
-    (frame: Opened) => {
-      const doc = frame.journey.artifacts[frame.pick]?.doc;
-
-      if (doc !== undefined) {
-        open(frame.journey, doc);
-      }
-    },
-    [open],
-  );
-
-  const enterStage = useCallback(
-    (frame: Opened) => {
-      const seated = selectedNodeOf(frame);
-
-      if (seated?.node.doc !== undefined) {
-        open(seated.journey, seated.node.doc);
-      }
-    },
-    [open],
-  );
-
+function useEntering(top: Frame, doors: Doors) {
   return useCallback(() => {
-    if (top.kind !== 'journey') {
-      return;
+    if (top.kind === 'journey') {
+      enteredIn(top, doors);
     }
-
-    if (top.tab === 'children') {
-      dive(top.journey.children[top.pick]?.key);
-
-      return;
-    }
-
-    if (top.tab === 'artifacts') {
-      enterArtifact(top);
-
-      return;
-    }
-
-    enterStage(top);
-  }, [top, dive, enterArtifact, enterStage]);
+  }, [top, doors]);
 }
 
 type Diving = Pick<FrameStack, 'dive' | 'enter'>;
@@ -163,7 +124,14 @@ function useDiving(feed: BoardFeed, top: Frame, setFrames: Grow): Diving {
         if (journey !== undefined) {
           setFrames((stack) => [
             ...stack,
-            { kind: 'journey', journey, sel: landingOf(journey), tab: 'overview', pick: 0 },
+            {
+              kind: 'journey',
+              journey,
+              sel: landingOf(journey),
+              tab: 'overview',
+              pick: 0,
+              focus: 'canvas',
+            },
           ]);
         }
       });
@@ -178,7 +146,17 @@ function useDiving(feed: BoardFeed, top: Frame, setFrames: Grow): Diving {
     [setFrames],
   );
 
-  const enter = useEntering(top, dive, open);
+  const showTab = useCallback(
+    (tab: JourneyTab) => {
+      setFrames((stack) => tabbedTo(stack, tab));
+    },
+    [setFrames],
+  );
+
+  const enter = useEntering(
+    top,
+    useMemo(() => ({ dive, open, showTab }), [dive, open, showTab]),
+  );
 
   return { dive, enter };
 }

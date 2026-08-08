@@ -36,6 +36,35 @@ export interface JourneyChild {
   refusal: KanbanRefusal | undefined;
 }
 
+interface JourneyFiling {
+  by: string;
+  at: string;
+}
+
+interface JourneyBranch {
+  name: string;
+  commits: number;
+}
+
+export interface RepoFacts {
+  filed: JourneyFiling | undefined;
+  branch: JourneyBranch | undefined;
+}
+
+export interface JourneyPane {
+  kind: string;
+  size: string;
+  status: ItemStatus;
+  stageAt: number;
+  stageOf: number;
+  parent: string | undefined;
+  refusedTimes: number;
+  arrivedAt: string | undefined;
+  lastEventAt: string | undefined;
+  filed: JourneyFiling | undefined;
+  branch: JourneyBranch | undefined;
+}
+
 export interface Journey {
   item: string;
   title: string;
@@ -45,6 +74,7 @@ export interface Journey {
   standing: string | undefined;
   artifacts: JourneyArtifact[];
   children: JourneyChild[];
+  pane: JourneyPane;
 }
 
 export interface Visit {

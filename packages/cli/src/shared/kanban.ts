@@ -18,6 +18,7 @@ interface KanbanCard {
   title: string;
   size: string;
   status: ItemStatus;
+  parent: string | undefined;
   since: string | undefined;
   refusal: KanbanRefusal | undefined;
   offers: GateAction[];
@@ -78,6 +79,7 @@ function cardOf(stored: StoredItem, log: string): KanbanCard | undefined {
     title: item.title,
     size: item.size,
     status: item.status,
+    parent: item.parent,
     since,
     refusal: since === undefined ? undefined : refusalAfter(events, since),
     offers: offeredBy(item),

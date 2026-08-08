@@ -13,6 +13,7 @@ export interface KanbanCardView {
   title: string;
   size: string;
   status: string;
+  parent: string | undefined;
   since: string | undefined;
   refusal: KanbanRefusalView | undefined;
   offers: GateActionView[];
@@ -126,6 +127,30 @@ export interface JourneyChildView {
   refusal: KanbanRefusalView | undefined;
 }
 
+export interface JourneyFilingView {
+  by: string;
+  at: string;
+}
+
+export interface JourneyBranchView {
+  name: string;
+  commits: number;
+}
+
+export interface JourneyPaneView {
+  kind: string;
+  size: string;
+  status: string;
+  stageAt: number;
+  stageOf: number;
+  parent: string | undefined;
+  refusedTimes: number;
+  arrivedAt: string | undefined;
+  lastEventAt: string | undefined;
+  filed: JourneyFilingView | undefined;
+  branch: JourneyBranchView | undefined;
+}
+
 export interface JourneyView {
   item: string;
   title: string;
@@ -135,6 +160,7 @@ export interface JourneyView {
   standing: string | undefined;
   artifacts: JourneyArtifactView[];
   children: JourneyChildView[];
+  pane: JourneyPaneView;
 }
 
 export type MovedView = { moved: string } | { refused: string };

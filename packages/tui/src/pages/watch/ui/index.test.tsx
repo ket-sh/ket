@@ -219,6 +219,20 @@ describe('the key bar the chrome carries', () => {
     expect(bottomRow(frame)).toContain('q quit');
   });
 
+  it('drops the hint it can best spare rather than the way out', async () => {
+    const narrow = bottomRow(await openedAt(80, 24));
+
+    expect(narrow).toContain('q quit');
+    expect(narrow).not.toContain('r refresh');
+  });
+
+  it('spells every key once the row has the room for them', async () => {
+    const wide = bottomRow(await openedAt(WIDE, 30));
+
+    expect(wide).toContain('r refresh');
+    expect(wide).toContain('b backlog');
+  });
+
   it('leaves the header to the breadcrumb and the worn theme', async () => {
     const frame = await openedAt(WIDE, 30);
 
