@@ -40,6 +40,7 @@ describe('the rows the operation log folds into', () => {
         at: at(10),
         note: undefined,
         actor: undefined,
+        adopted: undefined,
       },
     ]);
   });

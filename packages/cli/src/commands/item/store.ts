@@ -1,23 +1,10 @@
-import { readdir } from 'node:fs/promises';
-import { join } from 'node:path';
-
 import type { Filing } from '../../shared/decompose.ts';
 
 import { decompositionOf } from '../../shared/decompose.ts';
 import { describing } from '../../shared/item-description.ts';
-import { keyOf, read, write } from '../../shared/item-store.ts';
+import { itemsIn, keyOf, read, write } from '../../shared/item-store.ts';
 
-const KET_DIRECTORY = '.ket';
-
-export { keyOf, read, write };
-
-export async function itemsIn(root: string): Promise<string[]> {
-  const entries = await readdir(join(root, KET_DIRECTORY, 'items'), {
-    withFileTypes: true,
-  }).catch(() => []);
-
-  return entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
-}
+export { itemsIn, keyOf, read, write };
 
 export async function fileAlone(root: string, filing: Filing): Promise<void> {
   await write(root, filing.key, {

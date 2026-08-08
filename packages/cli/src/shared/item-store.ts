@@ -14,15 +14,22 @@ const ITEMS = 'items';
 
 const ITEM_FILE = 'item.yaml';
 
+export async function itemsIn(root: string): Promise<string[]> {
+  const entries = await readdir(join(root, KET_DIRECTORY, ITEMS), {
+    withFileTypes: true,
+  }).catch(() => []);
+
+  return entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
+}
+
 export async function readStored(root: string): Promise<StoredItem[]> {
   const items = join(root, KET_DIRECTORY, ITEMS);
-  const entries = await readdir(items, { withFileTypes: true }).catch(() => []);
-  const directories = entries.filter((entry) => entry.isDirectory());
+  const keys = await itemsIn(root);
 
   return Promise.all(
-    directories.map(async (entry) => ({
-      key: entry.name,
-      contents: await readFile(join(items, entry.name, ITEM_FILE), 'utf8').catch(() => ''),
+    keys.map(async (key) => ({
+      key,
+      contents: await readFile(join(items, key, ITEM_FILE), 'utf8').catch(() => ''),
     })),
   );
 }

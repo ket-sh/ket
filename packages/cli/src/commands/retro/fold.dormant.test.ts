@@ -41,57 +41,61 @@ function ranThrough(script: string, at: string): string {
 
 const BUSY = moved('triaged', '2026-08-04T09:00:00.000Z');
 
-function actionOf(log: string, gates: GateSemantics[]) {
-  return foldRetro(WORKING, log, WINDOW, gates).action;
+function dormantOf(log: string, gates: GateSemantics[]) {
+  const action = foldRetro(WORKING, log, WINDOW, gates).actions.at(0);
+
+  return action !== undefined && 'dormant' in action ? action.dormant : undefined;
 }
 
 function quietGateOf(log: string, gates: GateSemantics[]): string | undefined {
-  const action = actionOf(log, gates);
-
-  return action !== undefined && 'dormant' in action ? action.dormant.gate : undefined;
+  return dormantOf(log, gates)?.gate;
 }
 
 describe('the gate a busy window with nothing refused leaves quiet', () => {
   it('names the configured gate the log has never recorded', () => {
-    expect(actionOf(BUSY, [DUP])).toStrictEqual({
-      dormant: { gate: 'lint:dup', guards: 'It guards lint:dup.', seen: undefined },
+    expect(dormantOf(BUSY, [DUP])).toStrictEqual({
+      gate: 'lint:dup',
+      guards: 'It guards lint:dup.',
+      seen: undefined,
     });
   });
 
   it('leaves out a gate the window recorded, even where it let the work through', () => {
     const log = BUSY + recorded('lint:dup', 'allowed', '2026-08-04T10:00:00.000Z');
 
-    expect(actionOf(log, [DUP, gateOf('lint:dead')])).toStrictEqual({
-      dormant: { gate: 'lint:dead', guards: 'It guards lint:dead.', seen: undefined },
+    expect(dormantOf(log, [DUP, gateOf('lint:dead')])).toStrictEqual({
+      gate: 'lint:dead',
+      guards: 'It guards lint:dead.',
+      seen: undefined,
     });
   });
 
   it('asks for nothing when every configured gate was recorded in the window', () => {
     const log = BUSY + recorded('lint:dup', 'allowed', '2026-08-04T10:00:00.000Z');
 
-    expect(actionOf(log, [DUP])).toBeUndefined();
+    expect(dormantOf(log, [DUP])).toBeUndefined();
   });
 
   it('asks for nothing when the project declares no gate at all', () => {
-    expect(actionOf(BUSY, [])).toBeUndefined();
+    expect(dormantOf(BUSY, [])).toBeUndefined();
   });
 });
 
 describe('the activity a quiet gate needs before it is worth naming', () => {
   it('asks for nothing when no item moved through the window', () => {
-    expect(actionOf('', [DUP])).toBeUndefined();
+    expect(dormantOf('', [DUP])).toBeUndefined();
   });
 
   it('asks for nothing when the window carried events but moved no item', () => {
     const log = recorded('write', 'allowed', '2026-08-04T09:00:00.000Z');
 
-    expect(actionOf(log, [DUP])).toBeUndefined();
+    expect(dormantOf(log, [DUP])).toBeUndefined();
   });
 
   it('asks for nothing when the only move landed outside the window', () => {
     const log = moved('triaged', '2026-07-20T09:00:00.000Z');
 
-    expect(actionOf(log, [DUP])).toBeUndefined();
+    expect(dormantOf(log, [DUP])).toBeUndefined();
   });
 });
 
@@ -106,16 +110,20 @@ describe('the moment history last recorded a quiet gate', () => {
     recorded('lint:dup', 'allowed', NEWEST);
 
   it('carries the last of several recordings, not an earlier one', () => {
-    expect(actionOf(HISTORY + BUSY, [DUP])).toStrictEqual({
-      dormant: { gate: 'lint:dup', guards: 'It guards lint:dup.', seen: Date.parse(NEWEST) },
+    expect(dormantOf(HISTORY + BUSY, [DUP])).toStrictEqual({
+      gate: 'lint:dup',
+      guards: 'It guards lint:dup.',
+      seen: Date.parse(NEWEST),
     });
   });
 
   it('reads only what the gate itself was recorded for, not the log as a whole', () => {
     const log = recorded('lint:dup', 'allowed', OLDEST) + BUSY;
 
-    expect(actionOf(log, [DUP])).toStrictEqual({
-      dormant: { gate: 'lint:dup', guards: 'It guards lint:dup.', seen: Date.parse(OLDEST) },
+    expect(dormantOf(log, [DUP])).toStrictEqual({
+      gate: 'lint:dup',
+      guards: 'It guards lint:dup.',
+      seen: Date.parse(OLDEST),
     });
   });
 });
@@ -154,8 +162,10 @@ describe('a declared gate run the shell gate recorded', () => {
     const at = '2026-07-02T09:00:00.000Z';
     const log = ranThrough('lint:dup', at) + BUSY;
 
-    expect(actionOf(log, [DUP])).toStrictEqual({
-      dormant: { gate: 'lint:dup', guards: 'It guards lint:dup.', seen: Date.parse(at) },
+    expect(dormantOf(log, [DUP])).toStrictEqual({
+      gate: 'lint:dup',
+      guards: 'It guards lint:dup.',
+      seen: Date.parse(at),
     });
   });
 
@@ -172,9 +182,9 @@ describe('a declared gate run the shell gate recorded', () => {
 describe('the arm a refusal keeps for itself', () => {
   it('takes the action from the refusal cluster, leaving the quiet gate unnamed', () => {
     const log = BUSY + turnedAway('write', '2026-08-04T10:00:00.000Z', 'the test comes first');
+    const action = foldRetro(WORKING, log, WINDOW, [DUP]).actions.at(0);
 
-    expect(actionOf(log, [DUP])).toStrictEqual({
-      cluster: { gate: 'write', reason: 'the test comes first', count: 1 },
-    });
+    expect(dormantOf(log, [DUP])).toBeUndefined();
+    expect(action !== undefined && 'cluster' in action).toBe(true);
   });
 });

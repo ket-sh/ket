@@ -2,38 +2,40 @@ import type { GateSemantics } from '@ket/preset';
 
 import type { StoredItem } from '../../shared/read-item.ts';
 import type { DormantGate } from './dormant.ts';
+import type { Draft } from './draft.ts';
 import type { Friction, RefusalCluster } from './friction.ts';
 import type { WeekInItems } from './items.ts';
 import type { Reading } from './timeline.ts';
 import type { RetroWindow } from './window.ts';
 
 import { dormantIn } from './dormant.ts';
+import { clusterDraftOf, dormantDraftOf } from './draft.ts';
 import { frictionIn } from './friction.ts';
 import { weekInItems } from './items.ts';
 import { readingOf } from './timeline.ts';
 
-export type RetroAction = { cluster: RefusalCluster } | { dormant: DormantGate };
+type RetroArm = { cluster: RefusalCluster } | { dormant: DormantGate };
+
+export type RetroAction = RetroArm & { draft: Draft };
 
 export interface Retro extends WeekInItems, Friction {
   window: RetroWindow;
   events: number;
-  action: RetroAction | undefined;
+  actions: RetroAction[];
 }
 
-function actionIn(
+function actionsIn(
   reading: Reading,
   clusters: RefusalCluster[],
   gates: GateSemantics[],
-): RetroAction | undefined {
-  const cluster = clusters.at(0);
-
-  if (cluster !== undefined) {
-    return { cluster };
+): RetroAction[] {
+  if (clusters.length > 0) {
+    return clusters.map((cluster, held) => ({ cluster, draft: clusterDraftOf(cluster, held + 1) }));
   }
 
   const dormant = dormantIn(reading, gates);
 
-  return dormant === undefined ? undefined : { dormant };
+  return dormant === undefined ? [] : [{ dormant, draft: dormantDraftOf(dormant) }];
 }
 
 export function foldRetro(
@@ -50,6 +52,6 @@ export function foldRetro(
     events: reading.windowed.length,
     ...weekInItems(reading),
     ...friction,
-    action: actionIn(reading, friction.clusters, gates),
+    actions: actionsIn(reading, friction.clusters, gates),
   };
 }

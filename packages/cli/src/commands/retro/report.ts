@@ -1,9 +1,11 @@
 import type { DormantGate } from './dormant.ts';
+import type { Draft } from './draft.ts';
 import type { Retro, RetroAction } from './fold.ts';
 import type { RefusalCluster, Rework, Stall } from './friction.ts';
 import type { FlightLine, ItemLine } from './items.ts';
 import type { RetroWindow } from './window.ts';
 
+import { LOG_SCOPE, momentTextOf, sightingOf, timesOf, withoutStop } from './draft.ts';
 import { weekLabelOf } from './window.ts';
 
 const MINUTE = 60_000;
@@ -16,10 +18,6 @@ const RULE_CHANGE =
   'Consider a rule change, recorded in an ADR, since a single refusal shows no pattern yet.';
 
 const QUIET_WEEK = 'No gate refused anything in this window';
-
-const LOG_SCOPE =
-  'The log sees a gate only when a session runs its script, ' +
-  'so a run at commit time or in CI leaves no line here.';
 
 function spanOf(span: number): string {
   const days = Math.floor(span / DAY);
@@ -35,10 +33,6 @@ function spanOf(span: number): string {
   }
 
   return `${String(minutes)}m`;
-}
-
-function timesOf(count: number): string {
-  return count === 1 ? 'once' : `${String(count)} times`;
 }
 
 function sizeNote(size: string | undefined): string | undefined {
@@ -81,10 +75,6 @@ function splitLinesOf(retro: Retro): string[] {
   ];
 }
 
-function withoutStop(text: string): string {
-  return text.endsWith('.') ? text.slice(0, -1) : text;
-}
-
 function checkAdvice(gate: string): string {
   return (
     `Consider a mechanical check, \`ket gate ${gate}\` run where the work starts, ` +
@@ -104,12 +94,6 @@ function clusterActionOf(cluster: RefusalCluster): string {
   return `${opened}, each for the same reason: ${said}. ${checkAdvice(cluster.gate)}`;
 }
 
-function sightingOf(dormant: DormantGate): string {
-  return dormant.seen === undefined
-    ? `the log has never recorded \`${dormant.gate}\``
-    : `the log last recorded \`${dormant.gate}\` at ${momentText(dormant.seen)}`;
-}
-
 function dormantActionOf(dormant: DormantGate): string {
   return (
     `${QUIET_WEEK}, and ${sightingOf(dormant)}. ${dormant.guards} ` +
@@ -117,14 +101,25 @@ function dormantActionOf(dormant: DormantGate): string {
   );
 }
 
-function actionLinesOf(action: RetroAction | undefined): string[] {
-  if (action === undefined) {
-    return [];
-  }
+function draftLineOf(draft: Draft): string {
+  const numbered = String(draft.number);
 
-  return 'cluster' in action
-    ? [clusterActionOf(action.cluster)]
-    : [dormantActionOf(action.dormant)];
+  return `Draft ${numbered}: ${draft.sentence}. Adopt it with \`ket retro adopt ${numbered}\`.`;
+}
+
+function actionParagraphsOf(action: RetroAction): string[] {
+  const prose =
+    'cluster' in action ? clusterActionOf(action.cluster) : dormantActionOf(action.dormant);
+
+  return [prose, draftLineOf(action.draft)];
+}
+
+function spaced(paragraphs: string[]): string[] {
+  return paragraphs.flatMap((paragraph, held) => (held === 0 ? [paragraph] : ['', paragraph]));
+}
+
+function actionsHeadingOf(actions: RetroAction[]): string {
+  return actions.length === 1 ? '## The one action' : '## The actions';
 }
 
 function partsOf(heading: string, lines: string[]): string[] {
@@ -167,13 +162,9 @@ function frictionParts(retro: Retro): string[] {
   ];
 }
 
-function momentText(at: number): string {
-  return new Date(at).toISOString();
-}
-
 function coverageLineOf(window: RetroWindow, events: number): string {
   const counted = events === 1 ? '1 event' : `${String(events)} events`;
-  const ran = `from ${momentText(window.from)} to ${momentText(window.to)}`;
+  const ran = `from ${momentTextOf(window.from)} to ${momentTextOf(window.to)}`;
 
   return `The window runs ${ran}, over ${counted}.`;
 }
@@ -188,7 +179,10 @@ export function renderRetro(retro: Retro): string {
       '## Items that entered and never moved',
       retro.unmoved.map((line) => itemLineOf(line)),
     ),
-    ...partsOf('## The one action', actionLinesOf(retro.action)),
+    ...partsOf(
+      actionsHeadingOf(retro.actions),
+      spaced(retro.actions.flatMap((action) => actionParagraphsOf(action))),
+    ),
     '## Coverage',
     '',
     coverageLineOf(retro.window, retro.events),
