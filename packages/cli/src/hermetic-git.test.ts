@@ -42,6 +42,8 @@ describe('the git a suite spawns', () => {
       'user.name=ket suite',
       'user.email=suite@ket.invalid',
       'commit.gpgsign=false',
+      'gc.auto=0',
+      'maintenance.auto=false',
     ]);
     expect(fromScope(listing, 'system')).toStrictEqual([]);
   });
@@ -72,5 +74,13 @@ describe('the git a suite spawns', () => {
     const author = await gitRan(['log', '-1', '--pretty=%an']);
 
     expect(author.trim()).toBe('Ada Lovelace');
+  });
+
+  it('leaves no detached maintenance behind a sandbox commit', async () => {
+    const gc = await gitRan(['config', 'gc.auto']);
+    const maintenance = await gitRan(['config', 'maintenance.auto']);
+
+    expect(gc.trim()).toBe('0');
+    expect(maintenance.trim()).toBe('false');
   });
 });

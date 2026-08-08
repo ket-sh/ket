@@ -3,3 +3,7 @@
 	email = suite@ket.invalid
 [commit]
 	gpgsign = false
+[gc]
+	auto = 0
+[maintenance]
+	auto = false
