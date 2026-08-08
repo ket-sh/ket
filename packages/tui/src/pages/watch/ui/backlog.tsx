@@ -1,32 +1,10 @@
 import type { ReactNode } from 'react';
 
-import type { KanbanCardView, KanbanColumnView } from '../../../shared/model';
+import type { KanbanColumnView } from '../../../shared/model';
 
-import { stageColorOf, useTheme } from '../../../shared/theme';
+import { useTheme } from '../../../shared/theme';
 import { backlogOf } from '../lib/backlog.ts';
-
-const KEY_ROOM = 7;
-
-const STAGE_ROOM = 10;
-
-const SIZE_ROOM = 9;
-
-function Row({ card, chosen }: { card: KanbanCardView; chosen: boolean }): ReactNode {
-  const { theme } = useTheme();
-
-  return (
-    <text wrapMode="none">
-      <span fg={theme.text}>{chosen ? '► ' : '  '}</span>
-      <strong>{card.key.padEnd(KEY_ROOM)}</strong>
-      <span fg={stageColorOf(theme)[card.status] ?? theme.subtext}>
-        {card.status.padEnd(STAGE_ROOM)}
-      </span>
-      <span fg={theme.gray}>{card.size.padEnd(SIZE_ROOM)}</span>
-      <span fg={chosen ? theme.text : theme.subtext}>{card.title}</span>
-      {card.parent === undefined ? null : <span fg={theme.gray}>{`   under ${card.parent}`}</span>}
-    </text>
-  );
-}
+import { BacklogRow } from './card-row.tsx';
 
 export function BacklogView({
   columns,
@@ -50,7 +28,7 @@ export function BacklogView({
     >
       {cards.map(
         (card): ReactNode => (
-          <Row key={card.key} card={card} chosen={card.key === chosenKey} />
+          <BacklogRow key={card.key} card={card} chosen={card.key === chosenKey} />
         ),
       )}
     </box>
