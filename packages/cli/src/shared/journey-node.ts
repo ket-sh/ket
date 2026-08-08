@@ -2,14 +2,21 @@ import type { ItemStatus } from './item.ts';
 import type { KanbanRefusal } from './kanban.ts';
 import type { SurfaceDoc } from './surface-doc.ts';
 
-export type JourneyMark = 'done' | 'active' | 'future';
+export type StageState =
+  | 'done'
+  | 'running'
+  | 'needs-you'
+  | 'changes-requested'
+  | 'sent-back'
+  | 'future';
 
 export interface JourneyNode {
   id: string;
   title: string;
-  mark: JourneyMark;
+  state: StageState;
   at: string | undefined;
   until: string | undefined;
+  refusal: KanbanRefusal | undefined;
   doc: SurfaceDoc | undefined;
 }
 

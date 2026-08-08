@@ -66,13 +66,15 @@ export interface FrameStack {
 }
 
 function lastOf(nodes: JourneyView['nodes']): string | undefined {
-  return nodes[nodes.length - 1]?.id;
+  return nodes[0]?.id;
 }
 
+// The stage the item stands in is the last one it ever arrived at, whatever
+// state that arrival left it wearing.
 export function landingOf(journey: JourneyView): string {
-  const active = [...journey.nodes].reverse().find((node) => node.mark === 'active');
+  const arrived = [...journey.nodes].reverse().find((node) => node.at !== undefined);
 
-  return active?.id ?? lastOf(journey.nodes) ?? '';
+  return arrived?.id ?? lastOf(journey.nodes) ?? '';
 }
 
 function restingStepOf(frame: Extract<Frame, { kind: 'board' | 'journey' | 'map' }>): string {

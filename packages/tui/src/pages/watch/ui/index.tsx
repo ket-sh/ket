@@ -238,7 +238,7 @@ function WatchRoom({
       paddingLeft={PAGE_SIDE}
       paddingRight={PAGE_SIDE}
     >
-      <Banner tick={tick} />
+      <Banner />
       <HeaderRow stack={stack} tick={tick} />
       <box flexDirection="column" flexGrow={1} overflow="hidden">
         <StageArea

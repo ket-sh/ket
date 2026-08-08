@@ -16,7 +16,7 @@ function bandOf(theme: Theme): string[] {
   ];
 }
 
-export function shimmerAt(unit: number, theme: Theme = KANAGAWA): string {
+export function bandAt(unit: number, theme: Theme = KANAGAWA): string {
   const band = bandOf(theme);
   const wrapped = ((unit % 1) + 1) % 1;
   const scaled = wrapped * band.length;

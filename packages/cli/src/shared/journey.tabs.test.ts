@@ -122,6 +122,7 @@ describe('the children a journey hands to its tab', () => {
     expect(foldJourney(stored, log, 'K-1')?.children[0]?.refusal).toStrictEqual({
       reason: 'no failing test covers it',
       at: '2026-08-07T09:40:00.000Z',
+      gate: 'write',
     });
   });
 

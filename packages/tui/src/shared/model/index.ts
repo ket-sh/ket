@@ -10,6 +10,7 @@ export type {
   KanbanColumnView,
   KanbanRefusalView,
   MovedView,
+  StageStateView,
   SketchView,
   SurfaceDocView,
 } from './board.ts';

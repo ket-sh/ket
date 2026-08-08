@@ -65,12 +65,13 @@ describe('the stages a journey walks', () => {
     expect(journey?.nodes[0]).toStrictEqual({
       id: 'designing',
       title: 'designing',
-      mark: 'active',
+      state: 'running',
       at: undefined,
       until: undefined,
+      refusal: undefined,
       doc: undefined,
     });
-    expect(journey?.nodes.slice(1).map((node) => node.mark)).toStrictEqual([
+    expect(journey?.nodes.slice(1).map((node) => node.state)).toStrictEqual([
       'future',
       'future',
       'future',
@@ -82,9 +83,9 @@ describe('the stages a journey walks', () => {
   it('walks one node per visit, done behind the active one, the rest ahead', () => {
     const journey = foldJourney(STORED, WALKED, 'K-1');
 
-    expect(journey?.nodes.map((node) => [node.id, node.mark, node.at])).toStrictEqual([
+    expect(journey?.nodes.map((node) => [node.id, node.state, node.at])).toStrictEqual([
       ['triaged', 'done', '2026-08-07T09:00:00.000Z'],
-      ['designing', 'active', '2026-08-07T10:00:00.000Z'],
+      ['designing', 'running', '2026-08-07T10:00:00.000Z'],
       ['awaiting-approval', 'future', undefined],
       ['implementing', 'future', undefined],
       ['verifying', 'future', undefined],
@@ -142,7 +143,7 @@ describe('the visits a journey refuses to count', () => {
       moved('K-1', 'verifying', '2026-08-07T10:00:00.000Z') +
       moved('K-1', 'implementing', '2026-08-07T11:00:00.000Z');
     const journey = foldJourney(STORED, log, 'K-1');
-    const ahead = journey?.nodes.find((node) => node.mark === 'future');
+    const ahead = journey?.nodes.find((node) => node.state === 'future');
 
     expect(ahead?.id).toBe('verifying#2');
   });

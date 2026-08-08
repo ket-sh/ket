@@ -10,6 +10,7 @@ import { offeredBy } from './transition.ts';
 export interface KanbanRefusal {
   reason: string;
   at: string;
+  gate: string;
 }
 
 interface KanbanCard {
@@ -47,17 +48,19 @@ export function arrivalOf(events: LoggedEvent[], status: ItemStatus): string | u
     .at(-1)?.at;
 }
 
+function refusalOf(event: LoggedEvent): KanbanRefusal | undefined {
+  return event.at === undefined
+    ? undefined
+    : { reason: event.reason ?? event.about ?? '', at: event.at, gate: event.gate ?? '' };
+}
+
 export function refusalAfter(events: LoggedEvent[], since: string): KanbanRefusal | undefined {
   const refused = events
     .filter((event) => event.outcome === 'refused')
     .filter((event) => event.at !== undefined && event.at >= since)
     .at(-1);
 
-  if (refused?.at === undefined) {
-    return undefined;
-  }
-
-  return { reason: refused.reason ?? refused.about ?? '', at: refused.at };
+  return refused === undefined ? undefined : refusalOf(refused);
 }
 
 function cardOf(stored: StoredItem, log: string): KanbanCard | undefined {

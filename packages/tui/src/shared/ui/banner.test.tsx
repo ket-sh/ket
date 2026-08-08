@@ -11,10 +11,10 @@ afterEach(() => {
   rendered = undefined;
 });
 
-async function drawn(tick: number): Promise<string> {
+async function drawn(): Promise<string> {
   rendered = await testRender(
     <ThemeProvider>
-      <Banner tick={tick} />
+      <Banner />
     </ThemeProvider>,
     { width: 60, height: 6 },
   );
@@ -30,7 +30,7 @@ async function drawn(tick: number): Promise<string> {
 
 describe('the banner over the watch', () => {
   it('raises the torii beside the block letters', async () => {
-    const frame = await drawn(0);
+    const frame = await drawn();
 
     expect(frame).toContain('▄▄█▄▄▄█▄▄');
     expect(frame).toContain('█ ▄▀  █▀▀  ▀█▀');

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { shimmerAt } from '../lib';
+import { bandAt } from '../lib';
 import { useTheme } from '../theme';
 
 export const TORII = ['▄▄█▄▄▄█▄▄', '  █▀▀▀█  ', '  █   █  '];
@@ -9,9 +9,7 @@ const LETTERS = ['█ ▄▀  █▀▀  ▀█▀', '█▀▄   █▀    █ 
 
 const BAND_WIDTH = 42;
 
-const DRIFT = 0.01;
-
-export function Banner({ tick }: { tick: number }): ReactNode {
+export function Banner(): ReactNode {
   const { theme } = useTheme();
   const rows = TORII.map((torii, index) => `${torii}   ${LETTERS[index] ?? ''}`);
 
@@ -22,10 +20,7 @@ export function Banner({ tick }: { tick: number }): ReactNode {
           <text key={String(rowIndex)} wrapMode="none">
             {Array.from(row).map(
               (glyph, colIndex): ReactNode => (
-                <span
-                  key={String(colIndex)}
-                  fg={shimmerAt(colIndex / BAND_WIDTH - tick * DRIFT, theme)}
-                >
+                <span key={String(colIndex)} fg={bandAt(colIndex / BAND_WIDTH, theme)}>
                   {glyph}
                 </span>
               ),

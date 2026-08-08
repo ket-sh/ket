@@ -4,11 +4,22 @@ import type { JourneyNodeView, JourneyView } from '../../../shared/model';
 
 import { NODE_H, NODE_W, neighborOf, placedOf } from './layout.ts';
 
+const MARGIN = 2;
+
+const COLUMN_GAP = 7;
+
+const STRIDE = NODE_H + 1;
+
+function columnAt(layer: number): number {
+  return MARGIN + layer * (NODE_W + COLUMN_GAP);
+}
+
 function nodeOf(id: string): JourneyNodeView {
   return {
     id,
     title: id,
-    mark: 'done',
+    state: 'done',
+    refusal: undefined,
     at: undefined,
     until: undefined,
     doc: undefined,
@@ -33,11 +44,11 @@ describe('the places a chain takes', () => {
     const placed = placedOf(journeyOf(['a', 'b'], [['a', 'b']]));
 
     expect(placed.nodes.map((node) => [node.id, node.x, node.y])).toStrictEqual([
-      ['a', 2, 2],
-      ['b', 31, 2],
+      ['a', columnAt(0), MARGIN],
+      ['b', columnAt(1), MARGIN],
     ]);
-    expect(placed.width).toBe(55);
-    expect(placed.height).toBe(NODE_H + 4);
+    expect(placed.width).toBe(MARGIN * 2 + NODE_W * 2 + COLUMN_GAP);
+    expect(placed.height).toBe(NODE_H + MARGIN * 2);
   });
 
   it('lays a node on the layer of its longest approach', () => {
@@ -53,9 +64,9 @@ describe('the places a chain takes', () => {
     );
 
     expect(placed.nodes.map((node) => [node.id, node.x])).toStrictEqual([
-      ['a', 2],
-      ['b', 31],
-      ['c', 60],
+      ['a', columnAt(0)],
+      ['b', columnAt(1)],
+      ['c', columnAt(2)],
     ]);
   });
 
@@ -79,11 +90,11 @@ describe('the fan a layer spreads', () => {
     const placed = placedOf(FANNED);
 
     expect(placed.nodes.map((node) => [node.id, node.x, node.y])).toStrictEqual([
-      ['root', 2, 4],
-      ['s1', 31, 2],
-      ['s2', 31, 7],
+      ['root', columnAt(0), MARGIN + Math.floor(STRIDE / 2)],
+      ['s1', columnAt(1), MARGIN],
+      ['s2', columnAt(1), MARGIN + STRIDE],
     ]);
-    expect(placed.height).toBe(13);
+    expect(placed.height).toBe(MARGIN * 2 + STRIDE * 2 - 1);
   });
 
   it('jumps to the nearest node in the pressed direction', () => {
@@ -104,8 +115,8 @@ describe('the fan a layer spreads', () => {
 });
 
 describe('the sizes a node keeps', () => {
-  it('draws every node the same width and height', () => {
-    expect(NODE_W).toBe(22);
-    expect(NODE_H).toBe(4);
+  it('gives every node room for its title, its state and how long it held', () => {
+    expect(NODE_H).toBeGreaterThanOrEqual(5);
+    expect(NODE_W - 4).toBeGreaterThanOrEqual('✗ Changes requested'.length);
   });
 });

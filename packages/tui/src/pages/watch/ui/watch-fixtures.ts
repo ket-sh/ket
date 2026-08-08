@@ -69,7 +69,7 @@ const SEATED: Record<string, KanbanCardView[]> = {
       size: 'story',
       status: 'designing',
       since: '2026-08-07T10:00:00.000Z',
-      refusal: { reason: 'no spec named', at: '2026-08-07T11:00:00.000Z' },
+      refusal: { reason: 'no spec named', at: '2026-08-07T11:00:00.000Z', gate: 'write' },
       offers: [],
     },
   ],
@@ -88,7 +88,8 @@ const JOURNEY: JourneyView = {
     {
       id: 'triaged',
       title: 'triaged',
-      mark: 'done',
+      state: 'done',
+      refusal: undefined,
       at: '2026-08-07T09:00:00.000Z',
       until: '2026-08-07T10:00:00.000Z',
       doc: undefined,
@@ -96,7 +97,8 @@ const JOURNEY: JourneyView = {
     {
       id: 'designing',
       title: 'designing',
-      mark: 'active',
+      state: 'running',
+      refusal: undefined,
       at: '2026-08-07T10:00:00.000Z',
       until: undefined,
       doc: undefined,
@@ -104,7 +106,8 @@ const JOURNEY: JourneyView = {
     {
       id: 'awaiting-approval',
       title: 'awaiting-approval',
-      mark: 'future',
+      state: 'future',
+      refusal: undefined,
       at: undefined,
       until: undefined,
       doc: undefined,
@@ -149,7 +152,8 @@ const CHILD_JOURNEY: JourneyView = {
     {
       id: 'triaged',
       title: 'triaged',
-      mark: 'active',
+      state: 'running',
+      refusal: undefined,
       at: undefined,
       until: undefined,
       doc: undefined,

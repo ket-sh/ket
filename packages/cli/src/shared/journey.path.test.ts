@@ -58,7 +58,7 @@ describe('the machine path a journey draws', () => {
     const journey = foldJourney([{ key: 'K-1', contents: itemOf('designing') }], WALKED, 'K-1');
     const ahead = journey?.nodes.find((node) => node.id === 'implementing');
 
-    expect(ahead?.mark).toBe('future');
+    expect(ahead?.state).toBe('future');
     expect(ahead?.at).toBeUndefined();
     expect(ahead?.until).toBeUndefined();
   });
