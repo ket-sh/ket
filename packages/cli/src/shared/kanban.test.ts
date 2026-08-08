@@ -50,6 +50,13 @@ describe('the columns a board always shows', () => {
     expect(cardsAt(columns, 'triaged').map((card) => card.title)).toStrictEqual(['A quiet fix']);
   });
 
+  it('carries the kind the item declares, so a facet can narrow by it', () => {
+    const columns = foldKanban(STORED, '');
+
+    expect(cardsAt(columns, 'designing').map((card) => card.kind)).toStrictEqual(['feature']);
+    expect(cardsAt(columns, 'triaged').map((card) => card.kind)).toStrictEqual(['bug']);
+  });
+
   it('skips an item whose manifest it cannot read, rather than inventing one', () => {
     const columns = foldKanban([{ key: 'K-9', contents: 'not yaml at all' }], '');
 
