@@ -5,7 +5,7 @@ import type { RefusalCluster, Rework, Stall } from './friction.ts';
 import type { FlightLine, ItemLine } from './items.ts';
 import type { RetroWindow } from './window.ts';
 
-import { momentTextOf, sightingOf, timesOf, withoutStop } from './draft.ts';
+import { LOG_SCOPE, momentTextOf, sightingOf, timesOf, withoutStop } from './draft.ts';
 import { weekLabelOf } from './window.ts';
 
 const MINUTE = 60_000;
@@ -18,10 +18,6 @@ const RULE_CHANGE =
   'Consider a rule change, recorded in an ADR, since a single refusal shows no pattern yet.';
 
 const QUIET_WEEK = 'No gate refused anything in this window';
-
-const LOG_SCOPE =
-  'The log sees a gate only when a session runs its script, ' +
-  'so a run at commit time or in CI leaves no line here.';
 
 function spanOf(span: number): string {
   const days = Math.floor(span / DAY);

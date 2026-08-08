@@ -1,7 +1,7 @@
 import type { DormantGate } from './dormant.ts';
 import type { RefusalCluster } from './friction.ts';
 
-interface DraftEvidence {
+export interface DraftEvidence {
   gate: string;
   reason: string | undefined;
   moments: string[];
@@ -15,6 +15,10 @@ export interface Draft {
 }
 
 const EXAMINE = 'examine whether the rule still earns its place';
+
+export const LOG_SCOPE =
+  'The log sees a gate only when a session runs its script, ' +
+  'so a run at commit time or in CI leaves no line here.';
 
 export function withoutStop(text: string): string {
   return text.endsWith('.') ? text.slice(0, -1) : text;

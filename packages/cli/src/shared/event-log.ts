@@ -1,7 +1,7 @@
 import { appendFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import type { DeclaredGateEvent, GateEvent, NoteEvent } from './event.ts';
+import type { AdoptionEvent, DeclaredGateEvent, GateEvent, NoteEvent } from './event.ts';
 
 import { renderEvent } from './event.ts';
 
@@ -19,7 +19,7 @@ export async function readLog(root: string): Promise<string> {
 
 export async function record(
   root: string,
-  event: DeclaredGateEvent | GateEvent | NoteEvent,
+  event: AdoptionEvent | DeclaredGateEvent | GateEvent | NoteEvent,
   at = new Date().toISOString(),
 ): Promise<void> {
   await appendFile(logIn(root), renderEvent({ ...event, at }), 'utf8');
