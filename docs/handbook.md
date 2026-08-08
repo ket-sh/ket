@@ -1,3 +1,14 @@
+---
+category: reference
+sources:
+  - packages/cli/src/commands/**
+  - packages/preset/src/**
+  - presets/cli/src/**
+  - presets/web/src/**
+  - harness/**
+stamp: b0bddb930ecd
+---
+
 # The ket handbook
 
 Everything a newcomer needs to go from never having seen ket to knowing what

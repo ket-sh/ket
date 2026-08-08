@@ -26,7 +26,12 @@
     "gate": "turbo run gate",
     "lint:boundaries": "depcruise packages presets --config .dependency-cruiser.cjs",
     "lint:fsd": "steiger packages/tui/src --fail-on-warnings",
-    "check-types:root-configs": "tsc -p tsconfig.root-configs.json"
+    "check-types:root-configs": "tsc -p tsconfig.root-configs.json",
+    "docs:architecture": "bun scripts/docs-architecture.mts",
+    "docs:check": "bun scripts/docs-check.mts",
+    "docs:stamp": "bun scripts/docs-stamp.mts",
+    "docs:glossary": "bun scripts/docs-glossary.mts",
+    "test:scripts": "vitest run --config scripts/vitest.config.mts"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.1",
