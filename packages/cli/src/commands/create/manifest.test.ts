@@ -55,6 +55,12 @@ describe('rendering the manifest a project starts from', () => {
     expect(manifest).toMatchObject({ type: 'module' });
   });
 
+  it('declares the bun floor a project needs to watch its own board', () => {
+    const manifest: unknown = JSON.parse(renderManifest('app', PRESET));
+
+    expect(manifest).toMatchObject({ engines: { bun: '>=1.3.14' } });
+  });
+
   it('ends with a newline, so a formatter leaves it alone', () => {
     expect(renderManifest('app', PRESET).endsWith('}\n')).toBe(true);
   });
