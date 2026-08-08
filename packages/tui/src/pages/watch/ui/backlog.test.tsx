@@ -44,8 +44,10 @@ async function opening(presses: string[]): Promise<string> {
   let frame = await landed((seen) => seen.includes('K-2'));
 
   for (const press of presses) {
+    const before = frame;
+
     createMockKeys(opened.renderer).pressKey(press);
-    frame = await settled();
+    frame = await landed((seen) => seen !== before);
   }
 
   return frame;
