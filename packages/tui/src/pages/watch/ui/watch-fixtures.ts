@@ -83,6 +83,7 @@ const COLUMNS: KanbanColumnView[] = STAGES.map((status) => ({
 const JOURNEY: JourneyView = {
   item: 'K-1',
   title: 'The watched item',
+  description: 'The keeper locks the account after five failures.',
   nodes: [
     {
       id: 'triaged',
@@ -143,6 +144,7 @@ const JOURNEY: JourneyView = {
 const CHILD_JOURNEY: JourneyView = {
   item: 'K-2',
   title: 'A quiet fix',
+  description: undefined,
   nodes: [
     {
       id: 'triaged',

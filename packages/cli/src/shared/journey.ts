@@ -157,6 +157,7 @@ export function foldJourney(stored: StoredItem[], log: string, key: string): Jou
   return {
     item: key,
     title: item.title,
+    description: item.description,
     nodes: stageNodes(walk),
     edges: stageEdges([...walk.visited, ...walk.ahead]),
     standing: standingOf(events, walk.visited.at(-1)?.at),

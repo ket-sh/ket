@@ -32,6 +32,7 @@ export interface JourneyChild {
 export interface Journey {
   item: string;
   title: string;
+  description: string | undefined;
   nodes: JourneyNode[];
   edges: [string, string][];
   standing: string | undefined;

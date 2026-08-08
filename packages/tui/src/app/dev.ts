@@ -41,6 +41,7 @@ const REHEARSAL: KanbanColumnView[] = [
 const WALKED: JourneyView = {
   item: 'DEV-1',
   title: 'Login with lockout',
+  description: 'The keeper locks the account after five failures.',
   nodes: [
     {
       id: 'triaged',

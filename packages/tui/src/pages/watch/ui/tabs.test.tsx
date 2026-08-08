@@ -87,9 +87,33 @@ describe('the tabs an opened item wears', () => {
   });
 
   it('says so when the item carries no description', async () => {
-    const frame = await opening(OPENED);
+    const frame = await opening([
+      ...OPENED,
+      { key: 'TAB', lands: '║ designing' },
+      { key: 'TAB', lands: 'A quiet fix' },
+      { key: 'RETURN', lands: 'K-2 · journey' },
+    ]);
 
     expect(frame).toContain('No description written.');
+  });
+
+  it('reads out the description the item was written with', async () => {
+    const feed = feedOf();
+    const opened = await testRender(
+      <WatchPage feed={feed} clock={() => NOW} onQuit={() => undefined} />,
+      { width: 160, height: 40 },
+    );
+
+    rendered = opened;
+    await landed((seen) => seen.includes('K-2'));
+    createMockKeys(opened.renderer).pressKey('ARROW_RIGHT');
+    await landed((seen) => seen.includes('║ K-1'));
+    createMockKeys(opened.renderer).pressKey('RETURN');
+
+    const frame = await landed((seen) => seen.includes('K-1 · journey'));
+
+    expect(frame).toContain('The keeper locks the account after five failures.');
+    expect(frame).not.toContain('No description written.');
   });
 });
 

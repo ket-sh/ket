@@ -35,6 +35,7 @@ const someJourney = fc
     return {
       item: 'K-1',
       title: 'Any',
+      description: undefined,
       nodes,
       edges,
       standing: undefined,

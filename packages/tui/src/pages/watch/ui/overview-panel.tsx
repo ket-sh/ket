@@ -6,14 +6,6 @@ import { useTheme } from '../../../shared/theme';
 
 const NOTHING_WRITTEN = 'No description written.';
 
-// The description belongs to the item store, which does not carry the field
-// yet. Reading it defensively keeps the panel honest until the store does.
-function describedIn(journey: JourneyView): string | undefined {
-  const held: unknown = Reflect.get(journey, 'description');
-
-  return typeof held === 'string' && held.trim() !== '' ? held : undefined;
-}
-
 export function OverviewPanel({
   journey,
   width,
@@ -22,7 +14,7 @@ export function OverviewPanel({
   width: number;
 }): ReactNode {
   const { theme } = useTheme();
-  const description = describedIn(journey);
+  const { description } = journey;
 
   return (
     <box flexDirection="column" width={Math.max(20, width - 4)}>

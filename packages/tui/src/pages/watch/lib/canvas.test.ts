@@ -24,6 +24,7 @@ function nodeOf(id: string, patch: Partial<JourneyNodeView> = {}): JourneyNodeVi
 const WALKED: JourneyView = {
   item: 'K-1',
   title: 'The watched item',
+  description: undefined,
   nodes: [
     nodeOf('triaged', { at: '2026-08-07T09:00:00.000Z', until: '2026-08-07T10:00:00.000Z' }),
     nodeOf('designing', { mark: 'active', at: '2026-08-07T10:00:00.000Z' }),

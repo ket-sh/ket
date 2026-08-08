@@ -19,6 +19,7 @@ function journeyOf(ids: string[], edges: [string, string][]): JourneyView {
   return {
     item: 'K-1',
     title: 'The watched item',
+    description: undefined,
     nodes: ids.map(nodeOf),
     edges,
     standing: undefined,

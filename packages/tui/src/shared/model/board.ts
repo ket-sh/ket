@@ -119,6 +119,7 @@ export interface JourneyChildView {
 export interface JourneyView {
   item: string;
   title: string;
+  description: string | undefined;
   nodes: JourneyNodeView[];
   edges: [string, string][];
   standing: string | undefined;
