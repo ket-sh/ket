@@ -116,6 +116,27 @@ describe('planning an update', () => {
   });
 });
 
+describe('applying an update to a configuration that names two tools for one slot', () => {
+  it('refuses rather than writing one tool over the other, since whichever ran last would win', async () => {
+    await writeFile(
+      join(where, '.ket/config.ts'),
+      [
+        'export default {',
+        "  key: 'ORD',",
+        "  targets: { '.': 'cli' },",
+        "  integrations: ['codecov', 'qlty'],",
+        "  language: 'en',",
+        '  workflow: true,',
+        '};',
+        '',
+      ].join('\n'),
+    );
+    await committed(where);
+
+    await expect(runCommand('update', [])).rejects.toThrow(/each answer for coverage/);
+  });
+});
+
 describe('applying an update', () => {
   it('refuses a tree with uncommitted changes', async () => {
     await writeFile(join(where, 'stray.txt'), 'work in progress\n');

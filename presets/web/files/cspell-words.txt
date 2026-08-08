@@ -26,6 +26,7 @@ frontmatter
 fulfilment
 gitdir
 gitleaks
+greptile
 jscpd
 jsdom
 Karpathy
@@ -50,6 +51,8 @@ pilotty
 pipx
 playwright
 probity
+qlty
+qltysh
 rhysd
 sarif
 scrollbox

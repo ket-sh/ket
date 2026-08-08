@@ -24,6 +24,7 @@ frontmatter
 fulfilment
 gitdir
 gitleaks
+greptile
 jscpd
 Karpathy
 ket
@@ -44,6 +45,8 @@ pglite
 pilotty
 pipx
 probity
+qlty
+qltysh
 rhysd
 scrollbox
 semgrep

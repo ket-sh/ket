@@ -27,8 +27,20 @@ describe('the integrations every preset offers', () => {
   it('offers the services that answer for a repository whatever it holds', () => {
     expect(STANDING_INTEGRATIONS.map((offered) => offered.name)).toStrictEqual([
       'codecov',
+      'qlty',
       'codeql',
       'coderabbit',
+      'greptile',
+    ]);
+  });
+
+  it('answers for one category each, so a project is asked about them a category at a time', () => {
+    expect(STANDING_INTEGRATIONS.map((offered) => [offered.name, offered.category])).toStrictEqual([
+      ['codecov', 'coverage'],
+      ['qlty', 'coverage'],
+      ['codeql', 'code scanning'],
+      ['coderabbit', 'AI pull-request review'],
+      ['greptile', 'AI pull-request review'],
     ]);
   });
 
@@ -39,8 +51,11 @@ describe('the integrations every preset offers', () => {
 
     expect(offered.map((file) => [file.path, file.target])).toStrictEqual([
       ['files/github-coverage.yml', '~/.github/workflows/coverage.yml'],
+      ['files/github-qlty-coverage.yml', '~/.github/workflows/coverage.yml'],
       ['files/github-codeql.yml', '~/.github/workflows/codeql.yml'],
       ['files/coderabbit.yaml', '~/.coderabbit.yaml'],
+      ['files/greptile-config.json', '~/.greptile/config.json'],
+      ['files/greptile-rules.md', '~/.greptile/rules.md'],
     ]);
   });
 

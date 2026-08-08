@@ -16,7 +16,7 @@ import { installedFor, shippedContents } from '../../shared/scaffold/install.ts'
 import {
   chosenFrom,
   installsFor,
-  namesOffered,
+  offeredIntegrations,
   skillsFor,
 } from '../../shared/scaffold/integrations.ts';
 import { dictionaryInstallsFor, refuseLanguage } from '../../shared/scaffold/language.ts';
@@ -75,7 +75,7 @@ function configuredFromFlags(
     throw new Error(chosen.refused);
   }
 
-  const outcome = chosenFrom(named, namesOffered([chosen.preset]));
+  const outcome = chosenFrom(named, offeredIntegrations([chosen.preset]));
 
   if ('refused' in outcome) {
     throw new Error(outcome.refused);

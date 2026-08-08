@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { PresetItem } from './item.ts';
+import type { PresetIntegration, PresetItem } from './item.ts';
 import type { PresetSemantics } from './semantics.ts';
 
 import { declarationInvariantsOf } from './declaration-invariants.ts';
@@ -151,9 +151,10 @@ describe('the runner a preset says answers for it', () => {
 
 describe('what an integration installs', () => {
   it('breaks nothing when an integration pins everything it installs', () => {
-    const integrations = [
+    const integrations: PresetIntegration[] = [
       {
         name: 'chromatic',
+        category: 'visual review',
         asks: 'chromatic, on a public repository and a private one.',
         installs: ['chromatic@18.1.0'],
         files: [writes('github-chromatic.yml', '.github/workflows/chromatic.yml')],
@@ -164,9 +165,10 @@ describe('what an integration installs', () => {
   });
 
   it('names a package an integration installs on a range rather than a pin', () => {
-    const integrations = [
+    const integrations: PresetIntegration[] = [
       {
         name: 'chromatic',
+        category: 'visual review',
         asks: 'chromatic, on a public repository and a private one.',
         installs: ['chromatic@^18.1.0'],
         files: [writes('github-chromatic.yml', '.github/workflows/chromatic.yml')],

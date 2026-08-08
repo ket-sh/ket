@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { PresetItem } from './item.ts';
+import type { PresetIntegration, PresetItem } from './item.ts';
 
 import { copies, dependencyNamesOf, everyFileOf, skillsOf, writes } from './item.ts';
 
@@ -61,7 +61,12 @@ describe('every file a preset can write', () => {
     const item = itemThat({
       files: [writes('knip.json', 'knip.json')],
       integrations: [
-        { name: 'codecov', asks: 'codecov?', files: [writes('coverage.yml', 'coverage.yml')] },
+        {
+          name: 'codecov',
+          category: 'coverage',
+          asks: 'codecov?',
+          files: [writes('coverage.yml', 'coverage.yml')],
+        },
       ],
     });
 
@@ -74,8 +79,18 @@ describe('every file a preset can write', () => {
   it('gathers the file of every integration, not only the first', () => {
     const item = itemThat({
       integrations: [
-        { name: 'codecov', asks: 'codecov?', files: [writes('coverage.yml', 'coverage.yml')] },
-        { name: 'codeql', asks: 'codeql?', files: [writes('codeql.yml', 'codeql.yml')] },
+        {
+          name: 'codecov',
+          category: 'coverage',
+          asks: 'codecov?',
+          files: [writes('coverage.yml', 'coverage.yml')],
+        },
+        {
+          name: 'codeql',
+          category: 'code scanning',
+          asks: 'codeql?',
+          files: [writes('codeql.yml', 'codeql.yml')],
+        },
       ],
     });
 
@@ -94,8 +109,9 @@ describe('every file a preset can write', () => {
 
 describe('the skills an integration brings', () => {
   it('names the skills a chosen integration installs', () => {
-    const integration = {
+    const integration: PresetIntegration = {
       name: 'chromatic',
+      category: 'visual review',
       asks: 'reviews what a page looks like',
       skills: [{ name: 'chromatic-setup-ci', source: 'chromaui/skills' }],
       files: [],
@@ -107,8 +123,9 @@ describe('the skills an integration brings', () => {
   });
 
   it('brings no skills where the integration declares none', () => {
-    const integration = {
+    const integration: PresetIntegration = {
       name: 'mobbin',
+      category: 'design reference',
       asks: 'a gallery of shipped screens',
       reaches: { stage: 'designing', reference: 'https://mobbin.com' },
     };

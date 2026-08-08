@@ -1,6 +1,6 @@
 import type { PresetFile, PresetIntegration, PresetSkill } from '@ket/preset';
 
-import { filesOf, installsOf, skillsOf } from '@ket/preset';
+import { crowdedCategoriesOf, filesOf, installsOf, skillsOf } from '@ket/preset';
 
 import type { PresetName } from '../../shared/configuration.ts';
 import type { ScaffoldFile } from '../../shared/write-files.ts';
@@ -18,27 +18,49 @@ function chosenIn(preset: PresetName, chosen: string[]): PresetIntegration[] {
 
 export type ChosenIntegrations = { chosen: string[] } | { refused: string };
 
-export function namesOffered(presets: PresetName[]): string[] {
-  return [...new Set(presets)].flatMap((preset) =>
-    integrationsOffered(preset).map((offered) => offered.name),
-  );
+export function offeredIntegrations(presets: PresetName[]): PresetIntegration[] {
+  const byName = new Map<string, PresetIntegration>();
+
+  for (const preset of new Set(presets)) {
+    for (const offered of integrationsOffered(preset)) {
+      byName.set(offered.name, offered);
+    }
+  }
+
+  return [...byName.values()];
 }
 
-export function chosenFrom(named: string | undefined, offered: string[]): ChosenIntegrations {
+export function crowdedRefusal(chosen: string[], offered: PresetIntegration[]): string | undefined {
+  const [crowded] = crowdedCategoriesOf(
+    offered.filter((integration) => chosen.includes(integration.name)),
+  );
+
+  return crowded === undefined
+    ? undefined
+    : `${crowded.tools.join(' and ')} each answer for ${crowded.category}, and a project takes one of them`;
+}
+
+export function chosenFrom(
+  named: string | undefined,
+  offered: PresetIntegration[],
+): ChosenIntegrations {
   if (named === undefined) {
     return { chosen: [] };
   }
 
   const asked = named.split(',').map((name) => name.trim());
-  const unknown = asked.find((name) => !offered.includes(name));
+  const names = offered.map((integration) => integration.name);
+  const unknown = asked.find((name) => !names.includes(name));
 
   if (unknown !== undefined) {
     return {
-      refused: `${unknown} is not an integration this project offers. It offers ${offered.join(', ')}`,
+      refused: `${unknown} is not an integration this project offers. It offers ${names.join(', ')}`,
     };
   }
 
-  return { chosen: asked };
+  const crowded = crowdedRefusal(asked, offered);
+
+  return crowded === undefined ? { chosen: asked } : { refused: crowded };
 }
 
 export function integrationFile(file: PresetFile, contents: string): ScaffoldFile {

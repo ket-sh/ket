@@ -1,6 +1,7 @@
-import type { PresetIntegration } from '@ket/preset';
+import type { OfferedCategory, PresetIntegration } from '@ket/preset';
 
 import { cancel, confirm, isCancel, multiselect, select, text } from '@clack/prompts';
+import { categoriesOffering } from '@ket/preset';
 import { homedir } from 'node:os';
 import color from 'picocolors';
 
@@ -11,6 +12,7 @@ import { integrationsOffered } from '../../shared/scaffold/integrations.ts';
 import { DEFAULT_LANGUAGE, refuseLanguage } from '../../shared/scaffold/language.ts';
 import { drawWorkflow } from './announce.ts';
 import { directoryLabel } from './directory-label.ts';
+import { choicesFor, pickedNames, promptFor } from './integration-prompt.ts';
 import { refuseKey } from './key.ts';
 import { refuseName } from './name.ts';
 
@@ -66,21 +68,43 @@ async function askWorkflow(): Promise<boolean | symbol> {
   });
 }
 
-async function askIntegrations(offered: PresetIntegration[]): Promise<string[] | symbol> {
-  if (offered.length === 0) {
-    return [];
-  }
-
+async function askSeveral(offered: OfferedCategory): Promise<string[] | symbol> {
   return multiselect({
-    message: 'Which online services do you want to use?',
-    options: offered.map((integration) => ({
-      value: integration.name,
-      label: integration.name,
-      hint: integration.asks,
-    })),
+    message: promptFor(offered),
+    options: choicesFor(offered),
     required: false,
     initialValues: [],
   });
+}
+
+async function askOne(offered: OfferedCategory): Promise<string[] | symbol> {
+  const picked = await select({ message: promptFor(offered), options: choicesFor(offered) });
+
+  if (isCancel(picked)) {
+    return picked;
+  }
+
+  return pickedNames(picked, offered);
+}
+
+async function askCategory(offered: OfferedCategory): Promise<string[] | symbol> {
+  return offered.admits === 'several' ? askSeveral(offered) : askOne(offered);
+}
+
+async function askIntegrations(offered: PresetIntegration[]): Promise<string[] | symbol> {
+  const chosen: string[] = [];
+
+  for (const category of categoriesOffering(offered)) {
+    const answered = await askCategory(category);
+
+    if (isCancel(answered)) {
+      return answered;
+    }
+
+    chosen.push(...answered);
+  }
+
+  return chosen;
 }
 
 async function askedOrCancelled<Answer>(

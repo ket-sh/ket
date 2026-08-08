@@ -157,6 +157,23 @@ grep -q "integrations: \['codecov', 'codeql', 'coderabbit'\]" "$WITH/.ket/config
 (cd "$SANDBOX" && "$KET" create unoffered --with chromatic >/dev/null 2>&1) &&
   fail "create accepted an integration the cli preset does not offer"
 
+# A slot that takes one tool is a substitution, so the other side of it has to
+# arrive whole. A recorded choice with nothing on disk behind it is a lie.
+echo "acceptance: the other tool of a slot that takes one arrives whole"
+SUBSTITUTED="$SANDBOX/substituted"
+(cd "$SANDBOX" && "$KET" create substituted --with qlty,coderabbit,greptile >/dev/null) ||
+  fail "create refused the substitutes the cli preset offers"
+test -f "$SUBSTITUTED/.github/workflows/coverage.yml" ||
+  fail "qlty was asked for and no coverage workflow was written"
+grep -q 'qltysh/qlty-action' "$SUBSTITUTED/.github/workflows/coverage.yml" ||
+  fail "the coverage workflow uploads elsewhere although qlty was asked for"
+for expected in .greptile/config.json .greptile/rules.md .coderabbit.yaml; do
+  test -f "$SUBSTITUTED/$expected" || fail "$expected was asked for and never written"
+done
+
+(cd "$SANDBOX" && "$KET" create crowded --with codecov,qlty >/dev/null 2>&1) &&
+  fail "create took two coverage services for a slot that keeps one"
+
 # The tool clones over the network, and the network is not a promise ket can
 # make. Forcing the failure is the only way to find out what the user is left
 # holding when it happens.
@@ -192,5 +209,5 @@ for stranded in vitest find-skills; do
 done
 
 echo "acceptance: every workflow a project gets is one github can run"
-mise exec -- actionlint "$WITH/.github/workflows/"*.yml ||
+mise exec -- actionlint "$WITH/.github/workflows/"*.yml "$SUBSTITUTED/.github/workflows/"*.yml ||
   fail "a generated workflow does not parse"

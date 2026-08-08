@@ -66,11 +66,12 @@ describe('the files a preset ships', () => {
   });
 
   it('reads what an integration ships as well as what the preset always ships', async () => {
-    const item = {
+    const item: PresetItem = {
       ...itemPromising([writes('knip.json', 'knip.json')]),
       integrations: [
         {
           name: 'codecov',
+          category: 'coverage',
           asks: 'codecov?',
           files: [writes('source/main.ts', 'src/main.ts')],
         },

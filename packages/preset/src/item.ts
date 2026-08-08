@@ -14,8 +14,17 @@ export interface StageReference {
   reference: string;
 }
 
+export type IntegrationCategory =
+  | 'design reference'
+  | 'visual review'
+  | 'AI pull-request review'
+  | 'coverage'
+  | 'supply chain'
+  | 'code scanning';
+
 interface OfferedIntegration {
   name: string;
+  category: IntegrationCategory;
   asks: string;
   installs?: string[];
   skills?: PresetSkill[];

@@ -117,11 +117,13 @@ export const WEB_PRESET: PresetItem = {
   integrations: [
     {
       name: 'mobbin',
+      category: 'design reference',
       asks: 'mobbin is a gallery of shipped screens to design against. A seat costs the same whether the repository is public or private.',
       reaches: { stage: 'designing', reference: 'https://mobbin.com' },
     },
     {
       name: 'chromatic',
+      category: 'visual review',
       asks: 'chromatic reviews what a page looks like on each push. Free to 5000 snapshots a month on a public repository or a private one, then paid.',
       installs: ['chromatic@18.1.0', '@chromatic-com/playwright@0.14.11'],
       skills: [
@@ -136,6 +138,7 @@ export const WEB_PRESET: PresetItem = {
     },
     {
       name: 'scorecard',
+      category: 'supply chain',
       asks: 'scorecard publishes a supply-chain risk score on each push to main and once a week. A public repository gets the full score; a private one needs GitHub Advanced Security before scorecard can publish anything.',
       files: [writes('github-scorecard.yml', '.github/workflows/scorecard.yml')],
     },

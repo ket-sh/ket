@@ -41,6 +41,7 @@ fulfilment
 ghostty
 gitdir
 gitleaks
+greptile
 gridstack
 gsub
 jscpd
@@ -86,6 +87,8 @@ pipx
 playwright
 probity
 profoundlogic
+qlty
+qltysh
 resizestart
 resizestop
 rhysd
