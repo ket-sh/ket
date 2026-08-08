@@ -4,9 +4,16 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import process from 'node:process';
 
+import type { PinnedPage } from './docs/pinning.mts';
+
 import { readDependencyGraph } from './docs/dependency-graph.mts';
+import { isDocCategory, parsePage } from './docs/frontmatter.mts';
 import { missingAnchors } from './docs/intent-anchors.mts';
+import { governedDocPages } from './docs/pages.mts';
+import { pageState } from './docs/pinning.mts';
+import { changedFiles, trackedFiles } from './docs/repository.mts';
 import { renderSkeleton } from './docs/skeleton.mts';
+import { sourcesOf } from './docs/stamp.mts';
 
 const SKELETON_PATH = 'docs/architecture/skeleton.md';
 
@@ -38,10 +45,51 @@ function deadAnchors(committed: string): string[] {
   );
 }
 
+function movedSources(pinned: PinnedPage, changed: readonly string[]): string {
+  const moved = sourcesOf(changed, pinned.page.sources);
+
+  if (moved.length === 0) {
+    return `sources: ${pinned.page.sources.join(', ')}`;
+  }
+
+  return `sources that moved:\n${moved.map((path) => `- ${path}`).join('\n')}`;
+}
+
+function rotFailures(files: readonly string[], changed: readonly string[]): string[] {
+  return governedDocPages(files)
+    .map((path) => pageState(path, files))
+    .flatMap((state) => (state.kind === 'stale' ? [state.pinned] : []))
+    .map((pinned) =>
+      [
+        `${pinned.path} went stale: its sources moved past the stamp`,
+        movedSources(pinned, changed),
+        `reread the page, update what the change made stale, then run bun run docs:stamp ${pinned.path}`,
+      ].join('\n'),
+    );
+}
+
+function categoryFailures(files: readonly string[]): string[] {
+  return governedDocPages(files)
+    .filter((path) => !isDocCategory(parsePage(readFileSync(path, 'utf-8')).category))
+    .map(
+      (path) =>
+        `${path} declares no category: add category: tutorial, how-to, reference, or explanation to its frontmatter`,
+    );
+}
+
+function baseSha(): string | undefined {
+  const sha = process.env['BASE_SHA'];
+
+  return sha === undefined || sha === '' ? undefined : sha;
+}
+
 const committedSkeleton = readFileSync(SKELETON_PATH, 'utf-8');
+const files = trackedFiles();
 const failures = [
   ...skeletonDrift(committedSkeleton, renderSkeleton(readDependencyGraph())),
   ...deadAnchors(committedSkeleton),
+  ...rotFailures(files, changedFiles(baseSha())),
+  ...categoryFailures(files),
 ];
 
 if (failures.length > 0) {
