@@ -6,6 +6,7 @@ import type { Seat } from '../model/seat.ts';
 
 import { stageColorOf, useTheme } from '../../../shared/theme';
 import { agedOf } from '../lib/aged.ts';
+import { accentOf, BELL, needsYou } from '../lib/attention.ts';
 import { laneTitle } from '../lib/lanes.ts';
 
 interface CardFrame {
@@ -13,12 +14,15 @@ interface CardFrame {
   color: string;
 }
 
-function restingFrame(theme: Theme): CardFrame {
-  return { style: 'rounded', color: theme.surface1 };
+function restingFrame(card: KanbanCardView, theme: Theme): CardFrame {
+  return { style: 'rounded', color: accentOf(card, theme) ?? theme.surface1 };
 }
 
 function chosenFrame(card: KanbanCardView, theme: Theme): CardFrame {
-  return { style: 'double', color: stageColorOf(theme)[card.status] ?? theme.surface1 };
+  return {
+    style: 'double',
+    color: accentOf(card, theme) ?? stageColorOf(theme)[card.status] ?? theme.surface1,
+  };
 }
 
 function Card({
@@ -42,10 +46,17 @@ function Card({
       paddingLeft={1}
       paddingRight={1}
     >
-      <text wrapMode="none">
-        <strong>{card.key}</strong>
-        <span fg={theme.gray}>{age === '' ? '' : `  ${age}`}</span>
-      </text>
+      <box flexDirection="row" justifyContent="space-between">
+        <text wrapMode="none">
+          <strong>{card.key}</strong>
+          <span fg={theme.gray}>{age === '' ? '' : `  ${age}`}</span>
+        </text>
+        {needsYou(card) ? (
+          <text wrapMode="none" fg={theme.yellow}>
+            {BELL}
+          </text>
+        ) : null}
+      </box>
       <text wrapMode="none" fg={theme.text}>
         {card.title}
       </text>
@@ -88,7 +99,7 @@ function Column({
             key={card.key}
             card={card}
             now={now}
-            frame={cardAt === selectedRow ? chosenFrame(card, theme) : restingFrame(theme)}
+            frame={cardAt === selectedRow ? chosenFrame(card, theme) : restingFrame(card, theme)}
           />
         ),
       )}

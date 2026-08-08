@@ -8,6 +8,7 @@ const PULSE = 120;
 
 export interface BoardState {
   columns: KanbanColumnView[];
+  loaded: boolean;
   now: string;
   tick: number;
   refresh: () => void;
@@ -15,11 +16,15 @@ export interface BoardState {
 
 export function useBoardState(feed: BoardFeed, clock: () => string): BoardState {
   const [columns, setColumns] = useState<KanbanColumnView[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [now, setNow] = useState(clock());
   const [tick, setTick] = useState(0);
 
   const refresh = useCallback(() => {
-    void feed.snapshot().then(setColumns);
+    void feed.snapshot().then((fresh) => {
+      setColumns(fresh);
+      setLoaded(true);
+    });
   }, [feed]);
 
   useEffect(() => {
@@ -42,5 +47,5 @@ export function useBoardState(feed: BoardFeed, clock: () => string): BoardState 
     };
   }, [clock]);
 
-  return { columns, now, tick, refresh };
+  return { columns, loaded, now, tick, refresh };
 }

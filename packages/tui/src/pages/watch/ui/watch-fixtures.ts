@@ -237,7 +237,7 @@ export function feedOf(): ActedFeed {
     snapshot: async () => {
       await Promise.resolve();
 
-      return columns;
+      return columns.map((column) => ({ ...column, cards: [...column.cards] }));
     },
     storyMap: async () => {
       await Promise.resolve();
