@@ -1,6 +1,8 @@
+import type { MouseEvent } from '@opentui/core';
 import type { ReactNode } from 'react';
 
 import type { Theme } from '../../../shared/theme';
+import type { WatchMouse } from '../model/mouse.ts';
 
 import { THEMES, useTheme } from '../../../shared/theme';
 import { OverlayBox } from './overlay-box.tsx';
@@ -15,16 +17,24 @@ function WardrobeRow({
   name,
   candidate,
   chosen,
+  onPress,
 }: {
   name: string;
   candidate: Theme;
   chosen: boolean;
+  onPress: () => void;
 }): ReactNode {
   const { theme } = useTheme();
   const label = `${chosen ? '► ' : '  '}${name.padEnd(20)}`;
 
   return (
-    <text wrapMode="none">
+    <text
+      wrapMode="none"
+      onMouseDown={(event: MouseEvent) => {
+        event.stopPropagation();
+        onPress();
+      }}
+    >
       <span fg={chosen ? theme.text : theme.subtext}>{label}</span>
       {stripOf(candidate).map(
         (tint, index): ReactNode => (
@@ -41,10 +51,12 @@ export function ThemePicker({
   at,
   width,
   height,
+  mouse,
 }: {
   at: number;
   width: number;
   height: number;
+  mouse: WatchMouse;
 }): ReactNode {
   const { theme } = useTheme();
 
@@ -59,7 +71,15 @@ export function ThemePicker({
     >
       {THEMES.map(
         ([name, candidate], index): ReactNode => (
-          <WardrobeRow key={name} name={name} candidate={candidate} chosen={index === at} />
+          <WardrobeRow
+            key={name}
+            name={name}
+            candidate={candidate}
+            chosen={index === at}
+            onPress={() => {
+              mouse.pickerRow(index);
+            }}
+          />
         ),
       )}
       <text> </text>

@@ -1,6 +1,8 @@
+import type { MouseEvent } from '@opentui/core';
 import type { ReactNode } from 'react';
 
 import type { PaletteEntry } from '../lib/palette.ts';
+import type { WatchMouse } from '../model/mouse.ts';
 import type { Palette } from '../model/palette.ts';
 
 import { stageColorOf, useTheme } from '../../../shared/theme';
@@ -10,14 +12,27 @@ const WIDE = 56;
 
 const MOST = 9;
 
-function EntryRow({ entry, chosen }: { entry: PaletteEntry; chosen: boolean }): ReactNode {
+function EntryRow({
+  entry,
+  chosen,
+  onPress,
+}: {
+  entry: PaletteEntry;
+  chosen: boolean;
+  onPress: () => void;
+}): ReactNode {
   const { theme } = useTheme();
   const mark = chosen ? '► ' : '  ';
   const rest = chosen ? theme.text : theme.subtext;
 
+  const pressAt = (event: MouseEvent): void => {
+    event.stopPropagation();
+    onPress();
+  };
+
   if (entry.kind !== 'item') {
     return (
-      <text wrapMode="none">
+      <text wrapMode="none" onMouseDown={pressAt}>
         <span fg={theme.text}>{mark}</span>
         <span fg={rest}>{entry.label}</span>
       </text>
@@ -25,7 +40,7 @@ function EntryRow({ entry, chosen }: { entry: PaletteEntry; chosen: boolean }): 
   }
 
   return (
-    <text wrapMode="none">
+    <text wrapMode="none" onMouseDown={pressAt}>
       <span fg={theme.text}>{mark}</span>
       <span fg={stageColorOf(theme)[entry.status] ?? theme.text}>{entry.key}</span>
       <span fg={rest}>{entry.label.slice(entry.key.length)}</span>
@@ -49,10 +64,12 @@ export function PaletteOverlay({
   palette,
   width,
   height,
+  mouse,
 }: {
   palette: Palette;
   width: number;
   height: number;
+  mouse: WatchMouse;
 }): ReactNode {
   const { theme } = useTheme();
 
@@ -76,7 +93,14 @@ export function PaletteOverlay({
       <text> </text>
       {rows.map(
         (entry, seatAt): ReactNode => (
-          <EntryRow key={entry.label} entry={entry} chosen={from + seatAt === palette.at} />
+          <EntryRow
+            key={entry.label}
+            entry={entry}
+            chosen={from + seatAt === palette.at}
+            onPress={() => {
+              mouse.paletteRow(from + seatAt);
+            }}
+          />
         ),
       )}
       <text> </text>

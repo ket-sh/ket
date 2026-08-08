@@ -1,3 +1,4 @@
+import type { MouseEvent } from '@opentui/core';
 import type { ReactNode } from 'react';
 
 import { useTheme } from '../../../shared/theme';
@@ -14,7 +15,13 @@ export function FilterBar({
   const { theme } = useTheme();
 
   return (
-    <box flexDirection="row" justifyContent="space-between">
+    <box
+      flexDirection="row"
+      justifyContent="space-between"
+      onMouseDown={(event: MouseEvent) => {
+        event.stopPropagation();
+      }}
+    >
       <text wrapMode="none">
         <span fg={theme.blue}>{'/ '}</span>
         <span fg={theme.text}>{query}</span>

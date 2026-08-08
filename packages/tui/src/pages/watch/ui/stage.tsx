@@ -38,7 +38,7 @@ function BoardArea({
   mouse,
 }: Omit<RoomProps, 'stack'>): ReactNode {
   if (layout === 'backlog') {
-    return <BacklogView columns={columns} chosenKey={seat.chosen?.key} />;
+    return <BacklogView columns={columns} chosenKey={seat.chosen?.key} mouse={mouse} />;
   }
 
   if (layout === 'list') {

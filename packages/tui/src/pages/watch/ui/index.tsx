@@ -87,16 +87,18 @@ function PickerOverlay({
   picker,
   width,
   height,
+  mouse,
 }: {
   picker: Picker;
   width: number;
   height: number;
+  mouse: WatchMouse;
 }): ReactNode {
   if (picker.at === undefined) {
     return null;
   }
 
-  return <ThemePicker at={picker.at} width={width} height={height} />;
+  return <ThemePicker at={picker.at} width={width} height={height} mouse={mouse} />;
 }
 
 function useMovedCardFollow(stack: FrameStack, seat: Seat, columns: KanbanColumnView[]): void {
@@ -176,12 +178,13 @@ function useWatchRoom({
 
 function OverlayLayer({ room }: { room: Room }): ReactNode {
   const { columns, tick, stack, seat, layout, picker, palette, help, width, height } = room;
+  const { mouse } = room;
 
   return (
     <>
       <CeremonyOverlay stack={stack} columns={columns} tick={tick} width={width} height={height} />
-      <PickerOverlay picker={picker} width={width} height={height} />
-      <PaletteOverlay palette={palette} width={width} height={height} />
+      <PickerOverlay picker={picker} width={width} height={height} mouse={mouse} />
+      <PaletteOverlay palette={palette} width={width} height={height} mouse={mouse} />
       <HelpOverlay
         help={help}
         frame={stack.top}
@@ -205,6 +208,9 @@ function WatchRoom(props: WatchPageProps): ReactNode {
       paddingTop={1}
       paddingLeft={PAGE_SIDE}
       paddingRight={PAGE_SIDE}
+      onMouseDown={() => {
+        mouse.outside();
+      }}
     >
       <Banner />
       <HeaderRow stack={stack} tick={tick} />
