@@ -215,10 +215,18 @@ async function artifactDoc(
   return named === undefined ? undefined : shelf[named];
 }
 
-function spokenOf(event: LoggedEvent): string {
-  const words = [event.gate, event.outcome, event.about, event.reason];
+function spokenWords(event: LoggedEvent): (string | undefined)[] {
+  if (event.note !== undefined) {
+    return ['note', event.actor, event.note];
+  }
 
-  return words.filter((word): word is string => word !== undefined && word !== '').join(' · ');
+  return [event.gate, event.outcome, event.about, event.reason];
+}
+
+function spokenOf(event: LoggedEvent): string {
+  return spokenWords(event)
+    .filter((word): word is string => word !== undefined && word !== '')
+    .join(' · ');
 }
 
 function lineOf(event: LoggedEvent): LedgerLine | undefined {

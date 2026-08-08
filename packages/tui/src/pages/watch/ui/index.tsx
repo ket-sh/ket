@@ -4,17 +4,18 @@ import { useKeyboard, useTerminalDimensions } from '@opentui/react';
 import { useEffect, useState } from 'react';
 
 import type { BoardFeed, KanbanColumnView } from '../../../shared/model';
+import type { Ring } from '../model/chime.ts';
 import type { FrameStack } from '../model/frames.ts';
 import type { BoardLayout, Picker, PressDeps } from '../model/keys.ts';
 import type { Seat } from '../model/seat.ts';
 
-import { lerpHex } from '../../../shared/lib';
 import { ThemeProvider, THEMES, useTheme } from '../../../shared/theme';
 import { Banner } from '../../../shared/ui';
 import { MapPane } from '../../../widgets/story-map';
 import { laidInRow } from '../lib/lanes.ts';
 import { useBoardState } from '../model/board-state.ts';
-import { crumbOf, outstayed } from '../model/frames.ts';
+import { useChime } from '../model/chime.ts';
+import { outstayed } from '../model/frames.ts';
 import { press } from '../model/keys.ts';
 import { useSeat } from '../model/seat.ts';
 import { useFrameStack } from '../model/stack.ts';
@@ -22,6 +23,7 @@ import { BacklogView } from './backlog.tsx';
 import { BoardView } from './board.tsx';
 import { EditorPage } from './editor.tsx';
 import { GateModal } from './gate.tsx';
+import { HeaderRow } from './header-row.tsx';
 import { JourneyPage } from './journey.tsx';
 import { KeyBar } from './key-bar.tsx';
 import { ListView } from './list.tsx';
@@ -36,6 +38,7 @@ export interface WatchPageProps {
   feed: BoardFeed;
   onQuit: () => void;
   clock?: () => string;
+  ring?: Ring;
 }
 
 function statusOf(columns: KanbanColumnView[], key: string): string | undefined {
@@ -48,23 +51,6 @@ function useCeremonyCurtain(stack: FrameStack, tick: number): void {
       stack.pop();
     }
   }, [stack, tick]);
-}
-
-function HeaderRow({ stack, tick }: { stack: FrameStack; tick: number }): ReactNode {
-  const { theme, name } = useTheme();
-  const beat = lerpHex(theme.green, theme.base, tick % 8 < 4 ? 0.1 : 0.5);
-
-  return (
-    <box flexDirection="row" justifyContent="space-between">
-      <text wrapMode="none">
-        <span fg={beat}>{'● '}</span>
-        <span fg={theme.gray}>{crumbOf(stack.frames)}</span>
-      </text>
-      <text wrapMode="none" fg={theme.subtext}>
-        {name}
-      </text>
-    </box>
-  );
 }
 
 interface RoomProps {
@@ -240,8 +226,9 @@ function WatchRoom({
   feed,
   onQuit,
   clock = () => new Date().toISOString(),
+  ring,
 }: WatchPageProps): ReactNode {
-  const { columns, now, tick, refresh } = useBoardState(feed, clock);
+  const { columns, loaded, now, tick, refresh } = useBoardState(feed, clock);
   const stack = useFrameStack(feed);
   const seat = useSeat(columns);
   const { width, height } = useTerminalDimensions();
@@ -249,6 +236,7 @@ function WatchRoom({
   const picker = usePicker(stack);
   const most = stack.top.kind === 'surface' ? surfaceMost(stack.top, height - CHROME) : 0;
 
+  useChime(columns, loaded, ring);
   useCeremonyCurtain(stack, tick);
   useMovedCardFollow(stack, seat, columns);
   useWatchKeys({ onQuit, refresh, stack, seat, most, tick, layout, swap, queue, picker });

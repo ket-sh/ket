@@ -69,6 +69,7 @@ describe('the stages a journey walks', () => {
       at: undefined,
       until: undefined,
       refusal: undefined,
+      note: undefined,
       doc: undefined,
     });
     expect(journey?.nodes.slice(1).map((node) => node.state)).toStrictEqual([

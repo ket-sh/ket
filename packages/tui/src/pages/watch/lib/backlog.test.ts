@@ -13,6 +13,7 @@ function cardOf(key: string, status: string, parent?: string): KanbanCardView {
     parent,
     since: undefined,
     refusal: undefined,
+    note: undefined,
     offers: [],
   };
 }

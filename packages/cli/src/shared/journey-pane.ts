@@ -3,6 +3,7 @@ import type { JourneyPane, RepoFacts } from './journey-node.ts';
 import type { LoggedEvent } from './kanban.ts';
 
 import { ITEM_STATUSES } from './item.ts';
+import { noteAfter } from './kanban.ts';
 
 function refusalsSince(events: LoggedEvent[], since: string | undefined): number {
   if (since === undefined) {
@@ -32,5 +33,6 @@ export function paneOf(
     lastEventAt: events.at(-1)?.at,
     filed: repo.filed,
     branch: repo.branch,
+    note: arrivedAt === undefined ? undefined : noteAfter(events, arrivedAt),
   };
 }

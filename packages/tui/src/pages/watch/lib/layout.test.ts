@@ -14,6 +14,7 @@ const PANE: JourneyPaneView = {
   lastEventAt: undefined,
   filed: undefined,
   branch: undefined,
+  note: undefined,
 };
 
 import { NODE_H, NODE_W, neighborOf, placedOf } from './layout.ts';
@@ -36,6 +37,7 @@ function nodeOf(id: string): JourneyNodeView {
     refusal: undefined,
     at: undefined,
     until: undefined,
+    note: undefined,
     doc: undefined,
   };
 }
