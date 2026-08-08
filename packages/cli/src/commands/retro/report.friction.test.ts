@@ -108,32 +108,34 @@ describe('where a report says the time went', () => {
 
 describe('the one action a report asks for', () => {
   it('asks for a mechanical check when a gate kept refusing the same thing', () => {
-    const action = { gate: 'write', reason: TEST_FIRST, count: 7 };
+    const cluster = { gate: 'write', reason: TEST_FIRST, count: 7 };
 
-    expect(reportOf({ action })).toContain(
+    expect(reportOf({ action: { cluster } })).toContain(
       `## The one action\n\n\`write\` refused 7 times, each for the same reason: ${TEST_FIRST}. Consider a mechanical check, \`ket gate write\` run where the work starts, so the rule stops the edit before the edit lands.\n`,
     );
   });
 
   it('asks for a rule change with its record when a gate refused only once', () => {
-    const action = { gate: 'review', reason: 'the design names no spec', count: 1 };
+    const cluster = { gate: 'review', reason: 'the design names no spec', count: 1 };
 
-    expect(reportOf({ action })).toContain(
+    expect(reportOf({ action: { cluster } })).toContain(
       '`review` refused once, for this reason: the design names no spec. Consider a rule change, recorded in an ADR, since a single refusal shows no pattern yet.',
     );
   });
 
   it('reads a reason that already ended in a stop without doubling it', () => {
-    const action = { gate: 'transition', reason: 'not verified yet.', count: 1 };
+    const cluster = { gate: 'transition', reason: 'not verified yet.', count: 1 };
 
-    expect(reportOf({ action })).toContain('for this reason: not verified yet. Consider');
+    expect(reportOf({ action: { cluster } })).toContain(
+      'for this reason: not verified yet. Consider',
+    );
   });
 
   it('asks for one action and never a second', () => {
-    const action = { gate: 'write', reason: TEST_FIRST, count: 7 };
+    const cluster = { gate: 'write', reason: TEST_FIRST, count: 7 };
     const report = reportOf({
-      action,
-      clusters: [action, { gate: 'review', reason: '', count: 1 }],
+      action: { cluster },
+      clusters: [cluster, { gate: 'review', reason: '', count: 1 }],
     });
 
     expect(report.split('Consider')).toHaveLength(2);

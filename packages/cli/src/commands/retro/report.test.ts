@@ -46,7 +46,7 @@ const FULL: Retro = {
   rework: [{ key: 'K-1', count: 2 }],
   waiting: 2 * HOUR,
   working: 45 * 60_000,
-  action: { gate: 'write', reason: TEST_FIRST, count: 7 },
+  action: { cluster: { gate: 'write', reason: TEST_FIRST, count: 7 } },
 };
 
 const WRITTEN = [

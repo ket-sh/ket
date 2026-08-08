@@ -4,6 +4,7 @@ import { dirname, join, resolve } from 'node:path';
 
 import { COMMAND_ARGS } from '../../shared/args.ts';
 import { readLog } from '../../shared/event-log.ts';
+import { semanticsOf } from '../../shared/governing.ts';
 import { readStored } from '../../shared/item-store.ts';
 import { ketRootOrThrow } from '../../shared/locate.ts';
 import { foldRetro } from './fold.ts';
@@ -30,7 +31,13 @@ const retro = defineCommand({
       throw new Error(chosen.refused);
     }
 
-    const folded = foldRetro(await readStored(root), await readLog(root), chosen.window);
+    const semantics = await semanticsOf(root);
+    const folded = foldRetro(
+      await readStored(root),
+      await readLog(root),
+      chosen.window,
+      semantics?.gates ?? [],
+    );
     const path = retroPathOf(chosen.window);
 
     await mkdir(dirname(join(root, path)), { recursive: true });

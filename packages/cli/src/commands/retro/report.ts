@@ -1,4 +1,5 @@
-import type { Retro } from './fold.ts';
+import type { DormantGate } from './dormant.ts';
+import type { Retro, RetroAction } from './fold.ts';
 import type { RefusalCluster, Rework, Stall } from './friction.ts';
 import type { FlightLine, ItemLine } from './items.ts';
 import type { RetroWindow } from './window.ts';
@@ -13,6 +14,8 @@ const DAY = 24 * HOUR;
 
 const RULE_CHANGE =
   'Consider a rule change, recorded in an ADR, since a single refusal shows no pattern yet.';
+
+const QUIET_WEEK = 'No gate refused anything in this window';
 
 function spanOf(span: number): string {
   const days = Math.floor(span / DAY);
@@ -85,20 +88,39 @@ function checkAdvice(gate: string): string {
   );
 }
 
-function actionLinesOf(action: RefusalCluster | undefined): string[] {
+function clusterActionOf(cluster: RefusalCluster): string {
+  const said = withoutStop(cluster.reason);
+
+  if (cluster.count === 1) {
+    return `\`${cluster.gate}\` refused once, for this reason: ${said}. ${RULE_CHANGE}`;
+  }
+
+  const opened = `\`${cluster.gate}\` refused ${String(cluster.count)} times`;
+
+  return `${opened}, each for the same reason: ${said}. ${checkAdvice(cluster.gate)}`;
+}
+
+function sightingOf(dormant: DormantGate): string {
+  return dormant.seen === undefined
+    ? `the log has never recorded \`${dormant.gate}\``
+    : `the log last recorded \`${dormant.gate}\` at ${momentText(dormant.seen)}`;
+}
+
+function dormantActionOf(dormant: DormantGate): string {
+  return (
+    `${QUIET_WEEK}, and ${sightingOf(dormant)}. ${dormant.guards} ` +
+    'Examine whether the rule still earns its place.'
+  );
+}
+
+function actionLinesOf(action: RetroAction | undefined): string[] {
   if (action === undefined) {
     return [];
   }
 
-  const said = withoutStop(action.reason);
-
-  if (action.count === 1) {
-    return [`\`${action.gate}\` refused once, for this reason: ${said}. ${RULE_CHANGE}`];
-  }
-
-  const opened = `\`${action.gate}\` refused ${String(action.count)} times`;
-
-  return [`${opened}, each for the same reason: ${said}. ${checkAdvice(action.gate)}`];
+  return 'cluster' in action
+    ? [clusterActionOf(action.cluster)]
+    : [dormantActionOf(action.dormant)];
 }
 
 function partsOf(heading: string, lines: string[]): string[] {

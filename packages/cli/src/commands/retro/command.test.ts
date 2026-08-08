@@ -88,6 +88,35 @@ describe('writing a retro into the repository it reads', () => {
   });
 });
 
+async function quietWeek(): Promise<string> {
+  const root = await mkdtemp(join(tmpdir(), 'ket-retro-quiet-'));
+
+  await mkdir(join(root, '.ket', 'items', 'K-1'), { recursive: true });
+  await writeFile(
+    join(root, '.ket', 'items', 'K-1', 'item.yaml'),
+    'title: The fold\nkind: feature\nsize: story\nstatus: implementing\n',
+  );
+  await writeFile(join(root, '.ket', 'config.yaml'), "key: KET\ntargets:\n  '.': cli\n");
+  await writeFile(
+    join(root, '.ket', 'events.jsonl'),
+    moved('K-1', 'triaged', '2026-08-04T09:00:00.000Z'),
+  );
+
+  return root;
+}
+
+describe('writing a retro for a week no gate refused anything in', () => {
+  it('asks for a look at the gate the preset declares and the log never recorded', async () => {
+    const quiet = await quietWeek();
+
+    await runCommand('retro', ['--cwd', quiet, '--since', '2026-08-03T00:00:00.000Z']);
+
+    expect(await readFile(join(quiet, lines.join('').trim()), 'utf8')).toContain(
+      '## The one action\n\nNo gate refused anything in this window, and the log has never recorded `check-types`. It checks types at full strictness. Examine whether the rule still earns its place.\n',
+    );
+  });
+});
+
 describe('asking a retro for a window nothing can read', () => {
   it('refuses by naming the moment it was handed', async () => {
     await expect(runCommand('retro', ['--cwd', where, '--since', 'last tuesday'])).rejects.toThrow(
