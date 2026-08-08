@@ -60,6 +60,8 @@ export interface FrameStack {
   top: Frame;
   dive: (key: string | undefined) => void;
   tab: () => void;
+  showTab: (tab: JourneyTab) => void;
+  aim: (sel: string) => void;
   openMap: () => void;
   mapWalk: (name: string) => void;
   enter: () => void;

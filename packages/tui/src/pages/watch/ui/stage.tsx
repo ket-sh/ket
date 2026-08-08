@@ -57,7 +57,7 @@ function BoardArea({
 }
 
 export function StageArea(room: RoomProps): ReactNode {
-  const { stack, now, tick, width, height } = room;
+  const { stack, now, tick, width, height, mouse } = room;
 
   if (stack.top.kind === 'edit') {
     return <EditorPage frame={stack.top} tick={tick} height={height} />;
@@ -79,6 +79,7 @@ export function StageArea(room: RoomProps): ReactNode {
         tick={tick}
         width={width - 2}
         height={height}
+        mouse={mouse}
       />
     );
   }
