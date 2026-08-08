@@ -1,4 +1,5 @@
 import type {
+  ItemNoteView,
   JourneyBranchView,
   JourneyChildView,
   JourneyFilingView,
@@ -44,6 +45,17 @@ function filedLines(filed: JourneyFilingView | undefined, now: string): PaneLine
   return filed === undefined
     ? []
     : [lineOf(`filed by ${filed.by} · ${ageOf(filed.at, now)} ago`, 'quiet')];
+}
+
+function narrationLines(note: ItemNoteView | undefined, now: string): PaneLine[] {
+  if (note === undefined) {
+    return [];
+  }
+
+  return [
+    lineOf(note.text, 'quiet'),
+    lineOf(`by ${note.actor} · ${ageOf(note.at, now)} ago`, 'quiet'),
+  ];
 }
 
 function agedLines(facts: JourneyPaneView, now: string): PaneLine[] {
@@ -93,6 +105,7 @@ export function paneLinesOf(journey: JourneyView, now: string, room: number): Pa
     ...nameLines(journey, facts, room),
     lineOf(`${facts.status} · stage ${String(facts.stageAt)} of ${String(facts.stageOf)}`, 'state'),
     ...alertLines(facts, journey.standing),
+    ...narrationLines(facts.note, now),
     ...filedLines(facts.filed, now),
     ...agedLines(facts, now),
     ...parentLines(facts.parent),

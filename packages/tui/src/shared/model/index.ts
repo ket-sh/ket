@@ -2,6 +2,7 @@ export type {
   BoardFeed,
   CalloutView,
   GateActionView,
+  ItemNoteView,
   JourneyArtifactView,
   JourneyBranchView,
   JourneyChildView,

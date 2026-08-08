@@ -1,4 +1,4 @@
-import type { PresetSemantics } from '@ket/preset';
+import type { GateSemantics, PresetSemantics } from '@ket/preset';
 
 import { adapterPatternsOf } from '@ket/preset';
 
@@ -6,6 +6,7 @@ import type { Verdict } from '../../shared/verdict.ts';
 import type { Denial } from './envelope.ts';
 
 import { writesOf } from '../../shared/command-writes.ts';
+import { declaredGateEventFor, declaredGatesRunBy } from '../../shared/declared-gates.ts';
 import { readLog, record } from '../../shared/event-log.ts';
 import { semanticsOf } from '../../shared/governing.ts';
 import { readStored } from '../../shared/item-store.ts';
@@ -38,6 +39,16 @@ async function commandVerdict(
   });
 }
 
+async function recordDeclaredGateRuns(
+  root: string,
+  command: string,
+  gates: GateSemantics[],
+): Promise<void> {
+  for (const script of declaredGatesRunBy(command, gates)) {
+    await record(root, declaredGateEventFor(script, command));
+  }
+}
+
 // A shell writes the same files the Write tool does, so a gate that reads only
 // one of the two is a gate an agent steps around with a redirect.
 export async function judgeCommand(): Promise<Denial | undefined> {
@@ -62,6 +73,10 @@ export async function judgeCommand(): Promise<Denial | undefined> {
   const denial = verdictReply(await commandVerdict(root, command, semantics));
 
   await record(root, eventFor('shell', command, denial));
+
+  if (denial === undefined) {
+    await recordDeclaredGateRuns(root, command, semantics.gates);
+  }
 
   return denial;
 }

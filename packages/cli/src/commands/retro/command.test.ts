@@ -112,7 +112,7 @@ describe('writing a retro for a week no gate refused anything in', () => {
     await runCommand('retro', ['--cwd', quiet, '--since', '2026-08-03T00:00:00.000Z']);
 
     expect(await readFile(join(quiet, lines.join('').trim()), 'utf8')).toContain(
-      '## The one action\n\nNo gate refused anything in this window, and the log has never recorded `check-types`. It checks types at full strictness. Examine whether the rule still earns its place.\n',
+      '## The one action\n\nNo gate refused anything in this window, and the log has never recorded `check-types`. It checks types at full strictness. The log sees a gate only when a session runs its script, so a run at commit time or in CI leaves no line here. Examine whether the rule still earns its place.\n',
     );
   });
 });

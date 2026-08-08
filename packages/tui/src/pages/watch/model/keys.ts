@@ -1,67 +1,26 @@
 import type { GateActionView, KanbanCardView } from '../../../shared/model';
+import type { BoardLayout } from './board-layout.ts';
 import type { Direction, Pressed } from './compass.ts';
+import type { Filter } from './filter.ts';
 import type { Frame, FrameStack } from './frames.ts';
+import type { Help } from './help.ts';
+import type { Palette } from './palette.ts';
+import type { Picker } from './picker.ts';
 import type { Seat } from './seat.ts';
 
 import { asDirection, DELTA } from './compass.ts';
 import { editorPress } from './editor-keys.ts';
-
-export type BoardLayout = 'kanban' | 'list' | 'backlog';
-
-export interface Picker {
-  at: number | undefined;
-  open: () => void;
-  move: (delta: number) => void;
-  keep: () => void;
-  close: () => void;
-}
+import { filterOpened, filterPress } from './filter-keys.ts';
+import { ceremonyPress, journeyPress, mapPress, surfacePress } from './frame-keys.ts';
+import { helpOpened, helpPress } from './help-keys.ts';
+import { paletteOpened, palettePress } from './palette-keys.ts';
+import { pickerPress } from './picker-keys.ts';
 
 export const GATE_KEYS: Record<string, GateActionView> = {
   a: 'approve',
   s: 'ship',
   o: 'reopen',
 };
-
-const JOURNEY_KEYS: Record<string, (stack: FrameStack) => void> = {
-  escape: (stack) => {
-    stack.pop();
-  },
-  return: (stack) => {
-    stack.enter();
-  },
-  enter: (stack) => {
-    stack.enter();
-  },
-  tab: (stack) => {
-    stack.tab();
-  },
-};
-
-function journeyPress(name: string, stack: FrameStack): void {
-  const answer = JOURNEY_KEYS[name];
-
-  if (answer !== undefined) {
-    answer(stack);
-
-    return;
-  }
-
-  const direction: Direction | undefined = asDirection(name);
-
-  if (direction !== undefined) {
-    stack.walk(direction);
-  }
-}
-
-function mapPress(name: string, stack: FrameStack): void {
-  if (name === 'escape') {
-    stack.pop();
-
-    return;
-  }
-
-  stack.mapWalk(name);
-}
 
 function offeredAction(
   name: string,
@@ -146,68 +105,6 @@ function boardPress(name: string, deps: PressDeps): void {
   }
 }
 
-const SURFACE_MOVES: Record<string, (stack: FrameStack, most: number) => void> = {
-  escape: (stack) => {
-    stack.pop();
-  },
-  up: (stack, most) => {
-    stack.scroll(-1, most);
-  },
-  down: (stack, most) => {
-    stack.scroll(1, most);
-  },
-  tab: (stack) => {
-    stack.tune('toggle');
-  },
-  left: (stack) => {
-    stack.tune('technical');
-  },
-  right: (stack) => {
-    stack.tune('plain');
-  },
-  e: (stack) => {
-    stack.edit();
-  },
-};
-
-function surfacePress(name: string, stack: FrameStack, most: number): void {
-  SURFACE_MOVES[name]?.(stack, most);
-}
-
-function ceremonyPress(name: string, stack: FrameStack, tick: number): void {
-  if (name === 'escape') {
-    stack.pop();
-
-    return;
-  }
-
-  if (name === 'return' || name === 'enter') {
-    stack.pass(tick);
-  }
-}
-
-const PICKER_MOVES: Record<string, (picker: Picker) => void> = {
-  up: (picker) => {
-    picker.move(-1);
-  },
-  down: (picker) => {
-    picker.move(1);
-  },
-  return: (picker) => {
-    picker.keep();
-  },
-  enter: (picker) => {
-    picker.keep();
-  },
-  escape: (picker) => {
-    picker.close();
-  },
-};
-
-function pickerPress(name: string, picker: Picker): void {
-  PICKER_MOVES[name]?.(picker);
-}
-
 export interface PressDeps {
   onQuit: () => void;
   refresh: () => void;
@@ -219,6 +116,9 @@ export interface PressDeps {
   swap: () => void;
   queue: () => void;
   picker: Picker;
+  filter: Filter;
+  palette: Palette;
+  help: Help;
 }
 
 const FRAME_PRESSES: Record<Frame['kind'], (name: string, deps: PressDeps) => void> = {
@@ -240,10 +140,30 @@ const FRAME_PRESSES: Record<Frame['kind'], (name: string, deps: PressDeps) => vo
   edit: () => undefined,
 };
 
-function heldPress(key: Pressed, deps: PressDeps): boolean {
+function overlayPress(key: Pressed, deps: PressDeps): boolean {
+  if (deps.palette.at !== undefined) {
+    palettePress(key, deps.palette);
+
+    return true;
+  }
+
   if (deps.picker.at !== undefined) {
     pickerPress(key.name, deps.picker);
 
+    return true;
+  }
+
+  if (deps.help.on) {
+    helpPress(key, deps.help);
+
+    return true;
+  }
+
+  return false;
+}
+
+function heldPress(key: Pressed, deps: PressDeps): boolean {
+  if (overlayPress(key, deps)) {
     return true;
   }
 
@@ -253,7 +173,35 @@ function heldPress(key: Pressed, deps: PressDeps): boolean {
     return true;
   }
 
+  if (deps.filter.typing) {
+    filterPress(key, deps.filter);
+
+    return true;
+  }
+
   return false;
+}
+
+const GLOBAL_KEYS: Record<string, (deps: PressDeps) => void> = {
+  q: (deps) => {
+    deps.onQuit();
+  },
+  r: (deps) => {
+    deps.refresh();
+  },
+  t: (deps) => {
+    deps.picker.open();
+  },
+};
+
+function overlayOpened(key: Pressed, deps: PressDeps): boolean {
+  const kind = deps.stack.top.kind;
+
+  return (
+    filterOpened(key, kind, deps.layout, deps.filter) ||
+    paletteOpened(key, kind, deps.palette) ||
+    helpOpened(key, kind, deps.help)
+  );
 }
 
 export function press(key: Pressed, deps: PressDeps): void {
@@ -261,21 +209,15 @@ export function press(key: Pressed, deps: PressDeps): void {
     return;
   }
 
-  if (key.name === 'q') {
-    deps.onQuit();
+  const answered = GLOBAL_KEYS[key.name];
+
+  if (answered !== undefined) {
+    answered(deps);
 
     return;
   }
 
-  if (key.name === 'r') {
-    deps.refresh();
-
-    return;
-  }
-
-  if (key.name === 't') {
-    deps.picker.open();
-
+  if (overlayOpened(key, deps)) {
     return;
   }
 

@@ -7,13 +7,13 @@ import type {
   StageState,
   Visit,
 } from './journey-node.ts';
-import type { KanbanRefusal, LoggedEvent } from './kanban.ts';
+import type { ItemNote, KanbanRefusal, LoggedEvent } from './kanban.ts';
 import type { StoredItem } from './read-item.ts';
 
 import { ITEM_STATUSES } from './item.ts';
 import { artifactsOf } from './journey-artifacts.ts';
 import { paneOf } from './journey-pane.ts';
-import { arrivalOf, eventsAbout, refusalAfter } from './kanban.ts';
+import { arrivalOf, eventsAbout, noteAfter, refusalAfter } from './kanban.ts';
 import { parseItem } from './read-item.ts';
 
 export type { Journey } from './journey-node.ts';
@@ -96,6 +96,7 @@ function stageNode(
   visit: Visit,
   state: StageState,
   refusal: KanbanRefusal | undefined,
+  note: ItemNote | undefined,
 ): JourneyNode {
   return {
     id: visit.id,
@@ -104,6 +105,7 @@ function stageNode(
     at: visit.at,
     until: visit.until,
     refusal,
+    note,
     doc: undefined,
   };
 }
@@ -163,15 +165,22 @@ function walkOf(events: LoggedEvent[], standing: ItemStatus): Walk {
   return { visited, ahead: aheadOf(visited, last.status) };
 }
 
-function stageNodes(walk: Walk, refusal: KanbanRefusal | undefined): JourneyNode[] {
+function stageNodes(
+  walk: Walk,
+  refusal: KanbanRefusal | undefined,
+  note: ItemNote | undefined,
+): JourneyNode[] {
   const last = walk.visited.length - 1;
   const walked = walk.visited.map((visit, index) =>
     index === last
-      ? stageNode(visit, standingState(visit.status, refusal), refusal)
-      : stageNode(visit, 'done', undefined),
+      ? stageNode(visit, standingState(visit.status, refusal), refusal, note)
+      : stageNode(visit, 'done', undefined, undefined),
   );
 
-  return [...walked, ...walk.ahead.map((visit) => stageNode(visit, 'future', undefined))];
+  return [
+    ...walked,
+    ...walk.ahead.map((visit) => stageNode(visit, 'future', undefined, undefined)),
+  ];
 }
 
 function itemAt(stored: StoredItem[], key: string): Item | undefined {
@@ -187,12 +196,13 @@ function journeyOf(item: Item, stored: StoredItem[], log: string, key: string, r
   const walk = walkOf(events, item.status);
   const arrived = walk.visited.at(-1)?.at;
   const refusal = arrived === undefined ? undefined : refusalAfter(events, arrived);
+  const note = arrived === undefined ? undefined : noteAfter(events, arrived);
 
   return {
     item: key,
     title: item.title,
     description: item.description,
-    nodes: stageNodes(walk, refusal),
+    nodes: stageNodes(walk, refusal, note),
     edges: stageEdges([...walk.visited, ...walk.ahead]),
     standing: refusal?.reason,
     artifacts: artifactsOf(events, key),

@@ -150,6 +150,26 @@ const SHIPPED_LOG =
     at: '2026-08-07T09:30:00.000Z',
   });
 
+describe('the notes a ledger speaks', () => {
+  it('speaks a note as its author and its words', async () => {
+    const log =
+      LOG +
+      eventOf({
+        note: 'researching the breakdown',
+        actor: 'decomposer',
+        at: '2026-08-07T09:40:00.000Z',
+      });
+    const doc = await ledgerOf('designing', storedAt('designing'), log);
+    const lines = doc?.kind === 'ledger' ? doc.lines : [];
+
+    expect(lines).toContainEqual({
+      at: '2026-08-07T09:40:00.000Z',
+      text: 'note · decomposer · researching the breakdown',
+      refused: false,
+    });
+  });
+});
+
 describe('the ledgers a stage goes without or keeps open', () => {
   it('leaves a pending stage without a ledger', async () => {
     expect(await ledgerOf('awaiting-approval')).toBeUndefined();

@@ -23,6 +23,7 @@ const FACTS: JourneyPaneView = {
   lastEventAt: '2026-08-07T11:51:00.000Z',
   filed: undefined,
   branch: undefined,
+  note: undefined,
 };
 
 function childOf(key: string, status: string): JourneyChildView {
@@ -184,6 +185,26 @@ describe('the family the pane points at', () => {
     const lines = paneLinesOf(journeyOf({ children: [childOf('K-2', 'shipped')] }), NOW, 30);
 
     expect(lines.filter((line) => line.tone === 'link')).toHaveLength(1);
+  });
+});
+
+describe('the narration the pane speaks for the step at work', () => {
+  const note = {
+    text: 'researching the breakdown',
+    actor: 'decomposer',
+    at: '2026-08-07T11:30:00.000Z',
+  };
+
+  it('says what is happening in its own line', () => {
+    expect(textOf({ pane: { note } }, 40)).toContain('researching the breakdown');
+  });
+
+  it('attributes the words to their author and their moment', () => {
+    expect(textOf({ pane: { note } }, 40)).toContain('by decomposer · 30m ago');
+  });
+
+  it('says nothing where no step said anything', () => {
+    expect(textOf().some((line) => line.startsWith('by '))).toBe(false);
   });
 });
 

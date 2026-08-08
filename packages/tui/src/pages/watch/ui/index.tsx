@@ -1,30 +1,45 @@
 import type { ReactNode } from 'react';
 
 import { useKeyboard, useTerminalDimensions } from '@opentui/react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 import type { BoardFeed, KanbanColumnView } from '../../../shared/model';
+import type { BoardLayout } from '../model/board-layout.ts';
+import type { Ring } from '../model/chime.ts';
+import type { Filter } from '../model/filter.ts';
 import type { FrameStack } from '../model/frames.ts';
-import type { BoardLayout, Picker, PressDeps } from '../model/keys.ts';
+import type { Help } from '../model/help.ts';
+import type { PressDeps } from '../model/keys.ts';
+import type { Palette } from '../model/palette.ts';
+import type { Picker } from '../model/picker.ts';
 import type { Seat } from '../model/seat.ts';
 
-import { lerpHex } from '../../../shared/lib';
-import { ThemeProvider, THEMES, useTheme } from '../../../shared/theme';
+import { ThemeProvider } from '../../../shared/theme';
 import { Banner } from '../../../shared/ui';
 import { MapPane } from '../../../widgets/story-map';
+import { narrowedBy } from '../lib/filter.ts';
 import { laidInRow } from '../lib/lanes.ts';
+import { useBoardLayout } from '../model/board-layout.ts';
 import { useBoardState } from '../model/board-state.ts';
-import { crumbOf, outstayed } from '../model/frames.ts';
+import { useChime } from '../model/chime.ts';
+import { useFilter } from '../model/filter.ts';
+import { outstayed } from '../model/frames.ts';
+import { useHelp } from '../model/help.ts';
 import { press } from '../model/keys.ts';
+import { usePalette } from '../model/palette.ts';
+import { usePicker } from '../model/picker.ts';
 import { useSeat } from '../model/seat.ts';
 import { useFrameStack } from '../model/stack.ts';
 import { BacklogView } from './backlog.tsx';
 import { BoardView } from './board.tsx';
 import { EditorPage } from './editor.tsx';
+import { FootRow } from './foot-row.tsx';
 import { GateModal } from './gate.tsx';
+import { HeaderRow } from './header-row.tsx';
+import { HelpOverlay } from './help.tsx';
 import { JourneyPage } from './journey.tsx';
-import { KeyBar } from './key-bar.tsx';
 import { ListView } from './list.tsx';
+import { PaletteOverlay } from './palette.tsx';
 import { SurfacePage, surfaceMost } from './surface.tsx';
 import { ThemePicker } from './theme.tsx';
 
@@ -36,6 +51,7 @@ export interface WatchPageProps {
   feed: BoardFeed;
   onQuit: () => void;
   clock?: () => string;
+  ring?: Ring;
 }
 
 function statusOf(columns: KanbanColumnView[], key: string): string | undefined {
@@ -48,23 +64,6 @@ function useCeremonyCurtain(stack: FrameStack, tick: number): void {
       stack.pop();
     }
   }, [stack, tick]);
-}
-
-function HeaderRow({ stack, tick }: { stack: FrameStack; tick: number }): ReactNode {
-  const { theme, name } = useTheme();
-  const beat = lerpHex(theme.green, theme.base, tick % 8 < 4 ? 0.1 : 0.5);
-
-  return (
-    <box flexDirection="row" justifyContent="space-between">
-      <text wrapMode="none">
-        <span fg={beat}>{'● '}</span>
-        <span fg={theme.gray}>{crumbOf(stack.frames)}</span>
-      </text>
-      <text wrapMode="none" fg={theme.subtext}>
-        {name}
-      </text>
-    </box>
-  );
 }
 
 interface RoomProps {
@@ -177,81 +176,73 @@ function useMovedCardFollow(stack: FrameStack, seat: Seat, columns: KanbanColumn
   }, [columns, stack, seat]);
 }
 
-function usePicker(stack: FrameStack): Picker {
-  const wardrobe = useTheme();
-  const [at, setAt] = useState<number | undefined>(undefined);
-
-  const open = (): void => {
-    if (stack.top.kind !== 'gate') {
-      setAt(THEMES.findIndex(([name]) => name === wardrobe.name));
-    }
-  };
-
-  const move = (delta: number): void => {
-    const landing = Math.min(Math.max((at ?? 0) + delta, 0), THEMES.length - 1);
-
-    setAt(landing);
-    wardrobe.preview(landing);
-  };
-
-  const keep = (): void => {
-    if (at !== undefined) {
-      wardrobe.keep(at);
-    }
-
-    setAt(undefined);
-  };
-
-  const close = (): void => {
-    wardrobe.revert();
-    setAt(undefined);
-  };
-
-  return { at, open, move, keep, close };
-}
-
-interface Laid {
-  layout: BoardLayout;
-  swap: () => void;
-  queue: () => void;
-}
-
-function useBoardLayout(): Laid {
-  const [layout, setLayout] = useState<BoardLayout>('kanban');
-
-  const swap = (): void => {
-    setLayout((worn) => (worn === 'kanban' ? 'list' : 'kanban'));
-  };
-
-  const queue = (): void => {
-    setLayout((worn) => (worn === 'backlog' ? 'kanban' : 'backlog'));
-  };
-
-  return { layout, swap, queue };
-}
-
 function useWatchKeys(deps: PressDeps): void {
   useKeyboard((key) => {
     press({ name: key.name, seq: key.sequence, ctrl: key.ctrl }, deps);
   });
 }
 
-function WatchRoom({
+interface Room {
+  columns: KanbanColumnView[];
+  shown: KanbanColumnView[];
+  now: string;
+  tick: number;
+  stack: FrameStack;
+  seat: Seat;
+  layout: BoardLayout;
+  picker: Picker;
+  filter: Filter;
+  palette: Palette;
+  help: Help;
+  width: number;
+  height: number;
+}
+
+function useWatchRoom({
   feed,
   onQuit,
   clock = () => new Date().toISOString(),
-}: WatchPageProps): ReactNode {
-  const { columns, now, tick, refresh } = useBoardState(feed, clock);
+  ring,
+}: WatchPageProps): Room {
+  const { columns, loaded, now, tick, refresh } = useBoardState(feed, clock);
   const stack = useFrameStack(feed);
-  const seat = useSeat(columns);
   const { width, height } = useTerminalDimensions();
-  const { layout, swap, queue } = useBoardLayout();
+  const { layout, swap, queue, wear } = useBoardLayout();
   const picker = usePicker(stack);
+  const filter = useFilter();
+  const shown = layout === 'backlog' ? columns : narrowedBy(columns, filter.query);
+  const seat = useSeat(shown);
+  const palette = usePalette({ columns, chosen: seat.chosen, stack, wear, picker, refresh, tick });
+  const help = useHelp();
   const most = stack.top.kind === 'surface' ? surfaceMost(stack.top, height - CHROME) : 0;
+  const deps = { onQuit, refresh, stack, seat, most, tick, layout, swap, queue };
 
+  useChime(columns, loaded, ring);
   useCeremonyCurtain(stack, tick);
   useMovedCardFollow(stack, seat, columns);
-  useWatchKeys({ onQuit, refresh, stack, seat, most, tick, layout, swap, queue, picker });
+  useWatchKeys({ ...deps, picker, filter, palette, help });
+
+  return {
+    columns,
+    shown,
+    now,
+    tick,
+    stack,
+    seat,
+    layout,
+    picker,
+    filter,
+    palette,
+    help,
+    width,
+    height,
+  };
+}
+
+function WatchRoom(props: WatchPageProps): ReactNode {
+  const room = useWatchRoom(props);
+  const { columns, shown, now, tick, stack, seat, layout, picker, filter, palette, help } = room;
+  const { width, height } = room;
 
   return (
     <box
@@ -266,7 +257,7 @@ function WatchRoom({
       <box flexDirection="column" flexGrow={1} overflow="hidden">
         <StageArea
           stack={stack}
-          columns={columns}
+          columns={shown}
           seat={seat}
           now={now}
           tick={tick}
@@ -275,14 +266,26 @@ function WatchRoom({
           layout={layout}
         />
       </box>
-      <KeyBar
-        frame={stack.top}
-        offers={seat.chosen?.offers ?? []}
+      <FootRow
+        filter={filter}
+        shown={shown}
+        columns={columns}
+        stack={stack}
+        seat={seat}
         layout={layout}
         width={width - PAGE_SIDE * 2}
       />
       <CeremonyOverlay stack={stack} columns={columns} tick={tick} width={width} height={height} />
       <PickerOverlay picker={picker} width={width} height={height} />
+      <PaletteOverlay palette={palette} width={width} height={height} />
+      <HelpOverlay
+        help={help}
+        frame={stack.top}
+        offers={seat.chosen?.offers ?? []}
+        layout={layout}
+        width={width}
+        height={height}
+      />
     </box>
   );
 }

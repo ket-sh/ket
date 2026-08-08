@@ -13,6 +13,12 @@ export interface KanbanRefusal {
   gate: string;
 }
 
+export interface ItemNote {
+  text: string;
+  actor: string;
+  at: string;
+}
+
 interface KanbanCard {
   key: string;
   title: string;
@@ -21,6 +27,7 @@ interface KanbanCard {
   parent: string | undefined;
   since: string | undefined;
   refusal: KanbanRefusal | undefined;
+  note: ItemNote | undefined;
   offers: GateAction[];
 }
 
@@ -36,6 +43,8 @@ export interface LoggedEvent {
   item: string;
   reason: string | undefined;
   at: string | undefined;
+  note: string | undefined;
+  actor: string | undefined;
 }
 
 export function eventsAbout(log: string, key: string): LoggedEvent[] {
@@ -64,6 +73,25 @@ export function refusalAfter(events: LoggedEvent[], since: string): KanbanRefusa
   return refused === undefined ? undefined : refusalOf(refused);
 }
 
+function noteOf(event: LoggedEvent): ItemNote | undefined {
+  if (event.note === undefined || event.actor === undefined || event.at === undefined) {
+    return undefined;
+  }
+
+  return { text: event.note, actor: event.actor, at: event.at };
+}
+
+export function noteAfter(events: LoggedEvent[], since: string): ItemNote | undefined {
+  return events
+    .flatMap((event) => {
+      const note = noteOf(event);
+
+      return note === undefined ? [] : [note];
+    })
+    .filter((note) => note.at >= since)
+    .at(-1);
+}
+
 function cardOf(stored: StoredItem, log: string): KanbanCard | undefined {
   const item = parseItem(stored.contents);
 
@@ -82,6 +110,7 @@ function cardOf(stored: StoredItem, log: string): KanbanCard | undefined {
     parent: item.parent,
     since,
     refusal: since === undefined ? undefined : refusalAfter(events, since),
+    note: since === undefined ? undefined : noteAfter(events, since),
     offers: offeredBy(item),
   };
 }

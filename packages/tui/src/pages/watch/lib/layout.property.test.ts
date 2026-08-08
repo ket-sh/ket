@@ -15,6 +15,7 @@ const PANE: JourneyPaneView = {
   lastEventAt: undefined,
   filed: undefined,
   branch: undefined,
+  note: undefined,
 };
 
 import { NODE_H, NODE_W, placedOf } from './layout.ts';
@@ -41,6 +42,7 @@ const someJourney = fc
       refusal: undefined,
       at: undefined,
       until: undefined,
+      note: undefined,
       doc: undefined,
     }));
     const edges: [string, string][] = picks

@@ -23,3 +23,7 @@ export interface Pressed {
   seq: string;
   ctrl: boolean;
 }
+
+export function glyphOf(key: Pressed): string | undefined {
+  return !key.ctrl && key.seq.length === 1 && key.seq >= ' ' ? key.seq : undefined;
+}

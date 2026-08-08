@@ -32,6 +32,27 @@ A question carries four options at most, so a longer list arrives in groups of
 four. AskUserQuestion is unavailable inside a subagent, so a gate always resolves
 in the main session, where the commands already run.
 
+## Say what is starting, the moment it starts
+
+No working step is ever invisible. `ket watch` shows the freshest note on the
+board card and under the running stage, so a step that leaves no note is a step
+the watcher cannot see. The decomposer researching for ten minutes with nothing
+on the board is exactly the silence this exists to end.
+
+At the start of every step, before the work, write one line saying what is
+about to happen:
+
+```
+ket item note <key> '<one line saying what is starting>' --actor <who is doing it>
+```
+
+Write one when research begins, when a proposal is being drafted, when the
+failing test is being written, when a long check holds the stage. The line is
+present tense and forward looking: `researching how billing usually splits`,
+never `finished the research`. The actor names the skill or agent doing the
+work, `decomposer` or `implementer` or `qa`, and a note left unsigned lands as
+`harness`.
+
 ## The surface arrives at the gate
 
 Nobody remembers to run the show command, so the gate command brings it:

@@ -6,7 +6,7 @@ import type { JourneyFocus, JourneyTab } from '../model/frames.ts';
 import { useTheme } from '../../../shared/theme';
 import { SpanRow } from '../../../shared/ui';
 import { journeyRows } from '../lib/canvas.ts';
-import { panePlaceOf } from '../lib/pane-place.ts';
+import { paneFitOf, panePlaceOf } from '../lib/pane-place.ts';
 import { paneLinesOf } from '../lib/pane.ts';
 import { tabsOf } from '../model/journey-tabs.ts';
 import { ArtifactsPanel } from './artifacts-panel.tsx';
@@ -81,12 +81,28 @@ const PANE_CHROME = 6;
 function WorkflowPanel(props: Omit<JourneyPageProps, 'tab' | 'pick'>): ReactNode {
   const place = panePlaceOf(props.width);
   const lines = paneLinesOf(props.journey, props.now, place.paneWidth - PANE_CHROME);
-  const canvasHeight = place.side === 'right' ? props.height : props.height - lines.length - 2;
+
+  if (place.side === 'right') {
+    return (
+      <box flexDirection="row">
+        <CanvasRows {...props} width={place.canvasWidth} height={Math.max(6, props.height)} />
+        <SidePane lines={lines} focus={props.focus} width={place.paneWidth} />
+      </box>
+    );
+  }
+
+  const fit = paneFitOf(props.height, lines.length);
 
   return (
-    <box flexDirection={place.side === 'right' ? 'row' : 'column'}>
-      <CanvasRows {...props} width={place.canvasWidth} height={Math.max(6, canvasHeight)} />
-      <SidePane lines={lines} focus={props.focus} width={place.paneWidth} />
+    <box flexDirection="column">
+      <CanvasRows {...props} width={place.canvasWidth} height={fit.canvasHeight} />
+      {fit.paneLines === 0 ? null : (
+        <SidePane
+          lines={lines.slice(0, fit.paneLines)}
+          focus={props.focus}
+          width={place.paneWidth}
+        />
+      )}
     </box>
   );
 }

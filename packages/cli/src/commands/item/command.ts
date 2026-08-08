@@ -28,6 +28,7 @@ import {
 } from '../../shared/transition.ts';
 import { blast } from './blast/command.ts';
 import { describeItem } from './describe/command.ts';
+import { note } from './note/command.ts';
 import { drift, stamp } from './plain/command.ts';
 import { fileAlone, fileUnder, itemsIn, keyOf } from './store.ts';
 import { show } from './surface/command.ts';
@@ -194,6 +195,7 @@ const item = defineCommand({
     reopen,
     ship,
     show,
+    note,
     drift,
     stamp,
     blast,

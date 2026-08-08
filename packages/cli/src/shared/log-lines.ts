@@ -5,6 +5,8 @@ export interface LoggedEvent {
   item: string | undefined;
   reason: string | undefined;
   at: string | undefined;
+  note: string | undefined;
+  actor: string | undefined;
 }
 
 function wordAt(entry: object, field: string): string | undefined {
@@ -29,6 +31,8 @@ function shapedEvent(parsed: object): LoggedEvent {
     item: wordAt(parsed, 'item'),
     reason: wordAt(parsed, 'reason'),
     at: wordAt(parsed, 'at'),
+    note: wordAt(parsed, 'note'),
+    actor: wordAt(parsed, 'actor'),
   };
 }
 

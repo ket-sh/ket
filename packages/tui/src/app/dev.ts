@@ -16,6 +16,7 @@ const REHEARSAL: KanbanColumnView[] = [
         parent: 'DEV-1',
         since: new Date(Date.now() - 45_000).toISOString(),
         refusal: undefined,
+        note: undefined,
         offers: ['approve'],
       },
     ],
@@ -35,6 +36,11 @@ const REHEARSAL: KanbanColumnView[] = [
           at: new Date(Date.now() - 60_000).toISOString(),
           gate: 'write',
         },
+        note: {
+          text: 'writing the failing lockout test',
+          actor: 'implementer',
+          at: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+        },
         offers: [],
       },
     ],
@@ -51,6 +57,7 @@ const WALKED: JourneyView = {
       title: 'triaged',
       state: 'done',
       refusal: undefined,
+      note: undefined,
       at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
       until: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
       doc: undefined,
@@ -60,6 +67,7 @@ const WALKED: JourneyView = {
       title: 'designing',
       state: 'done',
       refusal: undefined,
+      note: undefined,
       at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
       until: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
       doc: undefined,
@@ -71,6 +79,11 @@ const WALKED: JourneyView = {
       refusal: undefined,
       at: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
       until: undefined,
+      note: {
+        text: 'writing the failing lockout test',
+        actor: 'implementer',
+        at: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+      },
       doc: undefined,
     },
     {
@@ -78,6 +91,7 @@ const WALKED: JourneyView = {
       title: 'shipped',
       state: 'future',
       refusal: undefined,
+      note: undefined,
       at: undefined,
       until: undefined,
       doc: undefined,
@@ -110,6 +124,11 @@ const WALKED: JourneyView = {
     lastEventAt: new Date(Date.now() - 9 * 60 * 1000).toISOString(),
     filed: { by: 'Ada Lovelace', at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
     branch: { name: 'feat/login-lockout', commits: 4 },
+    note: {
+      text: 'writing the failing lockout test',
+      actor: 'implementer',
+      at: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+    },
   },
 };
 

@@ -15,6 +15,7 @@ const PANE: JourneyPaneView = {
   lastEventAt: undefined,
   filed: undefined,
   branch: undefined,
+  note: undefined,
 };
 
 import { journeyRows } from './canvas.ts';
@@ -31,6 +32,7 @@ function nodeOf(id: string, patch: Partial<JourneyNodeView> = {}): JourneyNodeVi
     refusal: undefined,
     at: undefined,
     until: undefined,
+    note: undefined,
     doc: undefined,
     ...patch,
   };

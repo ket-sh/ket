@@ -50,6 +50,12 @@ export const STAGES = [
   'shipped',
 ];
 
+const NARRATED = {
+  text: 'researching the breakdown',
+  actor: 'decomposer',
+  at: '2026-08-07T11:30:00.000Z',
+};
+
 const SEATED: Record<string, KanbanCardView[]> = {
   triaged: [
     {
@@ -57,9 +63,11 @@ const SEATED: Record<string, KanbanCardView[]> = {
       title: 'A quiet fix',
       size: 'subtask',
       status: 'triaged',
+      kind: 'bug',
       parent: 'K-1',
       since: undefined,
       refusal: undefined,
+      note: undefined,
       offers: ['approve'],
     },
   ],
@@ -69,9 +77,11 @@ const SEATED: Record<string, KanbanCardView[]> = {
       title: 'The watched item',
       size: 'story',
       status: 'designing',
+      kind: 'feature',
       parent: undefined,
       since: '2026-08-07T10:00:00.000Z',
       refusal: { reason: 'no spec named', at: '2026-08-07T11:00:00.000Z', gate: 'write' },
+      note: NARRATED,
       offers: [],
     },
   ],
@@ -94,6 +104,7 @@ const JOURNEY: JourneyView = {
       refusal: undefined,
       at: '2026-08-07T09:00:00.000Z',
       until: '2026-08-07T10:00:00.000Z',
+      note: undefined,
       doc: undefined,
     },
     {
@@ -103,6 +114,7 @@ const JOURNEY: JourneyView = {
       refusal: undefined,
       at: '2026-08-07T10:00:00.000Z',
       until: undefined,
+      note: NARRATED,
       doc: undefined,
     },
     {
@@ -112,6 +124,7 @@ const JOURNEY: JourneyView = {
       refusal: undefined,
       at: undefined,
       until: undefined,
+      note: undefined,
       doc: undefined,
     },
   ],
@@ -156,6 +169,7 @@ const JOURNEY: JourneyView = {
     lastEventAt: '2026-08-07T10:30:00.000Z',
     filed: { by: 'Ada Lovelace', at: '2026-08-07T08:00:00.000Z' },
     branch: { name: 'feat/watched', commits: 4 },
+    note: NARRATED,
   },
 };
 
@@ -171,6 +185,7 @@ const CHILD_JOURNEY: JourneyView = {
       refusal: undefined,
       at: undefined,
       until: undefined,
+      note: undefined,
       doc: undefined,
     },
   ],
@@ -202,6 +217,7 @@ const CHILD_JOURNEY: JourneyView = {
     lastEventAt: undefined,
     filed: undefined,
     branch: undefined,
+    note: undefined,
   },
 };
 
@@ -237,7 +253,7 @@ export function feedOf(): ActedFeed {
     snapshot: async () => {
       await Promise.resolve();
 
-      return columns;
+      return columns.map((column) => ({ ...column, cards: [...column.cards] }));
     },
     storyMap: async () => {
       await Promise.resolve();
