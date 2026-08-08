@@ -57,6 +57,7 @@ const SEATED: Record<string, KanbanCardView[]> = {
       title: 'A quiet fix',
       size: 'subtask',
       status: 'triaged',
+      parent: 'K-1',
       since: undefined,
       refusal: undefined,
       offers: ['approve'],
@@ -68,6 +69,7 @@ const SEATED: Record<string, KanbanCardView[]> = {
       title: 'The watched item',
       size: 'story',
       status: 'designing',
+      parent: undefined,
       since: '2026-08-07T10:00:00.000Z',
       refusal: { reason: 'no spec named', at: '2026-08-07T11:00:00.000Z', gate: 'write' },
       offers: [],
@@ -142,6 +144,19 @@ const JOURNEY: JourneyView = {
       refusal: undefined,
     },
   ],
+  pane: {
+    kind: 'feature',
+    size: 'story',
+    status: 'designing',
+    stageAt: 3,
+    stageOf: 8,
+    parent: undefined,
+    refusedTimes: 1,
+    arrivedAt: '2026-08-07T10:00:00.000Z',
+    lastEventAt: '2026-08-07T10:30:00.000Z',
+    filed: { by: 'Ada Lovelace', at: '2026-08-07T08:00:00.000Z' },
+    branch: { name: 'feat/watched', commits: 4 },
+  },
 };
 
 const CHILD_JOURNEY: JourneyView = {
@@ -175,6 +190,19 @@ const CHILD_JOURNEY: JourneyView = {
     },
   ],
   children: [],
+  pane: {
+    kind: 'chore',
+    size: 'subtask',
+    status: 'triaged',
+    stageAt: 2,
+    stageOf: 8,
+    parent: 'K-1',
+    refusedTimes: 0,
+    arrivedAt: undefined,
+    lastEventAt: undefined,
+    filed: undefined,
+    branch: undefined,
+  },
 };
 
 function movedInto(columns: KanbanColumnView[], key: string, status: string): void {

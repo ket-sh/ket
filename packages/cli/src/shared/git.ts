@@ -33,6 +33,12 @@ async function answered(argv: string[], root: string): Promise<GitAnswer> {
   });
 }
 
+export async function gitSaid(argv: string[], root: string): Promise<string | undefined> {
+  const { code, said } = await answered(['git', ...argv], root);
+
+  return code === 0 ? said.trim() : undefined;
+}
+
 async function ran(argv: string[], root: string): Promise<string | undefined> {
   const { code, said } = await answered(argv, root);
 

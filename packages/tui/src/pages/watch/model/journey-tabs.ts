@@ -1,8 +1,9 @@
-import type { JourneyView } from '../../../shared/model';
+import type { JourneyView, SurfaceDocView } from '../../../shared/model';
 import type { Direction } from './compass.ts';
 import type { Frame, JourneyTab } from './frames.ts';
 
 import { neighborOf, placedOf } from '../lib/layout.ts';
+import { selectedNodeOf } from './frames.ts';
 
 // The children tab only exists while the item has children, so a tab walk
 // never lands on a panel with nothing to show.
@@ -54,8 +55,33 @@ function walkedRows(above: Opened, direction: Direction): Opened {
   return { ...above, pick };
 }
 
+// The pane sits past the last node, so the walk that finds no node to the
+// right is the walk that lands in it. Only an item with children has anything
+// there to hold the selection.
+function paneReachable(above: Opened): boolean {
+  return above.journey.children.length > 0;
+}
+
 function walkedCanvas(above: Opened, direction: Direction): Opened {
-  return { ...above, sel: neighborOf(placedOf(above.journey).nodes, above.sel, direction) };
+  const sel = neighborOf(placedOf(above.journey).nodes, above.sel, direction);
+
+  if (direction === 'right' && sel === above.sel && paneReachable(above)) {
+    return { ...above, focus: 'pane' };
+  }
+
+  return { ...above, sel };
+}
+
+function walkedPane(above: Opened, direction: Direction): Opened {
+  return direction === 'left' ? { ...above, focus: 'canvas' } : above;
+}
+
+function steppedIn(above: Opened, direction: Direction): Opened {
+  if (listsRows(above.tab)) {
+    return walkedRows(above, direction);
+  }
+
+  return above.focus === 'pane' ? walkedPane(above, direction) : walkedCanvas(above, direction);
 }
 
 export function walked(stack: Frame[], direction: Direction): Frame[] {
@@ -65,9 +91,62 @@ export function walked(stack: Frame[], direction: Direction): Frame[] {
     return stack;
   }
 
-  const moved = listsRows(above.tab)
-    ? walkedRows(above, direction)
-    : walkedCanvas(above, direction);
+  return [...stack.slice(0, -1), steppedIn(above, direction)];
+}
 
-  return [...stack.slice(0, -1), moved];
+export function tabbedTo(stack: Frame[], tab: JourneyTab): Frame[] {
+  const above = stack[stack.length - 1];
+
+  if (above?.kind !== 'journey') {
+    return stack;
+  }
+
+  return [...stack.slice(0, -1), { ...above, tab, pick: 0, focus: 'canvas' }];
+}
+
+export interface Doors {
+  dive: (key: string | undefined) => void;
+  open: (journey: JourneyView, doc: SurfaceDocView) => void;
+  showTab: (tab: JourneyTab) => void;
+}
+
+function enteredChild(frame: Opened, doors: Doors): void {
+  doors.dive(frame.journey.children[frame.pick]?.key);
+}
+
+function enteredArtifact(frame: Opened, doors: Doors): void {
+  const doc = frame.journey.artifacts[frame.pick]?.doc;
+
+  if (doc !== undefined) {
+    doors.open(frame.journey, doc);
+  }
+}
+
+function enteredStage(frame: Opened, doors: Doors): void {
+  const seated = selectedNodeOf(frame);
+
+  if (seated?.node.doc !== undefined) {
+    doors.open(seated.journey, seated.node.doc);
+  }
+}
+
+function enteredWorkflow(frame: Opened, doors: Doors): void {
+  if (frame.focus === 'pane') {
+    doors.showTab('children');
+
+    return;
+  }
+
+  enteredStage(frame, doors);
+}
+
+const DOORWAYS: Record<JourneyTab, (frame: Opened, doors: Doors) => void> = {
+  overview: enteredStage,
+  workflow: enteredWorkflow,
+  children: enteredChild,
+  artifacts: enteredArtifact,
+};
+
+export function enteredIn(frame: Opened, doors: Doors): void {
+  DOORWAYS[frame.tab](frame, doors);
 }

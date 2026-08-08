@@ -13,6 +13,7 @@ const REHEARSAL: KanbanColumnView[] = [
         title: 'A quiet fix',
         size: 'subtask',
         status: 'triaged',
+        parent: 'DEV-1',
         since: new Date(Date.now() - 45_000).toISOString(),
         refusal: undefined,
         offers: ['approve'],
@@ -27,6 +28,7 @@ const REHEARSAL: KanbanColumnView[] = [
         title: 'Login with lockout',
         size: 'story',
         status: 'implementing',
+        parent: undefined,
         since: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
         refusal: {
           reason: 'no failing test covers src/auth.ts',
@@ -96,6 +98,19 @@ const WALKED: JourneyView = {
     },
   ],
   children: [],
+  pane: {
+    kind: 'feature',
+    size: 'story',
+    status: 'implementing',
+    stageAt: 5,
+    stageOf: 8,
+    parent: undefined,
+    refusedTimes: 0,
+    arrivedAt: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
+    lastEventAt: new Date(Date.now() - 9 * 60 * 1000).toISOString(),
+    filed: { by: 'Ada Lovelace', at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
+    branch: { name: 'feat/login-lockout', commits: 4 },
+  },
 };
 
 const feed: BoardFeed = {

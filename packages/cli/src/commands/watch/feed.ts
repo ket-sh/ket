@@ -15,6 +15,7 @@ import { foldKanban } from '../../shared/kanban.ts';
 import { decisionOf, moveThrough } from '../../shared/stage.ts';
 import { mapShowingIn } from '../../shared/story-map/reading.ts';
 import { docsFor } from './docs.ts';
+import { repoFactsFor } from './provenance.ts';
 import { writeCriteria } from './save.ts';
 
 export interface FeedTimings {
@@ -94,7 +95,7 @@ export function boardFeedFor(
     storyMap: async (): Promise<MapShowing> => mapShowingIn(root),
     journey: async (key) => {
       const log = await readLog(root);
-      const journey = foldJourney(await readStored(root), log, key);
+      const journey = foldJourney(await readStored(root), log, key, await repoFactsFor(root, key));
 
       if (journey === undefined) {
         return undefined;
