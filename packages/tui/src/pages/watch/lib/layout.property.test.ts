@@ -23,7 +23,8 @@ const someJourney = fc
     const nodes: JourneyNodeView[] = Array.from({ length: count }, (_, index) => ({
       id: `n${String(index)}`,
       title: `n${String(index)}`,
-      mark: 'done',
+      state: 'done',
+      refusal: undefined,
       at: undefined,
       until: undefined,
       doc: undefined,

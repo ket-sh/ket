@@ -141,6 +141,7 @@ describe('the refusals a card wears', () => {
     expect(cardOf(log)?.refusal).toStrictEqual({
       reason: 'the design names no spec',
       at: '2026-08-07T11:00:00.000Z',
+      gate: 'write',
     });
   });
 
@@ -166,6 +167,7 @@ describe('the refusals a card wears', () => {
     expect(cardOf(ARRIVED + bare)?.refusal).toStrictEqual({
       reason: '',
       at: '2026-08-07T11:00:00.000Z',
+      gate: '',
     });
   });
 

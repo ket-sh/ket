@@ -1,8 +1,8 @@
 import type { JourneyNodeView, JourneyView } from '../../../shared/model';
 
-export const NODE_W = 22;
+export const NODE_W = 26;
 
-export const NODE_H = 4;
+export const NODE_H = 5;
 
 const COLUMN_GAP = 7;
 

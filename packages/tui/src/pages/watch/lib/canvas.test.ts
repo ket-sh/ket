@@ -13,7 +13,8 @@ function nodeOf(id: string, patch: Partial<JourneyNodeView> = {}): JourneyNodeVi
   return {
     id,
     title: id,
-    mark: 'done',
+    state: 'done',
+    refusal: undefined,
     at: undefined,
     until: undefined,
     doc: undefined,
@@ -27,9 +28,9 @@ const WALKED: JourneyView = {
   description: undefined,
   nodes: [
     nodeOf('triaged', { at: '2026-08-07T09:00:00.000Z', until: '2026-08-07T10:00:00.000Z' }),
-    nodeOf('designing', { mark: 'active', at: '2026-08-07T10:00:00.000Z' }),
-    nodeOf('awaiting-approval', { mark: 'future' }),
-    nodeOf('implementing', { mark: 'future' }),
+    nodeOf('designing', { state: 'running', refusal: undefined, at: '2026-08-07T10:00:00.000Z' }),
+    nodeOf('awaiting-approval', { state: 'future' }),
+    nodeOf('implementing', { state: 'future' }),
   ],
   edges: [
     ['triaged', 'designing'],
@@ -46,14 +47,14 @@ function textOf(rows: Ln[]): string {
 }
 
 describe('the nodes a canvas paints', () => {
-  it('paints every title with the mark its state wears', () => {
+  it('paints every title beside the state it wears and how long it held', () => {
     const frame = textOf(journeyRows(WALKED, 'designing', NOW, 0, WIDE));
 
     expect(frame).toContain('triaged');
-    expect(frame).toContain('✓ 3h');
-    expect(frame).toContain('designing');
+    expect(frame).toContain('✓ Done');
+    expect(frame).toContain('1h');
     expect(frame).toContain('awaiting-approval');
-    expect(frame).toContain('○ waiting');
+    expect(frame).toContain('○ Not started');
   });
 
   it('wears the double border on the selected node alone', () => {
@@ -78,13 +79,15 @@ describe('the edges a canvas draws', () => {
     expect(frame).toContain('►');
   });
 
-  it('walks a dot along the edges touching the selection', () => {
-    const first = textOf(journeyRows(WALKED, 'designing', NOW, 2, WIDE));
-    const second = textOf(journeyRows(WALKED, 'designing', NOW, 3, WIDE));
+  it('leaves the edges still, so only the running stage moves', () => {
+    const settled: JourneyView = {
+      ...WALKED,
+      nodes: WALKED.nodes.map((node) => ({ ...node, state: 'done' as const })),
+    };
+    const first = textOf(journeyRows(settled, 'triaged', NOW, 2, WIDE));
+    const second = textOf(journeyRows(settled, 'triaged', NOW, 3, WIDE));
 
-    expect(first).toContain('●');
-    expect(second).toContain('●');
-    expect(first).not.toBe(second);
+    expect(first).toBe(second);
   });
 });
 

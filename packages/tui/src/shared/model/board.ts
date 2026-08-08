@@ -3,6 +3,7 @@ import type { MapReadingView } from './story-map.ts';
 export interface KanbanRefusalView {
   reason: string;
   at: string;
+  gate: string;
 }
 
 export type GateActionView = 'approve' | 'ship' | 'reopen';
@@ -91,12 +92,22 @@ interface BlastFiguresView {
   uncollapsedEdges: number;
 }
 
+export type StageStateView =
+  | 'done'
+  | 'running'
+  | 'needs-you'
+  | 'awaiting'
+  | 'changes-requested'
+  | 'sent-back'
+  | 'future';
+
 export interface JourneyNodeView {
   id: string;
   title: string;
-  mark: 'done' | 'active' | 'future';
+  state: StageStateView;
   at: string | undefined;
   until: string | undefined;
+  refusal: KanbanRefusalView | undefined;
   doc: SurfaceDocView | undefined;
 }
 

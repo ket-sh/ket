@@ -31,6 +31,7 @@ const REHEARSAL: KanbanColumnView[] = [
         refusal: {
           reason: 'no failing test covers src/auth.ts',
           at: new Date(Date.now() - 60_000).toISOString(),
+          gate: 'write',
         },
         offers: [],
       },
@@ -46,7 +47,8 @@ const WALKED: JourneyView = {
     {
       id: 'triaged',
       title: 'triaged',
-      mark: 'done',
+      state: 'done',
+      refusal: undefined,
       at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
       until: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
       doc: undefined,
@@ -54,7 +56,8 @@ const WALKED: JourneyView = {
     {
       id: 'designing',
       title: 'designing',
-      mark: 'done',
+      state: 'done',
+      refusal: undefined,
       at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
       until: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
       doc: undefined,
@@ -62,7 +65,8 @@ const WALKED: JourneyView = {
     {
       id: 'implementing',
       title: 'implementing',
-      mark: 'active',
+      state: 'running',
+      refusal: undefined,
       at: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
       until: undefined,
       doc: undefined,
@@ -70,7 +74,8 @@ const WALKED: JourneyView = {
     {
       id: 'shipped',
       title: 'shipped',
-      mark: 'future',
+      state: 'future',
+      refusal: undefined,
       at: undefined,
       until: undefined,
       doc: undefined,

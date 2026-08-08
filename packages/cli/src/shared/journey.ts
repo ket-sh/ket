@@ -1,6 +1,6 @@
 import type { Item, ItemStatus } from './item.ts';
-import type { Journey, JourneyChild, JourneyMark, JourneyNode, Visit } from './journey-node.ts';
-import type { LoggedEvent } from './kanban.ts';
+import type { Journey, JourneyChild, JourneyNode, StageState, Visit } from './journey-node.ts';
+import type { KanbanRefusal, LoggedEvent } from './kanban.ts';
 import type { StoredItem } from './read-item.ts';
 
 import { ITEM_STATUSES } from './item.ts';
@@ -60,13 +60,42 @@ function aheadOf(visits: Visit[], standing: ItemStatus): Visit[] {
   }));
 }
 
-function stageNode(visit: Visit, mark: JourneyMark): JourneyNode {
+const HUMAN_GATES: ItemStatus[] = ['awaiting-approval', 'awaiting-merge'];
+
+const TERMINAL: ItemStatus = 'shipped';
+
+const MOVE_GATE = 'transition';
+
+function refusedState(refusal: KanbanRefusal): StageState {
+  return refusal.gate === MOVE_GATE ? 'sent-back' : 'changes-requested';
+}
+
+// Every human gate the machine can reach stands open to whoever is watching,
+// so the canvas asks them for the move rather than naming someone else.
+function standingState(status: ItemStatus, refusal: KanbanRefusal | undefined): StageState {
+  if (refusal !== undefined) {
+    return refusedState(refusal);
+  }
+
+  if (status === TERMINAL) {
+    return 'done';
+  }
+
+  return HUMAN_GATES.includes(status) ? 'needs-you' : 'running';
+}
+
+function stageNode(
+  visit: Visit,
+  state: StageState,
+  refusal: KanbanRefusal | undefined,
+): JourneyNode {
   return {
     id: visit.id,
     title: visit.status,
-    mark,
+    state,
     at: visit.at,
     until: visit.until,
+    refusal,
     doc: undefined,
   };
 }
@@ -126,22 +155,21 @@ function walkOf(events: LoggedEvent[], standing: ItemStatus): Walk {
   return { visited, ahead: aheadOf(visited, last.status) };
 }
 
-function stageNodes(walk: Walk): JourneyNode[] {
+function stageNodes(walk: Walk, refusal: KanbanRefusal | undefined): JourneyNode[] {
+  const last = walk.visited.length - 1;
   const walked = walk.visited.map((visit, index) =>
-    stageNode(visit, index === walk.visited.length - 1 ? 'active' : 'done'),
+    index === last
+      ? stageNode(visit, standingState(visit.status, refusal), refusal)
+      : stageNode(visit, 'done', undefined),
   );
 
-  return [...walked, ...walk.ahead.map((visit) => stageNode(visit, 'future'))];
+  return [...walked, ...walk.ahead.map((visit) => stageNode(visit, 'future', undefined))];
 }
 
 function itemAt(stored: StoredItem[], key: string): Item | undefined {
   const entry = stored.find((candidate) => candidate.key === key);
 
   return entry === undefined ? undefined : parseItem(entry.contents);
-}
-
-function standingOf(events: LoggedEvent[], since: string | undefined): string | undefined {
-  return since === undefined ? undefined : refusalAfter(events, since)?.reason;
 }
 
 export function foldJourney(stored: StoredItem[], log: string, key: string): Journey | undefined {
@@ -153,14 +181,16 @@ export function foldJourney(stored: StoredItem[], log: string, key: string): Jou
 
   const events = eventsAbout(log, key);
   const walk = walkOf(events, item.status);
+  const arrived = walk.visited.at(-1)?.at;
+  const refusal = arrived === undefined ? undefined : refusalAfter(events, arrived);
 
   return {
     item: key,
     title: item.title,
     description: item.description,
-    nodes: stageNodes(walk),
+    nodes: stageNodes(walk, refusal),
     edges: stageEdges([...walk.visited, ...walk.ahead]),
-    standing: standingOf(events, walk.visited.at(-1)?.at),
+    standing: refusal?.reason,
     artifacts: artifactsOf(events, key),
     children: childrenOf(stored, log, item.children),
   };
