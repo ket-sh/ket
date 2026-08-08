@@ -72,6 +72,7 @@ export interface FrameStack {
   revise: (change: (draft: Draft) => Draft) => void;
   save: (tick: number) => void;
   pop: () => void;
+  home: () => void;
 }
 
 function lastOf(nodes: JourneyView['nodes']): string | undefined {

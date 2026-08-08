@@ -189,6 +189,10 @@ export function useFrameStack(feed: BoardFeed): FrameStack {
     setFrames((stack) => (stack.length > 1 ? stack.slice(0, -1) : stack));
   }, []);
 
+  const home = useCallback(() => {
+    setFrames([{ kind: 'board' }]);
+  }, []);
+
   return {
     frames,
     top,
@@ -206,5 +210,6 @@ export function useFrameStack(feed: BoardFeed): FrameStack {
     revise,
     save,
     pop,
+    home,
   };
 }
