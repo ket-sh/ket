@@ -60,8 +60,11 @@ export interface FrameStack {
   top: Frame;
   dive: (key: string | undefined) => void;
   tab: () => void;
+  showTab: (tab: JourneyTab) => void;
+  aim: (sel: string) => void;
   openMap: () => void;
   mapWalk: (name: string) => void;
+  mapSeat: (at: number) => void;
   enter: () => void;
   walk: (direction: Direction) => void;
   scroll: (delta: number, most: number) => void;
@@ -125,6 +128,16 @@ export function mapWalked(stack: Frame[], name: string): Frame[] {
   }
 
   return [...stack.slice(0, -1), { ...above, at: walkedIn(above.reading, above.at, name) }];
+}
+
+export function mapSeated(stack: Frame[], at: number): Frame[] {
+  const above = stack[stack.length - 1];
+
+  if (above?.kind !== 'map') {
+    return stack;
+  }
+
+  return [...stack.slice(0, -1), { ...above, at }];
 }
 
 export function scrolled(stack: Frame[], delta: number, most: number): Frame[] {

@@ -1,7 +1,11 @@
+import type { BoxRenderable, MouseEvent } from '@opentui/core';
 import type { ReactNode } from 'react';
+
+import { useRef } from 'react';
 
 import type { KanbanCardView, KanbanColumnView } from '../../../shared/model';
 import type { Theme } from '../../../shared/theme';
+import type { WatchMouse } from '../model/mouse.ts';
 import type { Seat } from '../model/seat.ts';
 
 import { stageColorOf, useTheme } from '../../../shared/theme';
@@ -25,17 +29,36 @@ function chosenFrame(card: KanbanCardView, theme: Theme): CardFrame {
   };
 }
 
+function CardHead({ card, age }: { card: KanbanCardView; age: string }): ReactNode {
+  const { theme } = useTheme();
+
+  return (
+    <box flexDirection="row" justifyContent="space-between">
+      <text wrapMode="none">
+        <strong>{card.key}</strong>
+        <span fg={theme.gray}>{age === '' ? '' : `  ${age}`}</span>
+      </text>
+      {needsYou(card) ? (
+        <text wrapMode="none" fg={theme.yellow}>
+          {BELL}
+        </text>
+      ) : null}
+    </box>
+  );
+}
+
 function Card({
   card,
   now,
   frame,
+  mouse,
 }: {
   card: KanbanCardView;
   now: string;
   frame: CardFrame;
+  mouse: WatchMouse;
 }): ReactNode {
   const { theme } = useTheme();
-  const age = agedOf(card, now);
 
   return (
     <box
@@ -45,18 +68,12 @@ function Card({
       borderColor={frame.color}
       paddingLeft={1}
       paddingRight={1}
+      onMouseDown={(event: MouseEvent) => {
+        event.stopPropagation();
+        mouse.boardCard(card.key);
+      }}
     >
-      <box flexDirection="row" justifyContent="space-between">
-        <text wrapMode="none">
-          <strong>{card.key}</strong>
-          <span fg={theme.gray}>{age === '' ? '' : `  ${age}`}</span>
-        </text>
-        {needsYou(card) ? (
-          <text wrapMode="none" fg={theme.yellow}>
-            {BELL}
-          </text>
-        ) : null}
-      </box>
+      <CardHead card={card} age={agedOf(card, now)} />
       <text wrapMode="none" fg={theme.text}>
         {card.title}
       </text>
@@ -77,16 +94,20 @@ function Column({
   now,
   inRow,
   selectedRow,
+  mouse,
 }: {
   column: KanbanColumnView;
   now: string;
   inRow: boolean;
   selectedRow: number | undefined;
+  mouse: WatchMouse;
 }): ReactNode {
   const { theme } = useTheme();
+  const laneRef = useRef<BoxRenderable>(null);
 
   return (
     <box
+      ref={laneRef}
       flexDirection="column"
       flexGrow={inRow ? 1 : 0}
       flexBasis={inRow ? 1 : 'auto'}
@@ -97,6 +118,12 @@ function Column({
       title={laneTitle(column)}
       paddingLeft={1}
       paddingRight={1}
+      onMouseDown={(event: MouseEvent) => {
+        if (event.y === laneRef.current?.y) {
+          event.stopPropagation();
+          mouse.laneHead(column.cards[0]?.key);
+        }
+      }}
     >
       {column.cards.map(
         (card, cardAt): ReactNode => (
@@ -105,6 +132,7 @@ function Column({
             card={card}
             now={now}
             frame={cardAt === selectedRow ? chosenFrame(card, theme) : restingFrame(card, theme)}
+            mouse={mouse}
           />
         ),
       )}
@@ -117,11 +145,13 @@ export function BoardView({
   now,
   inRow,
   seat,
+  mouse,
 }: {
   columns: KanbanColumnView[];
   now: string;
   inRow: boolean;
   seat: Seat;
+  mouse: WatchMouse;
 }): ReactNode {
   return (
     <box flexDirection={inRow ? 'row' : 'column'}>
@@ -133,6 +163,7 @@ export function BoardView({
             now={now}
             inRow={inRow}
             selectedRow={columnAt === seat.col ? seat.row : undefined}
+            mouse={mouse}
           />
         ),
       )}

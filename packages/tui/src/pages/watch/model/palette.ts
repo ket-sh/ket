@@ -17,6 +17,7 @@ export interface Palette {
   erase: () => void;
   move: (delta: number) => void;
   choose: () => void;
+  pick: (at: number) => void;
   close: () => void;
 }
 
@@ -128,6 +129,15 @@ export function usePalette(deps: PaletteDeps): Palette {
     }
   };
 
+  const pick = (at: number): void => {
+    const landing = shown[at];
+
+    if (landing !== undefined) {
+      wentTo(landing, deps);
+      setPoise(undefined);
+    }
+  };
+
   return {
     at: poise?.at,
     query: poise?.query ?? '',
@@ -141,6 +151,7 @@ export function usePalette(deps: PaletteDeps): Palette {
     },
     move,
     choose,
+    pick,
     close: () => {
       setPoise(undefined);
     },

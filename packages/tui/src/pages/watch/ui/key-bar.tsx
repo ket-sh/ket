@@ -1,26 +1,45 @@
+import type { MouseEvent, TextRenderable } from '@opentui/core';
 import type { ReactNode } from 'react';
+
+import { useRef } from 'react';
 
 import type { GateActionView } from '../../../shared/model';
 import type { BoardLayout } from '../model/board-layout.ts';
+import type { Pressed } from '../model/compass.ts';
 import type { Frame } from '../model/frames.ts';
+import type { WatchMouse } from '../model/mouse.ts';
 
-import { widthOf } from '../../../shared/lib';
 import { useTheme } from '../../../shared/theme';
 import { bindingsAt, hintOf, spotOf } from '../lib/bindings.ts';
+import { hintIndexAt, keptAt, pressedOf, rowOf } from '../lib/hints.ts';
 
-const SEPARATOR = ' · ';
+interface HintEntry {
+  hint: string;
+  keys: string;
+}
 
-// The way out is the one hint the row can never lose, so a narrow terminal
-// gives up the hints behind it instead, least useful first.
-function fittedInto(hints: string[], room: number): string {
-  const out = hints[hints.length - 1] ?? '';
-  let kept = hints;
+function entriesOf(
+  frame: Frame,
+  offers: GateActionView[],
+  layout: BoardLayout,
+  narrowed: string | undefined,
+): HintEntry[] {
+  const bound = bindingsAt(spotOf(frame, layout, offers)).map((binding) => ({
+    hint: hintOf(binding),
+    keys: binding.keys,
+  }));
 
-  while (kept.length > 1 && widthOf(kept.join(SEPARATOR)) > room) {
-    kept = [...kept.slice(0, kept.length - 2), out];
-  }
+  return narrowed === undefined ? bound : [{ hint: `/ ${narrowed}`, keys: '/' }, ...bound];
+}
 
-  return kept.join(SEPARATOR);
+function pressedAt(kept: HintEntry[], column: number): Pressed | undefined {
+  const at = hintIndexAt(
+    kept.map((entry) => entry.hint),
+    column,
+  );
+  const keys = at === undefined ? undefined : kept[at]?.keys;
+
+  return keys === undefined ? undefined : pressedOf(keys);
 }
 
 export function KeyBar({
@@ -29,20 +48,35 @@ export function KeyBar({
   layout,
   width,
   narrowed,
+  mouse,
 }: {
   frame: Frame;
   offers: GateActionView[];
   layout: BoardLayout;
   width: number;
   narrowed: string | undefined;
+  mouse: WatchMouse;
 }): ReactNode {
   const { theme } = useTheme();
-  const bound = bindingsAt(spotOf(frame, layout, offers)).map((binding) => hintOf(binding));
-  const hints = narrowed === undefined ? bound : [`/ ${narrowed}`, ...bound];
+  const rowRef = useRef<TextRenderable>(null);
+  const entries = entriesOf(frame, offers, layout, narrowed);
+  const kept = keptAt(
+    entries.map((entry) => entry.hint),
+    width,
+  ).flatMap((at) => (entries[at] === undefined ? [] : [entries[at]]));
+
+  const pressAt = (event: MouseEvent): void => {
+    const pressed = pressedAt(kept, event.x - (rowRef.current?.x ?? 0));
+
+    if (pressed !== undefined) {
+      event.stopPropagation();
+      mouse.hint(pressed);
+    }
+  };
 
   return (
-    <text wrapMode="none" fg={theme.overlay}>
-      {fittedInto(hints, width)}
+    <text ref={rowRef} wrapMode="none" fg={theme.overlay} onMouseDown={pressAt}>
+      {rowOf(kept.map((entry) => entry.hint))}
     </text>
   );
 }

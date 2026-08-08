@@ -1,3 +1,4 @@
+import type { MouseEvent } from '@opentui/core';
 import type { ReactNode } from 'react';
 
 import type { KanbanCardView } from '../../../shared/model';
@@ -19,10 +20,12 @@ export function ListRow({
   card,
   now,
   chosen,
+  onPress,
 }: {
   card: KanbanCardView;
   now: string;
   chosen: boolean;
+  onPress: () => void;
 }): ReactNode {
   const { theme } = useTheme();
 
@@ -37,11 +40,20 @@ export function ListRow({
           <span fg={theme.red}>{`   ! ${card.refusal.reason}`}</span>
         )
       }
+      onPress={onPress}
     />
   );
 }
 
-export function BacklogRow({ card, chosen }: { card: KanbanCardView; chosen: boolean }): ReactNode {
+export function BacklogRow({
+  card,
+  chosen,
+  onPress,
+}: {
+  card: KanbanCardView;
+  chosen: boolean;
+  onPress: () => void;
+}): ReactNode {
   const { theme } = useTheme();
 
   return (
@@ -55,6 +67,7 @@ export function BacklogRow({ card, chosen }: { card: KanbanCardView; chosen: boo
           <span fg={theme.gray}>{`   under ${card.parent}`}</span>
         )
       }
+      onPress={onPress}
     />
   );
 }
@@ -65,17 +78,25 @@ function CardRow({
   stageRoom,
   middle,
   tail,
+  onPress,
 }: {
   card: KanbanCardView;
   chosen: boolean;
   stageRoom: number;
   middle?: ReactNode;
   tail?: ReactNode;
+  onPress: () => void;
 }): ReactNode {
   const { theme } = useTheme();
 
   return (
-    <text wrapMode="none">
+    <text
+      wrapMode="none"
+      onMouseDown={(event: MouseEvent) => {
+        event.stopPropagation();
+        onPress();
+      }}
+    >
       <span fg={theme.text}>{chosen ? '► ' : '  '}</span>
       <strong>{card.key.padEnd(KEY_ROOM)}</strong>
       <span fg={stageColorOf(theme)[card.status] ?? theme.subtext}>

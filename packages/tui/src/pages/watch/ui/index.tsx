@@ -10,15 +10,15 @@ import type { Filter } from '../model/filter.ts';
 import type { FrameStack } from '../model/frames.ts';
 import type { Help } from '../model/help.ts';
 import type { PressDeps } from '../model/keys.ts';
+import type { WatchMouse } from '../model/mouse.ts';
 import type { Palette } from '../model/palette.ts';
 import type { Picker } from '../model/picker.ts';
 import type { Seat } from '../model/seat.ts';
+import type { RoomProps } from './stage.tsx';
 
 import { ThemeProvider } from '../../../shared/theme';
 import { Banner } from '../../../shared/ui';
-import { MapPane } from '../../../widgets/story-map';
 import { narrowedBy } from '../lib/filter.ts';
-import { laidInRow } from '../lib/lanes.ts';
 import { useBoardLayout } from '../model/board-layout.ts';
 import { useBoardState } from '../model/board-state.ts';
 import { useChime } from '../model/chime.ts';
@@ -26,24 +26,19 @@ import { useFilter } from '../model/filter.ts';
 import { outstayed } from '../model/frames.ts';
 import { useHelp } from '../model/help.ts';
 import { press } from '../model/keys.ts';
+import { mouseOf } from '../model/mouse.ts';
 import { usePalette } from '../model/palette.ts';
 import { usePicker } from '../model/picker.ts';
 import { useSeat } from '../model/seat.ts';
 import { useFrameStack } from '../model/stack.ts';
-import { BacklogView } from './backlog.tsx';
-import { BoardView } from './board.tsx';
-import { EditorPage } from './editor.tsx';
 import { FootRow } from './foot-row.tsx';
 import { GateModal } from './gate.tsx';
 import { HeaderRow } from './header-row.tsx';
 import { HelpOverlay } from './help.tsx';
-import { JourneyPage } from './journey.tsx';
-import { ListView } from './list.tsx';
 import { PaletteOverlay } from './palette.tsx';
-import { SurfacePage, surfaceMost } from './surface.tsx';
+import { PAGE_SIDE, StageArea } from './stage.tsx';
+import { surfaceMost } from './surface.tsx';
 import { ThemePicker } from './theme.tsx';
-
-const PAGE_SIDE = 1;
 
 const CHROME = 6;
 
@@ -66,77 +61,13 @@ function useCeremonyCurtain(stack: FrameStack, tick: number): void {
   }, [stack, tick]);
 }
 
-interface RoomProps {
-  stack: FrameStack;
-  columns: KanbanColumnView[];
-  seat: Seat;
-  now: string;
-  tick: number;
-  width: number;
-  height: number;
-  layout: BoardLayout;
-}
-
-function BoardArea({ columns, seat, now, width, layout }: Omit<RoomProps, 'stack'>): ReactNode {
-  if (layout === 'backlog') {
-    return <BacklogView columns={columns} chosenKey={seat.chosen?.key} />;
-  }
-
-  if (layout === 'list') {
-    return <ListView columns={columns} now={now} chosenKey={seat.chosen?.key} />;
-  }
-
-  return (
-    <BoardView
-      columns={columns}
-      now={now}
-      inRow={laidInRow(columns, width - PAGE_SIDE * 2)}
-      seat={seat}
-    />
-  );
-}
-
-function StageArea(room: RoomProps): ReactNode {
-  const { stack, now, tick, width, height } = room;
-
-  if (stack.top.kind === 'edit') {
-    return <EditorPage frame={stack.top} tick={tick} height={height} />;
-  }
-
-  if (stack.top.kind === 'map') {
-    return <MapPane reading={stack.top.reading} at={stack.top.at} />;
-  }
-
-  if (stack.top.kind === 'journey') {
-    return (
-      <JourneyPage
-        journey={stack.top.journey}
-        sel={stack.top.sel}
-        tab={stack.top.tab}
-        pick={stack.top.pick}
-        focus={stack.top.focus}
-        now={now}
-        tick={tick}
-        width={width - 2}
-        height={height}
-      />
-    );
-  }
-
-  if (stack.top.kind === 'surface') {
-    return <SurfacePage frame={stack.top} height={height} />;
-  }
-
-  return <BoardArea {...room} />;
-}
-
 function CeremonyOverlay({
   stack,
   columns,
   tick,
   width,
   height,
-}: Omit<RoomProps, 'seat' | 'now' | 'layout'>): ReactNode {
+}: Omit<RoomProps, 'seat' | 'now' | 'layout' | 'mouse'>): ReactNode {
   if (stack.top.kind !== 'gate') {
     return null;
   }
@@ -156,16 +87,18 @@ function PickerOverlay({
   picker,
   width,
   height,
+  mouse,
 }: {
   picker: Picker;
   width: number;
   height: number;
+  mouse: WatchMouse;
 }): ReactNode {
   if (picker.at === undefined) {
     return null;
   }
 
-  return <ThemePicker at={picker.at} width={width} height={height} />;
+  return <ThemePicker at={picker.at} width={width} height={height} mouse={mouse} />;
 }
 
 function useMovedCardFollow(stack: FrameStack, seat: Seat, columns: KanbanColumnView[]): void {
@@ -196,6 +129,7 @@ interface Room {
   help: Help;
   width: number;
   height: number;
+  mouse: WatchMouse;
 }
 
 function useWatchRoom({
@@ -216,11 +150,13 @@ function useWatchRoom({
   const help = useHelp();
   const most = stack.top.kind === 'surface' ? surfaceMost(stack.top, height - CHROME) : 0;
   const deps = { onQuit, refresh, stack, seat, most, tick, layout, swap, queue };
+  const pressDeps = { ...deps, picker, filter, palette, help };
+  const mouse = mouseOf(pressDeps);
 
   useChime(columns, loaded, ring);
   useCeremonyCurtain(stack, tick);
   useMovedCardFollow(stack, seat, columns);
-  useWatchKeys({ ...deps, picker, filter, palette, help });
+  useWatchKeys(pressDeps);
 
   return {
     columns,
@@ -236,13 +172,34 @@ function useWatchRoom({
     help,
     width,
     height,
+    mouse,
   };
+}
+
+function OverlayLayer({ room }: { room: Room }): ReactNode {
+  const { columns, tick, stack, seat, layout, picker, palette, help, width, height } = room;
+  const { mouse } = room;
+
+  return (
+    <>
+      <CeremonyOverlay stack={stack} columns={columns} tick={tick} width={width} height={height} />
+      <PickerOverlay picker={picker} width={width} height={height} mouse={mouse} />
+      <PaletteOverlay palette={palette} width={width} height={height} mouse={mouse} />
+      <HelpOverlay
+        help={help}
+        frame={stack.top}
+        offers={seat.chosen?.offers ?? []}
+        layout={layout}
+        width={width}
+        height={height}
+      />
+    </>
+  );
 }
 
 function WatchRoom(props: WatchPageProps): ReactNode {
   const room = useWatchRoom(props);
-  const { columns, shown, now, tick, stack, seat, layout, picker, filter, palette, help } = room;
-  const { width, height } = room;
+  const { columns, shown, now, tick, stack, seat, layout, filter, width, height, mouse } = room;
 
   return (
     <box
@@ -251,6 +208,9 @@ function WatchRoom(props: WatchPageProps): ReactNode {
       paddingTop={1}
       paddingLeft={PAGE_SIDE}
       paddingRight={PAGE_SIDE}
+      onMouseDown={() => {
+        mouse.outside();
+      }}
     >
       <Banner />
       <HeaderRow stack={stack} tick={tick} />
@@ -264,6 +224,7 @@ function WatchRoom(props: WatchPageProps): ReactNode {
           width={width}
           height={height - CHROME}
           layout={layout}
+          mouse={mouse}
         />
       </box>
       <FootRow
@@ -274,18 +235,9 @@ function WatchRoom(props: WatchPageProps): ReactNode {
         seat={seat}
         layout={layout}
         width={width - PAGE_SIDE * 2}
+        mouse={mouse}
       />
-      <CeremonyOverlay stack={stack} columns={columns} tick={tick} width={width} height={height} />
-      <PickerOverlay picker={picker} width={width} height={height} />
-      <PaletteOverlay palette={palette} width={width} height={height} />
-      <HelpOverlay
-        help={help}
-        frame={stack.top}
-        offers={seat.chosen?.offers ?? []}
-        layout={layout}
-        width={width}
-        height={height}
-      />
+      <OverlayLayer room={room} />
     </box>
   );
 }

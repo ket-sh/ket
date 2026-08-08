@@ -4,6 +4,7 @@ import type { KanbanColumnView } from '../../../shared/model';
 import type { BoardLayout } from '../model/board-layout.ts';
 import type { Filter } from '../model/filter.ts';
 import type { Frame, FrameStack } from '../model/frames.ts';
+import type { WatchMouse } from '../model/mouse.ts';
 import type { Seat } from '../model/seat.ts';
 
 import { FilterBar } from './filter-bar.tsx';
@@ -29,6 +30,7 @@ export function FootRow({
   seat,
   layout,
   width,
+  mouse,
 }: {
   filter: Filter;
   shown: KanbanColumnView[];
@@ -37,6 +39,7 @@ export function FootRow({
   seat: Seat;
   layout: BoardLayout;
   width: number;
+  mouse: WatchMouse;
 }): ReactNode {
   return (
     <box flexDirection="column">
@@ -49,6 +52,7 @@ export function FootRow({
         layout={layout}
         width={width}
         narrowed={narrowedWorn(filter, stack.top)}
+        mouse={mouse}
       />
     </box>
   );
