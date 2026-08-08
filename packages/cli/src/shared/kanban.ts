@@ -6,7 +6,7 @@ import { ITEM_STATUSES } from './item.ts';
 import { parseItem } from './read-item.ts';
 import { offeredBy } from './transition.ts';
 
-interface KanbanRefusal {
+export interface KanbanRefusal {
   reason: string;
   at: string;
 }

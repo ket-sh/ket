@@ -12,11 +12,10 @@ const WIDE = { width: 200, height: 40 };
 function nodeOf(id: string, patch: Partial<JourneyNodeView> = {}): JourneyNodeView {
   return {
     id,
-    kind: 'stage',
     title: id,
     mark: 'done',
     at: undefined,
-    child: undefined,
+    until: undefined,
     doc: undefined,
     ...patch,
   };
@@ -26,22 +25,19 @@ const WALKED: JourneyView = {
   item: 'K-1',
   title: 'The watched item',
   nodes: [
-    nodeOf('triaged', { at: '2026-08-07T09:00:00.000Z' }),
+    nodeOf('triaged', { at: '2026-08-07T09:00:00.000Z', until: '2026-08-07T10:00:00.000Z' }),
     nodeOf('designing', { mark: 'active', at: '2026-08-07T10:00:00.000Z' }),
-    nodeOf('spec.md', { kind: 'artifact', at: '2026-08-07T11:00:00.000Z' }),
-    nodeOf('gherkin.feature', { kind: 'artifact', mark: 'pending' }),
-    nodeOf('awaiting-approval', { mark: 'pending' }),
-    nodeOf('K-2', { kind: 'child', title: 'K-2 A quiet fix', mark: 'active', child: 'K-2' }),
+    nodeOf('awaiting-approval', { mark: 'future' }),
+    nodeOf('implementing', { mark: 'future' }),
   ],
   edges: [
     ['triaged', 'designing'],
-    ['designing', 'spec.md'],
-    ['designing', 'gherkin.feature'],
-    ['spec.md', 'awaiting-approval'],
-    ['gherkin.feature', 'awaiting-approval'],
-    ['designing', 'K-2'],
+    ['designing', 'awaiting-approval'],
+    ['awaiting-approval', 'implementing'],
   ],
   standing: undefined,
+  artifacts: [],
+  children: [],
 };
 
 function textOf(rows: Ln[]): string {
@@ -55,7 +51,7 @@ describe('the nodes a canvas paints', () => {
     expect(frame).toContain('triaged');
     expect(frame).toContain('✓ 3h');
     expect(frame).toContain('designing');
-    expect(frame).toContain('spec.md');
+    expect(frame).toContain('awaiting-approval');
     expect(frame).toContain('○ waiting');
   });
 
@@ -64,10 +60,6 @@ describe('the nodes a canvas paints', () => {
 
     expect(frame).toContain('║ designing');
     expect(frame).not.toContain('║ triaged');
-  });
-
-  it('marks a child node as a doorway', () => {
-    expect(textOf(journeyRows(WALKED, 'designing', NOW, 0, WIDE))).toContain('»');
   });
 
   it('spins the active mark with the tick', () => {
@@ -79,12 +71,10 @@ describe('the nodes a canvas paints', () => {
 });
 
 describe('the edges a canvas draws', () => {
-  it('draws elbows, junctions, and arrowheads for a fan', () => {
+  it('draws an arrowhead into every stage it joins', () => {
     const frame = textOf(journeyRows(WALKED, 'designing', NOW, 0, WIDE));
 
     expect(frame).toContain('►');
-    expect(frame).toContain('╮');
-    expect(frame).toContain('╰');
   });
 
   it('walks a dot along the edges touching the selection', () => {

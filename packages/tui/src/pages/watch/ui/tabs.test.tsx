@@ -65,47 +65,79 @@ async function opening(presses: Press[]): Promise<string> {
   return frame;
 }
 
-const ARTIFACTS_TAB: Press[] = [
+const OPENED: Press[] = [
   { key: 'ARROW_RIGHT', lands: '║ K-1' },
   { key: 'RETURN', lands: 'K-1 · journey' },
-  { key: 'TAB', lands: '║ designing' },
-  { key: 'TAB', lands: 'A quiet fix' },
-  { key: 'TAB', lands: '► spec.md' },
 ];
 
-const SPEC_PATH: Press[] = [...ARTIFACTS_TAB, { key: 'RETURN', lands: 'K-1 · Spec' }];
+describe('the tabs an opened item wears', () => {
+  it('names every tab across the top', async () => {
+    const frame = await opening(OPENED);
 
-describe('the surface a node opens', () => {
-  it('opens the artifact doc full screen with its audience tabs', async () => {
-    const frame = await opening(SPEC_PATH);
-
-    expect(frame).toContain('K-1 · Spec');
-    expect(frame).toContain('Technical');
-    expect(frame).toContain('Five failures lock the account.');
+    expect(frame).toContain('overview');
+    expect(frame).toContain('workflow');
+    expect(frame).toContain('children');
+    expect(frame).toContain('artifacts');
   });
 
-  it('switches the audience with tab', async () => {
-    const frame = await opening([...SPEC_PATH, { key: 'TAB', lands: 'Five tries' }]);
+  it('lands on the overview carrying the item title', async () => {
+    const frame = await opening(OPENED);
 
-    expect(frame).toContain('Five tries and you wait.');
+    expect(frame).toContain('The watched item');
   });
 
-  it('pops back to the journey on escape', async () => {
-    const frame = await opening([...SPEC_PATH, { key: 'ESCAPE', lands: 'K-1 · journey' }]);
+  it('says so when the item carries no description', async () => {
+    const frame = await opening(OPENED);
 
-    expect(frame).toContain('K-1 · journey');
+    expect(frame).toContain('No description written.');
   });
+});
 
-  it('dives into a child journey and grows the path', async () => {
+describe('the workflow tab', () => {
+  it('shows the stage canvas and no artifact box', async () => {
+    const frame = await opening([...OPENED, { key: 'TAB', lands: '║ designing' }]);
+
+    expect(frame).toContain('designing');
+    expect(frame).toContain('awaiting-approval');
+    expect(frame).not.toContain('spec.md');
+  });
+});
+
+describe('the children tab', () => {
+  it('lists a child row with the state the board would show', async () => {
     const frame = await opening([
-      { key: 'ARROW_RIGHT', lands: '║ K-1' },
-      { key: 'RETURN', lands: 'K-1 · journey' },
+      ...OPENED,
+      { key: 'TAB', lands: '║ designing' },
+      { key: 'TAB', lands: 'A quiet fix' },
+    ]);
+
+    expect(frame).toContain('K-2');
+    expect(frame).toContain('A quiet fix');
+    expect(frame).toContain('subtask');
+  });
+
+  it('drills into the child journey on enter', async () => {
+    const frame = await opening([
+      ...OPENED,
       { key: 'TAB', lands: '║ designing' },
       { key: 'TAB', lands: 'A quiet fix' },
       { key: 'RETURN', lands: 'K-2 · journey' },
     ]);
 
-    expect(frame).toContain('K-2 · journey');
     expect(frame).toContain('board › K-1 › K-2');
+  });
+});
+
+describe('the artifacts tab', () => {
+  it('lists the artifacts the item wrote beside the chosen one', async () => {
+    const frame = await opening([
+      ...OPENED,
+      { key: 'TAB', lands: '║ designing' },
+      { key: 'TAB', lands: 'A quiet fix' },
+      { key: 'TAB', lands: 'spec.md' },
+    ]);
+
+    expect(frame).toContain('spec.md');
+    expect(frame).toContain('Five failures lock the account.');
   });
 });

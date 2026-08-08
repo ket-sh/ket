@@ -80,15 +80,36 @@ shows "triaged 1" || fail "the child never reached its lane"
 "$PILOTTY" wait-for -s "$SESSION" "KWA-1 · journey" >/dev/null || fail "the journey never opened"
 
 SHOWN="$(screen)"
-shows "solution-design.md" || fail "the artifact never hung on its stage"
-shows "KWA-2" || fail "the child never closed the graph"
-shows "►" || fail "the edges never drew"
-shows "║ designing" || fail "the landing never selected the active stage"
+shows "overview" || fail "the tab bar never named the overview"
+shows "workflow" || fail "the tab bar never named the workflow"
+shows "children" || fail "the tab bar never named the children"
+shows "artifacts" || fail "the tab bar never named the artifacts"
+shows "The acceptance item" || fail "the overview never carried the title"
 
+"$PILOTTY" key -s "$SESSION" Tab >/dev/null
+"$PILOTTY" wait-for -s "$SESSION" "║ designing" >/dev/null || fail "the workflow never selected the active stage"
+
+SHOWN="$(screen)"
+shows "►" || fail "the edges never drew"
+
+for _ in 1 2 3 4 5; do
+  "$PILOTTY" key -s "$SESSION" Right >/dev/null
+done
+"$PILOTTY" wait-for -s "$SESSION" "║ shipped" >/dev/null || fail "the canvas never drew the path through to shipped"
+
+for _ in 1 2 3 4 5; do
+  "$PILOTTY" key -s "$SESSION" Left >/dev/null
+done
 "$PILOTTY" key -s "$SESSION" Left >/dev/null
 sleep 1
 SHOWN="$(screen)"
 shows "║ triaged" || fail "the arrows never walked the canvas"
+
+"$PILOTTY" key -s "$SESSION" Tab >/dev/null
+"$PILOTTY" wait-for -s "$SESSION" "KWA-2" >/dev/null || fail "the children tab never listed the child"
+
+"$PILOTTY" key -s "$SESSION" Tab >/dev/null
+"$PILOTTY" wait-for -s "$SESSION" "solution-design.md" >/dev/null || fail "the artifacts tab never listed the artifact"
 
 "$PILOTTY" key -s "$SESSION" Escape >/dev/null
 "$PILOTTY" wait-for -s "$SESSION" "designing 1" >/dev/null || fail "escape never popped to the board"
@@ -107,7 +128,10 @@ printf '%s\n' '{"gate":"transition","outcome":"allowed","about":"awaiting-approv
 
 "$PILOTTY" key -s "$SESSION" Enter >/dev/null
 "$PILOTTY" wait-for -s "$SESSION" "KWA-1 · journey" >/dev/null || fail "the journey never reopened"
-"$PILOTTY" key -s "$SESSION" Left >/dev/null
+"$PILOTTY" key -s "$SESSION" Tab >/dev/null
+"$PILOTTY" key -s "$SESSION" Tab >/dev/null
+"$PILOTTY" key -s "$SESSION" Tab >/dev/null
+"$PILOTTY" wait-for -s "$SESSION" "solution-design.md" >/dev/null || fail "the artifacts tab never reopened"
 "$PILOTTY" key -s "$SESSION" Enter >/dev/null
 "$PILOTTY" wait-for -s "$SESSION" "KWA-1 · Design" >/dev/null || fail "the surface never opened"
 

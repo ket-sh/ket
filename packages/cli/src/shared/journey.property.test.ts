@@ -61,9 +61,7 @@ function edgesOf(stored: StoredItem[], log: string): [string, string][] {
 }
 
 function visitedStages(stored: StoredItem[], log: string): Journey['nodes'] {
-  return (foldJourney(stored, log, KEY)?.nodes ?? []).filter(
-    (node) => node.kind === 'stage' && node.at !== undefined,
-  );
+  return (foldJourney(stored, log, KEY)?.nodes ?? []).filter((node) => node.at !== undefined);
 }
 
 describe('the invariants a journey keeps', () => {

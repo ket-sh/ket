@@ -11,12 +11,13 @@ import type { Audience } from '../lib/lines.ts';
 import type { Direction } from './compass.ts';
 
 import { walkedIn } from '../../../widgets/story-map';
-import { neighborOf, placedOf } from '../lib/layout.ts';
+
+export type JourneyTab = 'overview' | 'workflow' | 'children' | 'artifacts';
 
 export type Frame =
   | { kind: 'board' }
   | { kind: 'map'; reading: MapReadingView; at: number }
-  | { kind: 'journey'; journey: JourneyView; sel: string }
+  | { kind: 'journey'; journey: JourneyView; sel: string; tab: JourneyTab; pick: number }
   | {
       kind: 'surface';
       item: string;
@@ -49,6 +50,7 @@ export interface FrameStack {
   frames: Frame[];
   top: Frame;
   dive: (key: string | undefined) => void;
+  tab: () => void;
   openMap: () => void;
   mapWalk: (name: string) => void;
   enter: () => void;
@@ -68,10 +70,9 @@ function lastOf(nodes: JourneyView['nodes']): string | undefined {
 }
 
 export function landingOf(journey: JourneyView): string {
-  const stages = journey.nodes.filter((node) => node.kind === 'stage');
-  const active = [...stages].reverse().find((node) => node.mark === 'active');
+  const active = [...journey.nodes].reverse().find((node) => node.mark === 'active');
 
-  return active?.id ?? lastOf(stages) ?? lastOf(journey.nodes) ?? '';
+  return active?.id ?? lastOf(journey.nodes) ?? '';
 }
 
 function restingStepOf(frame: Extract<Frame, { kind: 'board' | 'journey' | 'map' }>): string {
@@ -102,18 +103,6 @@ function crumbStepOf(frame: Frame): string {
 
 export function crumbOf(frames: Frame[]): string {
   return frames.map((frame) => crumbStepOf(frame)).join(' › ');
-}
-
-export function walked(stack: Frame[], direction: Direction): Frame[] {
-  const above = stack[stack.length - 1];
-
-  if (above?.kind !== 'journey') {
-    return stack;
-  }
-
-  const sel = neighborOf(placedOf(above.journey).nodes, above.sel, direction);
-
-  return [...stack.slice(0, -1), { ...above, sel }];
 }
 
 export function mapWalked(stack: Frame[], name: string): Frame[] {

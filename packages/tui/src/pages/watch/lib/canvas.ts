@@ -15,11 +15,7 @@ export interface Viewport {
 }
 
 function frameColorOf(node: PlacedNode, theme: Theme): string {
-  if (node.kind === 'stage') {
-    return stageColorOf(theme)[node.title] ?? theme.overlay;
-  }
-
-  return node.kind === 'artifact' ? theme.blue : theme.pink;
+  return stageColorOf(theme)[node.title] ?? theme.overlay;
 }
 
 function pulseOf(color: string, tick: number, theme: Theme): string {
@@ -77,14 +73,12 @@ function drawNode(
 ): void {
   boxAt(grid, node.x, node.y, NODE_W, NODE_H, border.style, border.fg);
 
-  const room = node.kind === 'child' ? NODE_W - 6 : NODE_W - 4;
-
   writeText(
     grid,
     node.x + 2,
     node.y + 1,
-    trimmedTo(node.title, room),
-    node.mark === 'pending' ? theme.subtext : theme.text,
+    trimmedTo(node.title, NODE_W - 4),
+    node.mark === 'future' ? theme.subtext : theme.text,
   );
   writeText(
     grid,
@@ -93,10 +87,6 @@ function drawNode(
     subOf(node, clock.now, clock.tick),
     markColorOf(node, theme),
   );
-
-  if (node.kind === 'child') {
-    writeText(grid, node.x + NODE_W - 3, node.y + 1, '»', theme.pink);
-  }
 }
 
 type Tracer = (x: number, y: number, ch: string) => void;

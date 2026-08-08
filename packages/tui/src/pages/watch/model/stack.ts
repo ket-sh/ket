@@ -10,6 +10,7 @@ import type {
 import type { Draft } from '../lib/edit.ts';
 import type { Direction } from './compass.ts';
 import type { Frame, FrameStack, Tuning } from './frames.ts';
+import type { Opened } from './journey-tabs.ts';
 
 import {
   askFrameOf,
@@ -23,8 +24,8 @@ import {
   selectedNodeOf,
   surfaceFrame,
   tuned,
-  walked,
 } from './frames.ts';
+import { tabbed, walked } from './journey-tabs.ts';
 
 type Grow = (grow: (stack: Frame[]) => Frame[]) => void;
 
@@ -103,6 +104,52 @@ function useMapping(feed: BoardFeed, setFrames: Grow): Mapping {
   return { openMap, mapWalk };
 }
 
+type Opening = (journey: JourneyView, doc: SurfaceDocView) => void;
+
+function useEntering(top: Frame, dive: (key: string | undefined) => void, open: Opening) {
+  const enterArtifact = useCallback(
+    (frame: Opened) => {
+      const doc = frame.journey.artifacts[frame.pick]?.doc;
+
+      if (doc !== undefined) {
+        open(frame.journey, doc);
+      }
+    },
+    [open],
+  );
+
+  const enterStage = useCallback(
+    (frame: Opened) => {
+      const seated = selectedNodeOf(frame);
+
+      if (seated?.node.doc !== undefined) {
+        open(seated.journey, seated.node.doc);
+      }
+    },
+    [open],
+  );
+
+  return useCallback(() => {
+    if (top.kind !== 'journey') {
+      return;
+    }
+
+    if (top.tab === 'children') {
+      dive(top.journey.children[top.pick]?.key);
+
+      return;
+    }
+
+    if (top.tab === 'artifacts') {
+      enterArtifact(top);
+
+      return;
+    }
+
+    enterStage(top);
+  }, [top, dive, enterArtifact, enterStage]);
+}
+
 type Diving = Pick<FrameStack, 'dive' | 'enter'>;
 
 function useDiving(feed: BoardFeed, top: Frame, setFrames: Grow): Diving {
@@ -114,7 +161,10 @@ function useDiving(feed: BoardFeed, top: Frame, setFrames: Grow): Diving {
 
       void feed.journey(key).then((journey) => {
         if (journey !== undefined) {
-          setFrames((stack) => [...stack, { kind: 'journey', journey, sel: landingOf(journey) }]);
+          setFrames((stack) => [
+            ...stack,
+            { kind: 'journey', journey, sel: landingOf(journey), tab: 'overview', pick: 0 },
+          ]);
         }
       });
     },
@@ -128,23 +178,7 @@ function useDiving(feed: BoardFeed, top: Frame, setFrames: Grow): Diving {
     [setFrames],
   );
 
-  const enter = useCallback(() => {
-    const seated = selectedNodeOf(top);
-
-    if (seated === undefined) {
-      return;
-    }
-
-    if (seated.node.child !== undefined) {
-      dive(seated.node.child);
-
-      return;
-    }
-
-    if (seated.node.doc !== undefined) {
-      open(seated.journey, seated.node.doc);
-    }
-  }, [top, dive, open]);
+  const enter = useEntering(top, dive, open);
 
   return { dive, enter };
 }
@@ -159,6 +193,10 @@ export function useFrameStack(feed: BoardFeed): FrameStack {
 
   const walk = useCallback((direction: Direction) => {
     setFrames((stack) => walked(stack, direction));
+  }, []);
+
+  const tab = useCallback(() => {
+    setFrames((stack) => tabbed(stack));
   }, []);
 
   const scroll = useCallback((delta: number, most: number) => {
@@ -177,6 +215,7 @@ export function useFrameStack(feed: BoardFeed): FrameStack {
     frames,
     top,
     dive,
+    tab,
     openMap,
     mapWalk,
     enter,

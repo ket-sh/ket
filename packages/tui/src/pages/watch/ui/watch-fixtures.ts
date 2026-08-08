@@ -86,38 +86,39 @@ const JOURNEY: JourneyView = {
   nodes: [
     {
       id: 'triaged',
-      kind: 'stage',
       title: 'triaged',
       mark: 'done',
       at: '2026-08-07T09:00:00.000Z',
-      child: undefined,
+      until: '2026-08-07T10:00:00.000Z',
       doc: undefined,
     },
     {
       id: 'designing',
-      kind: 'stage',
       title: 'designing',
       mark: 'active',
       at: '2026-08-07T10:00:00.000Z',
-      child: undefined,
+      until: undefined,
       doc: undefined,
     },
     {
-      id: 'K-2',
-      kind: 'child',
-      title: 'K-2 A quiet fix',
-      mark: 'active',
+      id: 'awaiting-approval',
+      title: 'awaiting-approval',
+      mark: 'future',
       at: undefined,
-      child: 'K-2',
+      until: undefined,
       doc: undefined,
     },
+  ],
+  edges: [
+    ['triaged', 'designing'],
+    ['designing', 'awaiting-approval'],
+  ],
+  standing: 'no failing test covers it',
+  artifacts: [
     {
-      id: '.ket/items/K-1/spec.md',
-      kind: 'artifact',
-      title: 'spec.md',
-      mark: 'done',
+      path: '.ket/items/K-1/spec.md',
+      name: 'spec.md',
       at: '2026-08-07T11:00:00.000Z',
-      child: undefined,
       doc: {
         kind: 'prose',
         label: 'Spec',
@@ -127,12 +128,16 @@ const JOURNEY: JourneyView = {
       },
     },
   ],
-  edges: [
-    ['triaged', 'designing'],
-    ['designing', 'K-2'],
-    ['designing', '.ket/items/K-1/spec.md'],
+  children: [
+    {
+      key: 'K-2',
+      title: 'A quiet fix',
+      size: 'subtask',
+      status: 'triaged',
+      since: undefined,
+      refusal: undefined,
+    },
   ],
-  standing: 'no failing test covers it',
 };
 
 const CHILD_JOURNEY: JourneyView = {
@@ -141,20 +146,20 @@ const CHILD_JOURNEY: JourneyView = {
   nodes: [
     {
       id: 'triaged',
-      kind: 'stage',
       title: 'triaged',
       mark: 'active',
       at: undefined,
-      child: undefined,
+      until: undefined,
       doc: undefined,
     },
+  ],
+  edges: [],
+  standing: undefined,
+  artifacts: [
     {
-      id: '.ket/items/K-2/locking.feature',
-      kind: 'artifact',
-      title: 'locking.feature',
-      mark: 'done',
+      path: '.ket/items/K-2/locking.feature',
+      name: 'locking.feature',
       at: undefined,
-      child: undefined,
       doc: {
         kind: 'criteria',
         label: 'Criteria',
@@ -163,8 +168,7 @@ const CHILD_JOURNEY: JourneyView = {
       },
     },
   ],
-  edges: [['triaged', '.ket/items/K-2/locking.feature']],
-  standing: undefined,
+  children: [],
 };
 
 function movedInto(columns: KanbanColumnView[], key: string, status: string): void {

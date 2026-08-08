@@ -4,8 +4,8 @@ import type { Frame } from '../model/frames.ts';
 
 import { lerpHex } from '../../../shared/lib';
 import { useTheme } from '../../../shared/theme';
-import { SpanRow } from '../../../shared/ui';
 import { docLines } from '../lib/lines.ts';
+import { DocRows } from './doc-rows.tsx';
 
 type SurfaceFrame = Extract<Frame, { kind: 'surface' }>;
 
@@ -31,14 +31,11 @@ function clamp(value: number, low: number, high: number): number {
 
 export function SurfacePage({ frame, height }: { frame: SurfaceFrame; height: number }): ReactNode {
   const { theme } = useTheme();
-  const lines = docLines(frame.doc, frame.aud, theme);
+  const held = docLines(frame.doc, frame.aud, theme).length;
   const room = surfaceRoom(height);
-  const off = clamp(frame.off, 0, Math.max(0, lines.length - room));
-  const shown = lines.slice(off, off + room);
-  const range =
-    lines.length > room
-      ? ` · ${String(off + 1)}-${String(off + shown.length)}/${String(lines.length)}`
-      : '';
+  const off = clamp(frame.off, 0, Math.max(0, held - room));
+  const shown = Math.min(room, held - off);
+  const range = held > room ? ` · ${String(off + 1)}-${String(off + shown)}/${String(held)}` : '';
 
   return (
     <box
@@ -52,11 +49,7 @@ export function SurfacePage({ frame, height }: { frame: SurfaceFrame; height: nu
       paddingLeft={1}
       paddingRight={1}
     >
-      {shown.map(
-        (spans, index): ReactNode => (
-          <SpanRow key={String(index)} spans={spans} />
-        ),
-      )}
+      <DocRows doc={frame.doc} audience={frame.aud} from={off} room={room} />
     </box>
   );
 }

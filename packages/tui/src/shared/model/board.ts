@@ -93,12 +93,27 @@ interface BlastFiguresView {
 
 export interface JourneyNodeView {
   id: string;
-  kind: 'stage' | 'artifact' | 'child';
   title: string;
-  mark: 'done' | 'active' | 'pending';
+  mark: 'done' | 'active' | 'future';
   at: string | undefined;
-  child: string | undefined;
+  until: string | undefined;
   doc: SurfaceDocView | undefined;
+}
+
+export interface JourneyArtifactView {
+  path: string;
+  name: string;
+  at: string | undefined;
+  doc: SurfaceDocView | undefined;
+}
+
+export interface JourneyChildView {
+  key: string;
+  title: string;
+  size: string;
+  status: string;
+  since: string | undefined;
+  refusal: KanbanRefusalView | undefined;
 }
 
 export interface JourneyView {
@@ -107,6 +122,8 @@ export interface JourneyView {
   nodes: JourneyNodeView[];
   edges: [string, string][];
   standing: string | undefined;
+  artifacts: JourneyArtifactView[];
+  children: JourneyChildView[];
 }
 
 export type MovedView = { moved: string } | { refused: string };

@@ -108,6 +108,8 @@ function StageArea(room: RoomProps): ReactNode {
       <JourneyPage
         journey={stack.top.journey}
         sel={stack.top.sel}
+        tab={stack.top.tab}
+        pick={stack.top.pick}
         now={now}
         tick={tick}
         width={width - 2}

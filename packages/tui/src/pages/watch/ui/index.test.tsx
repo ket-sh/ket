@@ -62,7 +62,7 @@ function bottomRow(frame: string): string {
   return (rows.at(-1) === '' ? rows.at(-2) : rows.at(-1)) ?? '';
 }
 
-function pressed(key: 'ARROW_RIGHT' | 'ARROW_LEFT' | 'RETURN' | 'ESCAPE'): void {
+function pressed(key: 'ARROW_RIGHT' | 'ARROW_LEFT' | 'RETURN' | 'ESCAPE' | 'TAB'): void {
   if (rendered !== undefined) {
     createMockKeys(rendered.renderer).pressKey(key);
   }
@@ -166,6 +166,13 @@ async function landedOnJourney(): Promise<string> {
   return landed((seen) => seen.includes('K-1 · journey'));
 }
 
+async function landedOnWorkflow(): Promise<string> {
+  await landedOnJourney();
+  pressed('TAB');
+
+  return landed((seen) => seen.includes('║ designing'));
+}
+
 describe('the journey a card opens', () => {
   it('dives into the journey on enter and spells the path', async () => {
     const frame = await landedOnJourney();
@@ -175,12 +182,12 @@ describe('the journey a card opens', () => {
     expect(frame).toContain('! no failing test covers it');
   });
 
-  it('lands the selection on the active stage, never on an active child', async () => {
-    expect(await landedOnJourney()).toContain('║ designing');
+  it('lands the selection on the active stage once the workflow opens', async () => {
+    expect(await landedOnWorkflow()).toContain('║ designing');
   });
 
   it('walks the canvas selection with the arrows', async () => {
-    await landedOnJourney();
+    await landedOnWorkflow();
     pressed('ARROW_LEFT');
 
     const frame = await landed((seen) => seen.includes('║ triaged'));

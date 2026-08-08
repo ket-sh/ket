@@ -77,7 +77,8 @@ async function opening(presses: Press[], feed: ActedFeed = feedOf()): Promise<st
 
 const CRITERIA_PATH: Press[] = [
   { key: 'RETURN', lands: 'K-2 · journey' },
-  { key: 'ARROW_RIGHT', lands: '║ locking.feature' },
+  { key: 'TAB', lands: '║ triaged' },
+  { key: 'TAB', lands: '► locking.feature' },
   { key: 'RETURN', lands: 'K-2 · Criteria' },
 ];
 
@@ -109,7 +110,9 @@ describe('the criteria a keeper edits in place', () => {
     const frame = await opening([
       { key: 'ARROW_RIGHT', lands: '║ K-1' },
       { key: 'RETURN', lands: 'K-1 · journey' },
-      { key: 'ARROW_DOWN', lands: '║ spec.md' },
+      { key: 'TAB', lands: '║ designing' },
+      { key: 'TAB', lands: 'A quiet fix' },
+      { key: 'TAB', lands: '► spec.md' },
       { key: 'RETURN', lands: 'K-1 · Spec' },
       'e',
     ]);

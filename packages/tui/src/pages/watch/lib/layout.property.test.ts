@@ -22,18 +22,25 @@ const someJourney = fc
   .map(({ count, picks }) => {
     const nodes: JourneyNodeView[] = Array.from({ length: count }, (_, index) => ({
       id: `n${String(index)}`,
-      kind: 'stage',
       title: `n${String(index)}`,
       mark: 'done',
       at: undefined,
-      child: undefined,
+      until: undefined,
       doc: undefined,
     }));
     const edges: [string, string][] = picks
       .filter((pick) => pick.from < pick.to)
       .map((pick) => [`n${String(pick.from)}`, `n${String(pick.to)}`]);
 
-    return { item: 'K-1', title: 'Any', nodes, edges, standing: undefined } satisfies JourneyView;
+    return {
+      item: 'K-1',
+      title: 'Any',
+      nodes,
+      edges,
+      standing: undefined,
+      artifacts: [],
+      children: [],
+    } satisfies JourneyView;
   });
 
 function placedIds(journey: JourneyView): Set<string> {
