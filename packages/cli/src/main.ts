@@ -5,6 +5,7 @@ const load = {
   update: async () => import('./commands/update/command.ts'),
   watch: async () => import('./commands/watch/command.ts'),
   map: async () => import('./commands/map/command.ts'),
+  retro: async () => import('./commands/retro/command.ts'),
   gate: async () => import('./commands/gate/command.ts'),
   item: async () => import('./commands/item/command.ts'),
   review: async () => import('./commands/review/command.ts'),
@@ -16,6 +17,7 @@ export const commands = {
   update: async () => (await load.update()).default,
   watch: async () => (await load.watch()).default,
   map: async () => (await load.map()).default,
+  retro: async () => (await load.retro()).default,
 };
 
 export const hidden = {
