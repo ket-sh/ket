@@ -123,6 +123,14 @@ describe('the usage the note command prints', () => {
     expect(usage()).toContain('Who is doing the work');
   });
 
+  it('speaks under its own name', async () => {
+    const usage = captureUsage();
+
+    await showUsage(note);
+
+    expect(usage()).toContain('(note)');
+  });
+
   it('stands in the item command table under its own name', async () => {
     const usage = captureUsage();
 
