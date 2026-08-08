@@ -1,5 +1,9 @@
 import { testRender } from '@opentui/react/test-utils';
-import { afterEach, describe, expect, it } from 'bun:test';
+import { afterEach, describe, expect, it, setDefaultTimeout } from 'bun:test';
+
+// The landed() waits commit to a 15s deadline; a loaded runner can spend more
+// than bun's 5s default across two of them before a ring arrives.
+setDefaultTimeout(20_000);
 
 import type { ActedFeed } from './watch-fixtures.ts';
 
