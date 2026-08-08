@@ -8,9 +8,11 @@ import { createServer } from 'node:http';
 import { basename, resolve } from 'node:path';
 import { WebSocketServer } from 'ws';
 
+import type { QuietGate } from './quiet.ts';
 import type { Reply } from './routes.ts';
 
 import { alive, readInfo, removeInfo, signalForeign, writeInfo } from './info.ts';
+import { quietGate } from './quiet.ts';
 import { keyOf, pathOf, refusing, replyTo } from './routes.ts';
 
 export interface SurfaceOptions {
@@ -68,30 +70,6 @@ function idleTimer(onIdle: () => void, idleMs: number): { rest(): void } {
       clearTimeout(timer);
       timer = setTimeout(onIdle, idleMs);
       timer.unref();
-    },
-  };
-}
-
-interface QuietGate {
-  hush: () => void;
-  loud: () => boolean;
-}
-
-function quietGate(): QuietGate {
-  let hushed = false;
-
-  return {
-    hush: () => {
-      hushed = true;
-    },
-    loud: () => {
-      if (!hushed) {
-        return true;
-      }
-
-      hushed = false;
-
-      return false;
     },
   };
 }
