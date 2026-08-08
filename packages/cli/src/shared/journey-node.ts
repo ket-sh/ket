@@ -1,5 +1,5 @@
 import type { ItemStatus } from './item.ts';
-import type { KanbanRefusal } from './kanban.ts';
+import type { ItemNote, KanbanRefusal } from './kanban.ts';
 import type { SurfaceDoc } from './surface-doc.ts';
 
 export type StageState =
@@ -17,6 +17,7 @@ export interface JourneyNode {
   at: string | undefined;
   until: string | undefined;
   refusal: KanbanRefusal | undefined;
+  note: ItemNote | undefined;
   doc: SurfaceDoc | undefined;
 }
 
@@ -63,6 +64,7 @@ export interface JourneyPane {
   lastEventAt: string | undefined;
   filed: JourneyFiling | undefined;
   branch: JourneyBranch | undefined;
+  note: ItemNote | undefined;
 }
 
 export interface Journey {

@@ -145,6 +145,13 @@ function drawNode(
     toneOf(node.state, theme),
   );
   writeText(grid, node.x + 2, node.y + 3, heldLineOf(node, clock.now), theme.subtext);
+  writeText(
+    grid,
+    node.x + 2,
+    node.y + 4,
+    node.note === undefined ? '' : trimmedTo(node.note.text, NODE_W - 4),
+    theme.gray,
+  );
 }
 
 type Tracer = (x: number, y: number, ch: string) => void;

@@ -20,6 +20,7 @@ function stageOf(id: string, patch: Partial<JourneyNodeView> = {}): JourneyNodeV
     at: undefined,
     until: undefined,
     refusal: undefined,
+    note: undefined,
     doc: undefined,
     ...patch,
   };
@@ -47,6 +48,7 @@ function pathOf(nodes: JourneyNodeView[]): JourneyView {
       lastEventAt: undefined,
       filed: undefined,
       branch: undefined,
+      note: undefined,
     },
   };
 }

@@ -60,6 +60,11 @@ function Card({
       <text wrapMode="none" fg={theme.text}>
         {card.title}
       </text>
+      {card.note === undefined ? null : (
+        <text wrapMode="none" fg={theme.gray}>
+          {card.note.text}
+        </text>
+      )}
       {card.refusal === undefined ? null : (
         <text fg={theme.red} wrapMode="word">{`! ${card.refusal.reason}`}</text>
       )}

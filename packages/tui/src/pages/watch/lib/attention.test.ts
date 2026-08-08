@@ -14,6 +14,7 @@ function cardOf(patch: Partial<KanbanCardView> = {}): KanbanCardView {
     parent: undefined,
     since: undefined,
     refusal: undefined,
+    note: undefined,
     offers: [],
     ...patch,
   };

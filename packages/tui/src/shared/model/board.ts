@@ -6,6 +6,12 @@ export interface KanbanRefusalView {
   gate: string;
 }
 
+export interface ItemNoteView {
+  text: string;
+  actor: string;
+  at: string;
+}
+
 export type GateActionView = 'approve' | 'ship' | 'reopen';
 
 export interface KanbanCardView {
@@ -16,6 +22,7 @@ export interface KanbanCardView {
   parent: string | undefined;
   since: string | undefined;
   refusal: KanbanRefusalView | undefined;
+  note: ItemNoteView | undefined;
   offers: GateActionView[];
 }
 
@@ -108,6 +115,7 @@ export interface JourneyNodeView {
   at: string | undefined;
   until: string | undefined;
   refusal: KanbanRefusalView | undefined;
+  note: ItemNoteView | undefined;
   doc: SurfaceDocView | undefined;
 }
 
@@ -149,6 +157,7 @@ export interface JourneyPaneView {
   lastEventAt: string | undefined;
   filed: JourneyFilingView | undefined;
   branch: JourneyBranchView | undefined;
+  note: ItemNoteView | undefined;
 }
 
 export interface JourneyView {
