@@ -94,6 +94,7 @@ profoundlogic
 qlty
 qltysh
 redescription
+renderable
 resizestart
 resizestop
 rhysd
