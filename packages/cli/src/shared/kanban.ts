@@ -3,6 +3,7 @@ import type { StoredItem } from './read-item.ts';
 import type { GateAction } from './transition.ts';
 
 import { ITEM_STATUSES } from './item.ts';
+import { readEvents } from './log-lines.ts';
 import { parseItem } from './read-item.ts';
 import { offeredBy } from './transition.ts';
 
@@ -35,49 +36,8 @@ export interface LoggedEvent {
   at: string | undefined;
 }
 
-function wordAt(entry: object, field: string): string | undefined {
-  const held: unknown = Reflect.get(entry, field);
-
-  return typeof held === 'string' ? held : undefined;
-}
-
-function parsedOf(line: string): unknown {
-  try {
-    return JSON.parse(line);
-  } catch {
-    return undefined;
-  }
-}
-
-function shapedEvent(parsed: object): LoggedEvent | undefined {
-  const item = wordAt(parsed, 'item');
-
-  if (item === undefined) {
-    return undefined;
-  }
-
-  return {
-    outcome: wordAt(parsed, 'outcome'),
-    gate: wordAt(parsed, 'gate'),
-    about: wordAt(parsed, 'about'),
-    item,
-    reason: wordAt(parsed, 'reason'),
-    at: wordAt(parsed, 'at'),
-  };
-}
-
-function eventOf(line: string): LoggedEvent | undefined {
-  const parsed = parsedOf(line);
-
-  return parsed !== null && typeof parsed === 'object' ? shapedEvent(parsed) : undefined;
-}
-
 export function eventsAbout(log: string, key: string): LoggedEvent[] {
-  return log
-    .split('\n')
-    .map((line) => eventOf(line))
-    .filter((event): event is LoggedEvent => event !== undefined)
-    .filter((event) => event.item === key);
+  return readEvents(log).flatMap((event) => (event.item === key ? [{ ...event, item: key }] : []));
 }
 
 export function arrivalOf(events: LoggedEvent[], status: ItemStatus): string | undefined {
