@@ -1,22 +1,133 @@
 import { appendFile, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { boardFeedFor } from './feed.ts';
 
+const SPEAKS = 3000;
+
+const SILENCE = 400;
+
+const REVEILLE = 100;
+
+interface Tally {
+  tell: () => void;
+  rose: (patience: number) => Promise<boolean>;
+  settles: (quiet: number) => Promise<void>;
+  forget: () => void;
+}
+
+function tally(): Tally {
+  let count = 0;
+  let seen = 0;
+  let wake: (() => void) | undefined;
+
+  const rose = async (patience: number): Promise<boolean> => {
+    if (count > seen) {
+      seen = count;
+
+      return true;
+    }
+
+    return new Promise<boolean>((settle) => {
+      const timer = setTimeout(() => {
+        wake = undefined;
+        settle(false);
+      }, patience);
+
+      wake = () => {
+        clearTimeout(timer);
+        wake = undefined;
+        seen = count;
+        settle(true);
+      };
+    });
+  };
+
+  return {
+    tell: () => {
+      count += 1;
+      wake?.();
+    },
+    rose,
+    settles: async (quiet) => {
+      let stirring = true;
+
+      while (stirring) {
+        stirring = await rose(quiet);
+      }
+    },
+    forget: () => {
+      seen = count;
+    },
+  };
+}
+
+let suite = '';
 let root = '';
 let stop: (() => void) | undefined;
 
+function itemYaml(status: string): string {
+  return `title: The watched item\nkind: feature\nsize: story\nstatus: ${status}\n`;
+}
+
+function eventsAt(home: string): string {
+  return join(home, '.ket', 'events.jsonl');
+}
+
+function itemAt(home: string): string {
+  return join(home, '.ket', 'items', 'K-1', 'item.yaml');
+}
+
+// A directory watch is not armed when watch() returns, so the fixture repeats a
+// change the watcher must hear either way until the feed answers for one.
+async function awake(home: string, told: Tally): Promise<void> {
+  const reveille = join(home, '.ket', 'reveille');
+  const deadline = Date.now() + SPEAKS;
+  let woke = false;
+
+  while (!woke && Date.now() < deadline) {
+    await writeFile(reveille, String(Date.now()));
+    woke = await told.rose(REVEILLE);
+  }
+
+  if (!woke) {
+    throw new Error(`the feed under ${home} never woke, so its watcher never armed`);
+  }
+
+  await told.settles(REVEILLE * 2);
+  told.forget();
+}
+
+async function grows(home: string, told: Tally): Promise<boolean> {
+  const deadline = Date.now() + SPEAKS;
+  let woke = false;
+
+  while (!woke && Date.now() < deadline) {
+    await appendFile(eventsAt(home), '{"gate":"turn"}\n');
+    woke = await told.rose(REVEILLE);
+  }
+
+  return woke;
+}
+
+const deafWatcher = (): (() => void) => () => undefined;
+
+beforeAll(async () => {
+  suite = await mkdtemp(join(tmpdir(), 'ket-feed-suite-'));
+});
+
+afterAll(async () => {
+  await rm(suite, { recursive: true, force: true });
+});
+
 beforeEach(async () => {
-  root = await mkdtemp(join(tmpdir(), 'ket-feed-'));
+  root = await mkdtemp(join(suite, 'spec-'));
   await mkdir(join(root, '.ket', 'items', 'K-1'), { recursive: true });
+  await writeFile(itemAt(root), itemYaml('designing'));
   await writeFile(
-    join(root, '.ket', 'items', 'K-1', 'item.yaml'),
-    'title: The watched item\nkind: feature\nsize: story\nstatus: designing\n',
-  );
-  await writeFile(
-    join(root, '.ket', 'events.jsonl'),
+    eventsAt(root),
     '{"gate":"transition","outcome":"allowed","about":"designing","item":"K-1","at":"2026-08-07T10:00:00.000Z"}\n',
   );
 });
@@ -26,22 +137,6 @@ afterEach(async () => {
   stop = undefined;
   await rm(root, { recursive: true, force: true });
 });
-
-async function settled(checked: () => boolean, patience: number): Promise<boolean> {
-  const started = Date.now();
-
-  while (Date.now() - started < patience) {
-    if (checked()) {
-      return true;
-    }
-
-    await new Promise((tick) => {
-      setTimeout(tick, 20);
-    });
-  }
-
-  return checked();
-}
 
 describe('the feed the board drinks from', () => {
   it('folds the store and the log into columns', async () => {
@@ -53,54 +148,52 @@ describe('the feed the board drinks from', () => {
   });
 
   it('tells a subscriber when the log grows', async () => {
-    let told = 0;
+    const told = tally();
 
-    stop = boardFeedFor(root, { debounce: 10, poll: 60 }).subscribe(() => {
-      told += 1;
-    });
+    stop = boardFeedFor(root, { debounce: 10, poll: 60 }).subscribe(told.tell);
+
+    await awake(root, told);
 
     await appendFile(
-      join(root, '.ket', 'events.jsonl'),
+      eventsAt(root),
       '{"gate":"transition","outcome":"allowed","about":"awaiting-approval","item":"K-1"}\n',
     );
 
-    expect(await settled(() => told > 0, 2000)).toBe(true);
+    expect(await told.rose(SPEAKS)).toBe(true);
   });
 
-  it('hears a change deep inside the item tree, then nothing once let go', async () => {
-    let told = 0;
-    const letGo = boardFeedFor(root, { debounce: 10, poll: 10_000 }).subscribe(() => {
-      told += 1;
-    });
+  it('hears a change deep inside the item tree', async () => {
+    const told = tally();
 
-    await writeFile(
-      join(root, '.ket', 'items', 'K-1', 'item.yaml'),
-      'title: The watched item\nkind: feature\nsize: story\nstatus: implementing\n',
-    );
+    stop = boardFeedFor(root, { debounce: 10, poll: 10_000 }).subscribe(told.tell);
 
-    const heardTheChange = await settled(() => told > 0, 2000);
+    await awake(root, told);
+
+    await writeFile(itemAt(root), itemYaml('implementing'));
+
+    expect(await told.rose(SPEAKS)).toBe(true);
+  });
+
+  it('says nothing more once the subscriber lets go of the item tree', async () => {
+    const told = tally();
+    const letGo = boardFeedFor(root, { debounce: 10, poll: 10_000 }).subscribe(told.tell);
+
+    stop = letGo;
+
+    await awake(root, told);
 
     letGo();
 
-    const heard = told;
+    await writeFile(itemAt(root), itemYaml('verifying'));
 
-    await writeFile(
-      join(root, '.ket', 'items', 'K-1', 'item.yaml'),
-      'title: The watched item\nkind: feature\nsize: story\nstatus: verifying\n',
-    );
-
-    expect(heardTheChange).toBe(true);
-    expect(await settled(() => told > heard, 300)).toBe(false);
+    expect(await told.rose(SILENCE)).toBe(false);
   });
 });
 
 describe('the gate a feed acts through', () => {
   it('moves an eligible item and the next snapshot shows it', async () => {
     await writeFile(join(root, '.ket', 'config.ts'), "export default { key: 'K' };\n");
-    await writeFile(
-      join(root, '.ket', 'items', 'K-1', 'item.yaml'),
-      'title: The watched item\nkind: feature\nsize: story\nstatus: awaiting-approval\n',
-    );
+    await writeFile(itemAt(root), itemYaml('awaiting-approval'));
 
     const feed = boardFeedFor(root);
 
@@ -127,63 +220,57 @@ describe('the gate a feed acts through', () => {
 });
 
 describe('the poll that backstops the watcher', () => {
-  it('wakes for growth in a log that began empty', async () => {
-    let told = 0;
-    const deafWatcher = () => () => undefined;
+  it('wakes for growth in a log the poll last saw empty', async () => {
+    const told = tally();
 
-    await writeFile(join(root, '.ket', 'events.jsonl'), '');
-    stop = boardFeedFor(root, { debounce: 10, poll: 30 }, deafWatcher).subscribe(() => {
-      told += 1;
-    });
+    stop = boardFeedFor(root, { debounce: 10, poll: 30 }, deafWatcher).subscribe(told.tell);
 
-    await new Promise((tick) => {
-      setTimeout(tick, 80);
-    });
-    await appendFile(join(root, '.ket', 'events.jsonl'), '{"gate":"turn"}\n');
+    expect(await grows(root, told)).toBe(true);
 
-    expect(await settled(() => told > 0, 2000)).toBe(true);
+    await told.settles(REVEILLE);
+    told.forget();
+    await writeFile(eventsAt(root), '');
+
+    expect(await told.rose(SPEAKS)).toBe(true);
+
+    await told.settles(REVEILLE);
+    told.forget();
+    await appendFile(eventsAt(root), '{"gate":"turn"}\n');
+
+    expect(await told.rose(SPEAKS)).toBe(true);
   });
 
   it('hears the log grow through the size poll alone, when the watcher misses', async () => {
-    let told = 0;
-    const deafWatcher = () => () => undefined;
+    const told = tally();
 
-    stop = boardFeedFor(root, { debounce: 10, poll: 30 }, deafWatcher).subscribe(() => {
-      told += 1;
-    });
+    stop = boardFeedFor(root, { debounce: 10, poll: 30 }, deafWatcher).subscribe(told.tell);
 
-    await new Promise((tick) => {
-      setTimeout(tick, 80);
-    });
-    await appendFile(join(root, '.ket', 'events.jsonl'), '{"gate":"turn"}\n');
-
-    expect(await settled(() => told > 0, 2000)).toBe(true);
+    expect(await grows(root, told)).toBe(true);
   });
 
   it('polls without crying wolf: an unchanged log wakes nobody', async () => {
-    let told = 0;
-    const deafWatcher = () => () => undefined;
+    const told = tally();
 
-    stop = boardFeedFor(root, { debounce: 10, poll: 30 }, deafWatcher).subscribe(() => {
-      told += 1;
-    });
+    stop = boardFeedFor(root, { debounce: 10, poll: 30 }, deafWatcher).subscribe(told.tell);
 
-    expect(await settled(() => told > 0, 300)).toBe(false);
+    const criedWolf = await told.rose(SILENCE);
+    const pollWasAlive = await grows(root, told);
+
+    expect(criedWolf).toBe(false);
+    expect(pollWasAlive).toBe(true);
   });
 
   it('stays quiet after the subscriber lets go', async () => {
-    let told = 0;
+    const told = tally();
     const feed = boardFeedFor(root, { debounce: 10, poll: 40 });
-    const letGo = feed.subscribe(() => {
-      told += 1;
-    });
+    const letGo = feed.subscribe(told.tell);
+
+    stop = letGo;
 
     letGo();
 
-    await appendFile(join(root, '.ket', 'events.jsonl'), '{"gate":"turn"}\n');
+    await appendFile(eventsAt(root), '{"gate":"turn"}\n');
 
-    const heard = told;
-
-    expect(await settled(() => told > heard, 300)).toBe(false);
+    expect(await told.rose(SILENCE)).toBe(false);
   });
 });
