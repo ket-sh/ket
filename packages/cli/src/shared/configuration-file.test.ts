@@ -80,6 +80,40 @@ describe('a configuration a project left something out of', () => {
   });
 });
 
+describe('a setting a person left blank, which yaml reads as nothing at all', () => {
+  const BLANK = 'key: SHOP\ntargets:\n  .: cli\nintegrations:\nlanguage:\nworkflow:\n';
+
+  it('reads a blank language as English, the same as leaving the line out', () => {
+    const reading = readConfiguration(BLANK);
+
+    expect('configuration' in reading && reading.configuration.language).toBe('en');
+  });
+
+  it('reads a blank workflow as the pipeline, the same as leaving the line out', () => {
+    const reading = readConfiguration(BLANK);
+
+    expect('configuration' in reading && reading.configuration.workflow).toBe(true);
+  });
+
+  it('reads blank integrations as none, the same as leaving the line out', () => {
+    const reading = readConfiguration(BLANK);
+
+    expect('configuration' in reading && reading.configuration.integrations).toStrictEqual([]);
+  });
+
+  it('refuses a blank target map, since a project nothing governs is not configured', () => {
+    expect(readConfiguration('key: SHOP\ntargets:\n')).toStrictEqual({
+      refusals: ['the configuration maps no directory to a preset'],
+    });
+  });
+
+  it('refuses a file emptied out entirely, rather than reading it as settings', () => {
+    expect(readConfiguration('')).toStrictEqual({
+      refusals: ['the configuration is not a mapping of settings'],
+    });
+  });
+});
+
 describe('a configuration nothing can act on', () => {
   it('refuses a file that is not yaml, naming it rather than throwing', () => {
     const reading = readConfiguration('key: [SHOP\n');
@@ -124,6 +158,14 @@ describe('a setting written in a shape the file cannot mean', () => {
   it('refuses integrations that are not a list of names', () => {
     expect(
       readConfiguration('key: SHOP\ntargets:\n  .: cli\nintegrations: codecov\n'),
+    ).toStrictEqual({
+      refusals: ['the integrations are not a list of names'],
+    });
+  });
+
+  it('refuses a list holding something that is not a name, rather than keeping the rest', () => {
+    expect(
+      readConfiguration('key: SHOP\ntargets:\n  .: cli\nintegrations:\n  - 7\n  - codecov\n'),
     ).toStrictEqual({
       refusals: ['the integrations are not a list of names'],
     });

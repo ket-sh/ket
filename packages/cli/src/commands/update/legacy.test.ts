@@ -37,11 +37,14 @@ describe('a project scaffolded before ket kept its state in yaml', () => {
   });
 
   it('names every old file at once, so one run says all the work there is', () => {
-    const refusal = legacyRefusal(LEGACY_STATE);
-
-    expect(refusal).toContain('.ket/config.yaml');
-    expect(refusal).toContain('.ket/toolchain.yaml');
-    expect(refusal).toContain('.ket/scaffold.yaml');
+    expect(legacyRefusal(LEGACY_STATE)).toBe(
+      [
+        'this project keeps its state under names an older ket wrote, and update cannot rewrite it for you',
+        'rewrite .ket/config.ts as .ket/config.yaml, since a configuration is data now rather than a module ket runs',
+        'rename .ket/toolchain.json to .ket/toolchain.yaml, which reads unchanged because json already parses as yaml',
+        'rename .ket/scaffold.json to .ket/scaffold.yaml, which reads unchanged because json already parses as yaml',
+      ].join('; '),
+    );
   });
 
   it('says nothing about a file the project never had', () => {
