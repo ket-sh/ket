@@ -8,6 +8,7 @@ import type { PinnedPage } from './docs/pinning.mts';
 
 import { readDependencyGraph } from './docs/dependency-graph.mts';
 import { isDocCategory, parsePage } from './docs/frontmatter.mts';
+import { compiledOutputs, GLOSSARY_PATH } from './docs/glossary-outputs.mts';
 import { missingAnchors } from './docs/intent-anchors.mts';
 import { governedDocPages } from './docs/pages.mts';
 import { pageState } from './docs/pinning.mts';
@@ -77,6 +78,15 @@ function categoryFailures(files: readonly string[]): string[] {
     );
 }
 
+function glossaryFailures(): string[] {
+  return compiledOutputs()
+    .filter((output) => readFileSync(output.path, 'utf-8') !== output.content)
+    .map(
+      (output) =>
+        `${output.path} is stale against ${GLOSSARY_PATH}: run bun run docs:glossary and commit the result`,
+    );
+}
+
 function baseSha(): string | undefined {
   const sha = process.env['BASE_SHA'];
 
@@ -90,6 +100,7 @@ const failures = [
   ...deadAnchors(committedSkeleton),
   ...rotFailures(files, changedFiles(baseSha())),
   ...categoryFailures(files),
+  ...glossaryFailures(),
 ];
 
 if (failures.length > 0) {

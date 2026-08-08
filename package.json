@@ -30,6 +30,7 @@
     "docs:architecture": "bun scripts/docs-architecture.mts",
     "docs:check": "bun scripts/docs-check.mts",
     "docs:stamp": "bun scripts/docs-stamp.mts",
+    "docs:glossary": "bun scripts/docs-glossary.mts",
     "test:scripts": "vitest run --config scripts/vitest.config.mts"
   },
   "devDependencies": {

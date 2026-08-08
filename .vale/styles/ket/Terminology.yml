@@ -1,13 +1,14 @@
+# bun run docs:glossary writes this file from docs/glossary.md.
 extends: substitution
 message: "One concept, one name: use '%s' instead of '%s'."
 level: error
 scope: text
 ignorecase: true
 swap:
+  code base: codebase
   fail-over: failover
-  work-tree: worktree
+  pre commit: pre-commit
   round robin: round-robin
   sub-agent: subagent
-  code base: codebase
   type-check: typecheck
-  pre commit: pre-commit
+  work-tree: worktree
