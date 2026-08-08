@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import type { KanbanColumnView } from '../../../shared/model';
+import type { KanbanColumnView, OplogEventView } from '../../../shared/model';
 import type { BoardLayout } from '../model/board-layout.ts';
 import type { FrameStack } from '../model/frames.ts';
 import type { WatchMouse } from '../model/mouse.ts';
@@ -13,6 +13,7 @@ import { BoardView } from './board.tsx';
 import { EditorPage } from './editor.tsx';
 import { JourneyPage } from './journey.tsx';
 import { ListView } from './list.tsx';
+import { OplogView } from './oplog.tsx';
 import { SurfacePage } from './surface.tsx';
 
 export const PAGE_SIDE = 1;
@@ -20,6 +21,7 @@ export const PAGE_SIDE = 1;
 export interface RoomProps {
   stack: FrameStack;
   columns: KanbanColumnView[];
+  logRows: OplogEventView[];
   seat: Seat;
   now: string;
   tick: number;
@@ -64,11 +66,34 @@ function BoardArea({
   );
 }
 
-export function StageArea(room: RoomProps): ReactNode {
-  const { stack, now, tick, width, height, mouse } = room;
+function heldPageOf(room: RoomProps): ReactNode | undefined {
+  const { stack, now, tick, height } = room;
 
   if (stack.top.kind === 'edit') {
     return <EditorPage frame={stack.top} tick={tick} height={height} />;
+  }
+
+  if (stack.top.kind === 'oplog') {
+    return (
+      <OplogView
+        shown={room.logRows}
+        sel={stack.top.sel}
+        now={now}
+        height={height}
+        mouse={room.mouse}
+      />
+    );
+  }
+
+  return undefined;
+}
+
+export function StageArea(room: RoomProps): ReactNode {
+  const { stack, now, tick, width, height, mouse } = room;
+  const held = heldPageOf(room);
+
+  if (held !== undefined) {
+    return held;
   }
 
   if (stack.top.kind === 'map') {

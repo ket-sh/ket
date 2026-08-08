@@ -190,6 +190,24 @@ describe('the feed the board drinks from', () => {
   });
 });
 
+describe('the log the feed hands the browser', () => {
+  it('hands the raw rows newest first', async () => {
+    await appendFile(
+      eventsAt(root),
+      '{"note":"looking in","actor":"scout","item":"K-1","at":"2026-08-07T11:00:00.000Z"}\n',
+    );
+
+    const rows = await boardFeedFor(root).oplog();
+
+    expect(rows.map((row) => row.at)).toStrictEqual([
+      '2026-08-07T11:00:00.000Z',
+      '2026-08-07T10:00:00.000Z',
+    ]);
+    expect(rows[0]?.note).toBe('looking in');
+    expect(rows[1]?.gate).toBe('transition');
+  });
+});
+
 describe('the gate a feed acts through', () => {
   it('moves an eligible item and the next snapshot shows it', async () => {
     await writeFile(join(root, '.ket', 'config.yaml'), 'key: K\ntargets:\n  .: cli\n');

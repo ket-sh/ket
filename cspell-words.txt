@@ -128,6 +128,7 @@ openspec
 OpenSSF
 OpenTUI
 opentui-spinner
+oplog
 Ory
 OSSF
 oxfmt

@@ -154,6 +154,7 @@ Depends on:
 Depends on:
 
 - [packages/tui app](#packagestui-app)
+- [packages/tui pages/watch](#packagestui-pageswatch)
 - [packages/tui shared/model](#packagestui-sharedmodel)
 
 ### packages/tui shared/lib

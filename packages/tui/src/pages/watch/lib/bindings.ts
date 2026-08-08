@@ -19,6 +19,7 @@ export type BindingSpot =
   | { kind: 'board'; layout: BoardLayout; offers: GateActionView[] }
   | { kind: 'journey'; pane: PaneStanding }
   | { kind: 'map' }
+  | { kind: 'oplog' }
   | { kind: 'surface' }
   | { kind: 'gate' }
   | { kind: 'edit' };
@@ -52,6 +53,7 @@ function boardBindings(layout: BoardLayout, offers: GateActionView[]): Binding[]
     { keys: 'm', action: 'map', group: 'open' },
     { keys: 'v', action: laid, group: 'open' },
     { keys: 'b', action: queued, group: 'open' },
+    { keys: 'l', action: 'log', group: 'open' },
     ...(layout === 'backlog' ? [] : [NARROWS]),
     GOES,
     HELPS,
@@ -81,8 +83,17 @@ const JOURNEY_WAYS: Record<PaneStanding, Binding[]> = {
   ],
 };
 
-const HELD_SCREENS: Record<'map' | 'surface' | 'gate' | 'edit', Binding[]> = {
+const HELD_SCREENS: Record<'map' | 'oplog' | 'surface' | 'gate' | 'edit', Binding[]> = {
   map: [MOVE, GOES, HELPS, ESC_BOARD, QUIT],
+  oplog: [
+    { keys: '↑↓', action: 'move', group: 'move' },
+    { keys: '⏎', action: 'journey', group: 'open' },
+    NARROWS,
+    GOES,
+    HELPS,
+    ESC_BOARD,
+    QUIT,
+  ],
   surface: [
     { keys: '↑↓', action: 'scroll', group: 'move' },
     { keys: 'tab ←→', action: 'audience', group: 'tools' },
@@ -144,8 +155,9 @@ function paneStandingOf(frame: Extract<Frame, { kind: 'journey' }>): PaneStandin
   return neighborOf(nodes, frame.sel, 'right') === frame.sel ? 'brink' : 'canvas';
 }
 
-const HELD_SPOTS: Record<'map' | 'surface' | 'gate' | 'edit', BindingSpot> = {
+const HELD_SPOTS: Record<'map' | 'oplog' | 'surface' | 'gate' | 'edit', BindingSpot> = {
   map: { kind: 'map' },
+  oplog: { kind: 'oplog' },
   surface: { kind: 'surface' },
   gate: { kind: 'gate' },
   edit: { kind: 'edit' },

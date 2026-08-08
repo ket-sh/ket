@@ -4,6 +4,7 @@ import { join } from 'node:path';
 
 import type { Journey } from '../../shared/journey.ts';
 import type { KanbanColumn } from '../../shared/kanban.ts';
+import type { LoggedEvent } from '../../shared/log-lines.ts';
 import type { Moved } from '../../shared/stage.ts';
 import type { MapShowing } from '../../shared/story-map/reading.ts';
 import type { GateAction } from '../../shared/transition.ts';
@@ -12,6 +13,7 @@ import { readLog } from '../../shared/event-log.ts';
 import { readStored } from '../../shared/item-store.ts';
 import { foldJourney } from '../../shared/journey.ts';
 import { foldKanban } from '../../shared/kanban.ts';
+import { foldOplog } from '../../shared/oplog.ts';
 import { decisionOf, moveThrough } from '../../shared/stage.ts';
 import { mapShowingIn } from '../../shared/story-map/reading.ts';
 import { docsFor } from './docs.ts';
@@ -31,6 +33,7 @@ export interface BoardFeed {
   journey: (key: string) => Promise<Journey | undefined>;
   act: (key: string, gate: GateAction) => Promise<Moved>;
   saveCriteria: (key: string, name: string, source: string) => Promise<void>;
+  oplog: () => Promise<LoggedEvent[]>;
   subscribe: (refresh: () => void) => () => void;
 }
 
@@ -105,6 +108,7 @@ export function boardFeedFor(
     },
     act: async (key, gate) => moveThrough(root, key, gate, decisionOf(gate)),
     saveCriteria: async (key, name, source) => writeCriteria(root, key, name, source),
+    oplog: async () => foldOplog(await readLog(root)),
     subscribe: (refresh) => subscription(root, timings, refresh, watching),
   };
 }

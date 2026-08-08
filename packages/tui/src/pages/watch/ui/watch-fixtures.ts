@@ -6,6 +6,8 @@ import type {
   StoryMapView,
 } from '../../../shared/model';
 
+import { LOGGED } from './oplog-fixtures.ts';
+
 export const NOW = '2026-08-07T12:00:00.000Z';
 
 const MAP: StoryMapView = {
@@ -280,6 +282,11 @@ export function feedOf(): ActedFeed {
     saveCriteria: async (key, name, source) => {
       await Promise.resolve();
       saved.push(`${key} ${name} ${source}`);
+    },
+    oplog: async () => {
+      await Promise.resolve();
+
+      return [...LOGGED];
     },
     subscribe: (refresh) => {
       told = refresh;

@@ -175,11 +175,23 @@ export interface JourneyView {
 
 export type MovedView = { moved: string } | { refused: string };
 
+export interface OplogEventView {
+  at: string | undefined;
+  gate: string | undefined;
+  outcome: string | undefined;
+  item: string | undefined;
+  reason: string | undefined;
+  about: string | undefined;
+  note: string | undefined;
+  actor: string | undefined;
+}
+
 export interface BoardFeed {
   snapshot: () => Promise<KanbanColumnView[]>;
   storyMap: () => Promise<MapReadingView>;
   journey: (key: string) => Promise<JourneyView | undefined>;
   act: (key: string, gate: GateActionView) => Promise<MovedView>;
   saveCriteria: (key: string, name: string, source: string) => Promise<void>;
+  oplog: () => Promise<OplogEventView[]>;
   subscribe: (refresh: () => void) => () => void;
 }

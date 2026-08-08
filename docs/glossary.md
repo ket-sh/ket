@@ -74,6 +74,7 @@ Terms reach both prose gates. A row with a lowercase and a sentence-case form ac
 | `npm`                        |               | The Node package registry.                                         |
 | `OpenSSF`                    |               | The Open Source Security Foundation.                               |
 | `OpenTUI`                    |               | The terminal rendering library under the tui package.              |
+| `oplog`                      |               | The operation-log browser inside watch, fed by the event log.      |
 | `Ory`                        |               | The identity stack an integration offers.                          |
 | `oxfmt`                      |               | The formatter over every file kind here.                           |
 | `oxfmtrc`                    |               | The oxfmt configuration file.                                      |

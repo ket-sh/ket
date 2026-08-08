@@ -4,7 +4,10 @@ import type { BoardLayout } from './board-layout.ts';
 import type { FrameStack, JourneyTab } from './frames.ts';
 import type { Seat } from './seat.ts';
 
-export type OpeningStage = { kind: 'journey'; key: string; tab: JourneyTab } | { kind: 'map' };
+export type OpeningStage =
+  | { kind: 'journey'; key: string; tab: JourneyTab }
+  | { kind: 'map' }
+  | { kind: 'oplog' };
 
 export interface WatchView {
   layout?: BoardLayout;
@@ -21,6 +24,12 @@ interface OpeningDoors {
 function stagedThrough(stage: OpeningStage, stack: FrameStack): void {
   if (stage.kind === 'map') {
     stack.openMap();
+
+    return;
+  }
+
+  if (stage.kind === 'oplog') {
+    stack.openLog();
 
     return;
   }

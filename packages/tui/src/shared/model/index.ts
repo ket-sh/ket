@@ -14,6 +14,7 @@ export type {
   KanbanColumnView,
   KanbanRefusalView,
   MovedView,
+  OplogEventView,
   StageStateView,
   SketchView,
   SurfaceDocView,

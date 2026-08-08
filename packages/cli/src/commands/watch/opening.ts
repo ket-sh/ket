@@ -1,14 +1,6 @@
-type JourneyTab = 'overview' | 'workflow' | 'children' | 'artifacts';
+import type { BoardLayout, JourneyTab, OpeningStage, WatchView } from '@ket/tui';
 
-type BoardLayout = 'kanban' | 'list' | 'backlog';
-
-export type OpeningStage = { kind: 'journey'; key: string; tab: JourneyTab } | { kind: 'map' };
-
-export interface WatchView {
-  layout?: BoardLayout;
-  chosen?: string;
-  stage?: OpeningStage;
-}
+export type { OpeningStage, WatchView };
 
 interface OpeningAsk {
   key?: string | undefined;
@@ -47,7 +39,11 @@ function screenOpening(screen: string): OpeningReading {
     return { opening: { stage: { kind: 'map' } } };
   }
 
-  return { refused: `${screen} names no watch screen. watch opens list or map` };
+  if (screen === 'oplog') {
+    return { opening: { stage: { kind: 'oplog' } } };
+  }
+
+  return { refused: `${screen} names no watch screen. watch opens list, map, or oplog` };
 }
 
 function keylessOpening(tab: string | undefined, screen: string | undefined): OpeningReading {

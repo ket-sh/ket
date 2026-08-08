@@ -27,6 +27,12 @@ describe('the opening a watch invocation asks for', () => {
     expect(openingOf({ screen: 'map' })).toStrictEqual({ opening: { stage: { kind: 'map' } } });
   });
 
+  it('lands the oplog screen', () => {
+    expect(openingOf({ screen: 'oplog' })).toStrictEqual({
+      opening: { stage: { kind: 'oplog' } },
+    });
+  });
+
   it('refuses a tab no journey shows, naming the ones it does', () => {
     const reading = openingOf({ key: 'K-1', tab: 'bogus' });
 
@@ -39,7 +45,7 @@ describe('the opening a watch invocation asks for', () => {
     const reading = openingOf({ screen: 'bogus' });
 
     expect(reading).toStrictEqual({
-      refused: 'bogus names no watch screen. watch opens list or map',
+      refused: 'bogus names no watch screen. watch opens list, map, or oplog',
     });
   });
 

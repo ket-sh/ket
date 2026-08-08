@@ -1,6 +1,10 @@
 import { createMockKeys } from '@opentui/core/testing';
 import { testRender } from '@opentui/react/test-utils';
-import { afterEach, describe, expect, it } from 'bun:test';
+import { afterEach, describe, expect, it, setDefaultTimeout } from 'bun:test';
+
+// The landed() waits commit to a 15s deadline; a loaded runner can spend more
+// than bun's 5s default across two of them before a frame settles.
+setDefaultTimeout(20_000);
 
 import type { WatchView } from '../model/opening.ts';
 
@@ -96,7 +100,9 @@ describe('the frame a deep link opens on', () => {
 
     expect(frame).toContain('triaged 1');
   });
+});
 
+describe('the memory a reopening honors', () => {
   it('reopens the remembered list layout', async () => {
     const frame = await openedWith({ opening: { layout: 'list' } }, (seen) =>
       seen.includes('v kanban'),
@@ -111,6 +117,15 @@ describe('the frame a deep link opens on', () => {
     );
 
     expect(frame).toContain('walking skeleton');
+  });
+
+  it('reopens the remembered operation log', async () => {
+    const frame = await openedWith({ opening: { stage: { kind: 'oplog' } } }, (seen) =>
+      seen.includes('oplog · last 500'),
+    );
+
+    expect(frame).toContain('oplog · last 500');
+    expect(frame).toContain('board › oplog');
   });
 
   it('seats the remembered chosen card', async () => {
@@ -139,6 +154,24 @@ describe('the standing watch reports to be remembered', () => {
       layout: 'kanban',
       chosen: 'K-2',
       stage: { kind: 'journey', key: 'K-2', tab: 'overview' },
+    });
+  });
+
+  it('reports the operation log once the l key lands there', async () => {
+    const reported: WatchView[] = [];
+
+    const remember = (view: WatchView): void => {
+      reported.push(view);
+    };
+
+    await openedWith({ remember }, (seen) => seen.includes('K-2'));
+    pressed('l');
+    await landed((seen) => seen.includes('oplog · last 500'));
+
+    expect(reported.at(-1)).toStrictEqual({
+      layout: 'kanban',
+      chosen: 'K-2',
+      stage: { kind: 'oplog' },
     });
   });
 
