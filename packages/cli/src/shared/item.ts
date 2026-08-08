@@ -1,3 +1,5 @@
+import { renderDescription } from './item-description.ts';
+
 export const ITEM_STATUSES = [
   'idea',
   'triaged',
@@ -26,6 +28,7 @@ export interface Item {
   status: ItemStatus;
   parent: string | undefined;
   children: string[];
+  description?: string;
 }
 
 const SETTLED: ItemStatus[] = ['idea', 'shipped'];
@@ -76,6 +79,7 @@ export function renderItem(item: Item): string {
     `status: ${item.status}`,
     ...renderParent(item.parent),
     renderChildren(item.children),
+    ...renderDescription(item.description),
     '',
   ].join('\n');
 }

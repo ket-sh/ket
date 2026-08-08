@@ -12,6 +12,7 @@ import type { Transition } from '../../shared/transition.ts';
 import { failuresAmong } from '../../shared/checks.ts';
 import { record } from '../../shared/event-log.ts';
 import { semanticsOf } from '../../shared/governing.ts';
+import { describing } from '../../shared/item-description.ts';
 import { ITEM_KINDS, ITEM_SIZES, nextKey, titleRefusal } from '../../shared/item.ts';
 import { ketRootOrThrow } from '../../shared/locate.ts';
 import { argvOf } from '../../shared/ring.ts';
@@ -48,6 +49,7 @@ const file = defineCommand({
     kind: { type: 'string', required: true, description: 'feature, bug, refactor or chore' },
     size: { type: 'string', required: true, description: 'epic, story, subtask or trivial' },
     parent: { type: 'string', description: 'The epic or story this breaks out of' },
+    description: { type: 'string', description: 'The prose the issue-writing skill wrote' },
   },
   async run({ args }) {
     const root = await ketRootOrThrow(process.cwd());
@@ -61,7 +63,13 @@ const file = defineCommand({
       throw new Error(`${args.title.split('\n')[0] ?? ''} is not a title: ${refused}`);
     }
 
-    const filing: Filing = { key: allocated, title: args.title, kind, size };
+    const filing: Filing = {
+      key: allocated,
+      title: args.title,
+      kind,
+      size,
+      ...describing(args.description),
+    };
 
     if (args.parent === undefined) {
       await fileAlone(root, filing);

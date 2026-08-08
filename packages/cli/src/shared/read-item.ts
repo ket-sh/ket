@@ -1,6 +1,7 @@
 import type { Item, ItemKind, ItemSize, ItemStatus } from './item.ts';
 import type { GovernedItem } from './write-gate.ts';
 
+import { describing, splitDescription } from './item-description.ts';
 import { isInFlight, ITEM_KINDS, ITEM_SIZES, ITEM_STATUSES } from './item.ts';
 
 const STATUSES: ItemStatus[] = [...ITEM_STATUSES];
@@ -38,10 +39,11 @@ function oneOf<Known extends string>(known: Known[], value: string | undefined):
 }
 
 export function parseItem(contents: string): Item | undefined {
-  const title = valueOf(contents, 'title');
-  const kind = oneOf(KINDS, valueOf(contents, 'kind'));
-  const size = oneOf(SIZES, valueOf(contents, 'size'));
-  const status = oneOf(STATUSES, valueOf(contents, 'status'));
+  const { fields, description } = splitDescription(contents);
+  const title = valueOf(fields, 'title');
+  const kind = oneOf(KINDS, valueOf(fields, 'kind'));
+  const size = oneOf(SIZES, valueOf(fields, 'size'));
+  const status = oneOf(STATUSES, valueOf(fields, 'status'));
 
   if (title === undefined || kind === undefined || size === undefined || status === undefined) {
     return undefined;
@@ -52,8 +54,9 @@ export function parseItem(contents: string): Item | undefined {
     kind,
     size,
     status,
-    parent: valueOf(contents, 'parent'),
-    children: childrenOf(contents),
+    parent: valueOf(fields, 'parent'),
+    children: childrenOf(fields),
+    ...describing(description),
   };
 }
 

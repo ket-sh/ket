@@ -54,6 +54,44 @@ describe('rendering the item a repository owns', () => {
   });
 });
 
+describe('the description an item carries', () => {
+  it('writes the prose as a block below the fields the gates read', () => {
+    const described = { ...STORY, description: 'Context\n\nA locked account says nothing.' };
+
+    expect(renderItem(described).split('\n')).toStrictEqual([
+      'title: login with lockout',
+      'kind: feature',
+      'size: story',
+      'status: triaged',
+      'children: []',
+      'description: |',
+      '  Context',
+      '',
+      '  A locked account says nothing.',
+      '',
+    ]);
+  });
+
+  it('writes no description at all for an item nobody described', () => {
+    expect(renderItem(STORY)).not.toContain('description');
+  });
+
+  it('writes no description for prose that is only whitespace, since that describes nothing', () => {
+    expect(renderItem({ ...STORY, description: '  \n \n' })).not.toContain('description');
+  });
+
+  it('indents a line a carriage return opened, so no line of prose escapes the block', () => {
+    const forging = { ...STORY, description: 'Steps to reproduce\rstatus: shipped' };
+
+    expect(renderItem(forging).split('\n').slice(5)).toStrictEqual([
+      'description: |',
+      '  Steps to reproduce',
+      '  status: shipped',
+      '',
+    ]);
+  });
+});
+
 describe('allocating the key a new item carries', () => {
   it('starts at one in a repository with no items', () => {
     expect(nextKey('AUTH', [])).toBe('AUTH-1');

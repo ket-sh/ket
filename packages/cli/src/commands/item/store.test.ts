@@ -109,3 +109,47 @@ describe('what a filing writes', () => {
     ).rejects.toThrow();
   });
 });
+
+describe('the description a filing carries', () => {
+  it('lands the description the filing was written with', async () => {
+    await fileAlone(root, {
+      key: 'K-1',
+      title: 'Filed alone',
+      kind: 'bug',
+      size: 'subtask',
+      description: 'Steps to reproduce\n\n1. Sign in three times with the wrong password.',
+    });
+
+    await expect(read(root, 'K-1')).resolves.toMatchObject({
+      description: 'Steps to reproduce\n\n1. Sign in three times with the wrong password.',
+    });
+  });
+
+  it('gives a child its own description and leaves the parent the one it had', async () => {
+    await write(root, 'K-1', {
+      ...ITEM,
+      size: 'epic',
+      children: [],
+      description: 'The problem the epic answers',
+    });
+
+    await fileUnder(
+      root,
+      {
+        key: 'K-2',
+        title: 'The child',
+        kind: 'feature',
+        size: 'story',
+        description: 'The one behavior this child ships',
+      },
+      'K-1',
+    );
+
+    await expect(read(root, 'K-2')).resolves.toMatchObject({
+      description: 'The one behavior this child ships',
+    });
+    await expect(read(root, 'K-1')).resolves.toMatchObject({
+      description: 'The problem the epic answers',
+    });
+  });
+});

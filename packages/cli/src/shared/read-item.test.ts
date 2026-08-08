@@ -68,6 +68,70 @@ describe('reading back an item this repository wrote', () => {
   });
 });
 
+describe('reading the description back off an item', () => {
+  const described = (description: string): string =>
+    renderItem({
+      title: 'login with lockout',
+      kind: 'feature',
+      size: 'story',
+      status: 'triaged',
+      parent: undefined,
+      children: [],
+      description,
+    });
+
+  it('recovers the prose, blank lines and all', () => {
+    expect(parseItem(described('Context\n\nBehavior'))?.description).toBe('Context\n\nBehavior');
+  });
+
+  it('reads no description off an item nobody described', () => {
+    expect(parseItem(WRITTEN)?.description).toBeUndefined();
+  });
+
+  it('reads the status the item holds, not one the description quotes', () => {
+    expect(parseItem(described('status: shipped'))?.status).toBe('triaged');
+  });
+
+  it('reads no child off a bullet the description happens to carry', () => {
+    expect(parseItem(described('Out of scope\n- AUTH-9'))?.children).toStrictEqual([]);
+  });
+
+  it('reads no description off a block with nothing under it, since that describes nothing', () => {
+    const hollow = 'title: a\nkind: feature\nsize: story\nstatus: triaged\ndescription: |\n';
+
+    expect(parseItem(hollow)?.description).toBeUndefined();
+  });
+});
+
+describe('an item whose description is not the last thing in the file', () => {
+  const WITH_CHILDREN_BELOW = [
+    'title: authentication',
+    'kind: feature',
+    'size: epic',
+    'status: triaged',
+    'description: |',
+    '  Context',
+    'children:',
+    '  - AUTH-2',
+    '',
+  ].join('\n');
+
+  it('ends the description where the next field starts', () => {
+    expect(parseItem(WITH_CHILDREN_BELOW)?.description).toBe('Context');
+  });
+
+  it('reads the fields written below the description, since yaml has no field order', () => {
+    expect(parseItem(WITH_CHILDREN_BELOW)?.children).toStrictEqual(['AUTH-2']);
+  });
+
+  it('reads the last line of a file that ends without a newline', () => {
+    const unterminated =
+      'title: a\nkind: bug\nsize: subtask\nstatus: triaged\ndescription: |\n  One line';
+
+    expect(parseItem(unterminated)?.description).toBe('One line');
+  });
+});
+
 describe('refusing to guess at an item it cannot read', () => {
   it('reads nothing from an empty file', () => {
     expect(parseItem('')).toBeUndefined();
