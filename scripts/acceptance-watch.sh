@@ -156,4 +156,8 @@ sleep 3
 SHOWN="$(screen)"
 shows "approve gate" && fail "the ceremony never closed itself"
 
-echo "acceptance: watch walks the canvas, opens the surfaces, and passes the gate"
+"$PILOTTY" kill -s "$SESSION" >/dev/null 2>&1 || true
+"$PILOTTY" spawn --name "$SESSION" --cwd "$BOARD" bun "$PWD/packages/cli/src/run.ts" watch KWA-1 >/dev/null
+"$PILOTTY" wait-for -s "$SESSION" "KWA-1 · journey" >/dev/null || fail "the deep link never landed on the journey"
+
+echo "acceptance: watch walks the canvas, opens the surfaces, passes the gate, and deep-links the journey"

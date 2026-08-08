@@ -11,6 +11,7 @@ import type { FrameStack } from '../model/frames.ts';
 import type { Help } from '../model/help.ts';
 import type { PressDeps } from '../model/keys.ts';
 import type { WatchMouse } from '../model/mouse.ts';
+import type { WatchView } from '../model/opening.ts';
 import type { Palette } from '../model/palette.ts';
 import type { Picker } from '../model/picker.ts';
 import type { Seat } from '../model/seat.ts';
@@ -19,6 +20,7 @@ import type { RoomProps } from './stage.tsx';
 import { ThemeProvider } from '../../../shared/theme';
 import { Banner } from '../../../shared/ui';
 import { narrowedBy } from '../lib/filter.ts';
+import { standingOf } from '../lib/standing.ts';
 import { useBoardLayout } from '../model/board-layout.ts';
 import { useBoardState } from '../model/board-state.ts';
 import { useChime } from '../model/chime.ts';
@@ -27,6 +29,7 @@ import { outstayed } from '../model/frames.ts';
 import { useHelp } from '../model/help.ts';
 import { press } from '../model/keys.ts';
 import { mouseOf } from '../model/mouse.ts';
+import { useOpening, useRemember } from '../model/opening.ts';
 import { usePalette } from '../model/palette.ts';
 import { usePicker } from '../model/picker.ts';
 import { useSeat } from '../model/seat.ts';
@@ -47,6 +50,8 @@ export interface WatchPageProps {
   onQuit: () => void;
   clock?: () => string;
   ring?: Ring;
+  opening?: WatchView | undefined;
+  remember?: ((view: WatchView) => void) | undefined;
 }
 
 function statusOf(columns: KanbanColumnView[], key: string): string | undefined {
@@ -137,6 +142,8 @@ function useWatchRoom({
   onQuit,
   clock = () => new Date().toISOString(),
   ring,
+  opening,
+  remember,
 }: WatchPageProps): Room {
   const { columns, loaded, now, tick, refresh } = useBoardState(feed, clock);
   const stack = useFrameStack(feed);
@@ -149,13 +156,20 @@ function useWatchRoom({
   const palette = usePalette({ columns, chosen: seat.chosen, stack, wear, picker, refresh, tick });
   const help = useHelp();
   const most = stack.top.kind === 'surface' ? surfaceMost(stack.top, height - CHROME) : 0;
-  const deps = { onQuit, refresh, stack, seat, most, tick, layout, swap, queue };
+  const standing = standingOf(layout, stack.frames, seat.chosen?.key);
+  const leave = (): void => {
+    remember?.(standing);
+    onQuit();
+  };
+  const deps = { onQuit: leave, refresh, stack, seat, most, tick, layout, swap, queue };
   const pressDeps = { ...deps, picker, filter, palette, help };
   const mouse = mouseOf(pressDeps);
 
   useChime(columns, loaded, ring);
   useCeremonyCurtain(stack, tick);
   useMovedCardFollow(stack, seat, columns);
+  useOpening(opening, loaded, { stack, seat, wear });
+  useRemember(remember, standing);
   useWatchKeys(pressDeps);
 
   return {

@@ -128,7 +128,7 @@ function useDiving(
   showTab: (tab: JourneyTab) => void,
 ): Diving {
   const dive = useCallback(
-    (key: string | undefined) => {
+    (key: string | undefined, tab: JourneyTab = 'overview') => {
       if (key === undefined) {
         return;
       }
@@ -141,7 +141,7 @@ function useDiving(
               kind: 'journey',
               journey,
               sel: landingOf(journey),
-              tab: 'overview',
+              tab,
               pick: 0,
               focus: 'canvas',
             },
