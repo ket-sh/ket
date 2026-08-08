@@ -94,8 +94,8 @@ async function decorated(): Promise<Journey> {
   return grown;
 }
 
-function docOf(journey: Journey, title: string): SurfaceDoc | undefined {
-  return journey.nodes.find((node) => node.title === title)?.doc;
+function docOf(journey: Journey, name: string): SurfaceDoc | undefined {
+  return journey.artifacts.find((artifact) => artifact.name === name)?.doc;
 }
 
 beforeEach(async () => {

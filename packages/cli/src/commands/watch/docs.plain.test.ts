@@ -56,7 +56,7 @@ async function specDoc(): Promise<SurfaceDoc | undefined> {
 
   const grown = await docsFor(itemDir, LOG, journey);
 
-  return grown.nodes.find((node) => node.title === 'spec.md')?.doc;
+  return grown.artifacts.find((artifact) => artifact.name === 'spec.md')?.doc;
 }
 
 describe('the plain sibling a prose doc wears', () => {

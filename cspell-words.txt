@@ -5,11 +5,11 @@ arrayify
 artipacked
 autohide
 backoff
+bchpt
 bddgen
 bunfig
 bunx
 capitalises
-bchpt
 carriable
 catppuccin
 chpt
@@ -30,6 +30,7 @@ depcruise
 diffview
 difit
 dmno
+dogfood
 dorny
 dragstop
 electricsql
@@ -75,8 +76,8 @@ oklch
 openspec
 opentui
 opentui-spinner
-ossf
 OSSF
+ossf
 oxfmt
 oxfmtrc
 oxlint

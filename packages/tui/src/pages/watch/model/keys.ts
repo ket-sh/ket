@@ -22,15 +22,26 @@ export const GATE_KEYS: Record<string, GateActionView> = {
   o: 'reopen',
 };
 
-function journeyPress(name: string, stack: FrameStack): void {
-  if (name === 'escape') {
+const JOURNEY_KEYS: Record<string, (stack: FrameStack) => void> = {
+  escape: (stack) => {
     stack.pop();
-
-    return;
-  }
-
-  if (name === 'return' || name === 'enter') {
+  },
+  return: (stack) => {
     stack.enter();
+  },
+  enter: (stack) => {
+    stack.enter();
+  },
+  tab: (stack) => {
+    stack.tab();
+  },
+};
+
+function journeyPress(name: string, stack: FrameStack): void {
+  const answer = JOURNEY_KEYS[name];
+
+  if (answer !== undefined) {
+    answer(stack);
 
     return;
   }

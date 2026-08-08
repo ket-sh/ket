@@ -1,10 +1,10 @@
 import type { Item, ItemStatus } from './item.ts';
-import type { Journey, JourneyMark, JourneyNode, Pieces, Visit } from './journey-node.ts';
+import type { Journey, JourneyChild, JourneyMark, JourneyNode, Visit } from './journey-node.ts';
 import type { LoggedEvent } from './kanban.ts';
 import type { StoredItem } from './read-item.ts';
 
 import { ITEM_STATUSES } from './item.ts';
-import { artifactPieces } from './journey-artifacts.ts';
+import { artifactsOf } from './journey-artifacts.ts';
 import { arrivalOf, eventsAbout, refusalAfter } from './kanban.ts';
 import { parseItem } from './read-item.ts';
 
@@ -25,62 +25,50 @@ function movesAmong(events: LoggedEvent[]): { status: ItemStatus; at: string | u
     });
 }
 
+function idFor(status: ItemStatus, held: number): string {
+  return held === 0 ? status : `${status}#${String(held + 1)}`;
+}
+
 function visitsOf(events: LoggedEvent[]): Visit[] {
   const seen = new Map<string, number>();
+  const moves = movesAmong(events);
 
-  return movesAmong(events).map((move) => {
+  return moves.map((move, index) => {
     const count = (seen.get(move.status) ?? 0) + 1;
 
     seen.set(move.status, count);
 
     return {
-      id: count === 1 ? move.status : `${move.status}#${String(count)}`,
+      id: idFor(move.status, count - 1),
       status: move.status,
       at: move.at,
+      until: moves[index + 1]?.at,
     };
   });
 }
 
-function pendingAfter(visits: Visit[]): Visit | undefined {
-  const last = visits[visits.length - 1];
+// The machine's declared order is the whole path, so a status added to the
+// lifecycle joins the canvas without a second edit here.
+function aheadOf(visits: Visit[], standing: ItemStatus): Visit[] {
+  const reached = ITEM_STATUSES.indexOf(standing);
 
-  if (last === undefined) {
-    return undefined;
-  }
-
-  const next = ITEM_STATUSES[ITEM_STATUSES.indexOf(last.status) + 1];
-
-  if (next === undefined) {
-    return undefined;
-  }
-
-  const held = visits.filter((visit) => visit.status === next).length;
-
-  return {
-    id: held === 0 ? next : `${next}#${String(held + 1)}`,
-    status: next,
+  return ITEM_STATUSES.slice(reached + 1).map((status) => ({
+    id: idFor(status, visits.filter((visit) => visit.status === status).length),
+    status,
     at: undefined,
-  };
+    until: undefined,
+  }));
 }
 
 function stageNode(visit: Visit, mark: JourneyMark): JourneyNode {
   return {
     id: visit.id,
-    kind: 'stage',
     title: visit.status,
     mark,
     at: visit.at,
-    child: undefined,
+    until: visit.until,
     doc: undefined,
   };
-}
-
-function stageNodes(visits: Visit[], pending: Visit | undefined): JourneyNode[] {
-  const walked = visits.map((visit, index) =>
-    stageNode(visit, index === visits.length - 1 ? 'active' : 'done'),
-  );
-
-  return pending === undefined ? walked : [...walked, stageNode(pending, 'pending')];
 }
 
 function stageEdges(stages: Visit[]): [string, string][] {
@@ -91,74 +79,59 @@ function stageEdges(stages: Visit[]): [string, string][] {
   });
 }
 
-function childMark(status: ItemStatus): JourneyMark {
-  if (status === 'shipped') {
-    return 'done';
-  }
-
-  return status === 'idea' ? 'pending' : 'active';
-}
-
-function childNode(stored: StoredItem[], log: string, key: string): JourneyNode {
+function childOf(stored: StoredItem[], log: string, key: string): JourneyChild | undefined {
   const entry = stored.find((candidate) => candidate.key === key);
   const item = entry === undefined ? undefined : parseItem(entry.contents);
 
   if (item === undefined) {
-    return {
-      id: key,
-      kind: 'child',
-      title: key,
-      mark: 'pending',
-      at: undefined,
-      child: key,
-      doc: undefined,
-    };
+    return undefined;
   }
 
+  const events = eventsAbout(log, key);
+  const since = arrivalOf(events, item.status);
+
   return {
-    id: key,
-    kind: 'child',
-    title: `${key} ${item.title}`,
-    mark: childMark(item.status),
-    at: arrivalOf(eventsAbout(log, key), item.status),
-    child: key,
-    doc: undefined,
+    key,
+    title: item.title,
+    size: item.size,
+    status: item.status,
+    since,
+    refusal: since === undefined ? undefined : refusalAfter(events, since),
   };
 }
 
-function childPieces(
-  children: string[],
-  stored: StoredItem[],
-  log: string,
-  anchor: string,
-): Pieces {
-  const nodes = children.map((child) => childNode(stored, log, child));
+function childrenOf(stored: StoredItem[], log: string, keys: string[]): JourneyChild[] {
+  return keys.flatMap((key) => {
+    const child = childOf(stored, log, key);
 
-  return { nodes, edges: nodes.map((node) => [anchor, node.id]) };
+    return child === undefined ? [] : [child];
+  });
 }
 
 interface Walk {
-  visits: Visit[];
-  pending: Visit | undefined;
-  stages: Visit[];
+  visited: Visit[];
+  ahead: Visit[];
 }
 
-function walkOf(events: LoggedEvent[], fallback: ItemStatus): Walk {
-  const walked = visitsOf(events);
+function walkOf(events: LoggedEvent[], standing: ItemStatus): Walk {
+  const visited = visitsOf(events);
+  const last = visited[visited.length - 1];
 
-  if (walked.length === 0) {
-    const alone = [{ id: fallback, status: fallback, at: undefined }];
+  if (last === undefined) {
+    const alone = { id: standing, status: standing, at: undefined, until: undefined };
 
-    return { visits: alone, pending: undefined, stages: alone };
+    return { visited: [alone], ahead: aheadOf([], standing) };
   }
 
-  const pending = pendingAfter(walked);
+  return { visited, ahead: aheadOf(visited, last.status) };
+}
 
-  return {
-    visits: walked,
-    pending,
-    stages: pending === undefined ? walked : [...walked, pending],
-  };
+function stageNodes(walk: Walk): JourneyNode[] {
+  const walked = walk.visited.map((visit, index) =>
+    stageNode(visit, index === walk.visited.length - 1 ? 'active' : 'done'),
+  );
+
+  return [...walked, ...walk.ahead.map((visit) => stageNode(visit, 'future'))];
 }
 
 function itemAt(stored: StoredItem[], key: string): Item | undefined {
@@ -180,15 +153,15 @@ export function foldJourney(stored: StoredItem[], log: string, key: string): Jou
 
   const events = eventsAbout(log, key);
   const walk = walkOf(events, item.status);
-  const artifacts = artifactPieces(events, key, walk.stages);
-  const anchor = walk.visits[walk.visits.length - 1];
-  const kin = childPieces(item.children, stored, log, anchor?.id ?? item.status);
 
   return {
     item: key,
     title: item.title,
-    nodes: [...stageNodes(walk.visits, walk.pending), ...artifacts.nodes, ...kin.nodes],
-    edges: [...stageEdges(walk.stages), ...artifacts.edges, ...kin.edges],
-    standing: standingOf(events, anchor?.at),
+    description: item.description,
+    nodes: stageNodes(walk),
+    edges: stageEdges([...walk.visited, ...walk.ahead]),
+    standing: standingOf(events, walk.visited.at(-1)?.at),
+    artifacts: artifactsOf(events, key),
+    children: childrenOf(stored, log, item.children),
   };
 }

@@ -2,6 +2,8 @@ export type {
   BoardFeed,
   CalloutView,
   GateActionView,
+  JourneyArtifactView,
+  JourneyChildView,
   JourneyNodeView,
   JourneyView,
   KanbanCardView,

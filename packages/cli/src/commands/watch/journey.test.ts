@@ -38,6 +38,12 @@ describe('the journey the feed serves', () => {
       'triaged',
       'designing',
       'awaiting-approval',
+      'implementing',
+      'verifying',
+      'awaiting-merge',
+      'shipped',
+    ]);
+    expect(journey?.artifacts.map((artifact) => artifact.path)).toStrictEqual([
       '.ket/items/K-1/spec.md',
     ]);
   });
@@ -53,7 +59,7 @@ describe('the journey the feed serves', () => {
     );
 
     const journey = await boardFeedFor(root).journey('K-1');
-    const doc = journey?.nodes.find((node) => node.title === 'spec.md')?.doc;
+    const doc = journey?.artifacts.find((artifact) => artifact.name === 'spec.md')?.doc;
 
     expect(doc?.kind).toBe('prose');
   });

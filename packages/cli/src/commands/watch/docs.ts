@@ -241,18 +241,17 @@ function windowed(events: LoggedEvent[], from: string, until: string | undefined
 }
 
 function stageLedgers(journey: Journey, events: LoggedEvent[]): Map<string, SurfaceDoc> {
-  const stages = journey.nodes.filter((node) => node.kind === 'stage');
   const ledgers = new Map<string, SurfaceDoc>();
 
-  stages.forEach((stage, at) => {
+  for (const stage of journey.nodes) {
     if (stage.at !== undefined) {
       ledgers.set(stage.id, {
         kind: 'ledger',
         label: 'Ledger',
-        lines: windowed(events, stage.at, stages[at + 1]?.at),
+        lines: windowed(events, stage.at, stage.until),
       });
     }
-  });
+  }
 
   return ledgers;
 }
@@ -260,13 +259,16 @@ function stageLedgers(journey: Journey, events: LoggedEvent[]): Map<string, Surf
 export async function docsFor(itemDir: string, log: string, journey: Journey): Promise<Journey> {
   const shelf = await shelfOf(itemDir);
   const ledgers = stageLedgers(journey, eventsAbout(log, journey.item));
-  const nodes = await Promise.all(
-    journey.nodes.map(async (node) =>
-      node.kind === 'artifact'
-        ? { ...node, doc: await artifactDoc(itemDir, shelf, node.title) }
-        : { ...node, doc: ledgers.get(node.id) },
-    ),
+  const artifacts = await Promise.all(
+    journey.artifacts.map(async (artifact) => ({
+      ...artifact,
+      doc: await artifactDoc(itemDir, shelf, artifact.name),
+    })),
   );
 
-  return { ...journey, nodes };
+  return {
+    ...journey,
+    nodes: journey.nodes.map((node) => ({ ...node, doc: ledgers.get(node.id) })),
+    artifacts,
+  };
 }

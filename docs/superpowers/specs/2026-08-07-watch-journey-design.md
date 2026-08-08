@@ -29,16 +29,34 @@ screen, until the owner approved the whole.
   a live indicator. The key bar holds the bottom row of the screen and names
   the keys the view above it answers.
 
+## The drill-in
+
+Enter on a card opens the item behind a tab bar: overview, workflow,
+children, artifacts. The dogfood round settled this shape, replacing the
+single graph the first cut drew.
+
+- Overview comes first and holds the title and the description at full
+  width. An item without a description reads "No description written."
+- Workflow holds the flow canvas.
+- Children exists only while the item has children. Its rows read like the
+  board's flat list, and enter drills into the child.
+- Artifacts lists what the item wrote beside the chosen one, rendered
+  through the same surface replicas a full-screen artifact uses.
+
 ## The journey canvas
 
-- Enter on a card opens its journey: a two-dimensional graph of boxes joined
-  by elbow edges, flowing left to right like the kanban above it.
-- Stage visits, artifacts, and epic children are nodes. Artifacts fan out of
-  the stage that wrote them. Children close an epic's graph and carry a `»`
-  mark.
+- The canvas shows stages and nothing else. Artifacts and children left it
+  for their own tabs, because a graph carrying all three read as a maze.
+- It draws the whole machine path: the stages already visited, the stage the
+  item stands in, and every stage ahead through to shipped. The path comes
+  from the machine's declared order, so a new status joins the canvas with
+  no second edit.
+- A visited stage closes at the arrival that followed it, which is what
+  gives it a real duration. The stage the item stands in stays open and
+  measures against now.
 - A node wears its state: a check for done, a spinner for active, a hollow
-  circle for pending, a red exclamation for a standing refusal. The last
-  refusal also sits under the canvas as a red line.
+  circle for a stage not yet reached. The last refusal sits under the canvas
+  as a red line.
 - Arrow keys jump to the nearest node in that direction. The viewport
   follows the selection with its own pan arithmetic, because the renderer's
   horizontal scrolling is unreliable. Edges that touch the selection carry a
@@ -57,9 +75,9 @@ screen, until the owner approved the whole.
   under the item's directory. The event's moment dates the artifact.
 - Children come from the store's parent field.
 - A card's refusal is the last `refused` event at or after its arrival.
-- `foldJourney(stored, log, key)` joins the store and the log into nodes and
-  edges. It lives beside `foldKanban` in the CLI's shared domain, pure and
-  mutation-gated.
+- `foldJourney(stored, log, key)` joins the store and the log into stage
+  nodes, edges, an artifact list, and a child list. It lives beside
+  `foldKanban` in the CLI's shared domain, pure and mutation-gated.
 - Layout is presentation: a pure function in the TUI package assigns layers
   and lanes. Property tests hold two invariants: no two boxes overlap, and
   every edge joins two placed nodes.

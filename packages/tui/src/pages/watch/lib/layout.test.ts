@@ -7,11 +7,10 @@ import { NODE_H, NODE_W, neighborOf, placedOf } from './layout.ts';
 function nodeOf(id: string): JourneyNodeView {
   return {
     id,
-    kind: 'stage',
     title: id,
     mark: 'done',
     at: undefined,
-    child: undefined,
+    until: undefined,
     doc: undefined,
   };
 }
@@ -20,9 +19,12 @@ function journeyOf(ids: string[], edges: [string, string][]): JourneyView {
   return {
     item: 'K-1',
     title: 'The watched item',
+    description: undefined,
     nodes: ids.map(nodeOf),
     edges,
     standing: undefined,
+    artifacts: [],
+    children: [],
   };
 }
 

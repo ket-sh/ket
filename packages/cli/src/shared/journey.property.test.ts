@@ -1,6 +1,7 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
+import type { Journey } from './journey.ts';
 import type { StoredItem } from './read-item.ts';
 
 import { ITEM_STATUSES } from './item.ts';
@@ -59,6 +60,10 @@ function edgesOf(stored: StoredItem[], log: string): [string, string][] {
   return foldJourney(stored, log, KEY)?.edges ?? [];
 }
 
+function visitedStages(stored: StoredItem[], log: string): Journey['nodes'] {
+  return (foldJourney(stored, log, KEY)?.nodes ?? []).filter((node) => node.at !== undefined);
+}
+
 describe('the invariants a journey keeps', () => {
   it('names every edge endpoint after an existing node, whatever the log carries', () => {
     fc.assert(
@@ -79,6 +84,18 @@ describe('the invariants a journey keeps', () => {
         const ids = nodeIds(stored, log);
 
         expect(new Set(ids).size).toBe(ids.length);
+      }),
+    );
+  });
+
+  it('closes each visited stage where the next one opens, leaving only the last open', () => {
+    fc.assert(
+      fc.property(someStored, someLog, (stored, log) => {
+        const visited = visitedStages(stored, log);
+
+        for (const [index, stage] of visited.entries()) {
+          expect(stage.until).toBe(visited[index + 1]?.at);
+        }
       }),
     );
   });

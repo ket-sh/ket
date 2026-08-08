@@ -65,12 +65,15 @@ async function opening(presses: Press[]): Promise<string> {
   return frame;
 }
 
-const SPEC_PATH: Press[] = [
+const ARTIFACTS_TAB: Press[] = [
   { key: 'ARROW_RIGHT', lands: '║ K-1' },
   { key: 'RETURN', lands: 'K-1 · journey' },
-  { key: 'ARROW_DOWN', lands: '║ spec.md' },
-  { key: 'RETURN', lands: 'K-1 · Spec' },
+  { key: 'TAB', lands: '║ designing' },
+  { key: 'TAB', lands: 'A quiet fix' },
+  { key: 'TAB', lands: '► spec.md' },
 ];
+
+const SPEC_PATH: Press[] = [...ARTIFACTS_TAB, { key: 'RETURN', lands: 'K-1 · Spec' }];
 
 describe('the surface a node opens', () => {
   it('opens the artifact doc full screen with its audience tabs', async () => {
@@ -97,7 +100,8 @@ describe('the surface a node opens', () => {
     const frame = await opening([
       { key: 'ARROW_RIGHT', lands: '║ K-1' },
       { key: 'RETURN', lands: 'K-1 · journey' },
-      { key: 'ARROW_UP', lands: '║ K-2' },
+      { key: 'TAB', lands: '║ designing' },
+      { key: 'TAB', lands: 'A quiet fix' },
       { key: 'RETURN', lands: 'K-2 · journey' },
     ]);
 
