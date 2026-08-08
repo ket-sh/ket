@@ -35,15 +35,11 @@ function screenOpening(screen: string): OpeningReading {
     return { opening: { layout: 'list' } };
   }
 
-  if (screen === 'map') {
-    return { opening: { stage: { kind: 'map' } } };
+  if (screen === 'map' || screen === 'oplog' || screen === 'docs') {
+    return { opening: { stage: { kind: screen } } };
   }
 
-  if (screen === 'oplog') {
-    return { opening: { stage: { kind: 'oplog' } } };
-  }
-
-  return { refused: `${screen} names no watch screen. watch opens list, map, or oplog` };
+  return { refused: `${screen} names no watch screen. watch opens list, map, oplog, or docs` };
 }
 
 function keylessOpening(tab: string | undefined, screen: string | undefined): OpeningReading {

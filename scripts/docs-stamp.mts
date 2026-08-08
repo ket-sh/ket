@@ -1,11 +1,11 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import process from 'node:process';
 
-import { parsePage, stampedPage } from './docs/frontmatter.mts';
-import { governedDocPages } from './docs/pages.mts';
+import { parsePage, stampedPage } from '../packages/cli/src/shared/docs-frontmatter.ts';
+import { governedDocPages } from '../packages/cli/src/shared/docs-pages.ts';
+import { stampOf } from '../packages/cli/src/shared/docs-stamp.ts';
 import { pageState, readSources } from './docs/pinning.mts';
 import { trackedFiles } from './docs/repository.mts';
-import { stampOf } from './docs/stamp.mts';
 
 function renewStamp(path: string, files: readonly string[]): void {
   const markdown = readFileSync(path, 'utf-8');

@@ -6,6 +6,7 @@ import type {
   JourneyPaneView,
   JourneyView,
 } from '../../../shared/model';
+import type { Theme } from '../../../shared/theme';
 
 import { ageOf, clipped, wrappedTo } from '../../../shared/lib';
 
@@ -14,6 +15,19 @@ export type PaneTone = 'key' | 'title' | 'state' | 'alert' | 'quiet' | 'link';
 export interface PaneLine {
   text: string;
   tone: PaneTone;
+}
+
+export function toneColorOf(tone: PaneTone, theme: Theme): string {
+  const tones: Record<PaneTone, string> = {
+    key: theme.text,
+    title: theme.text,
+    state: theme.blue,
+    alert: theme.red,
+    quiet: theme.subtext,
+    link: theme.green,
+  };
+
+  return tones[tone];
 }
 
 const TITLE_LINES = 3;

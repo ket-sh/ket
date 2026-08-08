@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isDocCategory, parsePage, stampedPage } from './frontmatter.mts';
+import { isDocCategory, parsePage, stampedPage } from './docs-frontmatter.ts';
 
 const page = [
   '---',
@@ -41,6 +41,27 @@ describe('the page frontmatter codec', () => {
   it('given a sources entry that is not a list item, then parsing fails naming the key', () => {
     expect(() => parsePage('---\nsources: everywhere\n---\n')).toThrow(/sources/u);
   });
+
+  it('given keys outside any fence, then none of them read as frontmatter', () => {
+    const parsed = parsePage('# Bare page\ncategory: sneaky\nstamp: abc123def456\n');
+
+    expect(parsed.category).toBeUndefined();
+    expect(parsed.stamp).toBeUndefined();
+  });
+
+  it('given fences that start below the first line, then nothing reads as frontmatter', () => {
+    const late = 'intro\ncategory: sneaky\n---\nbody\n---\n';
+
+    expect(parsePage(late).category).toBeUndefined();
+    expect(() => stampedPage(late, 'abc123def456')).toThrow(/frontmatter/u);
+  });
+
+  it('given keys in the body below the fence, then the fence alone speaks', () => {
+    const parsed = parsePage('---\ncategory: reference\n---\n\nstamp: decoy\n');
+
+    expect(parsed.category).toBe('reference');
+    expect(parsed.stamp).toBeUndefined();
+  });
 });
 
 describe('stamping a page', () => {
@@ -61,6 +82,14 @@ describe('stamping a page', () => {
 
   it('given a page without frontmatter, then stamping refuses', () => {
     expect(() => stampedPage('# Bare page\n', 'abc123def456')).toThrow(/frontmatter/u);
+  });
+
+  it('given a stamp-looking line below the fence, then stamping still lands inside the fence', () => {
+    const decoyed = '---\ncategory: reference\nsources:\n  - harness/**\n---\n\nstamp: decoy\n';
+
+    expect(stampedPage(decoyed, 'abc123def456')).toBe(
+      '---\ncategory: reference\nsources:\n  - harness/**\nstamp: abc123def456\n---\n\nstamp: decoy\n',
+    );
   });
 });
 

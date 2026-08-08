@@ -21,6 +21,15 @@ export type {
 } from './board.ts';
 
 export type {
+  DocsCatalogView,
+  DocsNodeRowView,
+  DocsPageRowView,
+  DocsRecordRowView,
+  DocsRowView,
+  DocsTouchView,
+} from './docs.ts';
+
+export type {
   MapBandView,
   MapCardView,
   MapReadingView,

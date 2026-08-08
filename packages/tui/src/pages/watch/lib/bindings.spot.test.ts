@@ -145,6 +145,14 @@ describe('the spot a frame stands in', () => {
 });
 
 describe('the spot a held screen stands in', () => {
+  it('reads the docs screen with the focus it holds', () => {
+    const resting: Frame = { kind: 'docs', catalog: { groups: [] }, sel: 0, focus: 'catalog' };
+    const held: Frame = { kind: 'docs', catalog: { groups: [] }, sel: 0, focus: 'detail' };
+
+    expect(spotOf(resting, 'kanban', [])).toStrictEqual({ kind: 'docs', focus: 'catalog' });
+    expect(spotOf(held, 'kanban', [])).toStrictEqual({ kind: 'docs', focus: 'detail' });
+  });
+
   it('reads every held screen by its own kind', () => {
     expect(spotOf({ kind: 'map', reading: { absent: true }, at: 0 }, 'kanban', [])).toStrictEqual({
       kind: 'map',

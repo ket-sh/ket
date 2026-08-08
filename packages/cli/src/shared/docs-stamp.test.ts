@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { sourcesOf, stampOf } from './stamp.mts';
+import { rotOf, sourcesOf, stampOf } from './docs-stamp.ts';
 
 const files = [
   'packages/cli/src/main.ts',
@@ -65,5 +65,36 @@ describe('the stamp fingerprint', () => {
     ];
 
     expect(stampOf(renamed)).not.toBe(stampOf(entries));
+  });
+
+  it('given a known manifest, then the stamp reads back the recorded twelve digits', () => {
+    expect(stampOf([...entries].reverse())).toBe('38425cb6a5ad');
+  });
+});
+
+describe('the rot a page wears against its sources', () => {
+  const entries = [{ path: 'src/keeper.ts', content: 'export const keeper = true;' }];
+
+  it('given a page naming no sources, then it stands unpinned', () => {
+    expect(rotOf({ category: 'reference', sources: [], stamp: undefined }, [])).toBe('unpinned');
+  });
+
+  it('given a stamp covering the sources as they stand, then the page is fresh', () => {
+    const page = { category: 'reference', sources: ['src/**'], stamp: stampOf(entries) };
+
+    expect(rotOf(page, entries)).toBe('fresh');
+  });
+
+  it('given sources that moved past the stamp, then the page is stale', () => {
+    const page = { category: 'reference', sources: ['src/**'], stamp: stampOf(entries) };
+    const moved = [{ path: 'src/keeper.ts', content: 'export const keeper = false;' }];
+
+    expect(rotOf(page, moved)).toBe('stale');
+  });
+
+  it('given sources but no stamp at all, then the page is stale', () => {
+    const page = { category: 'reference', sources: ['src/**'], stamp: undefined };
+
+    expect(rotOf(page, entries)).toBe('stale');
   });
 });

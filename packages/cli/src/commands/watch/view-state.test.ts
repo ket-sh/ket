@@ -58,6 +58,14 @@ describe('the view watch remembers per project', () => {
     expect(await readView(home, root)).toStrictEqual(stood);
   });
 
+  it('reads back a stand on the docs screen', async () => {
+    const stood: WatchView = { layout: 'kanban', stage: { kind: 'docs' } };
+
+    rememberView(home, root, stood);
+
+    expect(await readView(home, root)).toStrictEqual(stood);
+  });
+
   it('keeps every project to its own memory', async () => {
     const other = await mkdtemp(join(tmpdir(), 'ket-watch-other-'));
 

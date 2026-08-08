@@ -1,3 +1,4 @@
+import type { DocsCatalogView } from './docs.ts';
 import type { MapReadingView } from './story-map.ts';
 
 export interface KanbanRefusalView {
@@ -193,5 +194,6 @@ export interface BoardFeed {
   act: (key: string, gate: GateActionView) => Promise<MovedView>;
   saveCriteria: (key: string, name: string, source: string) => Promise<void>;
   oplog: () => Promise<OplogEventView[]>;
+  docsCatalog: () => Promise<DocsCatalogView>;
   subscribe: (refresh: () => void) => () => void;
 }

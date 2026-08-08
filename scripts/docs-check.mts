@@ -6,15 +6,15 @@ import process from 'node:process';
 
 import type { PinnedPage } from './docs/pinning.mts';
 
+import { missingAnchors } from '../packages/cli/src/shared/docs-architecture.ts';
+import { isDocCategory, parsePage } from '../packages/cli/src/shared/docs-frontmatter.ts';
+import { governedDocPages } from '../packages/cli/src/shared/docs-pages.ts';
+import { sourcesOf } from '../packages/cli/src/shared/docs-stamp.ts';
 import { readDependencyGraph } from './docs/dependency-graph.mts';
-import { isDocCategory, parsePage } from './docs/frontmatter.mts';
 import { compiledOutputs, GLOSSARY_PATH } from './docs/glossary-outputs.mts';
-import { missingAnchors } from './docs/intent-anchors.mts';
-import { governedDocPages } from './docs/pages.mts';
 import { pageState } from './docs/pinning.mts';
 import { changedFiles, trackedFiles } from './docs/repository.mts';
 import { renderSkeleton } from './docs/skeleton.mts';
-import { sourcesOf } from './docs/stamp.mts';
 
 const SKELETON_PATH = 'docs/architecture/skeleton.md';
 

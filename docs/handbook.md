@@ -6,7 +6,7 @@ sources:
   - presets/cli/src/**
   - presets/web/src/**
   - harness/**
-stamp: c94d3bf9b006
+stamp: c27352ee77b2
 ---
 
 # The ket handbook
@@ -100,6 +100,11 @@ board, `enter` opens an item behind its tabs: overview, workflow with the
 stage canvas and the item pane, children, and artifacts. The `b` key shows
 the backlog, `m` opens the story map, `v` flips to a flat list, `l` opens the
 oplog over the last 500 logged events newest first, and `t` picks a theme.
+The `d` key opens the docs screen. The catalog groups the pages by category,
+with the ADRs and the architecture nodes as their own shelves, and each page
+wears its rot state. The detail pane names the chosen page's sources, its
+stamp state, and the last commit that touched it. `ket watch --screen docs`
+lands there directly.
 `ket retro` folds the week's events into a report that names what slowed
 you, and every action it derives carries a numbered draft with its
 evidence. `ket retro adopt 1` files the first draft as an idea item that

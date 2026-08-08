@@ -1,4 +1,5 @@
 import type {
+  DocsCatalogView,
   GateActionView,
   JourneyView,
   KanbanCardView,
@@ -11,16 +12,19 @@ import type { Draft } from '../lib/edit.ts';
 import type { Audience } from '../lib/lines.ts';
 import type { Direction } from './compass.ts';
 
-import { walkedIn } from '../../../widgets/story-map';
-
 export type JourneyTab = 'overview' | 'workflow' | 'children' | 'artifacts';
 
 export type JourneyFocus = 'canvas' | 'pane';
+
+export type DocsFocus = 'catalog' | 'detail';
+
+export type Grow = (grow: (stack: Frame[]) => Frame[]) => void;
 
 export type Frame =
   | { kind: 'board' }
   | { kind: 'map'; reading: MapReadingView; at: number }
   | { kind: 'oplog'; events: OplogEventView[]; sel: number }
+  | { kind: 'docs'; catalog: DocsCatalogView; sel: number; focus: DocsFocus }
   | {
       kind: 'journey';
       journey: JourneyView;
@@ -70,6 +74,10 @@ export interface FrameStack {
   openLog: () => void;
   logSeat: (at: number) => void;
   logSlide: (delta: number, most: number) => void;
+  openDocs: () => void;
+  docsSeat: (at: number) => void;
+  docsSlide: (delta: number, most: number) => void;
+  docsFocus: (focus: DocsFocus) => void;
   enter: () => void;
   walk: (direction: Direction) => void;
   scroll: (delta: number, most: number) => void;
@@ -96,7 +104,7 @@ export function landingOf(journey: JourneyView): string {
 }
 
 function restingStepOf(
-  frame: Extract<Frame, { kind: 'board' | 'journey' | 'map' | 'oplog' }>,
+  frame: Extract<Frame, { kind: 'board' | 'journey' | 'map' | 'oplog' | 'docs' }>,
 ): string {
   return frame.kind === 'journey' ? frame.journey.item : frame.kind;
 }
@@ -109,11 +117,11 @@ function openedStepOf(frame: Extract<Frame, { kind: 'surface' | 'gate' | 'edit' 
   return frame.kind === 'edit' ? frame.name : (frame.title.split(' · ')[0] ?? '');
 }
 
-const RESTING = ['board', 'journey', 'map', 'oplog'];
+const RESTING = ['board', 'journey', 'map', 'oplog', 'docs'];
 
 function isResting(
   frame: Frame,
-): frame is Extract<Frame, { kind: 'board' | 'journey' | 'map' | 'oplog' }> {
+): frame is Extract<Frame, { kind: 'board' | 'journey' | 'map' | 'oplog' | 'docs' }> {
   return RESTING.includes(frame.kind);
 }
 
@@ -123,49 +131,6 @@ function crumbStepOf(frame: Frame): string {
 
 export function crumbOf(frames: Frame[]): string {
   return frames.map((frame) => crumbStepOf(frame)).join(' › ');
-}
-
-export function mapWalked(stack: Frame[], name: string): Frame[] {
-  const above = stack[stack.length - 1];
-
-  if (above?.kind !== 'map') {
-    return stack;
-  }
-
-  return [...stack.slice(0, -1), { ...above, at: walkedIn(above.reading, above.at, name) }];
-}
-
-export function mapSeated(stack: Frame[], at: number): Frame[] {
-  const above = stack[stack.length - 1];
-
-  if (above?.kind !== 'map') {
-    return stack;
-  }
-
-  return [...stack.slice(0, -1), { ...above, at }];
-}
-
-export function logSeated(stack: Frame[], at: number): Frame[] {
-  const above = stack[stack.length - 1];
-
-  if (above?.kind !== 'oplog') {
-    return stack;
-  }
-
-  return [...stack.slice(0, -1), { ...above, sel: at }];
-}
-
-export function logSlid(stack: Frame[], delta: number, most: number): Frame[] {
-  const above = stack[stack.length - 1];
-
-  if (above?.kind !== 'oplog') {
-    return stack;
-  }
-
-  const seated = Math.min(Math.max(above.sel, 0), Math.max(0, most));
-  const sel = Math.min(Math.max(0, most), Math.max(0, seated + delta));
-
-  return [...stack.slice(0, -1), { ...above, sel }];
 }
 
 export function scrolled(stack: Frame[], delta: number, most: number): Frame[] {

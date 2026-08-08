@@ -73,7 +73,7 @@ export function stampedPage(markdown: string, stamp: string): string {
     throw new Error('the page carries no frontmatter to stamp');
   }
 
-  const at = lines.findIndex((line, index) => index < end && line.startsWith('stamp: '));
+  const at = lines.slice(0, end).findIndex((line) => line.startsWith('stamp: '));
 
   if (at === -1) {
     lines.splice(end, 0, `stamp: ${stamp}`);
@@ -84,7 +84,7 @@ export function stampedPage(markdown: string, stamp: string): string {
   return lines.join('\n');
 }
 
-const DOC_CATEGORIES: readonly string[] = ['tutorial', 'how-to', 'reference', 'explanation'];
+export const DOC_CATEGORIES: readonly string[] = ['tutorial', 'how-to', 'reference', 'explanation'];
 
 export function isDocCategory(value: string | undefined): boolean {
   return value !== undefined && DOC_CATEGORIES.includes(value);

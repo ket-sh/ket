@@ -9,18 +9,15 @@ import type {
 } from '../../../shared/model';
 import type { Draft } from '../lib/edit.ts';
 import type { Direction } from './compass.ts';
-import type { Frame, FrameStack, JourneyTab, Tuning } from './frames.ts';
+import type { Frame, FrameStack, Grow, JourneyTab, Tuning } from './frames.ts';
 import type { Doors } from './journey-tabs.ts';
 
+import { useDocsShelf } from './docs-shelf.ts';
 import {
   askFrameOf,
   editing,
   judged,
   landingOf,
-  logSeated,
-  logSlid,
-  mapSeated,
-  mapWalked,
   revisedIn,
   savedMark,
   scrolled,
@@ -28,8 +25,7 @@ import {
   tuned,
 } from './frames.ts';
 import { aimedAt, enteredIn, tabbedTo, tabbed, walked } from './journey-tabs.ts';
-
-type Grow = (grow: (stack: Frame[]) => Frame[]) => void;
+import { logSeated, logSlid, mapSeated, mapWalked } from './screen-frames.ts';
 
 type Ceremony = Pick<FrameStack, 'gate' | 'pass'>;
 
@@ -233,6 +229,7 @@ export function useFrameStack(feed: BoardFeed): FrameStack {
   const { edit, revise, save } = useEditing(feed, top, setFrames);
   const { openMap, mapWalk, mapSeat } = useMapping(feed, setFrames);
   const { openLog, logSeat, logSlide } = useLogging(feed, setFrames);
+  const shelved = useDocsShelf(feed, setFrames);
   const { showTab, aim, walk, tab } = useSteering(setFrames);
   const { dive, enter } = useDiving(feed, top, setFrames, showTab);
 
@@ -265,6 +262,7 @@ export function useFrameStack(feed: BoardFeed): FrameStack {
     openLog,
     logSeat,
     logSlide,
+    ...shelved,
     enter,
     walk,
     scroll,

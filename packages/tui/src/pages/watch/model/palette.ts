@@ -32,7 +32,7 @@ export interface PaletteDeps {
 }
 
 const SCREEN_GOES: Record<
-  'board' | 'list' | 'backlog' | 'map' | 'oplog',
+  'board' | 'list' | 'backlog' | 'map' | 'oplog' | 'docs',
   (deps: PaletteDeps) => void
 > = {
   board: (deps) => {
@@ -54,6 +54,10 @@ const SCREEN_GOES: Record<
   oplog: (deps) => {
     deps.stack.home();
     deps.stack.openLog();
+  },
+  docs: (deps) => {
+    deps.stack.home();
+    deps.stack.openDocs();
   },
 };
 

@@ -1,6 +1,6 @@
 import type { GateActionView } from '../../../shared/model';
 import type { BoardLayout } from '../model/board-layout.ts';
-import type { Frame } from '../model/frames.ts';
+import type { DocsFocus, Frame } from '../model/frames.ts';
 
 import { GATE_KEYS } from '../model/keys.ts';
 import { neighborOf, placedOf } from './layout.ts';
@@ -18,6 +18,7 @@ type PaneStanding = 'canvas' | 'brink' | 'held';
 export type BindingSpot =
   | { kind: 'board'; layout: BoardLayout; offers: GateActionView[] }
   | { kind: 'journey'; pane: PaneStanding }
+  | { kind: 'docs'; focus: DocsFocus }
   | { kind: 'map' }
   | { kind: 'oplog' }
   | { kind: 'surface' }
@@ -54,6 +55,7 @@ function boardBindings(layout: BoardLayout, offers: GateActionView[]): Binding[]
     { keys: 'v', action: laid, group: 'open' },
     { keys: 'b', action: queued, group: 'open' },
     { keys: 'l', action: 'log', group: 'open' },
+    { keys: 'd', action: 'docs', group: 'open' },
     ...(layout === 'backlog' ? [] : [NARROWS]),
     GOES,
     HELPS,
@@ -114,9 +116,31 @@ const HELD_SCREENS: Record<'map' | 'oplog' | 'surface' | 'gate' | 'edit', Bindin
   ],
 };
 
+const DOCS_WAYS: Record<DocsFocus, Binding[]> = {
+  catalog: [
+    { keys: '↑↓', action: 'move', group: 'move' },
+    { keys: '⏎', action: 'detail', group: 'open' },
+    GOES,
+    HELPS,
+    ESC_BOARD,
+    QUIT,
+  ],
+  detail: [
+    { keys: '↑↓', action: 'move', group: 'move' },
+    { keys: 'esc', action: 'catalog', group: 'open' },
+    GOES,
+    HELPS,
+    QUIT,
+  ],
+};
+
 export function bindingsAt(spot: BindingSpot): Binding[] {
   if (spot.kind === 'board') {
     return boardBindings(spot.layout, spot.offers);
+  }
+
+  if (spot.kind === 'docs') {
+    return DOCS_WAYS[spot.focus];
   }
 
   return spot.kind === 'journey' ? JOURNEY_WAYS[spot.pane] : HELD_SCREENS[spot.kind];
@@ -170,6 +194,10 @@ export function spotOf(frame: Frame, layout: BoardLayout, offers: GateActionView
 
   if (frame.kind === 'journey') {
     return { kind: 'journey', pane: paneStandingOf(frame) };
+  }
+
+  if (frame.kind === 'docs') {
+    return { kind: 'docs', focus: frame.focus };
   }
 
   return HELD_SPOTS[frame.kind];

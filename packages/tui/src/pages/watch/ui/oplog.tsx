@@ -1,4 +1,3 @@
-import type { MouseEvent } from '@opentui/core';
 import type { ReactNode } from 'react';
 
 import type { OplogEventView } from '../../../shared/model';
@@ -8,6 +7,7 @@ import type { WatchMouse } from '../model/mouse.ts';
 import { ageOf } from '../../../shared/lib';
 import { useTheme } from '../../../shared/theme';
 import { gateOf, seatedRow, textOf } from '../lib/oplog.ts';
+import { groundedOn, pressedRow, wheeledThrough } from './pane-mouse.ts';
 
 const AGE_ROOM = 5;
 
@@ -48,13 +48,8 @@ function OplogRow({
   const { theme } = useTheme();
   const outcome = outcomeWorn(event, theme);
 
-  const pressAt = (pressed: MouseEvent): void => {
-    pressed.stopPropagation();
-    onPress();
-  };
-
   return (
-    <text wrapMode="none" onMouseDown={pressAt}>
+    <text wrapMode="none" onMouseDown={pressedRow(onPress)}>
       <span fg={theme.text}>{chosen ? '► ' : '  '}</span>
       <span fg={theme.gray}>{agedAt(event, now).padEnd(AGE_ROOM)}</span>
       <span fg={theme.subtext}>
@@ -67,23 +62,6 @@ function OplogRow({
       <span fg={chosen ? theme.text : theme.subtext}>{textOf(event)}</span>
     </text>
   );
-}
-
-function groundedOn(mouse: WatchMouse): (pressed: MouseEvent) => void {
-  return (pressed) => {
-    pressed.stopPropagation();
-    mouse.heldGround();
-  };
-}
-
-function wheeledThrough(mouse: WatchMouse): (rolled: MouseEvent) => void {
-  return (rolled) => {
-    const direction = rolled.scroll?.direction;
-
-    if (direction !== undefined) {
-      mouse.logWheel(direction);
-    }
-  };
 }
 
 export function OplogView({
@@ -114,7 +92,7 @@ export function OplogView({
       paddingLeft={1}
       paddingRight={1}
       onMouseDown={groundedOn(mouse)}
-      onMouseScroll={wheeledThrough(mouse)}
+      onMouseScroll={wheeledThrough(mouse.logWheel)}
     >
       {shown.slice(from, from + room).map(
         (event, seatAt): ReactNode => (

@@ -2,9 +2,11 @@ import type { Pressed } from './compass.ts';
 import type { JourneyTab } from './frames.ts';
 import type { PressDeps } from './keys.ts';
 
+import { catalogRows } from '../lib/docs.ts';
 import { neighborOf, placedOf } from '../lib/layout.ts';
 import { seatedRow } from '../lib/oplog.ts';
-import { narrowerOf, press, shownLogOf } from './keys.ts';
+import { press, shownLogOf } from './keys.ts';
+import { overlayHeld, overlayShut } from './mouse-guards.ts';
 
 type WheelDirection = 'up' | 'down' | 'left' | 'right';
 
@@ -14,53 +16,6 @@ const ACROSS: Record<WheelDirection, 'left' | 'right'> = {
   down: 'right',
   right: 'right',
 };
-
-function overlayHeld(deps: PressDeps): boolean {
-  return (
-    deps.palette.at !== undefined ||
-    deps.picker.at !== undefined ||
-    deps.help.on ||
-    narrowerOf(deps).typing
-  );
-}
-
-function shutChooser(deps: PressDeps): boolean {
-  if (deps.palette.at !== undefined) {
-    deps.palette.close();
-
-    return true;
-  }
-
-  if (deps.picker.at !== undefined) {
-    deps.picker.close();
-
-    return true;
-  }
-
-  return false;
-}
-
-function overlayShut(deps: PressDeps): boolean {
-  if (shutChooser(deps)) {
-    return true;
-  }
-
-  if (deps.help.on) {
-    deps.help.close();
-
-    return true;
-  }
-
-  const narrower = narrowerOf(deps);
-
-  if (narrower.typing) {
-    narrower.clear();
-
-    return true;
-  }
-
-  return false;
-}
 
 interface BoardMouse {
   boardCard: (key: string) => void;
@@ -218,6 +173,42 @@ function logMouseOf(deps: PressDeps): LogMouse {
   return { logRow, logWheel };
 }
 
+interface DocsMouse {
+  docsRow: (at: number) => void;
+  docsWheel: (direction: WheelDirection) => void;
+}
+
+function docsMouseOf(deps: PressDeps): DocsMouse {
+  const docsRow = (at: number): void => {
+    if (overlayShut(deps) || deps.stack.top.kind !== 'docs') {
+      return;
+    }
+
+    const rows = catalogRows(deps.stack.top.catalog);
+
+    if (seatedRow(deps.stack.top.sel, rows.length) === at) {
+      deps.stack.docsFocus('detail');
+
+      return;
+    }
+
+    deps.stack.docsSeat(at);
+  };
+
+  const docsWheel = (direction: WheelDirection): void => {
+    const step = WHEEL_SLIDE[direction];
+    const top = deps.stack.top;
+
+    if (overlayHeld(deps) || top.kind !== 'docs' || step === 0) {
+      return;
+    }
+
+    deps.stack.docsSlide(step, catalogRows(top.catalog).length - 1);
+  };
+
+  return { docsRow, docsWheel };
+}
+
 interface MapMouse {
   mapSeat: (at: number) => void;
   mapWheel: (direction: WheelDirection) => void;
@@ -273,7 +264,7 @@ function overlayMouseOf(deps: PressDeps): OverlayMouse {
 }
 
 export interface WatchMouse
-  extends BoardMouse, RowsMouse, JourneyMouse, LogMouse, MapMouse, OverlayMouse {}
+  extends BoardMouse, RowsMouse, JourneyMouse, LogMouse, DocsMouse, MapMouse, OverlayMouse {}
 
 export function mouseOf(deps: PressDeps): WatchMouse {
   return {
@@ -281,6 +272,7 @@ export function mouseOf(deps: PressDeps): WatchMouse {
     ...rowsMouseOf(deps),
     ...journeyMouseOf(deps),
     ...logMouseOf(deps),
+    ...docsMouseOf(deps),
     ...mapMouseOf(deps),
     ...overlayMouseOf(deps),
   };

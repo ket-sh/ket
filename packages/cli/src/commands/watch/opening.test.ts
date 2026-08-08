@@ -19,6 +19,36 @@ describe('the opening a watch invocation asks for', () => {
     });
   });
 
+  it('refuses a tab no journey shows, naming the ones it does', () => {
+    const reading = openingOf({ key: 'K-1', tab: 'bogus' });
+
+    expect(reading).toStrictEqual({
+      refused: 'bogus names no journey tab. watch shows overview, workflow, children, artifacts',
+    });
+  });
+
+  it('refuses a screen watch never shows, naming the ones it does', () => {
+    const reading = openingOf({ screen: 'bogus' });
+
+    expect(reading).toStrictEqual({
+      refused: 'bogus names no watch screen. watch opens list, map, oplog, or docs',
+    });
+  });
+
+  it('refuses a tab that names no item to open', () => {
+    expect(openingOf({ tab: 'children' })).toStrictEqual({
+      refused: '--tab needs an item key to open a journey',
+    });
+  });
+
+  it('refuses a key and a screen asked together', () => {
+    expect(openingOf({ key: 'K-1', screen: 'map' })).toStrictEqual({
+      refused: 'K-1 and --screen map ask for two openings. name one',
+    });
+  });
+});
+
+describe('the screens a deep link lands', () => {
   it('lands the list screen', () => {
     expect(openingOf({ screen: 'list' })).toStrictEqual({ opening: { layout: 'list' } });
   });
@@ -33,31 +63,9 @@ describe('the opening a watch invocation asks for', () => {
     });
   });
 
-  it('refuses a tab no journey shows, naming the ones it does', () => {
-    const reading = openingOf({ key: 'K-1', tab: 'bogus' });
-
-    expect(reading).toStrictEqual({
-      refused: 'bogus names no journey tab. watch shows overview, workflow, children, artifacts',
-    });
-  });
-
-  it('refuses a screen watch never shows, naming the ones it does', () => {
-    const reading = openingOf({ screen: 'bogus' });
-
-    expect(reading).toStrictEqual({
-      refused: 'bogus names no watch screen. watch opens list, map, or oplog',
-    });
-  });
-
-  it('refuses a tab that names no item to open', () => {
-    expect(openingOf({ tab: 'children' })).toStrictEqual({
-      refused: '--tab needs an item key to open a journey',
-    });
-  });
-
-  it('refuses a key and a screen asked together', () => {
-    expect(openingOf({ key: 'K-1', screen: 'map' })).toStrictEqual({
-      refused: 'K-1 and --screen map ask for two openings. name one',
+  it('lands the docs screen', () => {
+    expect(openingOf({ screen: 'docs' })).toStrictEqual({
+      opening: { stage: { kind: 'docs' } },
     });
   });
 });
