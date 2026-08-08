@@ -1,6 +1,6 @@
 import type { GateActionView } from '../../../shared/model';
+import type { BoardLayout } from '../model/board-layout.ts';
 import type { Frame } from '../model/frames.ts';
-import type { BoardLayout } from '../model/keys.ts';
 
 import { GATE_KEYS } from '../model/keys.ts';
 import { neighborOf, placedOf } from './layout.ts';
@@ -35,6 +35,8 @@ function gateBindings(offers: GateActionView[]): Binding[] {
     .map(([keys, action]) => ({ keys, action, group: 'tools' as const }));
 }
 
+const NARROWS: Binding = { keys: '/', action: 'filter', group: 'filter' };
+
 function boardBindings(layout: BoardLayout, offers: GateActionView[]): Binding[] {
   const laid = layout === 'kanban' ? 'list' : 'kanban';
   const queued = layout === 'backlog' ? 'board' : 'backlog';
@@ -46,6 +48,7 @@ function boardBindings(layout: BoardLayout, offers: GateActionView[]): Binding[]
     { keys: 'm', action: 'map', group: 'open' },
     { keys: 'v', action: laid, group: 'open' },
     { keys: 'b', action: queued, group: 'open' },
+    ...(layout === 'backlog' ? [] : [NARROWS]),
     { keys: 'r', action: 'refresh', group: 'tools' },
     QUIT,
   ];

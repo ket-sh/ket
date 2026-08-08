@@ -1,12 +1,13 @@
 import type { GateActionView, KanbanCardView } from '../../../shared/model';
+import type { BoardLayout } from './board-layout.ts';
 import type { Direction, Pressed } from './compass.ts';
+import type { Filter } from './filter.ts';
 import type { Frame, FrameStack } from './frames.ts';
 import type { Seat } from './seat.ts';
 
 import { asDirection, DELTA } from './compass.ts';
 import { editorPress } from './editor-keys.ts';
-
-export type BoardLayout = 'kanban' | 'list' | 'backlog';
+import { filterOpened, filterPress } from './filter-keys.ts';
 
 export interface Picker {
   at: number | undefined;
@@ -219,6 +220,7 @@ export interface PressDeps {
   swap: () => void;
   queue: () => void;
   picker: Picker;
+  filter: Filter;
 }
 
 const FRAME_PRESSES: Record<Frame['kind'], (name: string, deps: PressDeps) => void> = {
@@ -253,29 +255,41 @@ function heldPress(key: Pressed, deps: PressDeps): boolean {
     return true;
   }
 
+  if (deps.filter.typing) {
+    filterPress(key, deps.filter);
+
+    return true;
+  }
+
   return false;
 }
+
+const GLOBAL_KEYS: Record<string, (deps: PressDeps) => void> = {
+  q: (deps) => {
+    deps.onQuit();
+  },
+  r: (deps) => {
+    deps.refresh();
+  },
+  t: (deps) => {
+    deps.picker.open();
+  },
+};
 
 export function press(key: Pressed, deps: PressDeps): void {
   if (heldPress(key, deps)) {
     return;
   }
 
-  if (key.name === 'q') {
-    deps.onQuit();
+  const answered = GLOBAL_KEYS[key.name];
+
+  if (answered !== undefined) {
+    answered(deps);
 
     return;
   }
 
-  if (key.name === 'r') {
-    deps.refresh();
-
-    return;
-  }
-
-  if (key.name === 't') {
-    deps.picker.open();
-
+  if (filterOpened(key, deps.stack.top.kind, deps.layout, deps.filter)) {
     return;
   }
 

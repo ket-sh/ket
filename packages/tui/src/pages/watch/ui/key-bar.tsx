@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 
 import type { GateActionView } from '../../../shared/model';
+import type { BoardLayout } from '../model/board-layout.ts';
 import type { Frame } from '../model/frames.ts';
-import type { BoardLayout } from '../model/keys.ts';
 
 import { widthOf } from '../../../shared/lib';
 import { useTheme } from '../../../shared/theme';
@@ -28,14 +28,17 @@ export function KeyBar({
   offers,
   layout,
   width,
+  narrowed,
 }: {
   frame: Frame;
   offers: GateActionView[];
   layout: BoardLayout;
   width: number;
+  narrowed: string | undefined;
 }): ReactNode {
   const { theme } = useTheme();
-  const hints = bindingsAt(spotOf(frame, layout, offers)).map((binding) => hintOf(binding));
+  const bound = bindingsAt(spotOf(frame, layout, offers)).map((binding) => hintOf(binding));
+  const hints = narrowed === undefined ? bound : [`/ ${narrowed}`, ...bound];
 
   return (
     <text wrapMode="none" fg={theme.overlay}>

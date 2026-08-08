@@ -110,6 +110,7 @@ describe('the bindings the board answers', () => {
       'm map',
       'v list',
       'b backlog',
+      '/ filter',
       'r refresh',
       'q quit',
     ]);
@@ -125,6 +126,7 @@ describe('the bindings the board answers', () => {
         'm map',
         'v list',
         'b backlog',
+        '/ filter',
         'r refresh',
         'q quit',
       ],
@@ -136,6 +138,7 @@ describe('the bindings the board answers', () => {
 
     expect(hints).toContain('v kanban');
     expect(hints).toContain('b backlog');
+    expect(hints).toContain('/ filter');
   });
 
   it('names the way back to the board from the backlog', () => {
@@ -143,6 +146,7 @@ describe('the bindings the board answers', () => {
 
     expect(hints).toContain('b board');
     expect(hints).toContain('v kanban');
+    expect(hints).not.toContain('/ filter');
   });
 });
 
@@ -214,6 +218,12 @@ describe('the group every binding wears', () => {
 
     expect(groupAt(board, 'a approve')).toBe('tools');
     expect(groupAt(board, 'r refresh')).toBe('tools');
+  });
+
+  it('files the slash under filter', () => {
+    const board: BindingSpot = { kind: 'board', layout: 'kanban', offers: [] };
+
+    expect(groupAt(board, '/ filter')).toBe('filter');
   });
 });
 

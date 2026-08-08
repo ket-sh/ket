@@ -2,6 +2,7 @@ import type { Pressed } from './compass.ts';
 import type { FrameStack } from './frames.ts';
 
 import { erased, inserted, moved, split } from '../lib/edit.ts';
+import { glyphOf } from './compass.ts';
 
 const EDITOR_MOVES: Record<string, (stack: FrameStack) => void> = {
   escape: (stack) => {
@@ -31,8 +32,10 @@ const EDITOR_MOVES: Record<string, (stack: FrameStack) => void> = {
 };
 
 function typedInto(key: Pressed, stack: FrameStack): void {
-  if (!key.ctrl && key.seq.length === 1 && key.seq >= ' ') {
-    stack.revise((draft) => inserted(draft, key.seq));
+  const glyph = glyphOf(key);
+
+  if (glyph !== undefined) {
+    stack.revise((draft) => inserted(draft, glyph));
   }
 }
 
