@@ -49,6 +49,7 @@ function neverInventsAndWalksBackwards(lines: string[]): void {
       at: undefined,
       note: undefined,
       actor: undefined,
+      adopted: undefined,
       ...JSON.parse(source),
     });
   }

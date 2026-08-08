@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { RetroWindow } from './window.ts';
 
+import { titleRefusal } from '../../shared/item.ts';
 import { foldRetro } from './fold.ts';
 import { renderRetro } from './report.ts';
 
@@ -102,6 +103,7 @@ function saysNothingHappened(refusals: Refusal[]): void {
 
   expect(report).not.toContain('- ');
   expect(report).not.toContain('## The one action');
+  expect(report).not.toContain('Draft');
 }
 
 const GATE_POOL = ['check-types', 'lint', 'lint:dup', 'review', 'write'];
@@ -131,20 +133,39 @@ function allowed(gate: string): string {
   })}\n`;
 }
 
-function actionLinesIn(report: string): string[] {
-  const opened = report.split('## The one action\n\n').at(1);
-
-  return opened === undefined ? [] : (opened.split('\n\n').at(0) ?? '').split('\n');
-}
-
-function asksAtMostOneAction(refusals: Refusal[], scripts: string[]): void {
+function numbersDensely(refusals: Refusal[], scripts: string[]): void {
   const folded = foldRetro(WORKING, MOVED + logOf(refusals), WINDOW, scripts.map(gateOf));
 
-  expect(actionLinesIn(renderRetro(folded)).length).toBeLessThanOrEqual(1);
+  expect(folded.actions.map((action) => action.draft.number)).toStrictEqual(
+    Array.from({ length: folded.actions.length }, (_, held) => held + 1),
+  );
+
+  if (folded.clusters.length > 0) {
+    expect(folded.actions).toHaveLength(folded.clusters.length);
+  } else {
+    expect(folded.actions.length).toBeLessThanOrEqual(1);
+  }
+}
+
+function draftsTheSameTwice(refusals: Refusal[], scripts: string[]): void {
+  const log = MOVED + logOf(refusals);
+  const gates = scripts.map(gateOf);
+
+  expect(foldRetro(WORKING, log, WINDOW, gates).actions).toStrictEqual(
+    foldRetro(WORKING, log, WINDOW, gates).actions,
+  );
+}
+
+function writesSentencesThatStandAsTitles(refusals: Refusal[], scripts: string[]): void {
+  const folded = foldRetro(WORKING, MOVED + logOf(refusals), WINDOW, scripts.map(gateOf));
+
+  for (const action of folded.actions) {
+    expect(titleRefusal(action.draft.sentence)).toBeUndefined();
+  }
 }
 
 function quietGateIn(log: string, scripts: string[]): string | undefined {
-  const { action } = foldRetro(WORKING, log, WINDOW, scripts.map(gateOf));
+  const action = foldRetro(WORKING, log, WINDOW, scripts.map(gateOf)).actions.at(0);
 
   return action !== undefined && 'dormant' in action ? action.dormant.gate : undefined;
 }
@@ -174,8 +195,16 @@ describe('the invariants a retro keeps', () => {
     fc.assert(fc.property(someRefusals, saysNothingHappened));
   });
 
-  it('asks for one action at most, whatever the window refused and the preset declares', () => {
-    fc.assert(fc.property(someRefusals, someScripts, asksAtMostOneAction));
+  it('numbers a draft for every action, densely from one, in report order', () => {
+    fc.assert(fc.property(someRefusals, someScripts, numbersDensely));
+  });
+
+  it('folds the same log into the same drafts, however often it folds', () => {
+    fc.assert(fc.property(someRefusals, someScripts, draftsTheSameTwice));
+  });
+
+  it('writes draft sentences that stand as one-line item titles', () => {
+    fc.assert(fc.property(someRefusals, someScripts, writesSentencesThatStandAsTitles));
   });
 
   it('calls a gate quiet only when the window recorded nothing from it', () => {

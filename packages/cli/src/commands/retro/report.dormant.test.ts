@@ -20,7 +20,7 @@ const EMPTY: Retro = {
   rework: [],
   waiting: 0,
   working: 0,
-  action: undefined,
+  actions: [],
 };
 
 const DUP: DormantGate = {
@@ -30,7 +30,13 @@ const DUP: DormantGate = {
 };
 
 function reportOf(dormant: DormantGate): string {
-  return renderRetro({ ...EMPTY, action: { dormant } });
+  const draft = {
+    number: 1,
+    sentence: `a draft on \`${dormant.gate}\``,
+    evidence: { gate: dormant.gate, reason: undefined, moments: [], items: [] },
+  };
+
+  return renderRetro({ ...EMPTY, actions: [{ dormant, draft }] });
 }
 
 describe('the action a report asks for when no gate refused anything', () => {
