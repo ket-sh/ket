@@ -8,6 +8,10 @@ drives agents through a pipeline those gates hold to. A status moves only when a
 gate moves it, and agents that run ahead of a stage hit a refusal at the write
 itself rather than at review.
 
+New here? [The handbook](docs/handbook.md) walks the whole system: what runs
+at every moment, the pipeline's stages and its four human gates, and every
+skill by name.
+
 ## Install
 
 ket needs Bun, and its prose gate runs Vale through

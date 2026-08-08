@@ -1,0 +1,239 @@
+# The ket handbook
+
+Everything a newcomer needs to go from never having seen ket to knowing what
+runs, when it runs, and why it refuses. Share this file whole.
+
+## What ket is
+
+ket scaffolds and governs projects that AI agents build. It exists to make one
+claim hold: AI-written code is what it appears to be. Every rule a team would
+keep by discipline becomes a machine that checks it. Every piece of work is an
+item with a visible history, and every claim about quality gets measured
+rather than asserted. The measurement at the center is mutation score: a suite
+that executes code without checking it gets caught, because a rule kept at
+less than 100 lets mutants through.
+
+Two presets exist today. The `web` preset writes a TanStack Start application
+under Feature-Sliced Design. The `cli` preset writes a command line tool whose
+slices are commands. Both arrive with the whole gate chain armed, the harness
+plugins registered, and the pipeline ready.
+
+## What a created project contains
+
+- `.ket/config.yaml` maps each directory to the preset that governs it and
+  records the project key, the chosen integrations, the language, and whether
+  the workflow drives it. It's data, never code.
+- `.ket/items/<key>/` holds one directory per piece of work: `item.yaml` with
+  the title, kind, size, status, parent, children, and description, beside the
+  artifacts each stage writes.
+- `.ket/events.jsonl` is the append-only log. Every gate decision lands here,
+  and every view folds from it.
+- `.ket/story-map.yaml` holds the product's story map when one exists.
+- `.ket/toolchain.yaml` and `.ket/scaffold.yaml` are machine state: which
+  dependencies the toolchain gate has already named, and which files the
+  scaffold wrote.
+- Two Claude Code plugins carry the law: `ket` arms the gates, and
+  `ket-workflow` carries the pipeline commands and their skills.
+
+## The pipeline
+
+Work is an item. An item has a kind (`feature`, `bug`, `refactor`, `chore`),
+a size (`epic`, `story`, `subtask`, `trivial`), and one status:
+
+```
+idea → triaged → designing → awaiting-approval → implementing
+     → verifying → awaiting-merge → shipped
+```
+
+Epics and stories owe a design stage. An epic never gets implemented directly:
+it decomposes into children, and the children travel the pipeline. An item
+sized `subtask` or `trivial` skips the design stage. Only a command moves a
+status, and
+the write gate refuses a hand edit of `item.yaml`'s fields, because a status
+anything can write is a status that means nothing.
+
+### The commands that drive it
+
+| Command               | What it does                                                                                                                                   |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/ket:feature`        | Files a piece of work, writes its title and description to the issue-writing standard, and carries it to the first gate                        |
+| `/ket:explore`        | Investigates before filing, when the shape of the work is unclear                                                                              |
+| `/ket:approve <key>`  | The human approves the design; implementation may start                                                                                        |
+| `/ket:continue <key>` | Picks an item up and runs the next machine stage                                                                                               |
+| `/ket:review <key>`   | Runs the review stage on the work                                                                                                              |
+| `/ket:ship <key>`     | The human confirms the merged work landed                                                                                                      |
+| `/ket:status`         | Reports where every item stands                                                                                                                |
+| `/ket:map`            | Sits down with you and builds the story map, challenging vague answers and researching unfamiliar domains before writing `.ket/story-map.yaml` |
+
+### The four human gates
+
+The pipeline stops for a person exactly four times. Everything between them
+runs without asking.
+
+1. Triage: you confirm the kind and the size before the pipeline files
+   anything.
+2. Decomposition: you pick which children an epic files. Scope belongs to the
+   person paying for it.
+3. Approval: you approve the design before implementation writes any source.
+4. Shipping: you confirm the merged work landed. A machine reads a green
+   pipeline, and only a person knows the product changed.
+
+At the third and fourth gate, the review surface opens in the browser so you
+decide looking at the work, not at a summary of it.
+
+### Watching it run
+
+Bare `ket` on a terminal opens the board: every stage as a lane, cards with
+their ages, refusals in red, a bell on any card that needs you. From the
+board, `enter` opens an item behind its tabs: overview, workflow with the
+stage canvas and the item pane, children, and artifacts. The `b` key shows
+the backlog, `m` opens the story map, `v` flips to a flat list, and `t` picks
+a theme. `ket retro` folds the week's events into a report that names what
+slowed you and derives one action from the largest refusal cluster.
+
+## The gates, by the moment they fire
+
+ket's gates aren't a checklist at the end. They sit at every moment work
+happens, earliest first:
+
+### When a session starts
+
+- **The toolchain gate** names any dependency that arrived since it last
+  looked, once. The `mechanical-checks` skill answers it: find the checker the
+  ecosystem already ships, judge whether it earns its cost, and propose it.
+  The user decides. Never install a checker to demonstrate it.
+
+### At every write, before it lands
+
+- **The write gate** asks the item in flight whether this file is its
+  business. Generated files refuse hand edits. Item state files refuse
+  everything except the commands that own them.
+- **The test-first gate** (probity) blocks a production edit under
+  `packages/*/src` until a failing test covers it. Red comes first, at the
+  edit itself, not at review time.
+- **Repository guardrails** refuse edits to `bun.lock`, `.env` files, and key
+  material.
+
+### At every shell command, before it runs
+
+- **The shell gate** refuses a command that would skip a gate, and refuses
+  writes routed through interpreters it can't judge.
+
+### After every write
+
+- **Ring one** runs on the file alone: the formatter, the linter with
+  warnings denied, and the domain tests that cover the written file. A write
+  is cheap to check, so ring one checks every one.
+- The toolchain gate looks at what the edit brought.
+
+### At the end of a stage
+
+- **Ring two** runs project-wide: the typechecker and the layering check.
+  A stage ends on the whole picture, not on the last file.
+
+### When the session tries to stop
+
+- **The turn gate** asks whether the item reached a resting place. It refuses
+  a stop in the middle of a stage and names the next step, up to three times
+  per standing.
+- **The rules reviewer** reads the uncommitted diff against the project's own
+  law: comment rules, naming, test-shape, boundaries.
+- **The security reviewer** reads the same diff for secrets, injection
+  surfaces, and trust boundary crossings.
+
+### At every commit
+
+The lefthook chain runs:
+
+- gitleaks over the staged files, and main-branch protection.
+- The linter, duplication at threshold zero, spelling, and dead exports.
+- The layering check and the import graph.
+- The preset's own checks: a ui component ships its story and test, the env
+  matches its schema, and every BDD step binds to the harness.
+- The formatter, workflow linting, and the typechecker.
+
+The commit message passes commitlint.
+
+### At every pull request
+
+CI runs the same chain plus the acceptance suites, which drive the compiled
+binary against real scaffolded projects, and an incremental mutation run over
+the changed files. The dependency audit runs here too. Prose passes Vale.
+
+### Weekly
+
+The full mutation run covers every package, so nothing hides behind the
+incremental runs for long.
+
+### Always
+
+No gate gets switched off, overridden, or loosened to reach green. A blocking
+gate is a design signal. When code genuinely can't satisfy a rule, the
+maintainer decides, and an authorized change lands with an ADR recording why.
+
+## The skills
+
+Skills are the law in loadable form. Each says when it applies. The session
+loads the one that applies and works from it rather than from a summary.
+
+### Carried by the `ket` plugin (the gates)
+
+| Skill               | When it applies                                                   |
+| ------------------- | ----------------------------------------------------------------- |
+| `tdd`               | The order tests arrive in: red, green, refactor, inside out       |
+| `mutation`          | How to kill a surviving mutant, and why the threshold never moves |
+| `gates`             | What each gate failure is telling you                             |
+| `suppression`       | What to reach for instead of turning a gate off                   |
+| `clean-code`        | Naming, size, purity, and the domain vocabulary                   |
+| `commit`            | Terse Conventional Commits, why over what                         |
+| `gherkin`           | The six checks a scenario passes                                  |
+| `design-tokens`     | What may be a token, and why the gate refuses raw values          |
+| `generated`         | Who owns, regenerates, and protects generated files               |
+| `adr`               | When a decision earns a record under `docs/adr/`                  |
+| `research`          | Where an answer comes from and what a finding must carry          |
+| `prior-art`         | Look for what exists before building                              |
+| `mechanical-checks` | Turn a hand-kept rule into a machine, and propose it              |
+| `verification`      | What counts as evidence of finished work                          |
+
+### Carried by the `ket-workflow` plugin (the pipeline)
+
+| Skill           | When it applies                                                |
+| --------------- | -------------------------------------------------------------- |
+| `stages`        | The stage table, the moving commands, and the four human gates |
+| `sizing`        | Which size an item takes, and what each size owes              |
+| `issue-writing` | Titles and descriptions per kind, with the refusal list        |
+| `story-mapping` | The facilitated mapping session behind `/ket:map`              |
+| `progress`      | The notes the pipeline drops so no working step is invisible   |
+| `findings`      | How to record and answer review findings                       |
+| `regression`    | What a fix owes the suite that missed the defect               |
+| `plain`         | The plain-language sibling every technical document keeps      |
+
+### Installed in the project
+
+Each scaffold carries project-level skills under `.claude/skills/`.
+`find-skills` looks for a skill the project has yet to install, `varlock`
+grows the env schema, and `vitest` covers the runner and its config. Chosen
+integrations bring their vendors' own skills beside them.
+
+## The vocabulary
+
+One concept, one name, everywhere:
+
+- **item**: a piece of work with a key, a status, and a history.
+- **stage**: a status the pipeline works an item through.
+- **gate**: a machine that refuses. Human gates are the four above.
+- **ring**: the checks that close around a write (one) or a stage (two).
+- **preset**: what `ket create` writes and governs.
+- **slice**: a Feature-Sliced Design unit. Never anything else.
+- **release**: a horizontal cut of the story map, with an outcome and a
+  metric.
+- **surface**: the review page an item opens for a human decision.
+- **refusal**: a gate saying no, with the reason and the next step.
+
+## When something refuses
+
+Read the refusal: it names the operation, the reason, and usually the fix.
+The `gates` skill explains what each gate failure means, and the
+`suppression` skill lists what to reach for instead of switching anything
+off. If the same refusal keeps arriving, `ket retro` will name it as the
+week's largest cluster and propose the one change that removes the friction.
