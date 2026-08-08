@@ -7,7 +7,11 @@ function stageOf(frame: Frame): OpeningStage | undefined {
     return { kind: 'journey', key: frame.journey.item, tab: frame.tab };
   }
 
-  return frame.kind === 'map' ? { kind: 'map' } : undefined;
+  if (frame.kind === 'map') {
+    return { kind: 'map' };
+  }
+
+  return frame.kind === 'oplog' ? { kind: 'oplog' } : undefined;
 }
 
 function deepestStageIn(frames: Frame[]): OpeningStage | undefined {

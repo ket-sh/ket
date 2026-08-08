@@ -3,7 +3,8 @@ import type { JourneyTab } from './frames.ts';
 import type { PressDeps } from './keys.ts';
 
 import { neighborOf, placedOf } from '../lib/layout.ts';
-import { press } from './keys.ts';
+import { seatedRow } from '../lib/oplog.ts';
+import { narrowerOf, press, shownLogOf } from './keys.ts';
 
 type WheelDirection = 'up' | 'down' | 'left' | 'right';
 
@@ -19,7 +20,7 @@ function overlayHeld(deps: PressDeps): boolean {
     deps.palette.at !== undefined ||
     deps.picker.at !== undefined ||
     deps.help.on ||
-    deps.filter.typing
+    narrowerOf(deps).typing
   );
 }
 
@@ -50,8 +51,10 @@ function overlayShut(deps: PressDeps): boolean {
     return true;
   }
 
-  if (deps.filter.typing) {
-    deps.filter.clear();
+  const narrower = narrowerOf(deps);
+
+  if (narrower.typing) {
+    narrower.clear();
 
     return true;
   }
@@ -180,6 +183,41 @@ function journeyMouseOf(deps: PressDeps): JourneyMouse {
   return { stage, tabLabel, paneChildren, canvasWheel };
 }
 
+interface LogMouse {
+  logRow: (at: number) => void;
+  logWheel: (direction: WheelDirection) => void;
+}
+
+function logMouseOf(deps: PressDeps): LogMouse {
+  const logRow = (at: number): void => {
+    if (overlayShut(deps) || deps.stack.top.kind !== 'oplog') {
+      return;
+    }
+
+    const shown = shownLogOf(deps);
+
+    if (seatedRow(deps.stack.top.sel, shown.length) === at) {
+      deps.stack.dive(shown[at]?.item);
+
+      return;
+    }
+
+    deps.stack.logSeat(at);
+  };
+
+  const logWheel = (direction: WheelDirection): void => {
+    const step = WHEEL_SLIDE[direction];
+
+    if (overlayHeld(deps) || deps.stack.top.kind !== 'oplog' || step === 0) {
+      return;
+    }
+
+    deps.stack.logSlide(step, shownLogOf(deps).length - 1);
+  };
+
+  return { logRow, logWheel };
+}
+
 interface MapMouse {
   mapSeat: (at: number) => void;
   mapWheel: (direction: WheelDirection) => void;
@@ -234,13 +272,15 @@ function overlayMouseOf(deps: PressDeps): OverlayMouse {
   return { paletteRow, pickerRow, heldGround, outside };
 }
 
-export interface WatchMouse extends BoardMouse, RowsMouse, JourneyMouse, MapMouse, OverlayMouse {}
+export interface WatchMouse
+  extends BoardMouse, RowsMouse, JourneyMouse, LogMouse, MapMouse, OverlayMouse {}
 
 export function mouseOf(deps: PressDeps): WatchMouse {
   return {
     ...boardMouseOf(deps),
     ...rowsMouseOf(deps),
     ...journeyMouseOf(deps),
+    ...logMouseOf(deps),
     ...mapMouseOf(deps),
     ...overlayMouseOf(deps),
   };

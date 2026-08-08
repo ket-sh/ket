@@ -127,11 +127,11 @@ export interface PressDeps {
   help: Help;
 }
 
-function narrowerOf(deps: PressDeps): Filter {
+export function narrowerOf(deps: PressDeps): Filter {
   return deps.stack.top.kind === 'oplog' ? deps.logFilter : deps.filter;
 }
 
-function shownLogOf(deps: PressDeps): OplogEventView[] {
+export function shownLogOf(deps: PressDeps): OplogEventView[] {
   return deps.stack.top.kind === 'oplog'
     ? narrowedEvents(deps.stack.top.events, deps.logFilter.query)
     : [];

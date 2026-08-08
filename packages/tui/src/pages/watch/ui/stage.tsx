@@ -74,7 +74,15 @@ function heldPageOf(room: RoomProps): ReactNode | undefined {
   }
 
   if (stack.top.kind === 'oplog') {
-    return <OplogView shown={room.logRows} sel={stack.top.sel} now={now} height={height} />;
+    return (
+      <OplogView
+        shown={room.logRows}
+        sel={stack.top.sel}
+        now={now}
+        height={height}
+        mouse={room.mouse}
+      />
+    );
   }
 
   return undefined;

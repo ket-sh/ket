@@ -176,12 +176,12 @@ export interface JourneyView {
 export type MovedView = { moved: string } | { refused: string };
 
 export interface OplogEventView {
-  outcome: string | undefined;
+  at: string | undefined;
   gate: string | undefined;
-  about: string | undefined;
+  outcome: string | undefined;
   item: string | undefined;
   reason: string | undefined;
-  at: string | undefined;
+  about: string | undefined;
   note: string | undefined;
   actor: string | undefined;
 }
