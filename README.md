@@ -247,6 +247,21 @@ captures what it learns only when you ask.
 It groups the items by status and names what each one waits on. `/ket:continue`
 picks up the single item in flight and carries it to the next stage.
 
+### Read the week back
+
+```text
+ket retro
+```
+
+It folds the event log into `docs/retro/<year>-W<week>.md`, and `--since` reads
+from a moment you name instead of the week. The report says what entered, what
+shipped and what still runs. Then it says what slowed the work: the refusals
+grouped by gate and reason, the longest quiet on an item still in flight, and
+the items that went backward. It splits the quiet between waiting on a person
+and the machine working. It closes on one action, taken from the cluster that
+fired most, because an action somebody takes beats ten suggestions nobody reads.
+A window nothing landed in still writes its report, and the report says so.
+
 ## Every session, ket looks for a machine
 
 A rule kept by discipline is a rule nobody keeps. When a session starts, ket

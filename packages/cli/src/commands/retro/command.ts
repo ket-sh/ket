@@ -1,0 +1,46 @@
+import { defineCommand, showUsage } from 'citty';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { dirname, join, resolve } from 'node:path';
+
+import { COMMAND_ARGS } from '../../shared/args.ts';
+import { readLog } from '../../shared/event-log.ts';
+import { readStored } from '../../shared/item-store.ts';
+import { ketRootOrThrow } from '../../shared/locate.ts';
+import { foldRetro } from './fold.ts';
+import { renderRetro } from './report.ts';
+import { retroPathOf, windowFrom } from './window.ts';
+
+const retro = defineCommand({
+  meta: {
+    name: 'retro',
+    description: 'Fold the event log into the week it covers',
+  },
+  args: {
+    ...COMMAND_ARGS,
+    since: {
+      type: 'string',
+      description: 'Read from this moment instead of the week the report is written in',
+    },
+  },
+  async run({ args }) {
+    const root = await ketRootOrThrow(resolve(args.cwd));
+    const chosen = windowFrom(new Date().toISOString(), args.since);
+
+    if ('refused' in chosen) {
+      throw new Error(chosen.refused);
+    }
+
+    const folded = foldRetro(await readStored(root), await readLog(root), chosen.window);
+    const path = retroPathOf(chosen.window);
+
+    await mkdir(dirname(join(root, path)), { recursive: true });
+    await writeFile(join(root, path), renderRetro(folded), 'utf8');
+    process.stdout.write(`${path}\n`);
+  },
+});
+
+export async function usage(): Promise<void> {
+  await showUsage(retro);
+}
+
+export default retro;
