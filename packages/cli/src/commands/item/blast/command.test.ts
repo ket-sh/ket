@@ -6,11 +6,12 @@ import {
   readFile,
   realpath,
   rm,
+  symlink,
   writeFile,
 } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { basename, dirname, join } from 'node:path';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { blast } from './command.ts';
 
@@ -24,20 +25,25 @@ const CRUISE = JSON.stringify({
 
 const DRAWN = 'direction: right\n"packages" -> "presets"\n';
 
+let sandbox = '';
+let launcher = '';
 let root = '';
 let itemDir = '';
 let lines: string[] = [];
 
-async function stubBinary(name: string, body: string): Promise<void> {
-  const binary = join(root, 'node_modules', '.bin', name);
-  const recording = `pwd > "${root}/${name}-cwd.txt"\nprintf '[%s]\\n' "$@" > "${root}/${name}-args.txt"`;
+function binaryAt(name: string): string {
+  return join(root, 'node_modules', '.bin', name);
+}
 
-  await writeFile(binary, `#!/bin/sh\n${recording}\n${body}\n`);
-  await chmod(binary, 0o755);
+// macOS assesses a freshly written executable on its first exec, machine-wide
+// and serialized, so every stub is one launcher wearing a per-spec body.
+async function stubBinary(name: string, body: string): Promise<void> {
+  await writeFile(`${binaryAt(name)}-body.sh`, `${body}\n`);
+  await symlink(launcher, binaryAt(name));
 }
 
 async function argvGiven(name: string): Promise<string[]> {
-  const written = await readFile(join(root, `${name}-args.txt`), 'utf8');
+  const written = await readFile(`${binaryAt(name)}-args.txt`, 'utf8');
 
   return written
     .split('\n')
@@ -46,14 +52,36 @@ async function argvGiven(name: string): Promise<string[]> {
 }
 
 async function ranIn(name: string): Promise<string> {
-  return (await readFile(join(root, `${name}-cwd.txt`), 'utf8')).trim();
+  return (await readFile(`${binaryAt(name)}-cwd.txt`, 'utf8')).trim();
 }
 
 async function scratchesLeft(): Promise<string[]> {
   return (await readdir(tmpdir()))
-    .filter((entry) => entry.startsWith('ket-blast-') && !entry.startsWith('ket-blast-home-'))
+    .filter((entry) => entry !== 'launcher' && !entry.startsWith('ket-blast-home-'))
     .sort();
 }
+
+async function scratchAsked(): Promise<string> {
+  const argv = await argvGiven('depcruise-fmt');
+
+  return dirname(argv[argv.length - 1] ?? '');
+}
+
+beforeAll(async () => {
+  sandbox = await mkdtemp(join(tmpdir(), 'ket-suite-blast-'));
+  launcher = join(sandbox, 'launcher');
+  await writeFile(
+    launcher,
+    '#!/bin/sh\npwd > "$0-cwd.txt"\nprintf \'[%s]\\n\' "$@" > "$0-args.txt"\nexec /bin/sh "$0-body.sh" "$@"\n',
+  );
+  await chmod(launcher, 0o755);
+  vi.stubEnv('TMPDIR', sandbox);
+});
+
+afterAll(async () => {
+  vi.unstubAllEnvs();
+  await rm(sandbox, { recursive: true, force: true });
+});
 
 beforeEach(async () => {
   root = await mkdtemp(join(tmpdir(), 'ket-blast-home-'));
@@ -181,6 +209,17 @@ describe('what the capture asks the cruiser', () => {
     await runBlast();
 
     expect(await scratchesLeft()).toEqual(before);
+  });
+
+  it('holds its scratch inside the temp directory, named for ket', async () => {
+    await stubCapture();
+
+    await runBlast();
+
+    const held = await scratchAsked();
+
+    expect(dirname(held)).toBe(tmpdir());
+    expect(basename(held)).toMatch(/^ket-blast-/);
   });
 
   it('accepts the tightest budget there is', async () => {
