@@ -6,6 +6,7 @@ export interface Laid {
   layout: BoardLayout;
   swap: () => void;
   queue: () => void;
+  wear: (landing: BoardLayout) => void;
 }
 
 export function useBoardLayout(): Laid {
@@ -19,5 +20,9 @@ export function useBoardLayout(): Laid {
     setLayout((worn) => (worn === 'backlog' ? 'kanban' : 'backlog'));
   };
 
-  return { layout, swap, queue };
+  const wear = (landing: BoardLayout): void => {
+    setLayout(landing);
+  };
+
+  return { layout, swap, queue, wear };
 }

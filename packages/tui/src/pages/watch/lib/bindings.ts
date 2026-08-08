@@ -37,6 +37,8 @@ function gateBindings(offers: GateActionView[]): Binding[] {
 
 const NARROWS: Binding = { keys: '/', action: 'filter', group: 'filter' };
 
+const GOES: Binding = { keys: 'ctrl+p', action: 'go', group: 'open' };
+
 function boardBindings(layout: BoardLayout, offers: GateActionView[]): Binding[] {
   const laid = layout === 'kanban' ? 'list' : 'kanban';
   const queued = layout === 'backlog' ? 'board' : 'backlog';
@@ -49,34 +51,38 @@ function boardBindings(layout: BoardLayout, offers: GateActionView[]): Binding[]
     { keys: 'v', action: laid, group: 'open' },
     { keys: 'b', action: queued, group: 'open' },
     ...(layout === 'backlog' ? [] : [NARROWS]),
+    GOES,
     { keys: 'r', action: 'refresh', group: 'tools' },
     QUIT,
   ];
 }
 
 const JOURNEY_WAYS: Record<PaneStanding, Binding[]> = {
-  canvas: [MOVE, { keys: '⏎', action: 'open', group: 'open' }, ESC_BOARD, QUIT],
+  canvas: [MOVE, { keys: '⏎', action: 'open', group: 'open' }, GOES, ESC_BOARD, QUIT],
   brink: [
     MOVE,
     { keys: '→', action: 'item pane', group: 'move' },
     { keys: '⏎', action: 'open', group: 'open' },
+    GOES,
     ESC_BOARD,
     QUIT,
   ],
   held: [
     { keys: '←', action: 'canvas', group: 'move' },
     { keys: '⏎', action: 'children', group: 'open' },
+    GOES,
     ESC_BOARD,
     QUIT,
   ],
 };
 
 const HELD_SCREENS: Record<'map' | 'surface' | 'gate' | 'edit', Binding[]> = {
-  map: [MOVE, ESC_BOARD, QUIT],
+  map: [MOVE, GOES, ESC_BOARD, QUIT],
   surface: [
     { keys: '↑↓', action: 'scroll', group: 'move' },
     { keys: 'tab ←→', action: 'audience', group: 'tools' },
     { keys: 'e', action: 'edit', group: 'tools' },
+    GOES,
     { keys: 'esc', action: 'back', group: 'open' },
     QUIT,
   ],

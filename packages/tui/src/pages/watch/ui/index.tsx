@@ -8,7 +8,9 @@ import type { BoardLayout } from '../model/board-layout.ts';
 import type { Ring } from '../model/chime.ts';
 import type { Filter } from '../model/filter.ts';
 import type { FrameStack } from '../model/frames.ts';
-import type { Picker, PressDeps } from '../model/keys.ts';
+import type { PressDeps } from '../model/keys.ts';
+import type { Palette } from '../model/palette.ts';
+import type { Picker } from '../model/picker.ts';
 import type { Seat } from '../model/seat.ts';
 
 import { ThemeProvider } from '../../../shared/theme';
@@ -22,6 +24,7 @@ import { useChime } from '../model/chime.ts';
 import { useFilter } from '../model/filter.ts';
 import { outstayed } from '../model/frames.ts';
 import { press } from '../model/keys.ts';
+import { usePalette } from '../model/palette.ts';
 import { usePicker } from '../model/picker.ts';
 import { useSeat } from '../model/seat.ts';
 import { useFrameStack } from '../model/stack.ts';
@@ -33,6 +36,7 @@ import { GateModal } from './gate.tsx';
 import { HeaderRow } from './header-row.tsx';
 import { JourneyPage } from './journey.tsx';
 import { ListView } from './list.tsx';
+import { PaletteOverlay } from './palette.tsx';
 import { SurfacePage, surfaceMost } from './surface.tsx';
 import { ThemePicker } from './theme.tsx';
 
@@ -185,6 +189,7 @@ interface Room {
   layout: BoardLayout;
   picker: Picker;
   filter: Filter;
+  palette: Palette;
   width: number;
   height: number;
 }
@@ -198,23 +203,25 @@ function useWatchRoom({
   const { columns, loaded, now, tick, refresh } = useBoardState(feed, clock);
   const stack = useFrameStack(feed);
   const { width, height } = useTerminalDimensions();
-  const { layout, swap, queue } = useBoardLayout();
+  const { layout, swap, queue, wear } = useBoardLayout();
   const picker = usePicker(stack);
   const filter = useFilter();
   const shown = layout === 'backlog' ? columns : narrowedBy(columns, filter.query);
   const seat = useSeat(shown);
+  const palette = usePalette({ columns, chosen: seat.chosen, stack, wear, picker, refresh, tick });
   const most = stack.top.kind === 'surface' ? surfaceMost(stack.top, height - CHROME) : 0;
+  const deps = { onQuit, refresh, stack, seat, most, tick, layout, swap, queue };
 
   useChime(columns, loaded, ring);
   useCeremonyCurtain(stack, tick);
   useMovedCardFollow(stack, seat, columns);
-  useWatchKeys({ onQuit, refresh, stack, seat, most, tick, layout, swap, queue, picker, filter });
+  useWatchKeys({ ...deps, picker, filter, palette });
 
-  return { columns, shown, now, tick, stack, seat, layout, picker, filter, width, height };
+  return { columns, shown, now, tick, stack, seat, layout, picker, filter, palette, width, height };
 }
 
 function WatchRoom(props: WatchPageProps): ReactNode {
-  const { columns, shown, now, tick, stack, seat, layout, picker, filter, width, height } =
+  const { columns, shown, now, tick, stack, seat, layout, picker, filter, palette, width, height } =
     useWatchRoom(props);
 
   return (
@@ -250,6 +257,7 @@ function WatchRoom(props: WatchPageProps): ReactNode {
       />
       <CeremonyOverlay stack={stack} columns={columns} tick={tick} width={width} height={height} />
       <PickerOverlay picker={picker} width={width} height={height} />
+      <PaletteOverlay palette={palette} width={width} height={height} />
     </box>
   );
 }

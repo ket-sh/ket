@@ -1,9 +1,16 @@
 import { useState } from 'react';
 
 import type { FrameStack } from './frames.ts';
-import type { Picker } from './keys.ts';
 
 import { THEMES, useTheme } from '../../../shared/theme';
+
+export interface Picker {
+  at: number | undefined;
+  open: () => void;
+  move: (delta: number) => void;
+  keep: () => void;
+  close: () => void;
+}
 
 export function usePicker(stack: FrameStack): Picker {
   const wardrobe = useTheme();

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import type { Theme } from '../../../shared/theme';
 
 import { THEMES, useTheme } from '../../../shared/theme';
+import { OverlayBox } from './overlay-box.tsx';
 
 const WIDE = 44;
 
@@ -46,23 +47,14 @@ export function ThemePicker({
   height: number;
 }): ReactNode {
   const { theme } = useTheme();
-  const tall = THEMES.length + 4;
 
   return (
-    <box
-      position="absolute"
-      left={Math.max(0, Math.floor((width - WIDE) / 2))}
-      top={Math.max(1, Math.floor((height - tall) / 2))}
-      width={WIDE}
-      zIndex={60}
-      border
-      borderStyle="rounded"
-      borderColor={theme.overlay}
-      backgroundColor={theme.base}
-      flexDirection="column"
-      paddingLeft={1}
-      paddingRight={1}
-      paddingTop={1}
+    <OverlayBox
+      wide={WIDE}
+      tall={THEMES.length + 4}
+      width={width}
+      height={height}
+      raised={60}
       title={' themes '}
     >
       {THEMES.map(
@@ -74,6 +66,6 @@ export function ThemePicker({
       <text wrapMode="none" fg={theme.overlay}>
         {'  ↑↓ preview · ⏎ keep · esc revert'}
       </text>
-    </box>
+    </OverlayBox>
   );
 }

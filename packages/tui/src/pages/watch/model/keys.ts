@@ -3,19 +3,15 @@ import type { BoardLayout } from './board-layout.ts';
 import type { Direction, Pressed } from './compass.ts';
 import type { Filter } from './filter.ts';
 import type { Frame, FrameStack } from './frames.ts';
+import type { Palette } from './palette.ts';
+import type { Picker } from './picker.ts';
 import type { Seat } from './seat.ts';
 
 import { asDirection, DELTA } from './compass.ts';
 import { editorPress } from './editor-keys.ts';
 import { filterOpened, filterPress } from './filter-keys.ts';
-
-export interface Picker {
-  at: number | undefined;
-  open: () => void;
-  move: (delta: number) => void;
-  keep: () => void;
-  close: () => void;
-}
+import { paletteOpened, palettePress } from './palette-keys.ts';
+import { pickerPress } from './picker-keys.ts';
 
 export const GATE_KEYS: Record<string, GateActionView> = {
   a: 'approve',
@@ -187,28 +183,6 @@ function ceremonyPress(name: string, stack: FrameStack, tick: number): void {
   }
 }
 
-const PICKER_MOVES: Record<string, (picker: Picker) => void> = {
-  up: (picker) => {
-    picker.move(-1);
-  },
-  down: (picker) => {
-    picker.move(1);
-  },
-  return: (picker) => {
-    picker.keep();
-  },
-  enter: (picker) => {
-    picker.keep();
-  },
-  escape: (picker) => {
-    picker.close();
-  },
-};
-
-function pickerPress(name: string, picker: Picker): void {
-  PICKER_MOVES[name]?.(picker);
-}
-
 export interface PressDeps {
   onQuit: () => void;
   refresh: () => void;
@@ -221,6 +195,7 @@ export interface PressDeps {
   queue: () => void;
   picker: Picker;
   filter: Filter;
+  palette: Palette;
 }
 
 const FRAME_PRESSES: Record<Frame['kind'], (name: string, deps: PressDeps) => void> = {
@@ -243,6 +218,12 @@ const FRAME_PRESSES: Record<Frame['kind'], (name: string, deps: PressDeps) => vo
 };
 
 function heldPress(key: Pressed, deps: PressDeps): boolean {
+  if (deps.palette.at !== undefined) {
+    palettePress(key, deps.palette);
+
+    return true;
+  }
+
   if (deps.picker.at !== undefined) {
     pickerPress(key.name, deps.picker);
 
@@ -290,6 +271,10 @@ export function press(key: Pressed, deps: PressDeps): void {
   }
 
   if (filterOpened(key, deps.stack.top.kind, deps.layout, deps.filter)) {
+    return;
+  }
+
+  if (paletteOpened(key, deps.stack.top.kind, deps.palette)) {
     return;
   }
 
