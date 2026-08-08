@@ -142,6 +142,19 @@ const JOURNEY: JourneyView = {
       refusal: undefined,
     },
   ],
+  pane: {
+    kind: 'feature',
+    size: 'story',
+    status: 'designing',
+    stageAt: 3,
+    stageOf: 8,
+    parent: undefined,
+    refusedTimes: 1,
+    arrivedAt: '2026-08-07T10:00:00.000Z',
+    lastEventAt: '2026-08-07T10:30:00.000Z',
+    filed: { by: 'Ada Lovelace', at: '2026-08-07T08:00:00.000Z' },
+    branch: { name: 'feat/watched', commits: 4 },
+  },
 };
 
 const CHILD_JOURNEY: JourneyView = {
@@ -175,6 +188,19 @@ const CHILD_JOURNEY: JourneyView = {
     },
   ],
   children: [],
+  pane: {
+    kind: 'chore',
+    size: 'subtask',
+    status: 'triaged',
+    stageAt: 2,
+    stageOf: 8,
+    parent: 'K-1',
+    refusedTimes: 0,
+    arrivedAt: undefined,
+    lastEventAt: undefined,
+    filed: undefined,
+    branch: undefined,
+  },
 };
 
 function movedInto(columns: KanbanColumnView[], key: string, status: string): void {

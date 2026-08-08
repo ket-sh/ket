@@ -118,12 +118,18 @@ describe('the tabs an opened item wears', () => {
 });
 
 describe('the workflow tab', () => {
-  it('shows the stage canvas and no artifact box', async () => {
+  it('shows the stage canvas', async () => {
     const frame = await opening([...OPENED, { key: 'TAB', lands: '║ designing' }]);
 
     expect(frame).toContain('designing');
     expect(frame).toContain('awaiting-approval');
-    expect(frame).not.toContain('spec.md');
+  });
+
+  it('draws no artifact on the canvas, naming it once in the pane instead', async () => {
+    const frame = await opening([...OPENED, { key: 'TAB', lands: '║ designing' }]);
+
+    expect(frame).toContain('artifacts spec.md');
+    expect(frame.split('spec.md')).toHaveLength(2);
   });
 });
 

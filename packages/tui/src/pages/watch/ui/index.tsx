@@ -110,6 +110,7 @@ function StageArea(room: RoomProps): ReactNode {
         sel={stack.top.sel}
         tab={stack.top.tab}
         pick={stack.top.pick}
+        focus={stack.top.focus}
         now={now}
         tick={tick}
         width={width - 2}

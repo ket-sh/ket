@@ -1,7 +1,21 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Ln } from '../../../shared/lib';
-import type { JourneyNodeView, JourneyView } from '../../../shared/model';
+import type { JourneyNodeView, JourneyPaneView, JourneyView } from '../../../shared/model';
+
+const PANE: JourneyPaneView = {
+  kind: 'feature',
+  size: 'story',
+  status: 'designing',
+  stageAt: 3,
+  stageOf: 8,
+  parent: undefined,
+  refusedTimes: 0,
+  arrivedAt: undefined,
+  lastEventAt: undefined,
+  filed: undefined,
+  branch: undefined,
+};
 
 import { journeyRows } from './canvas.ts';
 
@@ -40,6 +54,7 @@ const WALKED: JourneyView = {
   standing: undefined,
   artifacts: [],
   children: [],
+  pane: PANE,
 };
 
 function textOf(rows: Ln[]): string {

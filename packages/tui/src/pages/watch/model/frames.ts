@@ -14,10 +14,19 @@ import { walkedIn } from '../../../widgets/story-map';
 
 export type JourneyTab = 'overview' | 'workflow' | 'children' | 'artifacts';
 
+export type JourneyFocus = 'canvas' | 'pane';
+
 export type Frame =
   | { kind: 'board' }
   | { kind: 'map'; reading: MapReadingView; at: number }
-  | { kind: 'journey'; journey: JourneyView; sel: string; tab: JourneyTab; pick: number }
+  | {
+      kind: 'journey';
+      journey: JourneyView;
+      sel: string;
+      tab: JourneyTab;
+      pick: number;
+      focus: JourneyFocus;
+    }
   | {
       kind: 'surface';
       item: string;

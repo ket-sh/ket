@@ -96,6 +96,19 @@ const WALKED: JourneyView = {
     },
   ],
   children: [],
+  pane: {
+    kind: 'feature',
+    size: 'story',
+    status: 'implementing',
+    stageAt: 5,
+    stageOf: 8,
+    parent: undefined,
+    refusedTimes: 0,
+    arrivedAt: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
+    lastEventAt: new Date(Date.now() - 9 * 60 * 1000).toISOString(),
+    filed: { by: 'Ada Lovelace', at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
+    branch: { name: 'feat/login-lockout', commits: 4 },
+  },
 };
 
 const feed: BoardFeed = {
