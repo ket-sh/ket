@@ -5,6 +5,9 @@ set -euo pipefail
 # project. Nothing here reasons about the JSON contract; every assertion reads
 # what the binary actually wrote.
 
+# shellcheck source=scripts/hermetic-git.sh
+. "$(dirname "$0")/hermetic-git.sh"
+
 KET="$PWD/packages/cli/dist/ket"
 SANDBOX="$(mktemp -d)"
 PROJECT="$SANDBOX/order-service"
