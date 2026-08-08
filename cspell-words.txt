@@ -28,6 +28,7 @@ cva
 Datree
 dedup
 depcruise
+diátaxis
 diffview
 difit
 dmno
