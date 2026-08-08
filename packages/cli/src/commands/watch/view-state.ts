@@ -34,6 +34,10 @@ function stageOf(declared: unknown): OpeningStage | undefined {
     return { kind: 'map' };
   }
 
+  if (declared['kind'] === 'oplog') {
+    return { kind: 'oplog' };
+  }
+
   return declared['kind'] === 'journey' ? journeyStageOf(declared) : undefined;
 }
 

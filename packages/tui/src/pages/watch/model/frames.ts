@@ -4,6 +4,7 @@ import type {
   KanbanCardView,
   MapReadingView,
   MovedView,
+  OplogEventView,
   SurfaceDocView,
 } from '../../../shared/model';
 import type { Draft } from '../lib/edit.ts';
@@ -19,6 +20,7 @@ export type JourneyFocus = 'canvas' | 'pane';
 export type Frame =
   | { kind: 'board' }
   | { kind: 'map'; reading: MapReadingView; at: number }
+  | { kind: 'oplog'; events: OplogEventView[]; sel: number }
   | {
       kind: 'journey';
       journey: JourneyView;
@@ -65,6 +67,9 @@ export interface FrameStack {
   openMap: () => void;
   mapWalk: (name: string) => void;
   mapSeat: (at: number) => void;
+  openLog: () => void;
+  logSeat: (at: number) => void;
+  logSlide: (delta: number, most: number) => void;
   enter: () => void;
   walk: (direction: Direction) => void;
   scroll: (delta: number, most: number) => void;
@@ -90,12 +95,10 @@ export function landingOf(journey: JourneyView): string {
   return arrived?.id ?? lastOf(journey.nodes) ?? '';
 }
 
-function restingStepOf(frame: Extract<Frame, { kind: 'board' | 'journey' | 'map' }>): string {
-  if (frame.kind === 'board') {
-    return 'board';
-  }
-
-  return frame.kind === 'map' ? 'map' : frame.journey.item;
+function restingStepOf(
+  frame: Extract<Frame, { kind: 'board' | 'journey' | 'map' | 'oplog' }>,
+): string {
+  return frame.kind === 'journey' ? frame.journey.item : frame.kind;
 }
 
 function openedStepOf(frame: Extract<Frame, { kind: 'surface' | 'gate' | 'edit' }>): string {
@@ -106,9 +109,11 @@ function openedStepOf(frame: Extract<Frame, { kind: 'surface' | 'gate' | 'edit' 
   return frame.kind === 'edit' ? frame.name : (frame.title.split(' · ')[0] ?? '');
 }
 
-const RESTING = ['board', 'journey', 'map'];
+const RESTING = ['board', 'journey', 'map', 'oplog'];
 
-function isResting(frame: Frame): frame is Extract<Frame, { kind: 'board' | 'journey' | 'map' }> {
+function isResting(
+  frame: Frame,
+): frame is Extract<Frame, { kind: 'board' | 'journey' | 'map' | 'oplog' }> {
   return RESTING.includes(frame.kind);
 }
 
@@ -138,6 +143,29 @@ export function mapSeated(stack: Frame[], at: number): Frame[] {
   }
 
   return [...stack.slice(0, -1), { ...above, at }];
+}
+
+export function logSeated(stack: Frame[], at: number): Frame[] {
+  const above = stack[stack.length - 1];
+
+  if (above?.kind !== 'oplog') {
+    return stack;
+  }
+
+  return [...stack.slice(0, -1), { ...above, sel: at }];
+}
+
+export function logSlid(stack: Frame[], delta: number, most: number): Frame[] {
+  const above = stack[stack.length - 1];
+
+  if (above?.kind !== 'oplog') {
+    return stack;
+  }
+
+  const seated = Math.min(Math.max(above.sel, 0), Math.max(0, most));
+  const sel = Math.min(Math.max(0, most), Math.max(0, seated + delta));
+
+  return [...stack.slice(0, -1), { ...above, sel }];
 }
 
 export function scrolled(stack: Frame[], delta: number, most: number): Frame[] {

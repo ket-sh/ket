@@ -20,6 +20,7 @@ describe('the bindings the board answers', () => {
       'm map',
       'v list',
       'b backlog',
+      'l log',
       '/ filter',
       'ctrl+p go',
       '? help',
@@ -38,6 +39,7 @@ describe('the bindings the board answers', () => {
         'm map',
         'v list',
         'b backlog',
+        'l log',
         '/ filter',
         'ctrl+p go',
         '? help',
@@ -123,6 +125,18 @@ describe('the bindings the other screens answer', () => {
     ]);
   });
 
+  it('lets the operation log walk, dive, narrow, and leave', () => {
+    expect(hintsAt({ kind: 'oplog' })).toStrictEqual([
+      '↑↓ move',
+      '⏎ journey',
+      '/ filter',
+      'ctrl+p go',
+      '? help',
+      'esc board',
+      'q quit',
+    ]);
+  });
+
   it('holds the ceremony to pass or cancel', () => {
     expect(hintsAt({ kind: 'gate' })).toStrictEqual(['⏎ pass', 'esc cancel']);
   });
@@ -181,6 +195,7 @@ describe('the grouping the help screen reads', () => {
       'm map',
       'v list',
       'b backlog',
+      'l log',
       'ctrl+p go',
       'q quit',
     ]);

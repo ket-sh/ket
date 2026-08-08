@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import type { KanbanColumnView } from '../../../shared/model';
+import type { KanbanColumnView, OplogEventView } from '../../../shared/model';
 import type { BoardLayout } from '../model/board-layout.ts';
 import type { Filter } from '../model/filter.ts';
 import type { Frame, FrameStack } from '../model/frames.ts';
@@ -14,44 +14,59 @@ function cardsIn(columns: KanbanColumnView[]): number {
   return columns.reduce((count, column) => count + column.cards.length, 0);
 }
 
-function narrowedWorn(filter: Filter, frame: Frame): string | undefined {
-  if (frame.kind !== 'board' || filter.typing || filter.query === '') {
-    return undefined;
-  }
-
-  return filter.query;
+function wornBy(narrower: Filter): string | undefined {
+  return narrower.typing || narrower.query === '' ? undefined : narrower.query;
 }
 
-export function FootRow({
-  filter,
-  shown,
-  columns,
-  stack,
-  seat,
-  layout,
-  width,
-  mouse,
-}: {
+function narrowedWorn(filter: Filter, logFilter: Filter, frame: Frame): string | undefined {
+  if (frame.kind === 'oplog') {
+    return wornBy(logFilter);
+  }
+
+  return frame.kind === 'board' ? wornBy(filter) : undefined;
+}
+
+interface FootRowProps {
   filter: Filter;
+  logFilter: Filter;
   shown: KanbanColumnView[];
   columns: KanbanColumnView[];
+  logRows: OplogEventView[];
   stack: FrameStack;
   seat: Seat;
   layout: BoardLayout;
   width: number;
   mouse: WatchMouse;
-}): ReactNode {
+}
+
+interface Counted {
+  narrower: Filter;
+  kept: number;
+  all: number;
+}
+
+function countedAt(top: Frame, foot: FootRowProps): Counted {
+  if (top.kind === 'oplog') {
+    return { narrower: foot.logFilter, kept: foot.logRows.length, all: top.events.length };
+  }
+
+  return { narrower: foot.filter, kept: cardsIn(foot.shown), all: cardsIn(foot.columns) };
+}
+
+export function FootRow(foot: FootRowProps): ReactNode {
+  const { filter, logFilter, stack, seat, layout, width, mouse } = foot;
+  const top = stack.top;
+  const { narrower, kept, all } = countedAt(top, foot);
+
   return (
     <box flexDirection="column">
-      {filter.typing ? (
-        <FilterBar query={filter.query} kept={cardsIn(shown)} all={cardsIn(columns)} />
-      ) : null}
+      {narrower.typing ? <FilterBar query={narrower.query} kept={kept} all={all} /> : null}
       <KeyBar
-        frame={stack.top}
+        frame={top}
         offers={seat.chosen?.offers ?? []}
         layout={layout}
         width={width}
-        narrowed={narrowedWorn(filter, stack.top)}
+        narrowed={narrowedWorn(filter, logFilter, top)}
         mouse={mouse}
       />
     </box>

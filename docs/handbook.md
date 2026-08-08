@@ -6,7 +6,7 @@ sources:
   - presets/cli/src/**
   - presets/web/src/**
   - harness/**
-stamp: c5c2c9d2db28
+stamp: 67cdbb634130
 ---
 
 # The ket handbook
@@ -98,9 +98,10 @@ Bare `ket` on a terminal opens the board: every stage as a lane, cards with
 their ages, refusals in red, a bell on any card that needs you. From the
 board, `enter` opens an item behind its tabs: overview, workflow with the
 stage canvas and the item pane, children, and artifacts. The `b` key shows
-the backlog, `m` opens the story map, `v` flips to a flat list, and `t` picks
-a theme. `ket retro` folds the week's events into a report that names what
-slowed you, and every action it derives carries a numbered draft with its
+the backlog, `m` opens the story map, `v` flips to a flat list, `l` opens the
+oplog over the last 500 logged events newest first, and `t` picks a theme.
+`ket retro` folds the week's events into a report that names what slowed
+you, and every action it derives carries a numbered draft with its
 evidence. `ket retro adopt 1` files the first draft as an idea item that
 explains itself without the log. A terminal run ends with an adopt-or-skip
 tour over the drafts, and `ket retro --json` hands a session the same drafts

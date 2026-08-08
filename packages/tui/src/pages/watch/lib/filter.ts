@@ -1,5 +1,7 @@
 import type { KanbanCardView, KanbanColumnView } from '../../../shared/model';
 
+import { narrowedRows } from './narrowing.ts';
+
 type Answers = (card: KanbanCardView) => boolean;
 
 function stageAnswers(wanted: string): Answers {
@@ -23,18 +25,8 @@ function answersOf(token: string): Answers {
 }
 
 export function narrowedBy(columns: KanbanColumnView[], query: string): KanbanColumnView[] {
-  const asked = query
-    .toLowerCase()
-    .split(/\s+/u)
-    .filter((token) => token !== '')
-    .map((token) => answersOf(token));
-
-  if (asked.length === 0) {
-    return columns;
-  }
-
   return columns.map((column) => ({
     ...column,
-    cards: column.cards.filter((card) => asked.every((answers) => answers(card))),
+    cards: narrowedRows(column.cards, query, answersOf),
   }));
 }

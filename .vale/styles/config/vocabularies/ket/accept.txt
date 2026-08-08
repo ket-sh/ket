@@ -60,6 +60,7 @@ namespace
 npm
 OpenSSF
 OpenTUI
+oplog
 Ory
 oxfmt
 oxfmtrc
