@@ -84,7 +84,7 @@ async function askOne(offered: OfferedCategory): Promise<string[] | symbol> {
     return picked;
   }
 
-  return pickedNames(picked);
+  return pickedNames(picked, offered);
 }
 
 async function askCategory(offered: OfferedCategory): Promise<string[] | symbol> {

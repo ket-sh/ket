@@ -3,7 +3,7 @@ import type { OfferedCategory, PresetIntegration } from '@ket/preset';
 import { writes } from '@ket/preset';
 import { describe, expect, it } from 'vitest';
 
-import { choicesFor, NOTHING, pickedNames, promptFor } from './integration-prompt.ts';
+import { choicesFor, pickedNames, promptFor } from './integration-prompt.ts';
 
 function offering(name: string): PresetIntegration {
   return {
@@ -48,7 +48,7 @@ describe('what a person picks from', () => {
   it('lets a category that takes one be answered with none, since no tool is required', () => {
     const choices = choicesFor(takingOne([offering('codecov'), offering('qlty')]));
 
-    expect(choices.map((choice) => choice.value)).toStrictEqual([NOTHING, 'codecov', 'qlty']);
+    expect(choices.map((choice) => choice.value)).toStrictEqual(['', 'codecov', 'qlty']);
   });
 
   it('offers no such answer where the category takes several, since none is an empty pick', () => {
@@ -60,16 +60,22 @@ describe('what a person picks from', () => {
   it('names the answer that takes no tool in words a person reads', () => {
     const [first] = choicesFor(takingOne([offering('codecov')]));
 
-    expect(first).toStrictEqual({ value: NOTHING, label: 'none', hint: 'no such service' });
+    expect(first).toStrictEqual({ value: '', label: 'none', hint: 'no such service' });
   });
 });
 
 describe('reading back what a person picked for a category that takes one', () => {
+  const COVERAGE = takingOne([offering('codecov'), offering('qlty')]);
+
   it('reads a named tool as the one tool that category got', () => {
-    expect(pickedNames('codecov')).toStrictEqual(['codecov']);
+    expect(pickedNames('codecov', COVERAGE)).toStrictEqual(['codecov']);
   });
 
   it('reads the answer that takes no tool as no tool at all, not as a tool with no name', () => {
-    expect(pickedNames(NOTHING)).toStrictEqual([]);
+    expect(pickedNames('', COVERAGE)).toStrictEqual([]);
+  });
+
+  it('reads an answer naming no tool the category offered as none, whatever it says', () => {
+    expect(pickedNames('argos', COVERAGE)).toStrictEqual([]);
   });
 });

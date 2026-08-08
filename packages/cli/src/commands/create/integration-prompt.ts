@@ -7,9 +7,7 @@ export interface IntegrationChoice {
 }
 
 // A single-select has no empty pick, so declining is itself an option.
-export const NOTHING = '';
-
-const NO_SERVICE: IntegrationChoice = { value: NOTHING, label: 'none', hint: 'no such service' };
+const NO_SERVICE: IntegrationChoice = { value: '', label: 'none', hint: 'no such service' };
 
 export function promptFor(offered: OfferedCategory): string {
   const service = offered.admits === 'several' ? 'services' : 'service';
@@ -25,8 +23,10 @@ function offeredChoices(offered: OfferedCategory): IntegrationChoice[] {
   }));
 }
 
-export function pickedNames(answer: string): string[] {
-  return answer === NOTHING ? [] : [answer];
+// The answer that declines carries no tool name, and neither does a stale one,
+// so what a category got is whatever of it the category actually offered.
+export function pickedNames(answer: string, offered: OfferedCategory): string[] {
+  return offered.offers.filter((offer) => offer.name === answer).map((offer) => offer.name);
 }
 
 export function choicesFor(offered: OfferedCategory): IntegrationChoice[] {
