@@ -1,1 +1,1 @@
-export { clipped, wrappedTo } from './text.ts';
+export { clipped, widthOf, wrappedTo } from './text.ts';

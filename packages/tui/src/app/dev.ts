@@ -13,6 +13,7 @@ const REHEARSAL: KanbanColumnView[] = [
         title: 'A quiet fix',
         size: 'subtask',
         status: 'triaged',
+        parent: 'DEV-1',
         since: new Date(Date.now() - 45_000).toISOString(),
         refusal: undefined,
         offers: ['approve'],
@@ -27,6 +28,7 @@ const REHEARSAL: KanbanColumnView[] = [
         title: 'Login with lockout',
         size: 'story',
         status: 'implementing',
+        parent: undefined,
         since: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
         refusal: {
           reason: 'no failing test covers src/auth.ts',

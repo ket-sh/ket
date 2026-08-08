@@ -13,6 +13,7 @@ export interface KanbanCardView {
   title: string;
   size: string;
   status: string;
+  parent: string | undefined;
   since: string | undefined;
   refusal: KanbanRefusalView | undefined;
   offers: GateActionView[];

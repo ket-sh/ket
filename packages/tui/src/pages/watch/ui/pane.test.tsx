@@ -108,6 +108,25 @@ describe('the side pane beside the workflow canvas', () => {
   });
 });
 
+describe('the way the key bar advertises the pane', () => {
+  it('says nothing about the pane while nodes still lie to the right', async () => {
+    expect(await workflowAt(160)).not.toContain('item pane');
+  });
+
+  it('says the pane is one arrow away once the canvas runs out', async () => {
+    const frame = await workflowAt(160, ['ARROW_RIGHT']);
+
+    expect(frame).toContain('→ item pane');
+  });
+
+  it('names what enter means once the pane holds the selection', async () => {
+    const frame = await workflowAt(160, ['ARROW_RIGHT', 'ARROW_RIGHT']);
+
+    expect(frame).toContain('⏎ children');
+    expect(frame).toContain('← canvas');
+  });
+});
+
 describe('the jump the children summary offers', () => {
   it('takes the selection into the pane once the canvas runs out to the right', async () => {
     const frame = await workflowAt(160, ['ARROW_RIGHT', 'ARROW_RIGHT']);

@@ -6,7 +6,7 @@ import type { Seat } from './seat.ts';
 import { asDirection, DELTA } from './compass.ts';
 import { editorPress } from './editor-keys.ts';
 
-export type BoardLayout = 'kanban' | 'list';
+export type BoardLayout = 'kanban' | 'list' | 'backlog';
 
 export interface Picker {
   at: number | undefined;
@@ -114,6 +114,9 @@ const BOARD_CHORDS: Record<string, (deps: PressDeps) => void> = {
   v: (deps) => {
     deps.swap();
   },
+  b: (deps) => {
+    deps.queue();
+  },
   m: (deps) => {
     deps.stack.openMap();
   },
@@ -214,6 +217,7 @@ export interface PressDeps {
   tick: number;
   layout: BoardLayout;
   swap: () => void;
+  queue: () => void;
   picker: Picker;
 }
 

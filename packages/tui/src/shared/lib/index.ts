@@ -3,4 +3,4 @@ export { confettiRows } from './confetti.ts';
 export type { Cell, Ln } from './grid.ts';
 export { boxAt, gridOf, lerpHex, put, spansOf, writeText } from './grid.ts';
 export { bandAt } from './band.ts';
-export { clipped, wrappedTo } from './text/index.ts';
+export { clipped, widthOf, wrappedTo } from './text/index.ts';
