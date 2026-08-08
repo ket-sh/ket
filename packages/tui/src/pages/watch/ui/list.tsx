@@ -1,8 +1,6 @@
-import type { MouseEvent } from '@opentui/core';
 import type { ReactNode } from 'react';
 
 import type { KanbanColumnView } from '../../../shared/model';
-import type { WatchMouse } from '../model/mouse.ts';
 
 import { ListRow } from './card-row.tsx';
 
@@ -10,12 +8,14 @@ export function ListView({
   columns,
   now,
   chosenKey,
-  mouse,
+  onRow,
+  onWheel,
 }: {
   columns: KanbanColumnView[];
   now: string;
   chosenKey: string | undefined;
-  mouse: WatchMouse;
+  onRow: (key: string) => void;
+  onWheel: (direction: 'up' | 'down' | 'left' | 'right') => void;
 }): ReactNode {
   const cards = columns.flatMap((column) => column.cards);
 
@@ -23,11 +23,11 @@ export function ListView({
     <box
       flexDirection="column"
       paddingTop={1}
-      onMouseScroll={(event: MouseEvent) => {
+      onMouseScroll={(event) => {
         const direction = event.scroll?.direction;
 
         if (direction !== undefined) {
-          mouse.listWheel(direction);
+          onWheel(direction);
         }
       }}
     >
@@ -39,7 +39,7 @@ export function ListView({
             now={now}
             chosen={card.key === chosenKey}
             onPress={() => {
-              mouse.listRow(card.key);
+              onRow(card.key);
             }}
           />
         ),

@@ -42,7 +42,15 @@ function BoardArea({
   }
 
   if (layout === 'list') {
-    return <ListView columns={columns} now={now} chosenKey={seat.chosen?.key} mouse={mouse} />;
+    return (
+      <ListView
+        columns={columns}
+        now={now}
+        chosenKey={seat.chosen?.key}
+        onRow={mouse.listRow}
+        onWheel={mouse.listWheel}
+      />
+    );
   }
 
   return (
