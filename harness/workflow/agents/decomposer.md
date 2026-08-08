@@ -5,6 +5,7 @@ tools: Read, Grep, Glob, WebSearch, WebFetch, Bash
 model: fable
 skills:
   - gherkin
+  - issue-writing
   - prior-art
   - research
 ---
@@ -38,10 +39,32 @@ plainly when the codebase makes one unnecessary here.
 Where the standard breakdown includes something you are leaving out, name it and
 say why. A reader deserves to see what you considered, not only what survived.
 
+## How the text is written
+
+Every title and every description follows the `ket:issue-writing` skill, and its
+review step runs on your draft before you return it.
+
+Titles matter more here than anywhere else in the pipeline, because these ones
+are read side by side. A title has to identify its candidate against every
+sibling in the same list, so a distinguishing word in the first three words is
+what makes the list readable at all.
+
+You write two kinds of description in one pass:
+
+- **The parent.** Problem, appetite, approach, slice rationale, no-gos, and the
+  children. The slice rationale is the part only you can write: it says where
+  the cut falls and why the children run in that order, which is the reasoning
+  behind the list you are proposing. Keep the acceptance criteria out. A parent
+  holding one child's criteria has decided that child's scope in a document
+  nobody rereads when the child changes.
+- **Each child.** The parent key, the one behavior it ships, its criteria in
+  Given-When-Then, and out-of-scope lines only where they differ from the
+  parent. Never argue the problem again. The reader can open the parent.
+
 ## Return, and stop
 
-Return the candidates and nothing else. Do not run `ket item file`, do not move a
-status, and do not pick a subset yourself.
+Return the candidates with their descriptions, and nothing else. Do not run
+`ket item file`, do not move a status, and do not pick a subset yourself.
 
 The caller shows your list to the user, who chooses. That choice is a human gate
 and it is not yours to close.

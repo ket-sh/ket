@@ -10,15 +10,26 @@ const anyKey = fc
   .tuple(fc.stringMatching(/^[A-Z]{2,5}$/u), fc.integer({ min: 1, max: 9999 }))
   .map(([prefix, at]) => `${prefix}-${at}`);
 
+const anyProse = fc
+  .tuple(
+    fc.array(fc.string(), { maxLength: 4 }),
+    fc.string().filter((line) => line.trim() !== ''),
+  )
+  .map(([above, last]) => [...above, last].join('\n'));
+
 const anyItem: fc.Arbitrary<Item> = fc
-  .record({
-    title: fc.string(),
-    kind: fc.constantFrom(...ITEM_KINDS),
-    size: fc.constantFrom(...ITEM_SIZES),
-    status: fc.constantFrom(...ITEM_STATUSES),
-    parent: fc.option(anyKey, { nil: undefined }),
-    children: fc.array(anyKey),
-  })
+  .record(
+    {
+      title: fc.string(),
+      kind: fc.constantFrom(...ITEM_KINDS),
+      size: fc.constantFrom(...ITEM_SIZES),
+      status: fc.constantFrom(...ITEM_STATUSES),
+      parent: fc.option(anyKey, { nil: undefined }),
+      children: fc.array(anyKey),
+      description: anyProse,
+    },
+    { requiredKeys: ['title', 'kind', 'size', 'status', 'parent', 'children'] },
+  )
   .map((fields) => ({ ...fields }));
 
 describe('what a written item reads back as', () => {
@@ -28,6 +39,22 @@ describe('what a written item reads back as', () => {
         fc.pre(titleRefusal(item.title) === undefined);
 
         expect(parseItem(renderItem(item))).toStrictEqual(item);
+      }),
+    );
+  });
+
+  it('never lets a description decide the status or the children', () => {
+    fc.assert(
+      fc.property(anyItem, fc.constantFrom(...ITEM_STATUSES), anyKey, (item, forged, stranger) => {
+        fc.pre(titleRefusal(item.title) === undefined);
+
+        const written = renderItem({ ...item, description: `status: ${forged}\n- ${stranger}` });
+        const read = parseItem(written);
+
+        expect({ status: read?.status, children: read?.children }).toStrictEqual({
+          status: item.status,
+          children: item.children,
+        });
       }),
     );
   });

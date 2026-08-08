@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import type { Filing } from '../../shared/decompose.ts';
 
 import { decompositionOf } from '../../shared/decompose.ts';
+import { describing } from '../../shared/item-description.ts';
 import { keyOf, read, write } from '../../shared/item-store.ts';
 
 const KET_DIRECTORY = '.ket';
@@ -26,6 +27,7 @@ export async function fileAlone(root: string, filing: Filing): Promise<void> {
     status: 'triaged',
     parent: undefined,
     children: [],
+    ...describing(filing.description),
   });
 }
 

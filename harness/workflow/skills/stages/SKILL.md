@@ -190,8 +190,17 @@ research missed. Neither is an invitation to argue.
 **Then file what they chose**, one command per child:
 
 ```
-ket item file --parent <epic key> --title '<title>' --kind <kind> --size <size>
+ket item file --parent <epic key> --title '<title>' --kind <kind> --size <size> --description '<description>'
 ```
+
+The title and the description come from `ket:decomposer` already written to the
+`ket:issue-writing` skill, so carry them through rather than paraphrasing them
+into the command.
+
+The epic's own description was written when the epic was filed, and no command
+rewrites it. Where it says `unknown:` about the cut, the answer is the proposal
+you just showed the user, so say it in the chat and let the children carry the
+detail.
 
 Each child has to be smaller than the epic, and only an epic or a story takes
 children at all. The command records the link on both ends and prints the key it

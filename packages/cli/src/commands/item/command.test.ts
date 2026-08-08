@@ -4,6 +4,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { Item } from '../../shared/item.ts';
+
+import { parseItem } from '../../shared/read-item.ts';
 import item from './command.ts';
 
 async function runItem(argv: string[]): Promise<void> {
@@ -91,5 +94,44 @@ describe('the trail an item leaves in the event log', () => {
       about: 'triaged',
       item: 'K-2',
     });
+  });
+});
+
+describe('filing an item with the description somebody wrote for it', () => {
+  async function filed(key: string): Promise<Item | undefined> {
+    return parseItem(await readFile(join(root, '.ket', 'items', key, 'item.yaml'), 'utf8'));
+  }
+
+  it('lands the description beside the fields the gates read', async () => {
+    await runItem([
+      'file',
+      '--title',
+      'Locked accounts sign in without warning',
+      '--kind',
+      'bug',
+      '--size',
+      'subtask',
+      '--description',
+      'Expected\n\nThe form names the lockout.',
+    ]);
+
+    await expect(filed('K-2')).resolves.toMatchObject({
+      title: 'Locked accounts sign in without warning',
+      description: 'Expected\n\nThe form names the lockout.',
+    });
+  });
+
+  it('lands no description for a filing nobody described', async () => {
+    await runItem([
+      'file',
+      '--title',
+      'A described nothing',
+      '--kind',
+      'chore',
+      '--size',
+      'trivial',
+    ]);
+
+    expect((await filed('K-2'))?.description).toBeUndefined();
   });
 });
