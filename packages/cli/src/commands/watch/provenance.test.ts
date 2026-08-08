@@ -22,6 +22,41 @@ async function git(...flags: string[]): Promise<void> {
   });
 }
 
+async function gitSaying(input: string | undefined, ...flags: string[]): Promise<string> {
+  return new Promise((done, failed) => {
+    const scoped = ['-C', root, '-c', 'user.email=ada@test', '-c', 'user.name=Ada Lovelace'];
+    const child = execFile('git', [...scoped, ...flags], (broke, said) => {
+      if (broke === null) {
+        done(said.trim());
+      } else {
+        failed(new Error(broke.message));
+      }
+    });
+
+    if (input !== undefined) {
+      child.stdin?.end(input);
+    }
+  });
+}
+
+// git refuses to author a commit with a blank name, so the fixture writes the
+// commit object through plumbing, which is how such history reaches a clone.
+async function refiledNamelessly(key: string): Promise<void> {
+  const tree = await gitSaying(undefined, 'rev-parse', 'HEAD^{tree}');
+  const parent = await gitSaying(undefined, 'rev-parse', 'HEAD~1');
+  const crafted = await gitSaying(
+    `tree ${tree}\nparent ${parent}\nauthor  <ada@test> 1754550000 +0000\ncommitter  <ada@test> 1754550000 +0000\n\nfile ${key} namelessly\n`,
+    'hash-object',
+    '-t',
+    'commit',
+    '-w',
+    '--stdin',
+    '--literally',
+  );
+
+  await git('update-ref', 'refs/heads/main', crafted);
+}
+
 async function fileItem(key: string, at: string): Promise<void> {
   await mkdir(join(root, '.ket', 'items', key), { recursive: true });
   await writeFile(join(root, '.ket', 'items', key, 'item.md'), `title: ${key}\n`);
@@ -65,6 +100,13 @@ describe('who filed an item, read off the repository', () => {
     expect((await repoFactsFor(root, 'K-9')).filed).toBeUndefined();
   });
 
+  it('names nobody when the filing commit carries a blank author name', async () => {
+    await fileItem('K-1', '2026-08-07T08:00:00Z');
+    await refiledNamelessly('K-1');
+
+    expect((await repoFactsFor(root, 'K-1')).filed).toBeUndefined();
+  });
+
   it('names nobody outside a repository rather than refusing', async () => {
     const bare = await mkdtemp(join(tmpdir(), 'ket-no-repo-'));
 
@@ -74,6 +116,21 @@ describe('who filed an item, read off the repository', () => {
 });
 
 describe('the branch the work sits on', () => {
+  it('names no branch where no default branch exists to count against', async () => {
+    await git('checkout', '-b', 'work');
+    await git('branch', '-D', 'main');
+    await fileItem('K-1', '2026-08-07T08:00:00Z');
+
+    expect((await repoFactsFor(root, 'K-1')).branch).toBeUndefined();
+  });
+
+  it('names no branch while the checkout floats detached from any', async () => {
+    await fileItem('K-1', '2026-08-07T08:00:00Z');
+    await git('checkout', '--detach');
+
+    expect((await repoFactsFor(root, 'K-1')).branch).toBeUndefined();
+  });
+
   it('names no branch while the checkout rests on the default one', async () => {
     await fileItem('K-1', '2026-08-07T08:00:00Z');
 

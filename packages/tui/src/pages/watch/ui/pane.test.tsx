@@ -55,8 +55,10 @@ async function workflowAt(width: number, then: Key[] = []): Promise<string> {
   let frame = await landed((seen) => seen.includes('Not started'));
 
   for (const key of then) {
+    const before = frame;
+
     keys.pressKey(key);
-    frame = await settled();
+    frame = await landed((seen) => seen !== before);
   }
 
   return frame;
