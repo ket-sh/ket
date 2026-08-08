@@ -2,13 +2,15 @@ import type { AdoptionEvent } from '../../shared/event.ts';
 import type { DraftEvidence } from './draft.ts';
 import type { RetroAction } from './fold.ts';
 
-import { record } from '../../shared/event-log.ts';
+import { readLog, record } from '../../shared/event-log.ts';
 import { itemsIn, keyOf, write } from '../../shared/item-store.ts';
 import { nextKey } from '../../shared/item.ts';
 import { readEvents } from '../../shared/log-lines.ts';
 import { LOG_SCOPE } from './draft.ts';
 
 export type ChosenDraft = { action: RetroAction } | { refused: string };
+
+export type Adoption = { filed: string } | { refused: string };
 
 interface RecordedAdoption {
   gate: string;
@@ -104,4 +106,18 @@ export async function fileAdoption(root: string, action: RetroAction): Promise<s
   await record(root, adoptionEventOf(action, key));
 
   return key;
+}
+
+export async function adoptNumbered(
+  root: string,
+  actions: RetroAction[],
+  asked: string,
+): Promise<Adoption> {
+  const picked = chosenDraft(await readLog(root), actions, asked);
+
+  if ('refused' in picked) {
+    return picked;
+  }
+
+  return { filed: await fileAdoption(root, picked.action) };
 }

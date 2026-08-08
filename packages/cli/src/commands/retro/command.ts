@@ -12,9 +12,10 @@ import { readLog } from '../../shared/event-log.ts';
 import { semanticsOf } from '../../shared/governing.ts';
 import { readStored } from '../../shared/item-store.ts';
 import { ketRootOrThrow } from '../../shared/locate.ts';
-import { chosenDraft, fileAdoption } from './adopt.ts';
+import { adoptNumbered } from './adopt.ts';
 import { foldRetro } from './fold.ts';
 import { renderRetro } from './report.ts';
+import { isTerminal, runTour } from './tour.ts';
 import { retroPathOf, windowFrom } from './window.ts';
 
 const RETRO_ARGS = {
@@ -32,7 +33,6 @@ const RETRO_ARGS = {
 
 interface FoldedWeek {
   root: string;
-  log: string;
   window: RetroWindow;
   folded: Retro;
 }
@@ -49,7 +49,7 @@ async function foldedWeekAt(cwd: string, since: string | undefined): Promise<Fol
   const log = await readLog(root);
   const folded = foldRetro(await readStored(root), log, chosen.window, semantics?.gates ?? []);
 
-  return { root, log, window: chosen.window, folded };
+  return { root, window: chosen.window, folded };
 }
 
 const report = defineCommand({
@@ -72,6 +72,10 @@ const report = defineCommand({
     await mkdir(dirname(join(week.root, path)), { recursive: true });
     await writeFile(join(week.root, path), renderRetro(week.folded), 'utf8');
     process.stdout.write(`${path}\n`);
+
+    if (isTerminal()) {
+      await runTour(week.root, week.folded.actions);
+    }
   },
 });
 
@@ -91,15 +95,13 @@ const adopt = defineCommand({
   },
   async run({ args }) {
     const week = await foldedWeekAt(args.cwd, args.since);
-    const picked = chosenDraft(week.log, week.folded.actions, args.number);
+    const adopted = await adoptNumbered(week.root, week.folded.actions, args.number);
 
-    if ('refused' in picked) {
-      throw new Error(picked.refused);
+    if ('refused' in adopted) {
+      throw new Error(adopted.refused);
     }
 
-    const key = await fileAdoption(week.root, picked.action);
-
-    process.stdout.write(`${key}\n`);
+    process.stdout.write(`${adopted.filed}\n`);
   },
 });
 
