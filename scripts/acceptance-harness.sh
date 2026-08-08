@@ -536,8 +536,10 @@ echo "acceptance: a command that would step around a gate"
 shell_refuses 'git commit -m wip --no-verify' 'skips a gate'
 shell_refuses 'git commit --no-gpg-sign -m wip' 'skips a gate'
 shell_refuses 'git push --no-verify' '--no-verify skips a gate'
+shell_refuses 'bun run test --no-verify' '--no-verify skips a gate'
 shell_runs 'git commit -m wip'
 shell_runs 'bun run test'
+shell_runs 'bun run prepare'
 shell_runs 'git verify-commit HEAD'
 
 echo "acceptance: a shell writes the same files the write tool does"
@@ -968,6 +970,14 @@ grep -q '"about":"src/auth.ts","item":"OS-2"' "$PROJECT/.ket/events.jsonl" ||
   fail "no event named the child that governed a write under its epic"
 grep -q '"gate":"probe"' "$PROJECT/.ket/events.jsonl" || fail "the probe gate recorded nothing"
 grep -q '"gate":"shell"' "$PROJECT/.ket/events.jsonl" || fail "the shell gate recorded nothing"
+# The retro ranks a preset's own gates by when the log last saw them, so an
+# allowed run of a declared script lands under the name the preset declared.
+grep -q '"gate":"test","outcome":"allowed","about":"bun run test"' "$PROJECT/.ket/events.jsonl" ||
+  fail "an allowed run of the declared test gate left no line under its declared name"
+grep -q '"gate":"test","outcome":"allowed","about":"bun run test --no-verify"' "$PROJECT/.ket/events.jsonl" &&
+  fail "a refused command was recorded as a declared gate run"
+grep -q '"gate":"prepare"' "$PROJECT/.ket/events.jsonl" &&
+  fail "a script the preset declares no gate for was recorded as a gate run"
 # Every gate names a file the way the repository names it, or the log reads as
 # two logs and nothing can group by what a decision was about.
 grep -q '"gate":"test-first","outcome":"refused","about":"README.md"' "$PROJECT/.ket/events.jsonl" ||

@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest';
 
 import type { RetroWindow } from './window.ts';
 
+import { declaredGateEventFor } from '../../shared/declared-gates.ts';
+import { renderEvent } from '../../shared/event.ts';
 import { foldRetro } from './fold.ts';
 
 const WINDOW: RetroWindow = {
@@ -31,6 +33,10 @@ function recorded(gate: string, outcome: string, at: string): string {
 
 function turnedAway(gate: string, at: string, reason: string): string {
   return `${JSON.stringify({ gate, outcome: 'refused', about: 'src/a.ts', item: 'K-1', at, reason })}\n`;
+}
+
+function ranThrough(script: string, at: string): string {
+  return renderEvent({ ...declaredGateEventFor(script, `bun run ${script}`), at });
 }
 
 const BUSY = moved('triaged', '2026-08-04T09:00:00.000Z');
@@ -140,6 +146,26 @@ describe('the quietest gate among several the window left alone', () => {
       recorded('lint:spell', 'allowed', at) + recorded('check-types', 'allowed', at) + BUSY;
 
     expect(quietGateOf(log, [gateOf('lint:spell'), gateOf('check-types')])).toBe('check-types');
+  });
+});
+
+describe('a declared gate run the shell gate recorded', () => {
+  it('stops reading as never recorded once its run reaches the log', () => {
+    const at = '2026-07-02T09:00:00.000Z';
+    const log = ranThrough('lint:dup', at) + BUSY;
+
+    expect(actionOf(log, [DUP])).toStrictEqual({
+      dormant: { gate: 'lint:dup', guards: 'It guards lint:dup.', seen: Date.parse(at) },
+    });
+  });
+
+  it('ranks two quiet gates by the moments their runs were recorded, not by name', () => {
+    const log =
+      ranThrough('lint:spell', '2026-07-01T09:00:00.000Z') +
+      ranThrough('check-types', '2026-07-05T09:00:00.000Z') +
+      BUSY;
+
+    expect(quietGateOf(log, [gateOf('check-types'), gateOf('lint:spell')])).toBe('lint:spell');
   });
 });
 
