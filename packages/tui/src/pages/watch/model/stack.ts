@@ -115,7 +115,7 @@ type Diving = Pick<FrameStack, 'dive' | 'enter'>;
 
 function useDiving(feed: BoardFeed, top: Frame, setFrames: Grow): Diving {
   const dive = useCallback(
-    (key: string | undefined) => {
+    (key: string | undefined, tab: JourneyTab = 'overview') => {
       if (key === undefined) {
         return;
       }
@@ -128,7 +128,7 @@ function useDiving(feed: BoardFeed, top: Frame, setFrames: Grow): Diving {
               kind: 'journey',
               journey,
               sel: landingOf(journey),
-              tab: 'overview',
+              tab,
               pick: 0,
               focus: 'canvas',
             },

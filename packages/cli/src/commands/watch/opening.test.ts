@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { openingOf } from './opening.ts';
+import { openedFrom, openingOf } from './opening.ts';
 
 describe('the opening a watch invocation asks for', () => {
   it('opens the board when nothing is asked', () => {
@@ -53,5 +53,21 @@ describe('the opening a watch invocation asks for', () => {
     expect(openingOf({ key: 'K-1', screen: 'map' })).toStrictEqual({
       refused: 'K-1 and --screen map ask for two openings. name one',
     });
+  });
+});
+
+describe('what opens when a deep link meets a memory', () => {
+  it('lets the deep link beat the memory', () => {
+    expect(openedFrom({ stage: { kind: 'map' } }, { layout: 'list' })).toStrictEqual({
+      stage: { kind: 'map' },
+    });
+  });
+
+  it('lets the memory stand when nothing is asked', () => {
+    expect(openedFrom(undefined, { layout: 'list' })).toStrictEqual({ layout: 'list' });
+  });
+
+  it('opens the board when neither speaks', () => {
+    expect(openedFrom(undefined, undefined)).toBeUndefined();
   });
 });

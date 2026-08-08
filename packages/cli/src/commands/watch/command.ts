@@ -1,11 +1,13 @@
 import { defineCommand, showUsage } from 'citty';
-import { resolve } from 'node:path';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 
 import { COMMAND_ARGS } from '../../shared/args.ts';
 import { read } from '../../shared/item-store.ts';
 import { ketRootOrThrow } from '../../shared/locate.ts';
 import { boardFeedFor } from './feed.ts';
-import { openingOf } from './opening.ts';
+import { openedFrom, openingOf } from './opening.ts';
+import { readView, rememberView } from './view-state.ts';
 
 const watch = defineCommand({
   meta: {
@@ -40,9 +42,16 @@ const watch = defineCommand({
       await read(root, reading.opening.stage.key);
     }
 
+    const home = join(tmpdir(), 'ket-watch');
+    const opening = openedFrom(reading.opening, await readView(home, root));
     const { watch } = await import('@ket/tui');
 
-    await watch(boardFeedFor(root));
+    await watch(boardFeedFor(root), {
+      opening,
+      remember: (view) => {
+        rememberView(home, root, view);
+      },
+    });
   },
 });
 

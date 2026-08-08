@@ -58,6 +58,13 @@ function keylessOpening(tab: string | undefined, screen: string | undefined): Op
   return screen === undefined ? { opening: undefined } : screenOpening(screen);
 }
 
+export function openedFrom(
+  asked: WatchView | undefined,
+  remembered: WatchView | undefined,
+): WatchView | undefined {
+  return asked ?? remembered;
+}
+
 export function openingOf(ask: OpeningAsk): OpeningReading {
   if (ask.key === undefined) {
     return keylessOpening(ask.tab, ask.screen);
