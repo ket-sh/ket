@@ -103,6 +103,13 @@ describe('adopting a draft an earlier adoption already filed', () => {
 
     expect(chosenDraft(log, actions, '1')).toStrictEqual({ action: actions[0] });
   });
+
+  it('blocks nothing when the earlier adoption named another gate for the same reason', () => {
+    const log = CROWDED + adoption('review', 'KET-9', TEST_FIRST);
+    const actions = draftedActions(log);
+
+    expect(chosenDraft(log, actions, '1')).toStrictEqual({ action: actions[0] });
+  });
 });
 
 describe('adopting the dormant draft twice', () => {
