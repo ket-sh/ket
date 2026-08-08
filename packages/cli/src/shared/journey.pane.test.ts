@@ -73,6 +73,12 @@ describe('the alert the side pane raises', () => {
     expect(foldJourney(STORED, log, 'K-1')?.pane.refusedTimes).toBe(2);
   });
 
+  it('counts a refusal recorded at the very moment the item arrived', () => {
+    const log = WALKED + turnedAway('K-1', '2026-08-07T10:00:00.000Z', 'refused on arrival');
+
+    expect(foldJourney(STORED, log, 'K-1')?.pane.refusedTimes).toBe(1);
+  });
+
   it('leaves a refusal from a stage the item has already left out of the count', () => {
     const log =
       moved('K-1', 'triaged', '2026-08-07T09:00:00.000Z') +
