@@ -11,6 +11,7 @@
   ],
   "dictionaries": ["ket-words", "typescript", "node", "npm", "softwareTerms"],
   "ignorePaths": [
+    ".claude/settings.local.json",
     "node_modules",
     "dist",
     "coverage",
