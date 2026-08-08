@@ -62,7 +62,6 @@ function overlayShut(deps: PressDeps): boolean {
 interface BoardMouse {
   boardCard: (key: string) => void;
   laneHead: (key: string | undefined) => void;
-  backlogRow: (key: string) => void;
   hint: (pressed: Pressed) => void;
 }
 
@@ -91,6 +90,27 @@ function boardMouseOf(deps: PressDeps): BoardMouse {
     }
   };
 
+  const hint = (pressed: Pressed): void => {
+    press(pressed, deps);
+  };
+
+  return { boardCard, laneHead, hint };
+}
+
+const WHEEL_SLIDE: Record<WheelDirection, number> = {
+  up: -1,
+  down: 1,
+  left: 0,
+  right: 0,
+};
+
+interface RowsMouse {
+  backlogRow: (key: string) => void;
+  listRow: (key: string) => void;
+  listWheel: (direction: WheelDirection) => void;
+}
+
+function rowsMouseOf(deps: PressDeps): RowsMouse {
   const backlogRow = (key: string): void => {
     if (overlayShut(deps) || deps.stack.top.kind !== 'board') {
       return;
@@ -100,11 +120,25 @@ function boardMouseOf(deps: PressDeps): BoardMouse {
     deps.stack.dive(key);
   };
 
-  const hint = (pressed: Pressed): void => {
-    press(pressed, deps);
+  const listRow = (key: string): void => {
+    if (overlayShut(deps) || deps.stack.top.kind !== 'board') {
+      return;
+    }
+
+    deps.seat.seek(key);
   };
 
-  return { boardCard, laneHead, backlogRow, hint };
+  const listWheel = (direction: WheelDirection): void => {
+    const step = WHEEL_SLIDE[direction];
+
+    if (overlayHeld(deps) || deps.stack.top.kind !== 'board' || step === 0) {
+      return;
+    }
+
+    deps.seat.slide(step);
+  };
+
+  return { backlogRow, listRow, listWheel };
 }
 
 interface JourneyMouse {
@@ -146,6 +180,27 @@ function journeyMouseOf(deps: PressDeps): JourneyMouse {
   return { stage, tabLabel, paneChildren, canvasWheel };
 }
 
+interface MapMouse {
+  mapSeat: (at: number) => void;
+  mapWheel: (direction: WheelDirection) => void;
+}
+
+function mapMouseOf(deps: PressDeps): MapMouse {
+  const mapSeat = (at: number): void => {
+    if (!overlayShut(deps)) {
+      deps.stack.mapSeat(at);
+    }
+  };
+
+  const mapWheel = (direction: WheelDirection): void => {
+    if (!overlayHeld(deps)) {
+      deps.stack.mapWalk(direction);
+    }
+  };
+
+  return { mapSeat, mapWheel };
+}
+
 interface OverlayMouse {
   paletteRow: (at: number) => void;
   pickerRow: (at: number) => void;
@@ -179,8 +234,14 @@ function overlayMouseOf(deps: PressDeps): OverlayMouse {
   return { paletteRow, pickerRow, heldGround, outside };
 }
 
-export interface WatchMouse extends BoardMouse, JourneyMouse, OverlayMouse {}
+export interface WatchMouse extends BoardMouse, RowsMouse, JourneyMouse, MapMouse, OverlayMouse {}
 
 export function mouseOf(deps: PressDeps): WatchMouse {
-  return { ...boardMouseOf(deps), ...journeyMouseOf(deps), ...overlayMouseOf(deps) };
+  return {
+    ...boardMouseOf(deps),
+    ...rowsMouseOf(deps),
+    ...journeyMouseOf(deps),
+    ...mapMouseOf(deps),
+    ...overlayMouseOf(deps),
+  };
 }

@@ -17,6 +17,7 @@ import {
   editing,
   judged,
   landingOf,
+  mapSeated,
   mapWalked,
   revisedIn,
   savedMark,
@@ -84,7 +85,7 @@ function useEditing(feed: BoardFeed, top: Frame, setFrames: Grow): Editing {
   return { edit, revise, save };
 }
 
-type Mapping = Pick<FrameStack, 'mapWalk' | 'openMap'>;
+type Mapping = Pick<FrameStack, 'mapWalk' | 'openMap' | 'mapSeat'>;
 
 function useMapping(feed: BoardFeed, setFrames: Grow): Mapping {
   const openMap = useCallback(() => {
@@ -100,7 +101,14 @@ function useMapping(feed: BoardFeed, setFrames: Grow): Mapping {
     [setFrames],
   );
 
-  return { openMap, mapWalk };
+  const mapSeat = useCallback(
+    (at: number) => {
+      setFrames((stack) => mapSeated(stack, at));
+    },
+    [setFrames],
+  );
+
+  return { openMap, mapWalk, mapSeat };
 }
 
 function useEntering(top: Frame, doors: Doors) {
@@ -195,7 +203,7 @@ export function useFrameStack(feed: BoardFeed): FrameStack {
   const top = frames[frames.length - 1] ?? ({ kind: 'board' } as const);
   const { gate, pass } = useCeremony(feed, top, setFrames);
   const { edit, revise, save } = useEditing(feed, top, setFrames);
-  const { openMap, mapWalk } = useMapping(feed, setFrames);
+  const { openMap, mapWalk, mapSeat } = useMapping(feed, setFrames);
   const { showTab, aim, walk, tab } = useSteering(setFrames);
   const { dive, enter } = useDiving(feed, top, setFrames, showTab);
 
@@ -224,6 +232,7 @@ export function useFrameStack(feed: BoardFeed): FrameStack {
     aim,
     openMap,
     mapWalk,
+    mapSeat,
     enter,
     walk,
     scroll,

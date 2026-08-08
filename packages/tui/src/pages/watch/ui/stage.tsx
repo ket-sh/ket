@@ -42,7 +42,7 @@ function BoardArea({
   }
 
   if (layout === 'list') {
-    return <ListView columns={columns} now={now} chosenKey={seat.chosen?.key} />;
+    return <ListView columns={columns} now={now} chosenKey={seat.chosen?.key} mouse={mouse} />;
   }
 
   return (
@@ -64,7 +64,14 @@ export function StageArea(room: RoomProps): ReactNode {
   }
 
   if (stack.top.kind === 'map') {
-    return <MapPane reading={stack.top.reading} at={stack.top.at} />;
+    return (
+      <MapPane
+        reading={stack.top.reading}
+        at={stack.top.at}
+        onSeat={mouse.mapSeat}
+        onWheel={mouse.mapWheel}
+      />
+    );
   }
 
   if (stack.top.kind === 'journey') {

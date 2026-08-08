@@ -1,3 +1,4 @@
+import type { MouseEvent } from '@opentui/core';
 import type { ReactNode } from 'react';
 
 import type { MapBandView, MapCardView, MapReadingView, StoryMapView } from '../../../shared/model';
@@ -5,7 +6,7 @@ import type { MapColumn } from '../lib/columns.ts';
 
 import { useTheme } from '../../../shared/theme';
 import { cardsUnder, columnsOf } from '../lib/columns.ts';
-import { detailOf, seatsOf, walkedTo } from '../lib/spot.ts';
+import { detailOf, seatIndexOf, seatsOf, walkedTo } from '../lib/spot.ts';
 
 const WHAT_A_MAP_IS =
   'A story map lays the journey across the top, the work beneath it, and releases cut across.';
@@ -21,9 +22,13 @@ const STEP_OF: Record<string, number> = {
   down: 1,
 };
 
+type MapWheelDirection = 'up' | 'down' | 'left' | 'right';
+
 export interface MapPaneProps {
   reading: MapReadingView;
   at: number;
+  onSeat?: (at: number) => void;
+  onWheel?: (direction: MapWheelDirection) => void;
 }
 
 function seatCountOf(reading: MapReadingView): number {
@@ -85,7 +90,15 @@ function Spine({ map, columns }: { map: StoryMapView; columns: MapColumn[] }): R
   );
 }
 
-function Card({ card, chosen }: { card: MapCardView; chosen: boolean }): ReactNode {
+function Card({
+  card,
+  chosen,
+  onPress,
+}: {
+  card: MapCardView;
+  chosen: boolean;
+  onPress: () => void;
+}): ReactNode {
   const { theme } = useTheme();
 
   return (
@@ -95,6 +108,10 @@ function Card({ card, chosen }: { card: MapCardView; chosen: boolean }): ReactNo
       borderColor={chosen ? theme.blue : theme.surface1}
       paddingLeft={1}
       paddingRight={1}
+      onMouseDown={(event: MouseEvent) => {
+        event.stopPropagation();
+        onPress();
+      }}
     >
       <text wrapMode="word" fg={theme.text}>
         {card.name}
@@ -111,10 +128,12 @@ function Band({
   band,
   columns,
   chosen,
+  onSeat,
 }: {
   band: MapBandView;
   columns: MapColumn[];
   chosen: string | undefined;
+  onSeat: (cardId: string) => void;
 }): ReactNode {
   const { theme } = useTheme();
 
@@ -133,7 +152,14 @@ function Band({
           <box key={column.id} flexDirection="column" flexGrow={1} flexBasis={1}>
             {cardsUnder(band, column.id).map(
               (card): ReactNode => (
-                <Card key={card.id} card={card} chosen={card.id === chosen} />
+                <Card
+                  key={card.id}
+                  card={card}
+                  chosen={card.id === chosen}
+                  onPress={() => {
+                    onSeat(card.id);
+                  }}
+                />
               ),
             )}
           </box>
@@ -177,13 +203,36 @@ function Refused({ refusals }: { refusals: string[] }): ReactNode {
   );
 }
 
-function MapBody({ map, at }: { map: StoryMapView; at: number }): ReactNode {
+interface MapBodyProps {
+  map: StoryMapView;
+  at: number;
+  onSeat: ((at: number) => void) | undefined;
+  onWheel: ((direction: MapWheelDirection) => void) | undefined;
+}
+
+function MapBody({ map, at, onSeat, onWheel }: MapBodyProps): ReactNode {
   const { theme } = useTheme();
   const columns = columnsOf(map.spine);
   const seated = seatsOf(map.bands)[at];
 
+  const seatAt = (cardId: string): void => {
+    const found = seatIndexOf(map.bands, cardId);
+
+    if (found !== undefined) {
+      onSeat?.(found);
+    }
+  };
+
+  const wheelAt = (event: MouseEvent): void => {
+    const direction = event.scroll?.direction;
+
+    if (direction !== undefined) {
+      onWheel?.(direction);
+    }
+  };
+
   return (
-    <box flexDirection="column">
+    <box flexDirection="column" onMouseScroll={wheelAt}>
       <Header product={map.product} />
       <Spine map={map} columns={columns} />
       {map.bands.map(
@@ -193,6 +242,7 @@ function MapBody({ map, at }: { map: StoryMapView; at: number }): ReactNode {
             band={band}
             columns={columns}
             chosen={seated?.card.id}
+            onSeat={seatAt}
           />
         ),
       )}
@@ -203,7 +253,7 @@ function MapBody({ map, at }: { map: StoryMapView; at: number }): ReactNode {
   );
 }
 
-export function MapPane({ reading, at }: MapPaneProps): ReactNode {
+export function MapPane({ reading, at, onSeat, onWheel }: MapPaneProps): ReactNode {
   if ('refusals' in reading) {
     return <Refused refusals={reading.refusals} />;
   }
@@ -212,5 +262,5 @@ export function MapPane({ reading, at }: MapPaneProps): ReactNode {
     return <EmptyState />;
   }
 
-  return <MapBody map={reading.map} at={at} />;
+  return <MapBody map={reading.map} at={at} onSeat={onSeat} onWheel={onWheel} />;
 }

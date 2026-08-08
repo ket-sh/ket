@@ -20,10 +20,12 @@ export function ListRow({
   card,
   now,
   chosen,
+  onPress,
 }: {
   card: KanbanCardView;
   now: string;
   chosen: boolean;
+  onPress: () => void;
 }): ReactNode {
   const { theme } = useTheme();
 
@@ -38,6 +40,7 @@ export function ListRow({
           <span fg={theme.red}>{`   ! ${card.refusal.reason}`}</span>
         )
       }
+      onPress={onPress}
     />
   );
 }
@@ -82,7 +85,7 @@ function CardRow({
   stageRoom: number;
   middle?: ReactNode;
   tail?: ReactNode;
-  onPress?: () => void;
+  onPress: () => void;
 }): ReactNode {
   const { theme } = useTheme();
 
@@ -90,10 +93,8 @@ function CardRow({
     <text
       wrapMode="none"
       onMouseDown={(event: MouseEvent) => {
-        if (onPress !== undefined) {
-          event.stopPropagation();
-          onPress();
-        }
+        event.stopPropagation();
+        onPress();
       }}
     >
       <span fg={theme.text}>{chosen ? '► ' : '  '}</span>
