@@ -22,13 +22,10 @@ gate() {
   }
 }
 
-# A runner has no git identity and its hostname carries no domain, so git will
-# not guess one. The committed path is the normal one and it needs an identity
-# to be the path under test; the case without one is asserted further down.
-export GIT_AUTHOR_NAME='ket acceptance'
-export GIT_AUTHOR_EMAIL='acceptance@ket.invalid'
-export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
-export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+# The case without an identity is asserted further down, against a git that
+# reads nothing the machine keeps for its owner.
+# shellcheck source=scripts/hermetic-git.sh
+. "$(dirname "$0")/hermetic-git.sh"
 
 bun run --cwd packages/cli build >/dev/null || fail "the binary does not build"
 

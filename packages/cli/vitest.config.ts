@@ -8,6 +8,7 @@ export default defineConfig({
           name: 'server',
           include: ['src/**/*.test.ts'],
           exclude: ['src/commands/item/surface/client/**'],
+          setupFiles: ['vitest.git-setup.ts'],
         },
       },
       {
