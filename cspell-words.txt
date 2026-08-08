@@ -79,6 +79,7 @@ oklch
 openspec
 opentui
 opentui-spinner
+oplog
 OSSF
 ossf
 oxfmt

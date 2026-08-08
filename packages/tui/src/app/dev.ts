@@ -156,6 +156,32 @@ const feed: BoardFeed = {
   saveCriteria: async () => {
     await Promise.resolve();
   },
+  oplog: async () => {
+    await Promise.resolve();
+
+    return [
+      {
+        outcome: 'refused',
+        gate: 'write',
+        about: 'src/auth.ts',
+        item: 'DEV-1',
+        reason: 'no failing test covers src/auth.ts',
+        at: new Date(Date.now() - 60_000).toISOString(),
+        note: undefined,
+        actor: undefined,
+      },
+      {
+        outcome: undefined,
+        gate: undefined,
+        about: undefined,
+        item: 'DEV-1',
+        reason: undefined,
+        at: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+        note: 'writing the failing lockout test',
+        actor: 'implementer',
+      },
+    ];
+  },
   subscribe: () => () => undefined,
 };
 
