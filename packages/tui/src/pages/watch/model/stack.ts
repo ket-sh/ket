@@ -17,6 +17,8 @@ import {
   editing,
   judged,
   landingOf,
+  logSeated,
+  logSlid,
   mapSeated,
   mapWalked,
   revisedIn,
@@ -109,6 +111,32 @@ function useMapping(feed: BoardFeed, setFrames: Grow): Mapping {
   );
 
   return { openMap, mapWalk, mapSeat };
+}
+
+type Logging = Pick<FrameStack, 'openLog' | 'logSeat' | 'logSlide'>;
+
+function useLogging(feed: BoardFeed, setFrames: Grow): Logging {
+  const openLog = useCallback(() => {
+    void feed.oplog().then((events) => {
+      setFrames((stack) => [...stack, { kind: 'oplog', events, sel: 0 }]);
+    });
+  }, [feed, setFrames]);
+
+  const logSeat = useCallback(
+    (at: number) => {
+      setFrames((stack) => logSeated(stack, at));
+    },
+    [setFrames],
+  );
+
+  const logSlide = useCallback(
+    (delta: number, most: number) => {
+      setFrames((stack) => logSlid(stack, delta, most));
+    },
+    [setFrames],
+  );
+
+  return { openLog, logSeat, logSlide };
 }
 
 function useEntering(top: Frame, doors: Doors) {
@@ -204,6 +232,7 @@ export function useFrameStack(feed: BoardFeed): FrameStack {
   const { gate, pass } = useCeremony(feed, top, setFrames);
   const { edit, revise, save } = useEditing(feed, top, setFrames);
   const { openMap, mapWalk, mapSeat } = useMapping(feed, setFrames);
+  const { openLog, logSeat, logSlide } = useLogging(feed, setFrames);
   const { showTab, aim, walk, tab } = useSteering(setFrames);
   const { dive, enter } = useDiving(feed, top, setFrames, showTab);
 
@@ -233,6 +262,9 @@ export function useFrameStack(feed: BoardFeed): FrameStack {
     openMap,
     mapWalk,
     mapSeat,
+    openLog,
+    logSeat,
+    logSlide,
     enter,
     walk,
     scroll,

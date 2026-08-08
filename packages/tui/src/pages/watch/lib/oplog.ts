@@ -1,11 +1,17 @@
 import type { OplogEventView } from '../../../shared/model';
 
+import { narrowedRows } from './narrowing.ts';
+
 export function gateOf(event: OplogEventView): string {
   return event.gate ?? 'note';
 }
 
 export function textOf(event: OplogEventView): string {
   return event.reason ?? event.about ?? event.note ?? '';
+}
+
+export function seatedRow(sel: number, count: number): number {
+  return Math.min(Math.max(sel, 0), Math.max(0, count - 1));
 }
 
 type Answers = (event: OplogEventView) => boolean;
@@ -42,15 +48,5 @@ function answersOf(token: string): Answers {
 }
 
 export function narrowedEvents(events: OplogEventView[], query: string): OplogEventView[] {
-  const asked = query
-    .toLowerCase()
-    .split(/\s+/u)
-    .filter((token) => token !== '')
-    .map((token) => answersOf(token));
-
-  if (asked.length === 0) {
-    return events;
-  }
-
-  return events.filter((event) => asked.every((answers) => answers(event)));
+  return narrowedRows(events, query, answersOf);
 }

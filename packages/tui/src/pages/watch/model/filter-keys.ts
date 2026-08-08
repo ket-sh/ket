@@ -36,13 +36,21 @@ export function filterPress(key: Pressed, filter: Filter): void {
   }
 }
 
+function narrowableAt(kind: Frame['kind'], layout: BoardLayout): boolean {
+  if (kind === 'oplog') {
+    return true;
+  }
+
+  return kind === 'board' && layout !== 'backlog';
+}
+
 export function filterOpened(
   key: Pressed,
   kind: Frame['kind'],
   layout: BoardLayout,
   filter: Filter,
 ): boolean {
-  if (key.seq !== '/' || kind !== 'board' || layout === 'backlog') {
+  if (key.seq !== '/' || !narrowableAt(kind, layout)) {
     return false;
   }
 

@@ -31,7 +31,10 @@ export interface PaletteDeps {
   tick: number;
 }
 
-const SCREEN_GOES: Record<'board' | 'list' | 'backlog' | 'map', (deps: PaletteDeps) => void> = {
+const SCREEN_GOES: Record<
+  'board' | 'list' | 'backlog' | 'map' | 'oplog',
+  (deps: PaletteDeps) => void
+> = {
   board: (deps) => {
     deps.stack.home();
     deps.wear('kanban');
@@ -47,6 +50,10 @@ const SCREEN_GOES: Record<'board' | 'list' | 'backlog' | 'map', (deps: PaletteDe
   map: (deps) => {
     deps.stack.home();
     deps.stack.openMap();
+  },
+  oplog: (deps) => {
+    deps.stack.home();
+    deps.stack.openLog();
   },
 };
 

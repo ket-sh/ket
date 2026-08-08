@@ -149,6 +149,9 @@ describe('the spot a held screen stands in', () => {
     expect(spotOf({ kind: 'map', reading: { absent: true }, at: 0 }, 'kanban', [])).toStrictEqual({
       kind: 'map',
     });
+    expect(spotOf({ kind: 'oplog', events: [], sel: 0 }, 'kanban', [])).toStrictEqual({
+      kind: 'oplog',
+    });
     expect(spotOf(SURFACE, 'kanban', [])).toStrictEqual({ kind: 'surface' });
     expect(spotOf(GATE, 'kanban', [])).toStrictEqual({ kind: 'gate' });
     expect(spotOf(EDIT, 'kanban', [])).toStrictEqual({ kind: 'edit' });

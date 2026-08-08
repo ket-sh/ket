@@ -1,4 +1,4 @@
-import type { GateActionView, KanbanCardView } from '../../../shared/model';
+import type { GateActionView, KanbanCardView, OplogEventView } from '../../../shared/model';
 import type { BoardLayout } from './board-layout.ts';
 import type { Direction, Pressed } from './compass.ts';
 import type { Filter } from './filter.ts';
@@ -8,11 +8,13 @@ import type { Palette } from './palette.ts';
 import type { Picker } from './picker.ts';
 import type { Seat } from './seat.ts';
 
+import { narrowedEvents } from '../lib/oplog.ts';
 import { asDirection, DELTA } from './compass.ts';
 import { editorPress } from './editor-keys.ts';
 import { filterOpened, filterPress } from './filter-keys.ts';
 import { ceremonyPress, journeyPress, mapPress, surfacePress } from './frame-keys.ts';
 import { helpOpened, helpPress } from './help-keys.ts';
+import { oplogPress } from './oplog-keys.ts';
 import { paletteOpened, palettePress } from './palette-keys.ts';
 import { pickerPress } from './picker-keys.ts';
 
@@ -79,6 +81,9 @@ const BOARD_CHORDS: Record<string, (deps: PressDeps) => void> = {
   m: (deps) => {
     deps.stack.openMap();
   },
+  l: (deps) => {
+    deps.stack.openLog();
+  },
 };
 
 function boardPress(name: string, deps: PressDeps): void {
@@ -117,8 +122,19 @@ export interface PressDeps {
   queue: () => void;
   picker: Picker;
   filter: Filter;
+  logFilter: Filter;
   palette: Palette;
   help: Help;
+}
+
+function narrowerOf(deps: PressDeps): Filter {
+  return deps.stack.top.kind === 'oplog' ? deps.logFilter : deps.filter;
+}
+
+function shownLogOf(deps: PressDeps): OplogEventView[] {
+  return deps.stack.top.kind === 'oplog'
+    ? narrowedEvents(deps.stack.top.events, deps.logFilter.query)
+    : [];
 }
 
 const FRAME_PRESSES: Record<Frame['kind'], (name: string, deps: PressDeps) => void> = {
@@ -130,6 +146,9 @@ const FRAME_PRESSES: Record<Frame['kind'], (name: string, deps: PressDeps) => vo
   },
   map: (name, deps) => {
     mapPress(name, deps.stack);
+  },
+  oplog: (name, deps) => {
+    oplogPress(name, deps.stack, shownLogOf(deps));
   },
   surface: (name, deps) => {
     surfacePress(name, deps.stack, deps.most);
@@ -173,8 +192,10 @@ function heldPress(key: Pressed, deps: PressDeps): boolean {
     return true;
   }
 
-  if (deps.filter.typing) {
-    filterPress(key, deps.filter);
+  const narrower = narrowerOf(deps);
+
+  if (narrower.typing) {
+    filterPress(key, narrower);
 
     return true;
   }
@@ -198,7 +219,7 @@ function overlayOpened(key: Pressed, deps: PressDeps): boolean {
   const kind = deps.stack.top.kind;
 
   return (
-    filterOpened(key, kind, deps.layout, deps.filter) ||
+    filterOpened(key, kind, deps.layout, narrowerOf(deps)) ||
     paletteOpened(key, kind, deps.palette) ||
     helpOpened(key, kind, deps.help)
   );

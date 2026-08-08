@@ -3,11 +3,11 @@ import type { ReactNode } from 'react';
 import { useKeyboard, useTerminalDimensions } from '@opentui/react';
 import { useEffect } from 'react';
 
-import type { BoardFeed, KanbanColumnView } from '../../../shared/model';
+import type { BoardFeed, KanbanColumnView, OplogEventView } from '../../../shared/model';
 import type { BoardLayout } from '../model/board-layout.ts';
 import type { Ring } from '../model/chime.ts';
 import type { Filter } from '../model/filter.ts';
-import type { FrameStack } from '../model/frames.ts';
+import type { Frame, FrameStack } from '../model/frames.ts';
 import type { Help } from '../model/help.ts';
 import type { PressDeps } from '../model/keys.ts';
 import type { WatchMouse } from '../model/mouse.ts';
@@ -20,6 +20,7 @@ import type { RoomProps } from './stage.tsx';
 import { ThemeProvider } from '../../../shared/theme';
 import { Banner } from '../../../shared/ui';
 import { narrowedBy } from '../lib/filter.ts';
+import { narrowedEvents } from '../lib/oplog.ts';
 import { standingOf } from '../lib/standing.ts';
 import { useBoardLayout } from '../model/board-layout.ts';
 import { useBoardState } from '../model/board-state.ts';
@@ -72,7 +73,7 @@ function CeremonyOverlay({
   tick,
   width,
   height,
-}: Omit<RoomProps, 'seat' | 'now' | 'layout' | 'mouse'>): ReactNode {
+}: Omit<RoomProps, 'seat' | 'now' | 'layout' | 'mouse' | 'logRows'>): ReactNode {
   if (stack.top.kind !== 'gate') {
     return null;
   }
@@ -120,9 +121,37 @@ function useWatchKeys(deps: PressDeps): void {
   });
 }
 
+interface Narrowing {
+  filter: Filter;
+  logFilter: Filter;
+  shown: KanbanColumnView[];
+  logRows: OplogEventView[];
+}
+
+function useNarrowing(columns: KanbanColumnView[], layout: BoardLayout, top: Frame): Narrowing {
+  const filter = useFilter();
+  const logFilter = useFilter();
+  const shown = layout === 'backlog' ? columns : narrowedBy(columns, filter.query);
+  const logRows = top.kind === 'oplog' ? narrowedEvents(top.events, logFilter.query) : [];
+
+  return { filter, logFilter, shown, logRows };
+}
+
+function leavingOf(
+  remember: ((view: WatchView) => void) | undefined,
+  standing: WatchView,
+  onQuit: () => void,
+): () => void {
+  return () => {
+    remember?.(standing);
+    onQuit();
+  };
+}
+
 interface Room {
   columns: KanbanColumnView[];
   shown: KanbanColumnView[];
+  logRows: OplogEventView[];
   now: string;
   tick: number;
   stack: FrameStack;
@@ -130,6 +159,7 @@ interface Room {
   layout: BoardLayout;
   picker: Picker;
   filter: Filter;
+  logFilter: Filter;
   palette: Palette;
   help: Help;
   width: number;
@@ -150,19 +180,15 @@ function useWatchRoom({
   const { width, height } = useTerminalDimensions();
   const { layout, swap, queue, wear } = useBoardLayout();
   const picker = usePicker(stack);
-  const filter = useFilter();
-  const shown = layout === 'backlog' ? columns : narrowedBy(columns, filter.query);
+  const { filter, logFilter, shown, logRows } = useNarrowing(columns, layout, stack.top);
   const seat = useSeat(shown);
   const palette = usePalette({ columns, chosen: seat.chosen, stack, wear, picker, refresh, tick });
   const help = useHelp();
   const most = stack.top.kind === 'surface' ? surfaceMost(stack.top, height - CHROME) : 0;
   const standing = standingOf(layout, stack.frames, seat.chosen?.key);
-  const leave = (): void => {
-    remember?.(standing);
-    onQuit();
-  };
+  const leave = leavingOf(remember, standing, onQuit);
   const deps = { onQuit: leave, refresh, stack, seat, most, tick, layout, swap, queue };
-  const pressDeps = { ...deps, picker, filter, palette, help };
+  const pressDeps = { ...deps, picker, filter, logFilter, palette, help };
   const mouse = mouseOf(pressDeps);
 
   useChime(columns, loaded, ring);
@@ -175,6 +201,7 @@ function useWatchRoom({
   return {
     columns,
     shown,
+    logRows,
     now,
     tick,
     stack,
@@ -182,6 +209,7 @@ function useWatchRoom({
     layout,
     picker,
     filter,
+    logFilter,
     palette,
     help,
     width,
@@ -213,7 +241,8 @@ function OverlayLayer({ room }: { room: Room }): ReactNode {
 
 function WatchRoom(props: WatchPageProps): ReactNode {
   const room = useWatchRoom(props);
-  const { columns, shown, now, tick, stack, seat, layout, filter, width, height, mouse } = room;
+  const { columns, shown, logRows, now, tick, stack, seat, layout, width, height, mouse } = room;
+  const { filter, logFilter } = room;
 
   return (
     <box
@@ -232,6 +261,7 @@ function WatchRoom(props: WatchPageProps): ReactNode {
         <StageArea
           stack={stack}
           columns={shown}
+          logRows={logRows}
           seat={seat}
           now={now}
           tick={tick}
@@ -243,8 +273,10 @@ function WatchRoom(props: WatchPageProps): ReactNode {
       </box>
       <FootRow
         filter={filter}
+        logFilter={logFilter}
         shown={shown}
         columns={columns}
+        logRows={logRows}
         stack={stack}
         seat={seat}
         layout={layout}
