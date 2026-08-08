@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import type { RefusalCluster } from './friction.ts';
 import type { RetroWindow } from './window.ts';
 
 import { foldRetro } from './fold.ts';
@@ -28,6 +29,16 @@ function clustersOf(log: string) {
   return foldRetro(WORKING, log, WINDOW).clusters;
 }
 
+function held(gate: string, reason: string, moments: string[], items: string[]): RefusalCluster {
+  return {
+    gate,
+    reason,
+    count: moments.length,
+    moments: moments.map((at) => Date.parse(at)),
+    items,
+  };
+}
+
 const TEST_FIRST = 'the test comes first';
 
 describe('the refusals a window gathers', () => {
@@ -38,8 +49,8 @@ describe('the refusals a window gathers', () => {
       turnedAway('review', '2026-08-04T11:00:00.000Z', 'the design names no spec');
 
     expect(clustersOf(log)).toStrictEqual([
-      { gate: 'write', reason: TEST_FIRST, count: 2 },
-      { gate: 'review', reason: 'the design names no spec', count: 1 },
+      held('write', TEST_FIRST, ['2026-08-04T09:00:00.000Z', '2026-08-04T10:00:00.000Z'], ['K-1']),
+      held('review', 'the design names no spec', ['2026-08-04T11:00:00.000Z'], ['K-1']),
     ]);
   });
 
@@ -52,6 +63,14 @@ describe('the refusals a window gathers', () => {
       'a tool owns the lockfile',
       TEST_FIRST,
     ]);
+  });
+
+  it('names an item once, however many refusals it took', () => {
+    const log =
+      turnedAway('write', '2026-08-04T09:00:00.000Z', TEST_FIRST) +
+      turnedAway('write', '2026-08-04T10:00:00.000Z', TEST_FIRST);
+
+    expect(clustersOf(log).at(0)?.items).toStrictEqual(['K-1']);
   });
 
   it('leaves out a refusal that landed before the window opened', () => {
@@ -77,7 +96,7 @@ describe('the refusals a real log makes messy', () => {
     const log = turnedAway('chromatic', '2026-08-04T09:00:00.000Z', 'the snapshot drifted');
 
     expect(clustersOf(log)).toStrictEqual([
-      { gate: 'chromatic', reason: 'the snapshot drifted', count: 1 },
+      held('chromatic', 'the snapshot drifted', ['2026-08-04T09:00:00.000Z'], ['K-1']),
     ]);
   });
 
@@ -90,7 +109,7 @@ describe('the refusals a real log makes messy', () => {
     })}\n`;
 
     expect(clustersOf(log)).toStrictEqual([
-      { gate: 'an unnamed gate', reason: TEST_FIRST, count: 1 },
+      held('an unnamed gate', TEST_FIRST, ['2026-08-04T09:00:00.000Z'], ['K-1']),
     ]);
   });
 
@@ -103,7 +122,7 @@ describe('the refusals a real log makes messy', () => {
     })}\n`;
 
     expect(clustersOf(log)).toStrictEqual([
-      { gate: 'write', reason: 'no reason recorded', count: 1 },
+      held('write', 'no reason recorded', ['2026-08-04T09:00:00.000Z'], ['K-1']),
     ]);
   });
 
@@ -113,10 +132,17 @@ describe('the refusals a real log makes messy', () => {
       turnedAway('transition', '2026-08-04T10:00:00.000Z', 'not verified yet.\n\nbun test\nBBB');
 
     expect(clustersOf(log)).toStrictEqual([
-      { gate: 'transition', reason: 'not verified yet.', count: 2 },
+      held(
+        'transition',
+        'not verified yet.',
+        ['2026-08-04T09:00:00.000Z', '2026-08-04T10:00:00.000Z'],
+        ['K-1'],
+      ),
     ]);
   });
+});
 
+describe('a refusal that stopped work nobody filed', () => {
   it('counts a refusal that named no item, since a gate still stopped work', () => {
     const log = `${JSON.stringify({
       gate: 'shell',
@@ -126,34 +152,36 @@ describe('the refusals a real log makes messy', () => {
     })}\n`;
 
     expect(clustersOf(log)).toStrictEqual([
-      { gate: 'shell', reason: 'the rule reads the path', count: 1 },
+      held('shell', 'the rule reads the path', ['2026-08-04T09:00:00.000Z'], []),
     ]);
   });
 });
 
-describe('the one action a retro asks for', () => {
-  it('takes the action from the cluster that fired most', () => {
+describe('the order the drafted actions rank in', () => {
+  function firstClusterOf(log: string): RefusalCluster | undefined {
+    const action = foldRetro(WORKING, log, WINDOW).actions.at(0);
+
+    return action !== undefined && 'cluster' in action ? action.cluster : undefined;
+  }
+
+  it('ranks the cluster that fired most as the first action', () => {
     const log =
       turnedAway('review', '2026-08-04T08:00:00.000Z', 'the design names no spec') +
       turnedAway('write', '2026-08-04T09:00:00.000Z', TEST_FIRST) +
       turnedAway('write', '2026-08-04T10:00:00.000Z', TEST_FIRST);
 
-    expect(foldRetro(WORKING, log, WINDOW).action).toStrictEqual({
-      cluster: { gate: 'write', reason: TEST_FIRST, count: 2 },
-    });
+    expect(firstClusterOf(log)).toStrictEqual(
+      held('write', TEST_FIRST, ['2026-08-04T09:00:00.000Z', '2026-08-04T10:00:00.000Z'], ['K-1']),
+    );
   });
 
-  it('settles a tie on the gate name, so the same log always asks the same thing', () => {
+  it('settles a tie on the gate name, so the same log always ranks the same way', () => {
     const log =
       turnedAway('write', '2026-08-04T09:00:00.000Z', TEST_FIRST) +
       turnedAway('review', '2026-08-04T10:00:00.000Z', 'the design names no spec');
 
-    expect(foldRetro(WORKING, log, WINDOW).action).toStrictEqual({
-      cluster: { gate: 'review', reason: 'the design names no spec', count: 1 },
-    });
-  });
-
-  it('asks for nothing when no gate refused anything', () => {
-    expect(foldRetro(WORKING, '', WINDOW).action).toBeUndefined();
+    expect(firstClusterOf(log)).toStrictEqual(
+      held('review', 'the design names no spec', ['2026-08-04T10:00:00.000Z'], ['K-1']),
+    );
   });
 });

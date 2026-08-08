@@ -22,6 +22,11 @@ const retro = defineCommand({
       type: 'string',
       description: 'Read from this moment instead of the week the report is written in',
     },
+    json: {
+      type: 'boolean',
+      default: false,
+      description: 'Print the whole retro as JSON instead of writing the report',
+    },
   },
   async run({ args }) {
     const root = await ketRootOrThrow(resolve(args.cwd));
@@ -38,6 +43,13 @@ const retro = defineCommand({
       chosen.window,
       semantics?.gates ?? [],
     );
+
+    if (args.json) {
+      process.stdout.write(`${JSON.stringify(folded, undefined, 2)}\n`);
+
+      return;
+    }
+
     const path = retroPathOf(chosen.window);
 
     await mkdir(dirname(join(root, path)), { recursive: true });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Retro } from './fold.ts';
+import type { Retro, RetroAction } from './fold.ts';
+import type { RefusalCluster } from './friction.ts';
 
 import { renderRetro } from './report.ts';
 
@@ -19,7 +20,7 @@ const EMPTY: Retro = {
   rework: [],
   waiting: 0,
   working: 0,
-  action: undefined,
+  actions: [],
 };
 
 const HOUR = 3_600_000;
@@ -32,21 +33,38 @@ function reportOf(over: Partial<Retro>): string {
 
 const TEST_FIRST = 'no failing test covers this edit';
 
+function clusterOf(gate: string, reason: string, count: number): RefusalCluster {
+  return { gate, reason, count, moments: [], items: [] };
+}
+
+function actionOn(cluster: RefusalCluster): RetroAction[] {
+  return [
+    {
+      cluster,
+      draft: {
+        number: 1,
+        sentence: `a draft on \`${cluster.gate}\``,
+        evidence: { gate: cluster.gate, reason: cluster.reason, moments: [], items: [] },
+      },
+    },
+  ];
+}
+
 describe('the refusals a report gathers', () => {
   it('names the gate, the count and the reason on one line', () => {
-    const clusters = [{ gate: 'write', reason: TEST_FIRST, count: 7 }];
+    const clusters = [clusterOf('write', TEST_FIRST, 7)];
 
     expect(reportOf({ clusters })).toContain(`- \`write\` refused 7 times: ${TEST_FIRST}`);
   });
 
   it('says once rather than one time, so the line reads as English', () => {
-    const clusters = [{ gate: 'review', reason: 'the design names no spec', count: 1 }];
+    const clusters = [clusterOf('review', 'the design names no spec', 1)];
 
     expect(reportOf({ clusters })).toContain('- `review` refused once: the design names no spec');
   });
 
   it('files the clusters under what slowed you', () => {
-    const clusters = [{ gate: 'write', reason: TEST_FIRST, count: 2 }];
+    const clusters = [clusterOf('write', TEST_FIRST, 2)];
 
     expect(reportOf({ clusters })).toContain(
       '## What slowed you\n\n### Refusals by gate and reason',
@@ -106,38 +124,26 @@ describe('where a report says the time went', () => {
   });
 });
 
-describe('the one action a report asks for', () => {
+describe('the action prose a report writes over each draft', () => {
   it('asks for a mechanical check when a gate kept refusing the same thing', () => {
-    const cluster = { gate: 'write', reason: TEST_FIRST, count: 7 };
+    const actions = actionOn(clusterOf('write', TEST_FIRST, 7));
 
-    expect(reportOf({ action: { cluster } })).toContain(
+    expect(reportOf({ actions })).toContain(
       `## The one action\n\n\`write\` refused 7 times, each for the same reason: ${TEST_FIRST}. Consider a mechanical check, \`ket gate write\` run where the work starts, so the rule stops the edit before the edit lands.\n`,
     );
   });
 
   it('asks for a rule change with its record when a gate refused only once', () => {
-    const cluster = { gate: 'review', reason: 'the design names no spec', count: 1 };
+    const actions = actionOn(clusterOf('review', 'the design names no spec', 1));
 
-    expect(reportOf({ action: { cluster } })).toContain(
+    expect(reportOf({ actions })).toContain(
       '`review` refused once, for this reason: the design names no spec. Consider a rule change, recorded in an ADR, since a single refusal shows no pattern yet.',
     );
   });
 
   it('reads a reason that already ended in a stop without doubling it', () => {
-    const cluster = { gate: 'transition', reason: 'not verified yet.', count: 1 };
+    const actions = actionOn(clusterOf('transition', 'not verified yet.', 1));
 
-    expect(reportOf({ action: { cluster } })).toContain(
-      'for this reason: not verified yet. Consider',
-    );
-  });
-
-  it('asks for one action and never a second', () => {
-    const cluster = { gate: 'write', reason: TEST_FIRST, count: 7 };
-    const report = reportOf({
-      action: { cluster },
-      clusters: [cluster, { gate: 'review', reason: '', count: 1 }],
-    });
-
-    expect(report.split('Consider')).toHaveLength(2);
+    expect(reportOf({ actions })).toContain('for this reason: not verified yet. Consider');
   });
 });

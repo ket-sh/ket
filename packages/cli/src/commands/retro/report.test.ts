@@ -19,7 +19,7 @@ const EMPTY: Retro = {
   rework: [],
   waiting: 0,
   working: 0,
-  action: undefined,
+  actions: [],
 };
 
 const HOUR = 3_600_000;
@@ -34,6 +34,16 @@ const FOLD = { key: 'K-1', title: 'The fold', size: 'story' };
 
 const TEST_FIRST = 'no failing test covers this edit';
 
+const REFUSED_AT = '2026-08-04T09:00:00.000Z';
+
+const CLUSTER = {
+  gate: 'write',
+  reason: TEST_FIRST,
+  count: 7,
+  moments: [Date.parse(REFUSED_AT)],
+  items: ['K-1'],
+};
+
 const FULL: Retro = {
   ...EMPTY,
   events: 42,
@@ -41,12 +51,21 @@ const FULL: Retro = {
   shipped: [{ key: 'K-2', title: 'A quiet fix', size: 'subtask' }],
   inFlight: [{ ...FOLD, status: 'implementing', age: 2 * DAY + 4 * HOUR }],
   unmoved: [{ key: 'K-3', title: 'Rename the ring', size: 'subtask' }],
-  clusters: [{ gate: 'write', reason: TEST_FIRST, count: 7 }],
+  clusters: [CLUSTER],
   stall: { key: 'K-1', stage: 'implementing', span: 3 * HOUR + 30 * 60_000 },
   rework: [{ key: 'K-1', count: 2 }],
   waiting: 2 * HOUR,
   working: 45 * 60_000,
-  action: { cluster: { gate: 'write', reason: TEST_FIRST, count: 7 } },
+  actions: [
+    {
+      cluster: CLUSTER,
+      draft: {
+        number: 1,
+        sentence: `\`write\` refused 7 times: ${TEST_FIRST}; run \`ket gate write\` where the work starts`,
+        evidence: { gate: 'write', reason: TEST_FIRST, moments: [REFUSED_AT], items: ['K-1'] },
+      },
+    },
+  ],
 };
 
 const WRITTEN = [
@@ -91,6 +110,8 @@ const WRITTEN = [
   '## The one action',
   '',
   `\`write\` refused 7 times, each for the same reason: ${TEST_FIRST}. Consider a mechanical check, \`ket gate write\` run where the work starts, so the rule stops the edit before the edit lands.`,
+  '',
+  `Draft 1: \`write\` refused 7 times: ${TEST_FIRST}; run \`ket gate write\` where the work starts. Adopt it with \`ket retro adopt 1\`.`,
   '',
   '## Coverage',
   '',

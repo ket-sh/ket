@@ -10,6 +10,8 @@ export interface RefusalCluster {
   gate: string;
   reason: string;
   count: number;
+  moments: number[];
+  items: string[];
 }
 
 export interface Stall {
@@ -67,19 +69,34 @@ function byWeight(one: RefusalCluster, next: RefusalCluster): number {
   );
 }
 
+function openedAmong(counted: RefusalCluster[], gate: string, reason: string): RefusalCluster {
+  const cluster = { gate, reason, count: 0, moments: [], items: [] };
+
+  counted.push(cluster);
+
+  return cluster;
+}
+
+function grownWith(held: RefusalCluster, event: TimedEvent): void {
+  held.count += 1;
+  held.moments.push(event.at);
+
+  if (event.item !== undefined && !held.items.includes(event.item)) {
+    held.items.push(event.item);
+  }
+}
+
 function clusteredRefusals(windowed: TimedEvent[]): RefusalCluster[] {
   const counted: RefusalCluster[] = [];
 
   for (const event of windowed.filter((candidate) => isRefusal(candidate))) {
     const gate = event.gate ?? UNNAMED_GATE;
     const reason = reasonOf(event);
-    const held = counted.find((cluster) => cluster.gate === gate && cluster.reason === reason);
+    const held =
+      counted.find((cluster) => cluster.gate === gate && cluster.reason === reason) ??
+      openedAmong(counted, gate, reason);
 
-    if (held === undefined) {
-      counted.push({ gate, reason, count: 1 });
-    } else {
-      held.count += 1;
-    }
+    grownWith(held, event);
   }
 
   return counted.sort(byWeight);
