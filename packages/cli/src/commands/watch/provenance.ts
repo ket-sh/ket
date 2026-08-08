@@ -32,7 +32,7 @@ async function filedIn(root: string, key: string): Promise<Filing> {
 function countedFrom(said: string | undefined): number | undefined {
   const commits = Number(said);
 
-  return said === undefined || said === '' || Number.isNaN(commits) ? undefined : commits;
+  return Number.isNaN(commits) ? undefined : commits;
 }
 
 // Resting on the default branch means there is no work branch to name, which

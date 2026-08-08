@@ -116,6 +116,14 @@ describe('who filed an item, read off the repository', () => {
 });
 
 describe('the branch the work sits on', () => {
+  it('names no branch where no default branch exists to count against', async () => {
+    await git('checkout', '-b', 'work');
+    await git('branch', '-D', 'main');
+    await fileItem('K-1', '2026-08-07T08:00:00Z');
+
+    expect((await repoFactsFor(root, 'K-1')).branch).toBeUndefined();
+  });
+
   it('names no branch while the checkout rests on the default one', async () => {
     await fileItem('K-1', '2026-08-07T08:00:00Z');
 
