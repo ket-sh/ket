@@ -1,4 +1,4 @@
-import type { IncomingMessage, ServerResponse } from 'node:http';
+import type { IncomingMessage } from 'node:http';
 
 import { writeFile } from 'node:fs/promises';
 import { basename, dirname, resolve } from 'node:path';
@@ -11,6 +11,16 @@ import { changeDiff } from './change.ts';
 import { renderBlast, renderDiagram } from './diagram.ts';
 import { assemblePage } from './page.ts';
 import { schemeScoped } from './skin.ts';
+
+export interface Reply {
+  status: number;
+  headers: Record<string, string>;
+  body: string | undefined;
+}
+
+export function refusing(status: number, why: string): Reply {
+  return { status, headers: {}, body: `refused: ${why}` };
+}
 
 export function keyOf(request: IncomingMessage): string {
   return new URL(String(request.url), 'http://surface').searchParams.get('key') ?? '';
@@ -41,11 +51,14 @@ async function stylesChrome(): Promise<string> {
   return chromeStyles;
 }
 
-async function serveAsset(path: string, response: ServerResponse): Promise<void> {
+async function assetReply(path: string): Promise<Reply> {
   const assets = await assetsCarried();
-  const carried = path === '/surface.js' ? assets.CLIENT_SCRIPT : assets.GRID_SCRIPT;
 
-  response.writeHead(200, { 'content-type': 'text/javascript; charset=utf-8' }).end(carried);
+  return {
+    status: 200,
+    headers: { 'content-type': 'text/javascript; charset=utf-8' },
+    body: path === '/surface.js' ? assets.CLIENT_SCRIPT : assets.GRID_SCRIPT,
+  };
 }
 
 function featureTarget(itemDir: string, name: string): string | undefined {
@@ -59,34 +72,32 @@ function featureTarget(itemDir: string, name: string): string | undefined {
   return target;
 }
 
-async function acceptArtifact(
+async function artifactReply(
   itemDir: string,
   request: IncomingMessage,
-  response: ServerResponse,
   wroteArtifact: () => void,
-): Promise<void> {
+): Promise<Reply> {
   const name = new URL(String(request.url), 'http://surface').searchParams.get('name') ?? '';
   const target = featureTarget(itemDir, name);
 
   if (target === undefined) {
-    response.writeHead(400).end(`refused: ${name} is not a feature file inside the item`);
-
-    return;
+    return refusing(400, `${name} is not a feature file inside the item`);
   }
 
   await writeFile(target, await text(request));
   wroteArtifact();
-  response.writeHead(204).end();
+
+  return { status: 204, headers: {}, body: undefined };
 }
 
-async function serveWireframe(itemDir: string, response: ServerResponse): Promise<void> {
+async function wireframeReply(itemDir: string): Promise<Reply> {
   const wireframe = await readArtifact(itemDir, 'ui-design.html');
 
   if (wireframe === undefined) {
-    response.writeHead(404).end('refused: the item has no wireframe');
-  } else {
-    response.writeHead(200, { 'content-type': 'text/html' }).end(wireframe);
+    return refusing(404, 'the item has no wireframe');
   }
+
+  return { status: 200, headers: { 'content-type': 'text/html' }, body: wireframe };
 }
 
 function assetPath(path: string): boolean {
@@ -107,12 +118,7 @@ async function blastOf(itemDir: string, d2Binary: string): Promise<BlastArtifact
   return { ...files, render: await renderBlast(itemDir, d2Binary) };
 }
 
-async function servePage(
-  itemDir: string,
-  sessionKey: string,
-  d2Binary: string,
-  response: ServerResponse,
-): Promise<void> {
+async function pageReply(itemDir: string, sessionKey: string, d2Binary: string): Promise<Reply> {
   const surface = await readSurface(itemDir);
   const projectRoot = rootOf(itemDir);
   const page = assemblePage(
@@ -128,38 +134,31 @@ async function servePage(
     { sessionKey, styles: await stylesChrome() },
   );
 
-  response.writeHead(200, { 'content-type': 'text/html' }).end(page);
+  return { status: 200, headers: { 'content-type': 'text/html' }, body: page };
 }
 
-export async function respond(
+export async function replyTo(
   itemDir: string,
   sessionKey: string,
   d2Binary: string,
   request: IncomingMessage,
-  response: ServerResponse,
   wroteArtifact: () => void,
-): Promise<void> {
+): Promise<Reply> {
   const path = pathOf(request);
 
   if (path === '/wireframe') {
-    await serveWireframe(itemDir, response);
-
-    return;
+    return wireframeReply(itemDir);
   }
 
   if (assetPath(path)) {
-    await serveAsset(path, response);
-
-    return;
+    return assetReply(path);
   }
 
   if (postsArtifact(path, request)) {
-    await acceptArtifact(itemDir, request, response, wroteArtifact);
-
-    return;
+    return artifactReply(itemDir, request, wroteArtifact);
   }
 
-  await servePage(itemDir, sessionKey, d2Binary, response);
+  return pageReply(itemDir, sessionKey, d2Binary);
 }
 
 function rootOf(itemDir: string): string | undefined {

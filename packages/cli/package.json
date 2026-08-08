@@ -7,7 +7,7 @@
     ".": "./src/run.ts"
   },
   "scripts": {
-    "build": "bun build src/run.ts --compile --outfile dist/ket",
+    "build": "bun build src/run.ts --compile --no-compile-autoload-bunfig --no-compile-autoload-dotenv --outfile dist/ket",
     "test": "vitest run",
     "lint": "oxlint --config ../../.oxlintrc.json .",
     "fmt": "oxfmt --config ../../.oxfmtrc.json .",

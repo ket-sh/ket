@@ -16,6 +16,8 @@ function asRanges(pins: string[]): Record<string, string> {
   );
 }
 
+const BUN_FLOOR = '>=1.3.14';
+
 export function renderManifest(name: string, source: ManifestSource): string {
   return `${JSON.stringify(
     {
@@ -24,6 +26,7 @@ export function renderManifest(name: string, source: ManifestSource): string {
       scripts: source.scripts,
       dependencies: asRanges(source.dependencies),
       devDependencies: asRanges(source.devDependencies),
+      engines: { bun: BUN_FLOOR },
     },
     undefined,
     2,

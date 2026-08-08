@@ -43,6 +43,7 @@ fulfilment
 ghostty
 gitdir
 gitleaks
+gpgsign
 greptile
 gridstack
 gsub
@@ -91,6 +92,7 @@ probity
 profoundlogic
 qlty
 qltysh
+redescription
 resizestart
 resizestop
 rhysd

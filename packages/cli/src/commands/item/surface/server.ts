@@ -8,8 +8,10 @@ import { createServer } from 'node:http';
 import { basename, resolve } from 'node:path';
 import { WebSocketServer } from 'ws';
 
+import type { Reply } from './routes.ts';
+
 import { alive, readInfo, removeInfo, signalForeign, writeInfo } from './info.ts';
-import { keyOf, pathOf, respond } from './routes.ts';
+import { keyOf, pathOf, refusing, replyTo } from './routes.ts';
 
 export interface SurfaceOptions {
   idleMs?: number;
@@ -26,14 +28,12 @@ const FOUR_HOURS = 14_400_000;
 
 const running = new Map<string, SurfaceHandle>();
 
-function refusedBy(response: ServerResponse): (failed: unknown) => void {
-  return (failed) => {
-    const message = failed instanceof Error ? failed.message : String(failed);
+function send(response: ServerResponse, reply: Reply): void {
+  response.writeHead(reply.status, reply.headers).end(reply.body);
+}
 
-    if (!response.headersSent) {
-      response.writeHead(500).end(`refused: ${message}`);
-    }
-  };
+function refusalFor(failed: unknown): Reply {
+  return refusing(500, failed instanceof Error ? failed.message : String(failed));
 }
 
 interface Watchdog {
@@ -168,15 +168,17 @@ export async function startSurface(
 
   const server: Server = createServer((request, response) => {
     if (keyOf(request) !== sessionKey) {
-      response.writeHead(403).end('refused: missing or wrong session key');
+      send(response, refusing(403, 'missing or wrong session key'));
 
       return;
     }
 
     idle.rest();
-    respond(home, sessionKey, options.d2Binary ?? 'd2', request, response, quiet.hush).catch(
-      refusedBy(response),
-    );
+    void replyTo(home, sessionKey, options.d2Binary ?? 'd2', request, quiet.hush)
+      .catch(refusalFor)
+      .then((reply) => {
+        send(response, reply);
+      });
   });
 
   attachSockets(server, sessionKey, clients);

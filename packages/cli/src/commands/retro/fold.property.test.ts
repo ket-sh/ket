@@ -1,3 +1,5 @@
+import type { GateSemantics } from '@ket/preset';
+
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
@@ -102,6 +104,59 @@ function saysNothingHappened(refusals: Refusal[]): void {
   expect(report).not.toContain('## The one action');
 }
 
+const GATE_POOL = ['check-types', 'lint', 'lint:dup', 'review', 'write'];
+
+const someScripts = fc.subarray(GATE_POOL);
+
+const someSightings = fc.subarray(GATE_POOL);
+
+const MOVED = `${JSON.stringify({
+  gate: 'transition',
+  outcome: 'allowed',
+  about: 'triaged',
+  item: 'K-1',
+  at: '2026-08-04T09:00:00.000Z',
+})}\n`;
+
+function gateOf(script: string): GateSemantics {
+  return { script, guards: `It guards ${script}.`, commitJob: script, ciJob: 'check' };
+}
+
+function allowed(gate: string): string {
+  return `${JSON.stringify({
+    gate,
+    outcome: 'allowed',
+    item: 'K-1',
+    at: '2026-08-05T09:00:00.000Z',
+  })}\n`;
+}
+
+function actionLinesIn(report: string): string[] {
+  const opened = report.split('## The one action\n\n').at(1);
+
+  return opened === undefined ? [] : (opened.split('\n\n').at(0) ?? '').split('\n');
+}
+
+function asksAtMostOneAction(refusals: Refusal[], scripts: string[]): void {
+  const folded = foldRetro(WORKING, MOVED + logOf(refusals), WINDOW, scripts.map(gateOf));
+
+  expect(actionLinesIn(renderRetro(folded)).length).toBeLessThanOrEqual(1);
+}
+
+function quietGateIn(log: string, scripts: string[]): string | undefined {
+  const { action } = foldRetro(WORKING, log, WINDOW, scripts.map(gateOf));
+
+  return action !== undefined && 'dormant' in action ? action.dormant.gate : undefined;
+}
+
+function namesNoGateTheWindowRecorded(scripts: string[], sighted: string[]): void {
+  const log = MOVED + sighted.map((gate) => allowed(gate)).join('');
+  const quiet = quietGateIn(log, scripts);
+
+  expect(sighted).not.toContain(quiet);
+  expect(quiet === undefined).toBe(scripts.every((script) => sighted.includes(script)));
+}
+
 describe('the invariants a retro keeps', () => {
   it('lands every refusal the window carries in exactly one cluster', () => {
     fc.assert(fc.property(someRefusals, clustersOnce));
@@ -117,5 +172,13 @@ describe('the invariants a retro keeps', () => {
 
   it('writes a report with no item line and no action when nothing landed', () => {
     fc.assert(fc.property(someRefusals, saysNothingHappened));
+  });
+
+  it('asks for one action at most, whatever the window refused and the preset declares', () => {
+    fc.assert(fc.property(someRefusals, someScripts, asksAtMostOneAction));
+  });
+
+  it('calls a gate quiet only when the window recorded nothing from it', () => {
+    fc.assert(fc.property(someScripts, someSightings, namesNoGateTheWindowRecorded));
   });
 });

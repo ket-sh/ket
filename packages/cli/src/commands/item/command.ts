@@ -27,6 +27,7 @@ import {
   verificationOf,
 } from '../../shared/transition.ts';
 import { blast } from './blast/command.ts';
+import { describeItem } from './describe/command.ts';
 import { note } from './note/command.ts';
 import { drift, stamp } from './plain/command.ts';
 import { fileAlone, fileUnder, itemsIn, keyOf } from './store.ts';
@@ -185,6 +186,7 @@ const item = defineCommand({
   meta: { name: 'item', description: 'Write the state a gate reads' },
   subCommands: {
     file,
+    describe: describeItem,
     design,
     submit,
     approve,

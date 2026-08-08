@@ -5,6 +5,9 @@ set -euo pipefail
 # project. Nothing here reasons about the JSON contract; every assertion reads
 # what the binary actually wrote.
 
+# shellcheck source=scripts/hermetic-git.sh
+. "$(dirname "$0")/hermetic-git.sh"
+
 KET="$PWD/packages/cli/dist/ket"
 SANDBOX="$(mktemp -d)"
 PROJECT="$SANDBOX/order-service"
@@ -277,6 +280,22 @@ refuses_command 'already implementing' item approve OS-1
 echo "acceptance: a second item takes the next key"
 second="$(cd "$PROJECT" && "$KET" item file --title 'logout' --kind chore --size trivial)"
 test "$second" = "OS-2" || fail "expected the second item to be OS-2, got: $second"
+
+echo "acceptance: a description piped in after the filing"
+printf 'Slice rationale\n\nThe form comes first.\n\nChildren\n\n- OS-2 the form\n' |
+  ket item describe OS-1 >/dev/null || fail "describe refused an item the binary just filed"
+grep -q '^description: |$' "$PROJECT/.ket/items/OS-1/item.yaml" ||
+  fail "describe wrote no description block"
+grep -q '^  - OS-2 the form$' "$PROJECT/.ket/items/OS-1/item.yaml" ||
+  fail "describe dropped the prose the pipe carried"
+# A child list inside the prose is indented, so nothing there is a child. An
+# item that took one this way would carry work no gate ever approved.
+grep -q '^children: \[\]$' "$PROJECT/.ket/items/OS-1/item.yaml" ||
+  fail "describe let the prose write a child of its own"
+status_is OS-1 implementing
+CHECKED=$((CHECKED + 4))
+refuses_command 'OS-99 has no item this repository can read' \
+  item describe OS-99 --description 'nobody to describe'
 
 echo "acceptance: a title that tries to write a field of its own"
 # A field is one per line, so a title carrying a break writes a second field. A
@@ -1182,6 +1201,16 @@ esac
 case "$CHROME" in
 *d2h*) ;;
 *) fail "the surface chrome carries no diff styles" ;;
+esac
+
+echo "acceptance: a host project's broken bunfig never reaches the binary"
+POISONED="$SANDBOX/poisoned"
+mkdir -p "$POISONED"
+printf 'this is not [valid toml{{{\n' >"$POISONED/bunfig.toml"
+HELPED="$( (cd "$POISONED" && "$KET" --help 2>&1) || true)"
+case "$HELPED" in
+*USAGE*) ;;
+*) fail "the compiled binary read the host bunfig: $HELPED" ;;
 esac
 
 echo "acceptance: $CHECKED gate decisions checked, all as specified"
