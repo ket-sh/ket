@@ -58,7 +58,7 @@ export type Tuning = 'toggle' | 'technical' | 'plain';
 export interface FrameStack {
   frames: Frame[];
   top: Frame;
-  dive: (key: string | undefined) => void;
+  dive: (key: string | undefined, tab?: JourneyTab) => void;
   tab: () => void;
   showTab: (tab: JourneyTab) => void;
   aim: (sel: string) => void;
