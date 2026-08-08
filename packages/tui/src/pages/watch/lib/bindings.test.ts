@@ -21,6 +21,7 @@ describe('the bindings the board answers', () => {
       'v list',
       'b backlog',
       'l log',
+      'd docs',
       '/ filter',
       'ctrl+p go',
       '? help',
@@ -40,6 +41,7 @@ describe('the bindings the board answers', () => {
         'v list',
         'b backlog',
         'l log',
+        'd docs',
         '/ filter',
         'ctrl+p go',
         '? help',
@@ -146,6 +148,29 @@ describe('the bindings the other screens answer', () => {
   });
 });
 
+describe('the bindings the docs screen answers', () => {
+  it('lets the catalog walk, open the detail, and leave', () => {
+    expect(hintsAt({ kind: 'docs', focus: 'catalog' })).toStrictEqual([
+      '↑↓ move',
+      '⏎ detail',
+      'ctrl+p go',
+      '? help',
+      'esc board',
+      'q quit',
+    ]);
+  });
+
+  it('hands the detail its way back to the catalog', () => {
+    expect(hintsAt({ kind: 'docs', focus: 'detail' })).toStrictEqual([
+      '↑↓ move',
+      'esc catalog',
+      'ctrl+p go',
+      '? help',
+      'q quit',
+    ]);
+  });
+});
+
 describe('the group every binding wears', () => {
   it('files the walk under move and the dive under open', () => {
     const board: BindingSpot = { kind: 'board', layout: 'kanban', offers: ['approve'] };
@@ -196,6 +221,7 @@ describe('the grouping the help screen reads', () => {
       'v list',
       'b backlog',
       'l log',
+      'd docs',
       'ctrl+p go',
       'q quit',
     ]);

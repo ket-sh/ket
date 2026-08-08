@@ -156,6 +156,11 @@ const feed: BoardFeed = {
   saveCriteria: async () => {
     await Promise.resolve();
   },
+  docsCatalog: async () => {
+    await Promise.resolve();
+
+    return { groups: [] };
+  },
   oplog: async () => {
     await Promise.resolve();
 

@@ -1,28 +1,15 @@
 import type { MouseEvent } from '@opentui/core';
 import type { ReactNode } from 'react';
 
-import type { Theme } from '../../../shared/theme';
-import type { PaneLine, PaneTone } from '../lib/pane.ts';
+import type { PaneLine } from '../lib/pane.ts';
 import type { JourneyFocus } from '../model/frames.ts';
 
 import { useTheme } from '../../../shared/theme';
+import { toneColorOf } from '../lib/pane.ts';
 
 const SEATED = '▸ ';
 
 const RESTING = '  ';
-
-function toneColorOf(tone: PaneTone, theme: Theme): string {
-  const tones: Record<PaneTone, string> = {
-    key: theme.text,
-    title: theme.text,
-    state: theme.blue,
-    alert: theme.red,
-    quiet: theme.subtext,
-    link: theme.green,
-  };
-
-  return tones[tone];
-}
 
 // Only the link answers the keyboard, so only the link shows where the
 // selection sits once the pane holds it.

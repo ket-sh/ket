@@ -10,6 +10,7 @@ import { MapPane } from '../../../widgets/story-map';
 import { laidInRow } from '../lib/lanes.ts';
 import { BacklogView } from './backlog.tsx';
 import { BoardView } from './board.tsx';
+import { DocsView } from './docs.tsx';
 import { EditorPage } from './editor.tsx';
 import { JourneyPage } from './journey.tsx';
 import { ListView } from './list.tsx';
@@ -67,7 +68,7 @@ function BoardArea({
 }
 
 function heldPageOf(room: RoomProps): ReactNode | undefined {
-  const { stack, now, tick, height } = room;
+  const { stack, now, tick, width, height } = room;
 
   if (stack.top.kind === 'edit') {
     return <EditorPage frame={stack.top} tick={tick} height={height} />;
@@ -83,6 +84,10 @@ function heldPageOf(room: RoomProps): ReactNode | undefined {
         mouse={room.mouse}
       />
     );
+  }
+
+  if (stack.top.kind === 'docs') {
+    return <DocsView frame={stack.top} now={now} width={width} height={height} />;
   }
 
   return undefined;

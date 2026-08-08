@@ -8,8 +8,10 @@ import type { Palette } from './palette.ts';
 import type { Picker } from './picker.ts';
 import type { Seat } from './seat.ts';
 
+import { catalogRows } from '../lib/docs.ts';
 import { narrowedEvents } from '../lib/oplog.ts';
 import { asDirection, DELTA } from './compass.ts';
+import { docsPress } from './docs-keys.ts';
 import { editorPress } from './editor-keys.ts';
 import { filterOpened, filterPress } from './filter-keys.ts';
 import { ceremonyPress, journeyPress, mapPress, surfacePress } from './frame-keys.ts';
@@ -84,6 +86,9 @@ const BOARD_CHORDS: Record<string, (deps: PressDeps) => void> = {
   l: (deps) => {
     deps.stack.openLog();
   },
+  d: (deps) => {
+    deps.stack.openDocs();
+  },
 };
 
 function boardPress(name: string, deps: PressDeps): void {
@@ -149,6 +154,12 @@ const FRAME_PRESSES: Record<Frame['kind'], (name: string, deps: PressDeps) => vo
   },
   oplog: (name, deps) => {
     oplogPress(name, deps.stack, shownLogOf(deps));
+  },
+  docs: (name, deps) => {
+    const top = deps.stack.top;
+    const most = top.kind === 'docs' ? catalogRows(top.catalog).length - 1 : 0;
+
+    docsPress(name, deps.stack, most);
   },
   surface: (name, deps) => {
     surfacePress(name, deps.stack, deps.most);

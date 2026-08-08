@@ -1,7 +1,11 @@
 import type { GateActionView, KanbanCardView, KanbanColumnView } from '../../../shared/model';
 
 export type PaletteEntry =
-  | { kind: 'screen'; screen: 'board' | 'list' | 'backlog' | 'map' | 'oplog'; label: string }
+  | {
+      kind: 'screen';
+      screen: 'board' | 'list' | 'backlog' | 'map' | 'oplog' | 'docs';
+      label: string;
+    }
   | { kind: 'item'; key: string; status: string; label: string }
   | { kind: 'gate'; gate: GateActionView; key: string; label: string }
   | { kind: 'tool'; tool: 'refresh' | 'themes'; label: string };
@@ -12,6 +16,7 @@ const SCREENS: PaletteEntry[] = [
   { kind: 'screen', screen: 'backlog', label: 'backlog' },
   { kind: 'screen', screen: 'map', label: 'map' },
   { kind: 'screen', screen: 'oplog', label: 'oplog' },
+  { kind: 'screen', screen: 'docs', label: 'docs' },
 ];
 
 const TOOLS: PaletteEntry[] = [

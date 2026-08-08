@@ -42,6 +42,7 @@ describe('the destinations the palette lists', () => {
       'backlog',
       'map',
       'oplog',
+      'docs',
       'K-2  A quiet fix',
       'K-1  The watched item',
       'approve K-2',
