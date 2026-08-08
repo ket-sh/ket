@@ -139,9 +139,7 @@ describe('the one action a retro asks for', () => {
       turnedAway('write', '2026-08-04T10:00:00.000Z', TEST_FIRST);
 
     expect(foldRetro(WORKING, log, WINDOW).action).toStrictEqual({
-      gate: 'write',
-      reason: TEST_FIRST,
-      count: 2,
+      cluster: { gate: 'write', reason: TEST_FIRST, count: 2 },
     });
   });
 
@@ -150,7 +148,9 @@ describe('the one action a retro asks for', () => {
       turnedAway('write', '2026-08-04T09:00:00.000Z', TEST_FIRST) +
       turnedAway('review', '2026-08-04T10:00:00.000Z', 'the design names no spec');
 
-    expect(foldRetro(WORKING, log, WINDOW).action?.gate).toBe('review');
+    expect(foldRetro(WORKING, log, WINDOW).action).toStrictEqual({
+      cluster: { gate: 'review', reason: 'the design names no spec', count: 1 },
+    });
   });
 
   it('asks for nothing when no gate refused anything', () => {
