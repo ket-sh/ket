@@ -1203,4 +1203,14 @@ case "$CHROME" in
 *) fail "the surface chrome carries no diff styles" ;;
 esac
 
+echo "acceptance: a host project's broken bunfig never reaches the binary"
+POISONED="$SANDBOX/poisoned"
+mkdir -p "$POISONED"
+printf 'this is not [valid toml{{{\n' >"$POISONED/bunfig.toml"
+HELPED="$( (cd "$POISONED" && "$KET" --help 2>&1) || true)"
+case "$HELPED" in
+*USAGE*) ;;
+*) fail "the compiled binary read the host bunfig: $HELPED" ;;
+esac
+
 echo "acceptance: $CHECKED gate decisions checked, all as specified"
