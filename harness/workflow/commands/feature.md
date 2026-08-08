@@ -40,15 +40,29 @@ actually touches later.
 
 This is the first of the four human gates. Stop here and wait.
 
-## 3. File
+## 3. Write the title and the description
+
+Read the `ket:issue-writing` skill and write both to it. The title checklist
+applies whatever the kind, the description follows the template for the kind the
+user just confirmed, and the review step at the end of that skill runs before
+the command does rather than after somebody complains.
+
+The description is the whole handover to a reader who was not in this
+conversation. Write nothing into it you did not read in this repository or in a
+source you can cite, and write a gap as `unknown: <the question>`.
+
+## 4. File
 
 ```
-ket item file --title '<title>' --kind <kind> --size <size>
+ket item file --title '<title>' --kind <kind> --size <size> --description '<description>'
 ```
+
+A feature small enough that its title settles every question can go without the
+flag. Everything else carries one.
 
 It prints the key it allocated. Tell the user the key.
 
-## 4. Carry on
+## 5. Carry on
 
 Filing is not the end of the turn. Read the `ket:stages` skill, find the row for
 the status and size you just filed, and do what it says. Keep moving through the
