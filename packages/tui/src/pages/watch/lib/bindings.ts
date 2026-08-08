@@ -39,6 +39,8 @@ const NARROWS: Binding = { keys: '/', action: 'filter', group: 'filter' };
 
 const GOES: Binding = { keys: 'ctrl+p', action: 'go', group: 'open' };
 
+const HELPS: Binding = { keys: '?', action: 'help', group: 'tools' };
+
 function boardBindings(layout: BoardLayout, offers: GateActionView[]): Binding[] {
   const laid = layout === 'kanban' ? 'list' : 'kanban';
   const queued = layout === 'backlog' ? 'board' : 'backlog';
@@ -52,18 +54,20 @@ function boardBindings(layout: BoardLayout, offers: GateActionView[]): Binding[]
     { keys: 'b', action: queued, group: 'open' },
     ...(layout === 'backlog' ? [] : [NARROWS]),
     GOES,
+    HELPS,
     { keys: 'r', action: 'refresh', group: 'tools' },
     QUIT,
   ];
 }
 
 const JOURNEY_WAYS: Record<PaneStanding, Binding[]> = {
-  canvas: [MOVE, { keys: '⏎', action: 'open', group: 'open' }, GOES, ESC_BOARD, QUIT],
+  canvas: [MOVE, { keys: '⏎', action: 'open', group: 'open' }, GOES, HELPS, ESC_BOARD, QUIT],
   brink: [
     MOVE,
     { keys: '→', action: 'item pane', group: 'move' },
     { keys: '⏎', action: 'open', group: 'open' },
     GOES,
+    HELPS,
     ESC_BOARD,
     QUIT,
   ],
@@ -71,18 +75,20 @@ const JOURNEY_WAYS: Record<PaneStanding, Binding[]> = {
     { keys: '←', action: 'canvas', group: 'move' },
     { keys: '⏎', action: 'children', group: 'open' },
     GOES,
+    HELPS,
     ESC_BOARD,
     QUIT,
   ],
 };
 
 const HELD_SCREENS: Record<'map' | 'surface' | 'gate' | 'edit', Binding[]> = {
-  map: [MOVE, GOES, ESC_BOARD, QUIT],
+  map: [MOVE, GOES, HELPS, ESC_BOARD, QUIT],
   surface: [
     { keys: '↑↓', action: 'scroll', group: 'move' },
     { keys: 'tab ←→', action: 'audience', group: 'tools' },
     { keys: 'e', action: 'edit', group: 'tools' },
     GOES,
+    HELPS,
     { keys: 'esc', action: 'back', group: 'open' },
     QUIT,
   ],
@@ -107,6 +113,21 @@ export function bindingsAt(spot: BindingSpot): Binding[] {
 
 export function hintOf(binding: Binding): string {
   return binding.action === '' ? binding.keys : `${binding.keys} ${binding.action}`;
+}
+
+export interface GroupedBindings {
+  group: BindingGroup;
+  bindings: Binding[];
+}
+
+const GROUP_ORDER: BindingGroup[] = ['move', 'open', 'filter', 'tools'];
+
+export function groupedOf(bindings: Binding[]): GroupedBindings[] {
+  return GROUP_ORDER.flatMap((group) => {
+    const worn = bindings.filter((binding) => binding.group === group);
+
+    return worn.length === 0 ? [] : [{ group, bindings: worn }];
+  });
 }
 
 function paneStandingOf(frame: Extract<Frame, { kind: 'journey' }>): PaneStanding {

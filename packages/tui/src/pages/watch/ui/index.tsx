@@ -8,6 +8,7 @@ import type { BoardLayout } from '../model/board-layout.ts';
 import type { Ring } from '../model/chime.ts';
 import type { Filter } from '../model/filter.ts';
 import type { FrameStack } from '../model/frames.ts';
+import type { Help } from '../model/help.ts';
 import type { PressDeps } from '../model/keys.ts';
 import type { Palette } from '../model/palette.ts';
 import type { Picker } from '../model/picker.ts';
@@ -23,6 +24,7 @@ import { useBoardState } from '../model/board-state.ts';
 import { useChime } from '../model/chime.ts';
 import { useFilter } from '../model/filter.ts';
 import { outstayed } from '../model/frames.ts';
+import { useHelp } from '../model/help.ts';
 import { press } from '../model/keys.ts';
 import { usePalette } from '../model/palette.ts';
 import { usePicker } from '../model/picker.ts';
@@ -34,6 +36,7 @@ import { EditorPage } from './editor.tsx';
 import { FootRow } from './foot-row.tsx';
 import { GateModal } from './gate.tsx';
 import { HeaderRow } from './header-row.tsx';
+import { HelpOverlay } from './help.tsx';
 import { JourneyPage } from './journey.tsx';
 import { ListView } from './list.tsx';
 import { PaletteOverlay } from './palette.tsx';
@@ -190,6 +193,7 @@ interface Room {
   picker: Picker;
   filter: Filter;
   palette: Palette;
+  help: Help;
   width: number;
   height: number;
 }
@@ -209,20 +213,36 @@ function useWatchRoom({
   const shown = layout === 'backlog' ? columns : narrowedBy(columns, filter.query);
   const seat = useSeat(shown);
   const palette = usePalette({ columns, chosen: seat.chosen, stack, wear, picker, refresh, tick });
+  const help = useHelp();
   const most = stack.top.kind === 'surface' ? surfaceMost(stack.top, height - CHROME) : 0;
   const deps = { onQuit, refresh, stack, seat, most, tick, layout, swap, queue };
 
   useChime(columns, loaded, ring);
   useCeremonyCurtain(stack, tick);
   useMovedCardFollow(stack, seat, columns);
-  useWatchKeys({ ...deps, picker, filter, palette });
+  useWatchKeys({ ...deps, picker, filter, palette, help });
 
-  return { columns, shown, now, tick, stack, seat, layout, picker, filter, palette, width, height };
+  return {
+    columns,
+    shown,
+    now,
+    tick,
+    stack,
+    seat,
+    layout,
+    picker,
+    filter,
+    palette,
+    help,
+    width,
+    height,
+  };
 }
 
 function WatchRoom(props: WatchPageProps): ReactNode {
-  const { columns, shown, now, tick, stack, seat, layout, picker, filter, palette, width, height } =
-    useWatchRoom(props);
+  const room = useWatchRoom(props);
+  const { columns, shown, now, tick, stack, seat, layout, picker, filter, palette, help } = room;
+  const { width, height } = room;
 
   return (
     <box
@@ -258,6 +278,14 @@ function WatchRoom(props: WatchPageProps): ReactNode {
       <CeremonyOverlay stack={stack} columns={columns} tick={tick} width={width} height={height} />
       <PickerOverlay picker={picker} width={width} height={height} />
       <PaletteOverlay palette={palette} width={width} height={height} />
+      <HelpOverlay
+        help={help}
+        frame={stack.top}
+        offers={seat.chosen?.offers ?? []}
+        layout={layout}
+        width={width}
+        height={height}
+      />
     </box>
   );
 }

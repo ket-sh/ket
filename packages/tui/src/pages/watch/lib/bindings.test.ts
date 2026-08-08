@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { BindingSpot } from './bindings.ts';
 
-import { bindingsAt, hintOf } from './bindings.ts';
+import { bindingsAt, groupedOf, hintOf } from './bindings.ts';
 
 function hintsAt(spot: BindingSpot): string[] {
   return bindingsAt(spot).map((binding) => hintOf(binding));
@@ -22,6 +22,7 @@ describe('the bindings the board answers', () => {
       'b backlog',
       '/ filter',
       'ctrl+p go',
+      '? help',
       'r refresh',
       'q quit',
     ]);
@@ -39,6 +40,7 @@ describe('the bindings the board answers', () => {
         'b backlog',
         '/ filter',
         'ctrl+p go',
+        '? help',
         'r refresh',
         'q quit',
       ],
@@ -68,6 +70,7 @@ describe('the bindings the journey answers', () => {
       '←↑↓→ move',
       '⏎ open',
       'ctrl+p go',
+      '? help',
       'esc board',
       'q quit',
     ]);
@@ -79,6 +82,7 @@ describe('the bindings the journey answers', () => {
       '→ item pane',
       '⏎ open',
       'ctrl+p go',
+      '? help',
       'esc board',
       'q quit',
     ]);
@@ -89,6 +93,7 @@ describe('the bindings the journey answers', () => {
       '← canvas',
       '⏎ children',
       'ctrl+p go',
+      '? help',
       'esc board',
       'q quit',
     ]);
@@ -100,6 +105,7 @@ describe('the bindings the other screens answer', () => {
     expect(hintsAt({ kind: 'map' })).toStrictEqual([
       '←↑↓→ move',
       'ctrl+p go',
+      '? help',
       'esc board',
       'q quit',
     ]);
@@ -111,6 +117,7 @@ describe('the bindings the other screens answer', () => {
       'tab ←→ audience',
       'e edit',
       'ctrl+p go',
+      '? help',
       'esc back',
       'q quit',
     ]);
@@ -150,5 +157,39 @@ describe('the group every binding wears', () => {
   it('files the palette under open, wherever it appears', () => {
     expect(groupAt({ kind: 'board', layout: 'kanban', offers: [] }, 'ctrl+p go')).toBe('open');
     expect(groupAt({ kind: 'map' }, 'ctrl+p go')).toBe('open');
+  });
+
+  it('files the help key under tools, wherever it appears', () => {
+    expect(groupAt({ kind: 'board', layout: 'kanban', offers: [] }, '? help')).toBe('tools');
+    expect(groupAt({ kind: 'surface' }, '? help')).toBe('tools');
+  });
+});
+
+describe('the grouping the help screen reads', () => {
+  it('walks the groups in move, open, filter, tools order', () => {
+    const grouped = groupedOf(bindingsAt({ kind: 'board', layout: 'kanban', offers: [] }));
+
+    expect(grouped.map((held) => held.group)).toStrictEqual(['move', 'open', 'filter', 'tools']);
+  });
+
+  it('keeps each binding under its group, in structure order', () => {
+    const grouped = groupedOf(bindingsAt({ kind: 'board', layout: 'kanban', offers: [] }));
+    const open = grouped.find((held) => held.group === 'open');
+
+    expect(open?.bindings.map((binding) => hintOf(binding))).toStrictEqual([
+      '⏎ journey',
+      'm map',
+      'v list',
+      'b backlog',
+      'ctrl+p go',
+      'q quit',
+    ]);
+  });
+
+  it('drops a group nothing wears', () => {
+    expect(groupedOf(bindingsAt({ kind: 'gate' })).map((held) => held.group)).toStrictEqual([
+      'open',
+      'tools',
+    ]);
   });
 });

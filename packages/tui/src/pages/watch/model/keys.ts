@@ -3,6 +3,7 @@ import type { BoardLayout } from './board-layout.ts';
 import type { Direction, Pressed } from './compass.ts';
 import type { Filter } from './filter.ts';
 import type { Frame, FrameStack } from './frames.ts';
+import type { Help } from './help.ts';
 import type { Palette } from './palette.ts';
 import type { Picker } from './picker.ts';
 import type { Seat } from './seat.ts';
@@ -10,6 +11,8 @@ import type { Seat } from './seat.ts';
 import { asDirection, DELTA } from './compass.ts';
 import { editorPress } from './editor-keys.ts';
 import { filterOpened, filterPress } from './filter-keys.ts';
+import { ceremonyPress, journeyPress, mapPress, surfacePress } from './frame-keys.ts';
+import { helpOpened, helpPress } from './help-keys.ts';
 import { paletteOpened, palettePress } from './palette-keys.ts';
 import { pickerPress } from './picker-keys.ts';
 
@@ -18,47 +21,6 @@ export const GATE_KEYS: Record<string, GateActionView> = {
   s: 'ship',
   o: 'reopen',
 };
-
-const JOURNEY_KEYS: Record<string, (stack: FrameStack) => void> = {
-  escape: (stack) => {
-    stack.pop();
-  },
-  return: (stack) => {
-    stack.enter();
-  },
-  enter: (stack) => {
-    stack.enter();
-  },
-  tab: (stack) => {
-    stack.tab();
-  },
-};
-
-function journeyPress(name: string, stack: FrameStack): void {
-  const answer = JOURNEY_KEYS[name];
-
-  if (answer !== undefined) {
-    answer(stack);
-
-    return;
-  }
-
-  const direction: Direction | undefined = asDirection(name);
-
-  if (direction !== undefined) {
-    stack.walk(direction);
-  }
-}
-
-function mapPress(name: string, stack: FrameStack): void {
-  if (name === 'escape') {
-    stack.pop();
-
-    return;
-  }
-
-  stack.mapWalk(name);
-}
 
 function offeredAction(
   name: string,
@@ -143,46 +105,6 @@ function boardPress(name: string, deps: PressDeps): void {
   }
 }
 
-const SURFACE_MOVES: Record<string, (stack: FrameStack, most: number) => void> = {
-  escape: (stack) => {
-    stack.pop();
-  },
-  up: (stack, most) => {
-    stack.scroll(-1, most);
-  },
-  down: (stack, most) => {
-    stack.scroll(1, most);
-  },
-  tab: (stack) => {
-    stack.tune('toggle');
-  },
-  left: (stack) => {
-    stack.tune('technical');
-  },
-  right: (stack) => {
-    stack.tune('plain');
-  },
-  e: (stack) => {
-    stack.edit();
-  },
-};
-
-function surfacePress(name: string, stack: FrameStack, most: number): void {
-  SURFACE_MOVES[name]?.(stack, most);
-}
-
-function ceremonyPress(name: string, stack: FrameStack, tick: number): void {
-  if (name === 'escape') {
-    stack.pop();
-
-    return;
-  }
-
-  if (name === 'return' || name === 'enter') {
-    stack.pass(tick);
-  }
-}
-
 export interface PressDeps {
   onQuit: () => void;
   refresh: () => void;
@@ -196,6 +118,7 @@ export interface PressDeps {
   picker: Picker;
   filter: Filter;
   palette: Palette;
+  help: Help;
 }
 
 const FRAME_PRESSES: Record<Frame['kind'], (name: string, deps: PressDeps) => void> = {
@@ -217,7 +140,7 @@ const FRAME_PRESSES: Record<Frame['kind'], (name: string, deps: PressDeps) => vo
   edit: () => undefined,
 };
 
-function heldPress(key: Pressed, deps: PressDeps): boolean {
+function overlayPress(key: Pressed, deps: PressDeps): boolean {
   if (deps.palette.at !== undefined) {
     palettePress(key, deps.palette);
 
@@ -227,6 +150,20 @@ function heldPress(key: Pressed, deps: PressDeps): boolean {
   if (deps.picker.at !== undefined) {
     pickerPress(key.name, deps.picker);
 
+    return true;
+  }
+
+  if (deps.help.on) {
+    helpPress(key, deps.help);
+
+    return true;
+  }
+
+  return false;
+}
+
+function heldPress(key: Pressed, deps: PressDeps): boolean {
+  if (overlayPress(key, deps)) {
     return true;
   }
 
@@ -257,6 +194,16 @@ const GLOBAL_KEYS: Record<string, (deps: PressDeps) => void> = {
   },
 };
 
+function overlayOpened(key: Pressed, deps: PressDeps): boolean {
+  const kind = deps.stack.top.kind;
+
+  return (
+    filterOpened(key, kind, deps.layout, deps.filter) ||
+    paletteOpened(key, kind, deps.palette) ||
+    helpOpened(key, kind, deps.help)
+  );
+}
+
 export function press(key: Pressed, deps: PressDeps): void {
   if (heldPress(key, deps)) {
     return;
@@ -270,11 +217,7 @@ export function press(key: Pressed, deps: PressDeps): void {
     return;
   }
 
-  if (filterOpened(key, deps.stack.top.kind, deps.layout, deps.filter)) {
-    return;
-  }
-
-  if (paletteOpened(key, deps.stack.top.kind, deps.palette)) {
+  if (overlayOpened(key, deps)) {
     return;
   }
 
