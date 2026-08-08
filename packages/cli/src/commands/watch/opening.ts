@@ -2,7 +2,7 @@ type JourneyTab = 'overview' | 'workflow' | 'children' | 'artifacts';
 
 type BoardLayout = 'kanban' | 'list' | 'backlog';
 
-type OpeningStage = { kind: 'journey'; key: string; tab: JourneyTab } | { kind: 'map' };
+export type OpeningStage = { kind: 'journey'; key: string; tab: JourneyTab } | { kind: 'map' };
 
 export interface WatchView {
   layout?: BoardLayout;
@@ -20,8 +20,14 @@ type OpeningReading = { opening: WatchView | undefined } | { refused: string };
 
 const TABS: JourneyTab[] = ['overview', 'workflow', 'children', 'artifacts'];
 
-function isTab(word: string): word is JourneyTab {
+const LAYOUTS: BoardLayout[] = ['kanban', 'list', 'backlog'];
+
+export function isTab(word: string): word is JourneyTab {
   return TABS.some((tab) => tab === word);
+}
+
+export function isLayout(word: string): word is BoardLayout {
+  return LAYOUTS.some((layout) => layout === word);
 }
 
 function journeyOpening(key: string, tab: string | undefined): OpeningReading {
