@@ -6,7 +6,7 @@ sources:
   - presets/cli/src/**
   - presets/web/src/**
   - harness/**
-stamp: b0bddb930ecd
+stamp: c5c2c9d2db28
 ---
 
 # The ket handbook
@@ -100,7 +100,11 @@ board, `enter` opens an item behind its tabs: overview, workflow with the
 stage canvas and the item pane, children, and artifacts. The `b` key shows
 the backlog, `m` opens the story map, `v` flips to a flat list, and `t` picks
 a theme. `ket retro` folds the week's events into a report that names what
-slowed you and derives one action from the largest refusal cluster.
+slowed you, and every action it derives carries a numbered draft with its
+evidence. `ket retro adopt 1` files the first draft as an idea item that
+explains itself without the log. A terminal run ends with an adopt-or-skip
+tour over the drafts, and `ket retro --json` hands a session the same drafts
+structured.
 
 ## The gates, by the moment they fire
 
@@ -221,6 +225,7 @@ loads the one that applies and works from it rather than from a summary.
 | `findings`      | How to record and answer review findings                       |
 | `regression`    | What a fix owes the suite that missed the defect               |
 | `plain`         | The plain-language sibling every technical document keeps      |
+| `retro`         | Enriching the numbered retro drafts, prose only                |
 
 ### Installed in the project
 
@@ -249,5 +254,6 @@ One concept, one name, everywhere:
 Read the refusal: it names the operation, the reason, and usually the fix.
 The `gates` skill explains what each gate failure means, and the
 `suppression` skill lists what to reach for instead of switching anything
-off. If the same refusal keeps arriving, `ket retro` will name it as the
-week's largest cluster and propose the one change that removes the friction.
+off. If the same refusal keeps arriving, `ket retro` names it as the week's
+largest cluster and drafts the change that removes the friction, numbered so
+`ket retro adopt 1` files it as work.

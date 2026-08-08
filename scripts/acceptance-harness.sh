@@ -995,6 +995,33 @@ echo "acceptance: the events file stays out of the diff"
 (cd "$PROJECT" && git check-ignore -q .ket/events.jsonl) ||
   fail "events.jsonl is not gitignored"
 
+echo "acceptance: the retro drafts the week and adoption files the first draft"
+# Piped stdout is not a terminal, so a retro that completes here is a retro
+# that never prompted. The refusals every gate recorded above are the drafts.
+RETRO_REPORT="$(ket retro)" || fail "ket retro refused a week full of refusals"
+test -f "$PROJECT/$RETRO_REPORT" || fail "ket retro named a report it did not write"
+grep -q 'Draft 1:' "$PROJECT/$RETRO_REPORT" ||
+  fail "the report printed no draft under its actions"
+grep -qF 'ket retro adopt 1' "$PROJECT/$RETRO_REPORT" ||
+  fail "the report says nothing about how to adopt draft 1"
+ket retro --json | grep -q '"sentence"' ||
+  fail "ket retro --json carries no draft sentences for a session to read"
+
+ADOPTED="$(ket retro adopt 1)" || fail "adopt refused the first draft"
+ADOPTED_ITEM="$PROJECT/.ket/items/$ADOPTED/item.yaml"
+test -f "$ADOPTED_ITEM" || fail "adopt printed $ADOPTED and filed no such item"
+grep -q '^status: idea$' "$ADOPTED_ITEM" || fail "the adopted item did not enter as an idea"
+grep -q '^  gate: ' "$ADOPTED_ITEM" ||
+  fail "the adopted item names no gate, so it cannot stand without the log"
+grep -q '^  moments: ' "$ADOPTED_ITEM" ||
+  fail "the adopted item carries no moments, so nothing dates its evidence"
+grep -q '"adopted":' "$PROJECT/.ket/events.jsonl" ||
+  fail "the adoption left no event in the log"
+CHECKED=$((CHECKED + 2))
+
+refuses_command "draft 1 already became $ADOPTED" retro adopt 1
+refuses_command 'the drafts run 1 to' retro adopt 99
+
 echo "acceptance: what arrived since ket last looked"
 # Both streams, because a gate that governs nothing has to say nothing at all,
 # and a crash that leaves stdout empty would otherwise read as silence.
