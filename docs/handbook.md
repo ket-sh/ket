@@ -117,7 +117,10 @@ happens, earliest first:
 ### At every shell command, before it runs
 
 - **The shell gate** refuses a command that would skip a gate, and refuses
-  writes routed through interpreters it can't judge.
+  writes routed through interpreters it can't judge. When it allows a command
+  that runs a script the preset declares as a gate, it records the run under
+  the declared name, which is what `ket retro` reads to rank the gates a week
+  left quiet.
 
 ### After every write
 

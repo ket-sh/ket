@@ -17,6 +17,10 @@ const RULE_CHANGE =
 
 const QUIET_WEEK = 'No gate refused anything in this window';
 
+const LOG_SCOPE =
+  'The log sees a gate only when a session runs its script, ' +
+  'so a run at commit time or in CI leaves no line here.';
+
 function spanOf(span: number): string {
   const days = Math.floor(span / DAY);
   const hours = Math.floor((span % DAY) / HOUR);
@@ -109,7 +113,7 @@ function sightingOf(dormant: DormantGate): string {
 function dormantActionOf(dormant: DormantGate): string {
   return (
     `${QUIET_WEEK}, and ${sightingOf(dormant)}. ${dormant.guards} ` +
-    'Examine whether the rule still earns its place.'
+    `${LOG_SCOPE} Examine whether the rule still earns its place.`
   );
 }
 
