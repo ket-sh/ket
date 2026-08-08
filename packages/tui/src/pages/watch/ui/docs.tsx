@@ -1,40 +1,21 @@
-import type { MouseEvent } from '@opentui/core';
 import type { ReactNode } from 'react';
 
-import type { DocsRowView } from '../../../shared/model';
+import type { DocsCatalogView, DocsRowView } from '../../../shared/model';
 import type { Theme } from '../../../shared/theme';
 import type { DocsLine } from '../lib/docs.ts';
-import type { Frame } from '../model/frames.ts';
+import type { DocsFocus } from '../model/frames.ts';
 import type { WatchMouse } from '../model/mouse.ts';
 
 import { useTheme } from '../../../shared/theme';
 import { catalogLines, catalogRows, detailLinesOf, detailRoomOf, rotWordOf } from '../lib/docs.ts';
 import { seatedRow } from '../lib/oplog.ts';
 import { toneColorOf } from '../lib/pane.ts';
-
-type DocsFrame = Extract<Frame, { kind: 'docs' }>;
+import { groundedOn, pressedRow, wheeledThrough } from './pane-mouse.ts';
 
 const FRAME_ROWS = 2;
 
 function rotColorOf(word: string, theme: Theme): string {
   return word === 'unpinned' ? theme.yellow : theme.red;
-}
-
-function groundedOn(mouse: WatchMouse): (pressed: MouseEvent) => void {
-  return (pressed) => {
-    pressed.stopPropagation();
-    mouse.heldGround();
-  };
-}
-
-function wheeledThrough(mouse: WatchMouse): (rolled: MouseEvent) => void {
-  return (rolled) => {
-    const direction = rolled.scroll?.direction;
-
-    if (direction !== undefined) {
-      mouse.docsWheel(direction);
-    }
-  };
 }
 
 function CatalogRow({
@@ -49,13 +30,8 @@ function CatalogRow({
   const { theme } = useTheme();
   const word = rotWordOf(row);
 
-  const pressAt = (pressed: MouseEvent): void => {
-    pressed.stopPropagation();
-    onPress();
-  };
-
   return (
-    <text wrapMode="none" onMouseDown={pressAt}>
+    <text wrapMode="none" onMouseDown={pressedRow(onPress)}>
       <span fg={theme.text}>{chosen ? '► ' : '  '}</span>
       <span fg={chosen ? theme.text : theme.subtext}>{row.name}</span>
       {word === '' ? null : <span fg={rotColorOf(word, theme)}>{`  ${word}`}</span>}
@@ -101,15 +77,15 @@ function shownWindowOf(lines: DocsLine[], chosen: number, room: number): DocsLin
 }
 
 interface ShelfProps {
-  frame: DocsFrame;
+  catalog: DocsCatalogView;
+  held: boolean;
   chosen: number;
   room: number;
   mouse: WatchMouse;
 }
 
-function CatalogPane({ frame, chosen, room, mouse }: ShelfProps): ReactNode {
+function CatalogPane({ catalog, held, chosen, room, mouse }: ShelfProps): ReactNode {
   const { theme } = useTheme();
-  const held = frame.focus === 'detail';
 
   return (
     <box
@@ -123,9 +99,9 @@ function CatalogPane({ frame, chosen, room, mouse }: ShelfProps): ReactNode {
       paddingRight={1}
       overflow="hidden"
       onMouseDown={groundedOn(mouse)}
-      onMouseScroll={wheeledThrough(mouse)}
+      onMouseScroll={wheeledThrough(mouse.docsWheel)}
     >
-      {shownWindowOf(catalogLines(frame.catalog), chosen, room).map(
+      {shownWindowOf(catalogLines(catalog), chosen, room).map(
         (line, seatAt): ReactNode => (
           <CatalogLine key={String(seatAt)} line={line} chosen={chosen} mouse={mouse} />
         ),
@@ -170,32 +146,31 @@ function DetailPane({ row, held, now, width, mouse }: DetailProps): ReactNode {
 }
 
 export function DocsView({
-  frame,
+  catalog,
+  sel,
+  focus,
   now,
   width,
   height,
   mouse,
 }: {
-  frame: DocsFrame;
+  catalog: DocsCatalogView;
+  sel: number;
+  focus: DocsFocus;
   now: string;
   width: number;
   height: number;
   mouse: WatchMouse;
 }): ReactNode {
-  const rows = catalogRows(frame.catalog);
-  const chosen = seatedRow(frame.sel, rows.length);
+  const rows = catalogRows(catalog);
+  const chosen = seatedRow(sel, rows.length);
   const room = Math.max(1, height - FRAME_ROWS);
+  const held = focus === 'detail';
 
   return (
     <box flexDirection="row">
-      <CatalogPane frame={frame} chosen={chosen} room={room} mouse={mouse} />
-      <DetailPane
-        row={rows[chosen]}
-        held={frame.focus === 'detail'}
-        now={now}
-        width={width}
-        mouse={mouse}
-      />
+      <CatalogPane catalog={catalog} held={held} chosen={chosen} room={room} mouse={mouse} />
+      <DetailPane row={rows[chosen]} held={held} now={now} width={width} mouse={mouse} />
     </box>
   );
 }
