@@ -15,7 +15,7 @@ type Branch = RepoFacts['branch'];
 function filingFrom(said: string): Filing {
   const [by, at] = said.split('\n');
 
-  return by === undefined || at === undefined || by === '' ? undefined : { by, at };
+  return by === undefined || at === undefined ? undefined : { by, at };
 }
 
 // The commit that added the item's directory is the moment somebody filed it,
@@ -26,7 +26,7 @@ async function filedIn(root: string, key: string): Promise<Filing> {
     root,
   );
 
-  return said === undefined || said === '' ? undefined : filingFrom(said);
+  return said === undefined ? undefined : filingFrom(said);
 }
 
 function countedFrom(said: string | undefined): number | undefined {
