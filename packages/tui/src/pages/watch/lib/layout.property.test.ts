@@ -1,7 +1,21 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
-import type { JourneyNodeView, JourneyView } from '../../../shared/model';
+import type { JourneyNodeView, JourneyPaneView, JourneyView } from '../../../shared/model';
+
+const PANE: JourneyPaneView = {
+  kind: 'feature',
+  size: 'story',
+  status: 'designing',
+  stageAt: 3,
+  stageOf: 8,
+  parent: undefined,
+  refusedTimes: 0,
+  arrivedAt: undefined,
+  lastEventAt: undefined,
+  filed: undefined,
+  branch: undefined,
+};
 
 import { NODE_H, NODE_W, placedOf } from './layout.ts';
 
@@ -42,6 +56,7 @@ const someJourney = fc
       standing: undefined,
       artifacts: [],
       children: [],
+      pane: PANE,
     } satisfies JourneyView;
   });
 

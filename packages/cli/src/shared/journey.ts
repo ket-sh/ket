@@ -1,10 +1,18 @@
 import type { Item, ItemStatus } from './item.ts';
-import type { Journey, JourneyChild, JourneyNode, StageState, Visit } from './journey-node.ts';
+import type {
+  Journey,
+  JourneyChild,
+  JourneyNode,
+  RepoFacts,
+  StageState,
+  Visit,
+} from './journey-node.ts';
 import type { KanbanRefusal, LoggedEvent } from './kanban.ts';
 import type { StoredItem } from './read-item.ts';
 
 import { ITEM_STATUSES } from './item.ts';
 import { artifactsOf } from './journey-artifacts.ts';
+import { paneOf } from './journey-pane.ts';
 import { arrivalOf, eventsAbout, refusalAfter } from './kanban.ts';
 import { parseItem } from './read-item.ts';
 
@@ -172,13 +180,9 @@ function itemAt(stored: StoredItem[], key: string): Item | undefined {
   return entry === undefined ? undefined : parseItem(entry.contents);
 }
 
-export function foldJourney(stored: StoredItem[], log: string, key: string): Journey | undefined {
-  const item = itemAt(stored, key);
+const NO_REPO: RepoFacts = { filed: undefined, branch: undefined };
 
-  if (item === undefined) {
-    return undefined;
-  }
-
+function journeyOf(item: Item, stored: StoredItem[], log: string, key: string, repo: RepoFacts) {
   const events = eventsAbout(log, key);
   const walk = walkOf(events, item.status);
   const arrived = walk.visited.at(-1)?.at;
@@ -193,5 +197,17 @@ export function foldJourney(stored: StoredItem[], log: string, key: string): Jou
     standing: refusal?.reason,
     artifacts: artifactsOf(events, key),
     children: childrenOf(stored, log, item.children),
-  };
+    pane: paneOf(item, events, arrived, repo),
+  } satisfies Journey;
+}
+
+export function foldJourney(
+  stored: StoredItem[],
+  log: string,
+  key: string,
+  repo: RepoFacts = NO_REPO,
+): Journey | undefined {
+  const item = itemAt(stored, key);
+
+  return item === undefined ? undefined : journeyOf(item, stored, log, key, repo);
 }

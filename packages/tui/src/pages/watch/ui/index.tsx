@@ -18,6 +18,7 @@ import { crumbOf, outstayed } from '../model/frames.ts';
 import { press } from '../model/keys.ts';
 import { useSeat } from '../model/seat.ts';
 import { useFrameStack } from '../model/stack.ts';
+import { BacklogView } from './backlog.tsx';
 import { BoardView } from './board.tsx';
 import { EditorPage } from './editor.tsx';
 import { GateModal } from './gate.tsx';
@@ -78,6 +79,10 @@ interface RoomProps {
 }
 
 function BoardArea({ columns, seat, now, width, layout }: Omit<RoomProps, 'stack'>): ReactNode {
+  if (layout === 'backlog') {
+    return <BacklogView columns={columns} chosenKey={seat.chosen?.key} />;
+  }
+
   if (layout === 'list') {
     return <ListView columns={columns} now={now} chosenKey={seat.chosen?.key} />;
   }
@@ -110,6 +115,7 @@ function StageArea(room: RoomProps): ReactNode {
         sel={stack.top.sel}
         tab={stack.top.tab}
         pick={stack.top.pick}
+        focus={stack.top.focus}
         now={now}
         tick={tick}
         width={width - 2}
@@ -204,6 +210,26 @@ function usePicker(stack: FrameStack): Picker {
   return { at, open, move, keep, close };
 }
 
+interface Laid {
+  layout: BoardLayout;
+  swap: () => void;
+  queue: () => void;
+}
+
+function useBoardLayout(): Laid {
+  const [layout, setLayout] = useState<BoardLayout>('kanban');
+
+  const swap = (): void => {
+    setLayout((worn) => (worn === 'kanban' ? 'list' : 'kanban'));
+  };
+
+  const queue = (): void => {
+    setLayout((worn) => (worn === 'backlog' ? 'kanban' : 'backlog'));
+  };
+
+  return { layout, swap, queue };
+}
+
 function useWatchKeys(deps: PressDeps): void {
   useKeyboard((key) => {
     press({ name: key.name, seq: key.sequence, ctrl: key.ctrl }, deps);
@@ -219,16 +245,13 @@ function WatchRoom({
   const stack = useFrameStack(feed);
   const seat = useSeat(columns);
   const { width, height } = useTerminalDimensions();
-  const [layout, setLayout] = useState<BoardLayout>('kanban');
+  const { layout, swap, queue } = useBoardLayout();
   const picker = usePicker(stack);
   const most = stack.top.kind === 'surface' ? surfaceMost(stack.top, height - CHROME) : 0;
-  const swap = (): void => {
-    setLayout((worn) => (worn === 'kanban' ? 'list' : 'kanban'));
-  };
 
   useCeremonyCurtain(stack, tick);
   useMovedCardFollow(stack, seat, columns);
-  useWatchKeys({ onQuit, refresh, stack, seat, most, tick, layout, swap, picker });
+  useWatchKeys({ onQuit, refresh, stack, seat, most, tick, layout, swap, queue, picker });
 
   return (
     <box
@@ -252,7 +275,12 @@ function WatchRoom({
           layout={layout}
         />
       </box>
-      <KeyBar kind={stack.top.kind} offers={seat.chosen?.offers ?? []} layout={layout} />
+      <KeyBar
+        frame={stack.top}
+        offers={seat.chosen?.offers ?? []}
+        layout={layout}
+        width={width - PAGE_SIDE * 2}
+      />
       <CeremonyOverlay stack={stack} columns={columns} tick={tick} width={width} height={height} />
       <PickerOverlay picker={picker} width={width} height={height} />
     </box>

@@ -1,21 +1,25 @@
 import type { ReactNode } from 'react';
 
 import type { JourneyView } from '../../../shared/model';
-import type { JourneyTab } from '../model/frames.ts';
+import type { JourneyFocus, JourneyTab } from '../model/frames.ts';
 
 import { useTheme } from '../../../shared/theme';
 import { SpanRow } from '../../../shared/ui';
 import { journeyRows } from '../lib/canvas.ts';
+import { panePlaceOf } from '../lib/pane-place.ts';
+import { paneLinesOf } from '../lib/pane.ts';
 import { tabsOf } from '../model/journey-tabs.ts';
 import { ArtifactsPanel } from './artifacts-panel.tsx';
 import { ChildrenPanel } from './children-panel.tsx';
 import { OverviewPanel } from './overview-panel.tsx';
+import { SidePane } from './side-pane.tsx';
 
 export interface JourneyPageProps {
   journey: JourneyView;
   sel: string;
   tab: JourneyTab;
   pick: number;
+  focus: JourneyFocus;
   now: string;
   tick: number;
   width: number;
@@ -43,14 +47,14 @@ function TabBar({ journey, tab }: { journey: JourneyView; tab: JourneyTab }): Re
   );
 }
 
-function WorkflowPanel({
+function CanvasRows({
   journey,
   sel,
   now,
   tick,
   width,
   height,
-}: Omit<JourneyPageProps, 'tab' | 'pick'>): ReactNode {
+}: Omit<JourneyPageProps, 'tab' | 'pick' | 'focus'>): ReactNode {
   const { theme } = useTheme();
   const rows = journeyRows(
     journey,
@@ -68,6 +72,21 @@ function WorkflowPanel({
           <SpanRow key={String(index)} spans={spans} />
         ),
       )}
+    </box>
+  );
+}
+
+const PANE_CHROME = 6;
+
+function WorkflowPanel(props: Omit<JourneyPageProps, 'tab' | 'pick'>): ReactNode {
+  const place = panePlaceOf(props.width);
+  const lines = paneLinesOf(props.journey, props.now, place.paneWidth - PANE_CHROME);
+  const canvasHeight = place.side === 'right' ? props.height : props.height - lines.length - 2;
+
+  return (
+    <box flexDirection={place.side === 'right' ? 'row' : 'column'}>
+      <CanvasRows {...props} width={place.canvasWidth} height={Math.max(6, canvasHeight)} />
+      <SidePane lines={lines} focus={props.focus} width={place.paneWidth} />
     </box>
   );
 }

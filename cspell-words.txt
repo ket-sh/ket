@@ -5,6 +5,7 @@ arrayify
 artipacked
 autohide
 backoff
+basenames
 bchpt
 bddgen
 bunfig
