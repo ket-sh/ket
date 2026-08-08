@@ -59,6 +59,7 @@ function artifactNode(writing: Writing): JourneyNode {
     title: writing.path.split('/').pop() ?? writing.path,
     mark: 'done',
     at: writing.at,
+    until: undefined,
     child: undefined,
     doc: undefined,
   };

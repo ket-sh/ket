@@ -9,6 +9,7 @@ export interface JourneyNode {
   title: string;
   mark: JourneyMark;
   at: string | undefined;
+  until: string | undefined;
   child: string | undefined;
   doc: SurfaceDoc | undefined;
 }
@@ -25,6 +26,7 @@ export interface Visit {
   id: string;
   status: ItemStatus;
   at: string | undefined;
+  until: string | undefined;
 }
 
 export interface Pieces {

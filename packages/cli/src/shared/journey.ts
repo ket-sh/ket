@@ -27,8 +27,9 @@ function movesAmong(events: LoggedEvent[]): { status: ItemStatus; at: string | u
 
 function visitsOf(events: LoggedEvent[]): Visit[] {
   const seen = new Map<string, number>();
+  const moves = movesAmong(events);
 
-  return movesAmong(events).map((move) => {
+  return moves.map((move, index) => {
     const count = (seen.get(move.status) ?? 0) + 1;
 
     seen.set(move.status, count);
@@ -37,6 +38,7 @@ function visitsOf(events: LoggedEvent[]): Visit[] {
       id: count === 1 ? move.status : `${move.status}#${String(count)}`,
       status: move.status,
       at: move.at,
+      until: moves[index + 1]?.at,
     };
   });
 }
@@ -60,6 +62,7 @@ function pendingAfter(visits: Visit[]): Visit | undefined {
     id: held === 0 ? next : `${next}#${String(held + 1)}`,
     status: next,
     at: undefined,
+    until: undefined,
   };
 }
 
@@ -70,6 +73,7 @@ function stageNode(visit: Visit, mark: JourneyMark): JourneyNode {
     title: visit.status,
     mark,
     at: visit.at,
+    until: visit.until,
     child: undefined,
     doc: undefined,
   };
@@ -110,6 +114,7 @@ function childNode(stored: StoredItem[], log: string, key: string): JourneyNode 
       title: key,
       mark: 'pending',
       at: undefined,
+      until: undefined,
       child: key,
       doc: undefined,
     };
@@ -121,6 +126,7 @@ function childNode(stored: StoredItem[], log: string, key: string): JourneyNode 
     title: `${key} ${item.title}`,
     mark: childMark(item.status),
     at: arrivalOf(eventsAbout(log, key), item.status),
+    until: undefined,
     child: key,
     doc: undefined,
   };
@@ -147,7 +153,7 @@ function walkOf(events: LoggedEvent[], fallback: ItemStatus): Walk {
   const walked = visitsOf(events);
 
   if (walked.length === 0) {
-    const alone = [{ id: fallback, status: fallback, at: undefined }];
+    const alone = [{ id: fallback, status: fallback, at: undefined, until: undefined }];
 
     return { visits: alone, pending: undefined, stages: alone };
   }

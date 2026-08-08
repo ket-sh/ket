@@ -69,6 +69,7 @@ describe('the stages a journey walks', () => {
         title: 'designing',
         mark: 'active',
         at: undefined,
+        until: undefined,
         child: undefined,
         doc: undefined,
       },
