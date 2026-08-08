@@ -5,4 +5,6 @@ export type {
   KanbanRefusalView,
 } from './shared/model';
 
-export { watch } from './app';
+export type { MapReadingView, StoryMapView } from './shared/model';
+
+export { storyMap, watch } from './app';

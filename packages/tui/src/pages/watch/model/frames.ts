@@ -2,6 +2,7 @@ import type {
   GateActionView,
   JourneyView,
   KanbanCardView,
+  MapReadingView,
   MovedView,
   SurfaceDocView,
 } from '../../../shared/model';
@@ -9,10 +10,12 @@ import type { Draft } from '../lib/edit.ts';
 import type { Audience } from '../lib/lines.ts';
 import type { Direction } from './compass.ts';
 
+import { walkedIn } from '../../../widgets/story-map';
 import { neighborOf, placedOf } from '../lib/layout.ts';
 
 export type Frame =
   | { kind: 'board' }
+  | { kind: 'map'; reading: MapReadingView; at: number }
   | { kind: 'journey'; journey: JourneyView; sel: string }
   | {
       kind: 'surface';
@@ -46,6 +49,8 @@ export interface FrameStack {
   frames: Frame[];
   top: Frame;
   dive: (key: string | undefined) => void;
+  openMap: () => void;
+  mapWalk: (name: string) => void;
   enter: () => void;
   walk: (direction: Direction) => void;
   scroll: (delta: number, most: number) => void;
@@ -69,8 +74,12 @@ export function landingOf(journey: JourneyView): string {
   return active?.id ?? lastOf(stages) ?? lastOf(journey.nodes) ?? '';
 }
 
-function restingStepOf(frame: Extract<Frame, { kind: 'board' | 'journey' }>): string {
-  return frame.kind === 'board' ? 'board' : frame.journey.item;
+function restingStepOf(frame: Extract<Frame, { kind: 'board' | 'journey' | 'map' }>): string {
+  if (frame.kind === 'board') {
+    return 'board';
+  }
+
+  return frame.kind === 'map' ? 'map' : frame.journey.item;
 }
 
 function openedStepOf(frame: Extract<Frame, { kind: 'surface' | 'gate' | 'edit' }>): string {
@@ -81,10 +90,14 @@ function openedStepOf(frame: Extract<Frame, { kind: 'surface' | 'gate' | 'edit' 
   return frame.kind === 'edit' ? frame.name : (frame.title.split(' · ')[0] ?? '');
 }
 
+const RESTING = ['board', 'journey', 'map'];
+
+function isResting(frame: Frame): frame is Extract<Frame, { kind: 'board' | 'journey' | 'map' }> {
+  return RESTING.includes(frame.kind);
+}
+
 function crumbStepOf(frame: Frame): string {
-  return frame.kind === 'board' || frame.kind === 'journey'
-    ? restingStepOf(frame)
-    : openedStepOf(frame);
+  return isResting(frame) ? restingStepOf(frame) : openedStepOf(frame);
 }
 
 export function crumbOf(frames: Frame[]): string {
@@ -101,6 +114,16 @@ export function walked(stack: Frame[], direction: Direction): Frame[] {
   const sel = neighborOf(placedOf(above.journey).nodes, above.sel, direction);
 
   return [...stack.slice(0, -1), { ...above, sel }];
+}
+
+export function mapWalked(stack: Frame[], name: string): Frame[] {
+  const above = stack[stack.length - 1];
+
+  if (above?.kind !== 'map') {
+    return stack;
+  }
+
+  return [...stack.slice(0, -1), { ...above, at: walkedIn(above.reading, above.at, name) }];
 }
 
 export function scrolled(stack: Frame[], delta: number, most: number): Frame[] {

@@ -116,6 +116,25 @@ The skill's law, distilled from the sources:
    into it.
 6. Write the file, run `ket map`, and end by showing the person their map.
 
+Two laws sit above those moves, because a session that only transcribes
+produces a map nobody trusts.
+
+**The facilitator challenges.** A vague answer is where the map goes wrong, so
+the session pushes back before it writes anything down. "Everyone" names no
+user. "Soon" states no outcome. A list of features describes no journey. The
+facilitator questions the first framing rather than accepting it, makes the
+person defend the walking skeleton cut, and steers the conversation instead of
+recording it. The skill carries example challenges so the register is plain.
+
+**The facilitator researches on the slightest doubt.** Some domains it won't
+know: an invite flow, a checkout, an onboarding. It stops guessing there and
+searches for current best practice and for real examples of that exact thing.
+Then it steers with the evidence: the common pattern is this one, for that
+reason, so does the person want it or do they have a reason to differ? A
+scaffolded project carries the `research` skill, which owns where an answer
+comes from and what a finding must carry. Where that skill is absent, plain web
+search stands in.
+
 Guardrails the skill states outright:
 
 - A card is a verb phrase, never a noun.
@@ -162,11 +181,18 @@ and the node:
 
 ## Domain and boundaries
 
-- `packages/cli/src/commands/map/` holds the command and its domain beside
-  it: schema types, the parser, the validator, and the fold that turns a map
-  into what the view renders. Pure, node-only, mutation gated.
-- The view is a page in `packages/tui` under Feature-Sliced Design, steiger
-  enforced, reusing the shared theme and key bar pieces the board uses.
+- `packages/cli/src/commands/map/command.ts` holds the command, and
+  `packages/cli/src/shared/story-map/` holds its domain: schema types, the
+  parser, the validator, and the fold that turns a map into what the view
+  renders. Pure, node-only, mutation gated. The domain sits under `shared/`
+  rather than beside the command because the board reads the map too, and the
+  `cli-commands-are-islands` rule says where two commands keep what they both
+  need.
+- The map draws in `packages/tui` under Feature-Sliced Design, steiger
+  enforced, reusing the shared theme and key bar pieces the board uses. The
+  drawing is a widget, `widgets/story-map`, because two pages render it: the
+  board layers it over itself on `m`, and `pages/map` is the screen
+  `ket map` opens.
 - The CLI imports no renderer; the TUI parses no YAML. The command hands the
   TUI a parsed map, exactly as watch hands it a feed.
 

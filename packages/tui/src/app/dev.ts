@@ -93,6 +93,11 @@ const feed: BoardFeed = {
 
     return REHEARSAL;
   },
+  storyMap: async () => {
+    await Promise.resolve();
+
+    return { absent: true };
+  },
   journey: async (key) => {
     await Promise.resolve();
 

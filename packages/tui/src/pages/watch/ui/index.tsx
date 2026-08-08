@@ -11,6 +11,7 @@ import type { Seat } from '../model/seat.ts';
 import { lerpHex } from '../../../shared/lib';
 import { ThemeProvider, THEMES, useTheme } from '../../../shared/theme';
 import { Banner } from '../../../shared/ui';
+import { MapPane } from '../../../widgets/story-map';
 import { laidInRow } from '../lib/lanes.ts';
 import { useBoardState } from '../model/board-state.ts';
 import { crumbOf, outstayed } from '../model/frames.ts';
@@ -96,6 +97,10 @@ function StageArea(room: RoomProps): ReactNode {
 
   if (stack.top.kind === 'edit') {
     return <EditorPage frame={stack.top} tick={tick} height={height} />;
+  }
+
+  if (stack.top.kind === 'map') {
+    return <MapPane reading={stack.top.reading} at={stack.top.at} />;
   }
 
   if (stack.top.kind === 'journey') {

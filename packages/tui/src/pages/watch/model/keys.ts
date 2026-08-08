@@ -42,6 +42,16 @@ function journeyPress(name: string, stack: FrameStack): void {
   }
 }
 
+function mapPress(name: string, stack: FrameStack): void {
+  if (name === 'escape') {
+    stack.pop();
+
+    return;
+  }
+
+  stack.mapWalk(name);
+}
+
 function offeredAction(
   name: string,
   chosen: KanbanCardView | undefined,
@@ -89,6 +99,15 @@ function walkedBoard(direction: Direction, seat: Seat, layout: BoardLayout): voi
   }
 }
 
+const BOARD_CHORDS: Record<string, (deps: PressDeps) => void> = {
+  v: (deps) => {
+    deps.swap();
+  },
+  m: (deps) => {
+    deps.stack.openMap();
+  },
+};
+
 function boardPress(name: string, deps: PressDeps): void {
   if (divedIn(name, deps.stack, deps.seat)) {
     return;
@@ -98,8 +117,10 @@ function boardPress(name: string, deps: PressDeps): void {
     return;
   }
 
-  if (name === 'v') {
-    deps.swap();
+  const chord = BOARD_CHORDS[name];
+
+  if (chord !== undefined) {
+    chord(deps);
 
     return;
   }
@@ -191,6 +212,9 @@ const FRAME_PRESSES: Record<Frame['kind'], (name: string, deps: PressDeps) => vo
   },
   journey: (name, deps) => {
     journeyPress(name, deps.stack);
+  },
+  map: (name, deps) => {
+    mapPress(name, deps.stack);
   },
   surface: (name, deps) => {
     surfacePress(name, deps.stack, deps.most);

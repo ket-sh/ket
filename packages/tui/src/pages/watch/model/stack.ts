@@ -16,6 +16,7 @@ import {
   editing,
   judged,
   landingOf,
+  mapWalked,
   revisedIn,
   savedMark,
   scrolled,
@@ -83,12 +84,28 @@ function useEditing(feed: BoardFeed, top: Frame, setFrames: Grow): Editing {
   return { edit, revise, save };
 }
 
-export function useFrameStack(feed: BoardFeed): FrameStack {
-  const [frames, setFrames] = useState<Frame[]>([{ kind: 'board' }]);
-  const top = frames[frames.length - 1] ?? ({ kind: 'board' } as const);
-  const { gate, pass } = useCeremony(feed, top, setFrames);
-  const { edit, revise, save } = useEditing(feed, top, setFrames);
+type Mapping = Pick<FrameStack, 'mapWalk' | 'openMap'>;
 
+function useMapping(feed: BoardFeed, setFrames: Grow): Mapping {
+  const openMap = useCallback(() => {
+    void feed.storyMap().then((reading) => {
+      setFrames((stack) => [...stack, { kind: 'map', reading, at: 0 }]);
+    });
+  }, [feed, setFrames]);
+
+  const mapWalk = useCallback(
+    (name: string) => {
+      setFrames((stack) => mapWalked(stack, name));
+    },
+    [setFrames],
+  );
+
+  return { openMap, mapWalk };
+}
+
+type Diving = Pick<FrameStack, 'dive' | 'enter'>;
+
+function useDiving(feed: BoardFeed, top: Frame, setFrames: Grow): Diving {
   const dive = useCallback(
     (key: string | undefined) => {
       if (key === undefined) {
@@ -101,12 +118,15 @@ export function useFrameStack(feed: BoardFeed): FrameStack {
         }
       });
     },
-    [feed],
+    [feed, setFrames],
   );
 
-  const open = useCallback((journey: JourneyView, doc: SurfaceDocView) => {
-    setFrames((stack) => [...stack, surfaceFrame(journey, doc)]);
-  }, []);
+  const open = useCallback(
+    (journey: JourneyView, doc: SurfaceDocView) => {
+      setFrames((stack) => [...stack, surfaceFrame(journey, doc)]);
+    },
+    [setFrames],
+  );
 
   const enter = useCallback(() => {
     const seated = selectedNodeOf(top);
@@ -126,6 +146,17 @@ export function useFrameStack(feed: BoardFeed): FrameStack {
     }
   }, [top, dive, open]);
 
+  return { dive, enter };
+}
+
+export function useFrameStack(feed: BoardFeed): FrameStack {
+  const [frames, setFrames] = useState<Frame[]>([{ kind: 'board' }]);
+  const top = frames[frames.length - 1] ?? ({ kind: 'board' } as const);
+  const { gate, pass } = useCeremony(feed, top, setFrames);
+  const { edit, revise, save } = useEditing(feed, top, setFrames);
+  const { openMap, mapWalk } = useMapping(feed, setFrames);
+  const { dive, enter } = useDiving(feed, top, setFrames);
+
   const walk = useCallback((direction: Direction) => {
     setFrames((stack) => walked(stack, direction));
   }, []);
@@ -142,5 +173,21 @@ export function useFrameStack(feed: BoardFeed): FrameStack {
     setFrames((stack) => (stack.length > 1 ? stack.slice(0, -1) : stack));
   }, []);
 
-  return { frames, top, dive, enter, walk, scroll, tune, gate, pass, edit, revise, save, pop };
+  return {
+    frames,
+    top,
+    dive,
+    openMap,
+    mapWalk,
+    enter,
+    walk,
+    scroll,
+    tune,
+    gate,
+    pass,
+    edit,
+    revise,
+    save,
+    pop,
+  };
 }

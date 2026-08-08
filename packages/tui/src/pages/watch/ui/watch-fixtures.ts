@@ -3,9 +3,35 @@ import type {
   JourneyView,
   KanbanCardView,
   KanbanColumnView,
+  StoryMapView,
 } from '../../../shared/model';
 
 export const NOW = '2026-08-07T12:00:00.000Z';
+
+const MAP: StoryMapView = {
+  product: { name: 'shop', idea: 'a place to buy a thing' },
+  spine: [
+    {
+      activity: 'buy a thing',
+      steps: [
+        { id: 's-browse', name: 'browse the catalog' },
+        { id: 's-pay', name: 'pay for it' },
+      ],
+    },
+  ],
+  bands: [
+    {
+      id: 'r-skeleton',
+      name: 'walking skeleton',
+      outcome: 'one real purchase',
+      cards: [
+        { id: 'st-see', name: 'see the shelves', step: 's-browse' },
+        { id: 'st-card', name: 'pay by card', step: 's-pay' },
+      ],
+    },
+    { id: undefined, name: 'unassigned', outcome: undefined, cards: [] },
+  ],
+};
 
 export interface ActedFeed extends BoardFeed {
   acted: string[];
@@ -174,6 +200,11 @@ export function feedOf(): ActedFeed {
       await Promise.resolve();
 
       return columns;
+    },
+    storyMap: async () => {
+      await Promise.resolve();
+
+      return { map: MAP };
     },
     journey: async (key) => {
       await Promise.resolve();
