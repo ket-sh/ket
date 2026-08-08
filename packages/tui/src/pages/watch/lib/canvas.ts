@@ -5,6 +5,7 @@ import type { PlacedNode } from './layout.ts';
 
 import { ageOf, boxAt, gridOf, lerpHex, put, spansOf, writeText } from '../../../shared/lib';
 import { KANAGAWA, stageColorOf } from '../../../shared/theme';
+import { waitsOnAHuman } from './attention.ts';
 import { NODE_H, NODE_W, placedOf } from './layout.ts';
 
 const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
@@ -63,12 +64,22 @@ interface Border {
   fg: string;
 }
 
+function isGate(node: PlacedNode): boolean {
+  return waitsOnAHuman(node.title);
+}
+
+function invites(node: PlacedNode): boolean {
+  return isGate(node) && node.state === 'needs-you';
+}
+
 function borderOf(node: PlacedNode, selectedId: string, theme: Theme): Border {
   const frame = frameColorOf(node, theme);
 
-  return node.id === selectedId
-    ? { style: 'double', fg: frame }
-    : { style: 'rounded', fg: lerpHex(frame, theme.base, 0.55) };
+  if (node.id === selectedId) {
+    return { style: 'double', fg: frame };
+  }
+
+  return { style: 'rounded', fg: invites(node) ? frame : lerpHex(frame, theme.base, 0.55) };
 }
 
 function trimmedTo(title: string, room: number): string {
@@ -79,8 +90,30 @@ function stateOf(node: PlacedNode, tick: number): string {
   return `${glyphOf(node.state, tick)} ${SPOKEN[node.state]}`;
 }
 
+function titleOf(node: PlacedNode): string {
+  return isGate(node) ? `${HUMAN_GATE} ${node.title}` : node.title;
+}
+
+function titleToneOf(node: PlacedNode, theme: Theme): string {
+  if (node.state === 'future') {
+    return theme.subtext;
+  }
+
+  return isGate(node) ? frameColorOf(node, theme) : theme.text;
+}
+
 function heldFor(node: PlacedNode, now: string): string {
   return node.at === undefined ? '' : ageOf(node.at, node.until ?? now);
+}
+
+function heldLineOf(node: PlacedNode, now: string): string {
+  const held = heldFor(node, now);
+
+  if (!invites(node)) {
+    return held;
+  }
+
+  return held === '' ? 'yours' : `yours · ${held}`;
 }
 
 interface Clock {
@@ -101,8 +134,8 @@ function drawNode(
     grid,
     node.x + 2,
     node.y + 1,
-    trimmedTo(node.title, NODE_W - 4),
-    node.state === 'future' ? theme.subtext : theme.text,
+    trimmedTo(titleOf(node), NODE_W - 4),
+    titleToneOf(node, theme),
   );
   writeText(
     grid,
@@ -111,7 +144,7 @@ function drawNode(
     trimmedTo(stateOf(node, clock.tick), NODE_W - 4),
     toneOf(node.state, theme),
   );
-  writeText(grid, node.x + 2, node.y + 3, heldFor(node, clock.now), theme.subtext);
+  writeText(grid, node.x + 2, node.y + 3, heldLineOf(node, clock.now), theme.subtext);
 }
 
 type Tracer = (x: number, y: number, ch: string) => void;
