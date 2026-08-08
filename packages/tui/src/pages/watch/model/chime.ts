@@ -25,21 +25,21 @@ export function useChime(columns: KanbanColumnView[], loaded: boolean, ring?: Ri
   const rung = ring ?? desktop;
   const seen = useRef<Set<string> | undefined>(undefined);
 
-  useEffect(() => {
-    if (!loaded) {
-      return;
-    }
+  // Priming must happen with the first loaded paint, not in an effect: under a
+  // slow scheduler the first effect can arrive after a later snapshot and
+  // would swallow that transition as already-seen.
+  if (loaded && seen.current === undefined) {
+    seen.current = new Set(bellsAmong(columns).map((bell) => bell.signature));
+  }
 
-    const bells = bellsAmong(columns);
+  useEffect(() => {
     const primed = seen.current;
 
-    if (primed === undefined) {
-      seen.current = new Set(bells.map((bell) => bell.signature));
-
+    if (!loaded || primed === undefined) {
       return;
     }
 
-    for (const bell of bells.filter((waiting) => !primed.has(waiting.signature))) {
+    for (const bell of bellsAmong(columns).filter((waiting) => !primed.has(waiting.signature))) {
       primed.add(bell.signature);
       rung(bell.message, CHIME_TITLE);
     }
