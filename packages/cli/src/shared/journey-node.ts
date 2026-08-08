@@ -6,7 +6,6 @@ export type StageState =
   | 'done'
   | 'running'
   | 'needs-you'
-  | 'awaiting'
   | 'changes-requested'
   | 'sent-back'
   | 'future';

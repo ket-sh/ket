@@ -96,7 +96,6 @@ export type StageStateView =
   | 'done'
   | 'running'
   | 'needs-you'
-  | 'awaiting'
   | 'changes-requested'
   | 'sent-back'
   | 'future';

@@ -19,7 +19,6 @@ const SPOKEN: Record<StageStateView, string> = {
   done: 'Done',
   running: 'Running',
   'needs-you': 'Needs you',
-  awaiting: 'Awaiting approval',
   'changes-requested': 'Changes requested',
   'sent-back': 'Sent back',
   future: 'Not started',
@@ -28,7 +27,6 @@ const SPOKEN: Record<StageStateView, string> = {
 const GLYPH: Record<Exclude<StageStateView, 'running'>, string> = {
   done: '✓',
   'needs-you': HUMAN_GATE,
-  awaiting: HUMAN_GATE,
   'changes-requested': REFUSED,
   'sent-back': REFUSED,
   future: '○',
@@ -43,7 +41,6 @@ function toneOf(state: StageStateView, theme: Theme): string {
     done: theme.green,
     running: theme.blue,
     'needs-you': theme.yellow,
-    awaiting: lerpHex(theme.yellow, theme.base, 0.45),
     'changes-requested': theme.red,
     'sent-back': theme.red,
     future: theme.overlay,

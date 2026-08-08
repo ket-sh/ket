@@ -64,15 +64,6 @@ describe('the words a stage state speaks', () => {
     expect(frame).toContain('Needs you');
   });
 
-  it('says a gate the viewer cannot pass is awaiting approval, with no hint', () => {
-    const frame = painted(
-      nodeOf('awaiting-approval', { state: 'awaiting', at: '2026-08-07T10:00:00.000Z' }),
-    );
-
-    expect(frame).toContain('Awaiting approval');
-    expect(frame).not.toContain('Needs you');
-  });
-
   it('says a reworked stage has changes requested', () => {
     const frame = painted(
       nodeOf('designing', { state: 'changes-requested', at: '2026-08-07T10:00:00.000Z' }),
@@ -122,7 +113,7 @@ describe('the one thing that moves', () => {
   });
 
   it('holds every other state still across ticks', () => {
-    for (const state of ['done', 'future', 'needs-you', 'awaiting', 'sent-back'] as const) {
+    for (const state of ['done', 'future', 'needs-you', 'sent-back'] as const) {
       const node = nodeOf('designing', { state, at: '2026-08-07T10:00:00.000Z' });
 
       expect(painted(node, 0)).toBe(painted(node, 1));
