@@ -1,9 +1,10 @@
 import { readFileSync } from 'node:fs';
 
-import type { DocPage } from './frontmatter.mts';
+import type { DocPage } from '../../packages/cli/src/shared/docs-frontmatter.ts';
+import type { SourceEntry } from '../../packages/cli/src/shared/docs-stamp.ts';
 
-import { parsePage } from './frontmatter.mts';
-import { sourcesOf, stampOf } from './stamp.mts';
+import { parsePage } from '../../packages/cli/src/shared/docs-frontmatter.ts';
+import { matchedSourcesOf, rotOf, stampOf } from '../../packages/cli/src/shared/docs-stamp.ts';
 
 export interface PinnedPage {
   path: string;
@@ -18,17 +19,17 @@ export type PageState =
   | { kind: 'stale'; pinned: PinnedPage };
 
 export function readSources(files: readonly string[], globs: readonly string[]): string[] {
-  const matched = sourcesOf(files, globs);
+  const sources = matchedSourcesOf(files, globs);
 
-  if (matched.length === 0) {
-    throw new Error(`the sources list matches no tracked file: ${globs.join(', ')}`);
+  if ('refused' in sources) {
+    throw new Error(sources.refused);
   }
 
-  return matched;
+  return sources.matched;
 }
 
-function expectedStamp(matched: readonly string[]): string {
-  return stampOf(matched.map((path) => ({ path, content: readFileSync(path, 'utf-8') })));
+function entriesOf(matched: readonly string[]): SourceEntry[] {
+  return matched.map((path) => ({ path, content: readFileSync(path, 'utf-8') }));
 }
 
 export function pageState(path: string, files: readonly string[]): PageState {
@@ -39,11 +40,11 @@ export function pageState(path: string, files: readonly string[]): PageState {
   }
 
   const matched = readSources(files, page.sources);
-  const expected = expectedStamp(matched);
+  const entries = entriesOf(matched);
 
-  if (page.stamp === expected) {
+  if (rotOf(page, entries) === 'fresh') {
     return { kind: 'fresh', path };
   }
 
-  return { kind: 'stale', pinned: { path, page, matched, expected } };
+  return { kind: 'stale', pinned: { path, page, matched, expected: stampOf(entries) } };
 }

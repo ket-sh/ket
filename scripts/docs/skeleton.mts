@@ -1,3 +1,5 @@
+import { slugify } from '../../packages/cli/src/shared/docs-architecture.ts';
+
 export interface GraphDependency {
   resolved: string;
 }
@@ -12,8 +14,6 @@ export interface DependencyGraph {
 }
 
 const WORKSPACE_MODULE = /^(?:packages|presets)\/[^/]+\/src\//u;
-
-const HEADING = /^#{1,6} (?<text>.+)$/u;
 
 function isWorkspaceModule(path: string): boolean {
   return WORKSPACE_MODULE.test(path) && !path.includes('.test.');
@@ -31,21 +31,6 @@ function containerOf(node: string): string {
   const [container = ''] = node.split(' ');
 
   return container;
-}
-
-export function slugify(heading: string): string {
-  return heading
-    .toLowerCase()
-    .replaceAll(/[^a-z0-9 -]/gu, '')
-    .replaceAll(' ', '-');
-}
-
-export function headingAnchors(markdown: string): string[] {
-  return markdown
-    .split('\n')
-    .map((line) => HEADING.exec(line)?.groups?.['text'])
-    .filter((text): text is string => text !== undefined)
-    .map(slugify);
 }
 
 function workspaceEdges(module: GraphModule): string[] {

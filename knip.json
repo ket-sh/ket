@@ -5,12 +5,14 @@
     ".": {
       "entry": [
         ".claude/workflows/**/*.{mts,mjs}",
+        "scripts/**/*.mts",
         "probity.config.ts",
         "commitlint.config.ts",
         "steiger.config.ts"
       ],
       "project": [
         ".claude/workflows/**/*.{mts,mjs}",
+        "scripts/**/*.mts",
         "probity.config.ts",
         "commitlint.config.ts",
         "steiger.config.ts"

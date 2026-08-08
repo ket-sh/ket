@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { headingAnchors, parseDependencyGraph, renderSkeleton } from './skeleton.mts';
+import { headingAnchors } from '../../packages/cli/src/shared/docs-architecture.ts';
+import { parseDependencyGraph, renderSkeleton } from './skeleton.mts';
 
 const graph = {
   modules: [
