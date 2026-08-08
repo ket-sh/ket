@@ -1,5 +1,6 @@
 import { Buffer } from 'node:buffer';
 import { createHash } from 'node:crypto';
+import { parse, stringify } from 'yaml';
 
 export interface ScaffoldRecord {
   version: 1;
@@ -44,10 +45,10 @@ export function scaffoldRecordOf(files: WrittenFile[], ket: string): ScaffoldRec
 }
 
 export function renderScaffoldRecord(record: ScaffoldRecord): string {
-  return `${JSON.stringify(record, null, 2)}\n`;
+  return stringify({ version: record.version, ket: record.ket, files: record.files });
 }
 
-export const SCAFFOLD_RECORD_PATH = '.ket/scaffold.json';
+export const SCAFFOLD_RECORD_PATH = '.ket/scaffold.yaml';
 
 // ket appends project state to the gitignore after the preset writes it, so
 // its hash never matches what landed and it stays out of the record.
@@ -105,7 +106,7 @@ function filesFrom(declared: unknown): Record<string, string> | undefined {
 
 function parsedOf(source: string): unknown {
   try {
-    return JSON.parse(source);
+    return parse(source);
   } catch {
     return undefined;
   }

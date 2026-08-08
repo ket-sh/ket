@@ -23,9 +23,9 @@
     "bun.lock",
     "skills-lock.json",
     "cspell-words.txt",
-    ".ket/scaffold.json",
+    ".ket/scaffold.yaml",
     ".ket/events.jsonl",
-    ".ket/toolchain.json"
+    ".ket/toolchain.yaml"
   ],
   "useGitignore": true,
   "overrides": [

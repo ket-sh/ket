@@ -39,7 +39,7 @@ beforeEach(async () => {
     join(root, '.ket', 'items', 'K-1', 'item.yaml'),
     'title: The work\nstatus: triaged\n',
   );
-  await writeFile(join(root, '.ket', 'config.ts'), 'export const targets = {};\n');
+  await writeFile(join(root, '.ket', 'config.yaml'), 'key: K\ntargets: {}\n');
   vi.spyOn(process, 'cwd').mockReturnValue(root);
   vi.spyOn(process.stdout, 'write').mockImplementation((line: string | Uint8Array): boolean => {
     written.push(String(line));

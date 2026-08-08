@@ -17,9 +17,9 @@ describe('the file contents the cli preset carries', () => {
   it('keeps the machine state out of the spell gate, and the human documents in it', () => {
     const spell = contentOf('files/cspell.json');
 
-    expect(spell).toContain('.ket/scaffold.json');
+    expect(spell).toContain('.ket/scaffold.yaml');
     expect(spell).toContain('.ket/events.jsonl');
-    expect(spell).toContain('.ket/toolchain.json');
+    expect(spell).toContain('.ket/toolchain.yaml');
     expect(spell).not.toContain('".ket"');
   });
 });

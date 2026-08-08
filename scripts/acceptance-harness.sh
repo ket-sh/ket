@@ -146,10 +146,10 @@ bun run --cwd packages/cli build >/dev/null || fail "the binary does not build"
 
 (cd "$SANDBOX" && "$KET" create order-service >/dev/null) || fail "create did not finish"
 
-test -f "$PROJECT/.ket/config.ts" || fail "create wrote no ket config"
+test -f "$PROJECT/.ket/config.yaml" || fail "create wrote no ket config"
 
-grep -q 'No items yet' "$PROJECT/.ket/BOARD.md" ||
-  fail "a fresh project's board does not say it is empty"
+test -e "$PROJECT/.ket/BOARD.md" &&
+  fail "create rendered a board file, which ket watch replaced"
 
 echo "acceptance: create registered the harness"
 grep -q '"ket@ket": true' "$PROJECT/.claude/settings.json" ||
@@ -288,17 +288,12 @@ forged="$(printf 'authentication\nstatus: implementing')"
   fail "file accepted an item nobody can name"
 CHECKED=$((CHECKED + 2))
 
-echo "acceptance: the board follows the items"
-# Written once at create and never again, the board went on saying the project
-# had no items long after it had them.
-grep -q 'login with lockout' "$PROJECT/.ket/BOARD.md" ||
-  fail "the board does not name an item that was filed after create"
-grep -q 'No items yet' "$PROJECT/.ket/BOARD.md" &&
-  fail "the board still says the project is empty after an item was filed"
-grep -q '## implementing' "$PROJECT/.ket/BOARD.md" ||
-  fail "the board does not group an item under the status it holds"
-refuses .ket/BOARD.md 'rendered from the items'
-CHECKED=$((CHECKED + 4))
+echo "acceptance: filing an item renders no board beside it"
+# A generated board went stale the moment an item moved, so ket watch reads the
+# items themselves and nothing writes a second copy of them.
+test -e "$PROJECT/.ket/BOARD.md" &&
+  fail "filing an item rendered a board file, which ket watch replaced"
+CHECKED=$((CHECKED + 1))
 
 echo "acceptance: a classification the command refuses outright"
 refuses_command 'poem is not one of feature, bug, refactor, chore' \
@@ -751,9 +746,7 @@ refuses src/auth.ts 'OS-1 is awaiting-merge, not implementing'
 ket item ship OS-1 >/dev/null || fail "ship refused an item waiting on its merge"
 status_is OS-1 shipped
 allows src/auth.ts
-grep -q '## shipped' "$PROJECT/.ket/BOARD.md" ||
-  fail "the board does not group the item under the status it reached"
-CHECKED=$((CHECKED + 2))
+CHECKED=$((CHECKED + 1))
 
 echo "acceptance: the harness says how an item finishes"
 # A grep of the whole skill proves only that the words survived somewhere in it.
@@ -1023,7 +1016,7 @@ done
 CHECKED=$((CHECKED + 1))
 
 echo "acceptance: it names a dependency once, not every session"
-grep -q 'drizzle-orm' "$PROJECT/.ket/toolchain.json" ||
+grep -q 'drizzle-orm' "$PROJECT/.ket/toolchain.yaml" ||
   fail "the toolchain gate recorded nothing about what it named"
 looks_at "$PROJECT"
 test -z "$LOOKED" ||
@@ -1109,7 +1102,7 @@ printf '{"dependencies":{"drizzle-orm":"0.44.0"}}\n' >"$SANDBOX/package.json"
 looks_at "$SANDBOX"
 test -z "$LOOKED" ||
   fail "the toolchain gate spoke in a directory with no ket directory: $LOOKED"
-test -f "$SANDBOX/.ket/toolchain.json" &&
+test -f "$SANDBOX/.ket/toolchain.yaml" &&
   fail "the toolchain gate wrote a record into a repository it does not govern"
 CHECKED=$((CHECKED + 2))
 

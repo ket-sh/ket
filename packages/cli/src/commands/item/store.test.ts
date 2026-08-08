@@ -10,7 +10,7 @@ let root = '';
 beforeEach(async () => {
   root = await mkdtemp(join(tmpdir(), 'ket-store-'));
   await mkdir(join(root, '.ket', 'items'), { recursive: true });
-  await writeFile(join(root, '.ket', 'config.ts'), "export default { key: 'K' };\n");
+  await writeFile(join(root, '.ket', 'config.yaml'), 'key: K\ntargets:\n  .: cli\n');
 });
 
 afterEach(async () => {
@@ -32,7 +32,7 @@ describe('the key a store answers for', () => {
   });
 
   it('refuses a config that declares no key', async () => {
-    await writeFile(join(root, '.ket', 'config.ts'), 'export default {};\n');
+    await writeFile(join(root, '.ket', 'config.yaml'), 'targets:\n  .: cli\n');
 
     await expect(keyOf(root)).rejects.toThrow(/no project key/);
   });
@@ -63,13 +63,10 @@ describe('what a write leaves on disk', () => {
     });
   });
 
-  it('refreshes the board beside the items, so the board never lies', async () => {
+  it('writes the item alone, since ket watch reads the items rather than a rendered copy', async () => {
     await write(root, 'K-1', { ...ITEM, children: [] });
 
-    const board = await readFile(join(root, '.ket', 'BOARD.md'), 'utf8');
-
-    expect(board).toContain('K-1');
-    expect(board).toContain('The stored item');
+    await expect(readFile(join(root, '.ket', 'BOARD.md'), 'utf8')).rejects.toThrow();
   });
 
   it('refuses to read an item that is not there', async () => {

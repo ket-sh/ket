@@ -3,21 +3,24 @@ import type { PresetSemantics } from '@ket/preset';
 import { readdir, readFile, realpath } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 import { text } from 'node:stream/consumers';
+import { parse } from 'yaml';
 
 import type { PresetName } from '../../shared/configuration.ts';
 import type { GateEvent } from '../../shared/event.ts';
+import type { AdvisedSections } from '../../shared/toolchain.ts';
 import type { Denial } from './envelope.ts';
 
+import { configurationIn } from '../../shared/configuration-file.ts';
 import { semanticsOf } from '../../shared/governing.ts';
-import { insideRepository, ketRootFrom, sourceRootsOf, targetsFrom } from '../../shared/locate.ts';
-import { headingIn } from '../../shared/toolchain.ts';
+import { insideRepository, ketRootFrom, sourceRootsOf } from '../../shared/locate.ts';
+import { headingIn, seenUnder } from '../../shared/toolchain.ts';
 import { pathFrom } from './envelope.ts';
 
 export const KET_DIRECTORY = '.ket';
 
 export const MANIFEST = 'package.json';
 
-export const TOOLCHAIN = 'toolchain.json';
+export const TOOLCHAIN = 'toolchain.yaml';
 
 export function envelopeFrom(text: string): unknown {
   try {
@@ -32,9 +35,9 @@ export async function readEnvelope(): Promise<unknown> {
 }
 
 async function readTargets(root: string): Promise<Record<string, PresetName>> {
-  const loaded: unknown = await import(join(root, KET_DIRECTORY, 'config.ts'));
+  const reading = await configurationIn(root);
 
-  return targetsFrom(loaded);
+  return 'configuration' in reading ? reading.configuration.targets : {};
 }
 
 export async function sourcesOf(root: string): Promise<string[]> {
@@ -148,6 +151,27 @@ export async function adrTitlesUnder(root: string): Promise<string[]> {
   );
 
   return bodies.map(headingIn).filter((title): title is string => title !== undefined);
+}
+
+function heldIn(source: string): unknown {
+  try {
+    const held: unknown = parse(source);
+
+    return held;
+  } catch {
+    return undefined;
+  }
+}
+
+export async function readAdvised(root: string): Promise<AdvisedSections> {
+  const source = await readFile(join(root, KET_DIRECTORY, TOOLCHAIN), 'utf8').catch(() => '');
+  const held = heldIn(source);
+
+  return {
+    dependencies: seenUnder(held, 'dependencies'),
+    decisions: seenUnder(held, 'decisions'),
+    kinds: seenUnder(held, 'kinds'),
+  };
 }
 
 export async function readJson(path: string): Promise<unknown> {

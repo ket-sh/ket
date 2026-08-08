@@ -1,8 +1,7 @@
 import { fileKindOf } from '@ket/preset';
+import { stringify } from 'yaml';
 
 const DECLARING = ['dependencies', 'devDependencies'];
-
-const INDENT = 2;
 
 // A name that lands in a proposal a session reads has to be one a registry
 // could resolve, never a manifest key carrying a newline or an instruction.
@@ -116,11 +115,9 @@ export function kindArrivalsIn(look: {
 }
 
 export function recordAdvised(sections: AdvisedSections): string {
-  const ordered = {
+  return stringify({
     dependencies: inOneOrder(sections.dependencies),
     decisions: inOneOrder(sections.decisions),
     kinds: inOneOrder(sections.kinds),
-  };
-
-  return `${JSON.stringify(ordered, undefined, INDENT)}\n`;
+  });
 }

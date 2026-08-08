@@ -57,22 +57,22 @@ describe('keeping the event log out of the diff', () => {
 });
 
 describe('deciding what init writes into a repository', () => {
-  it('writes a config, a board and a home for items', () => {
+  it('writes a config and a home for items, since ket watch draws the board from them', () => {
     const paths = scaffoldFiles(DRIVEN).map((file) => file.path);
 
-    expect(paths).toStrictEqual(['.ket/config.ts', '.ket/BOARD.md', '.ket/items/.gitkeep']);
+    expect(paths).toStrictEqual(['.ket/config.yaml', '.ket/items/.gitkeep']);
   });
 
   it('carries the chosen key into the config', () => {
     const [config] = scaffoldFiles(DRIVEN);
 
-    expect(config?.contents).toContain("key: 'OFS'");
+    expect(config?.contents).toContain('key: OFS');
   });
 
   it('carries the targets into the config, so a gate can resolve a preset from a path', () => {
     const [config] = scaffoldFiles({ ...DRIVEN, targets: { 'packages/cli': 'cli' } });
 
-    expect(config?.contents).toContain("'packages/cli': 'cli'");
+    expect(config?.contents).toContain('packages/cli: cli');
   });
 
   it('leaves the items directory empty', () => {
@@ -82,16 +82,14 @@ describe('deciding what init writes into a repository', () => {
     expect(gitkeep?.contents).toBe('');
   });
 
-  it('names the board so it reads on its own', () => {
-    const board = scaffoldFiles(DRIVEN).find((file) => file.path.endsWith('BOARD.md'));
-
-    expect(board?.contents).toContain('# OFS board');
+  it('renders no board, since a generated copy of the items only goes stale', () => {
+    expect(scaffoldFiles(DRIVEN).find((file) => file.path.endsWith('BOARD.md'))).toBeUndefined();
   });
 });
 
 describe('writing into a repository that took the gates without the pipeline', () => {
   it('writes the config alone, since the gates read it and nothing tracks items', () => {
-    expect(scaffoldFiles(GATED_ONLY).map((file) => file.path)).toStrictEqual(['.ket/config.ts']);
+    expect(scaffoldFiles(GATED_ONLY).map((file) => file.path)).toStrictEqual(['.ket/config.yaml']);
   });
 
   it('writes no board, because a board with nowhere to draw from would only lie', () => {
@@ -109,6 +107,6 @@ describe('writing into a repository that took the gates without the pipeline', (
   it('records the refusal in the config, so a later tool reads the choice rather than guessing', () => {
     const [config] = scaffoldFiles(GATED_ONLY);
 
-    expect(config?.contents).toContain('workflow: false,');
+    expect(config?.contents).toContain('workflow: false');
   });
 });

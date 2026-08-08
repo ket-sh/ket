@@ -141,7 +141,7 @@ for absent in codeql.yml coverage.yml; do
 done
 test -f "$PROJECT/.coderabbit.yaml" &&
   fail "a review config arrived in a project that asked for no integration"
-grep -q 'integrations: \[\]' "$PROJECT/.ket/config.ts" ||
+grep -q 'integrations: \[\]' "$PROJECT/.ket/config.yaml" ||
   fail "the config does not record that no integration was chosen"
 
 WITH="$SANDBOX/with-everything"
@@ -151,8 +151,10 @@ for expected in ci.yml codeql.yml coverage.yml; do
   test -f "$WITH/.github/workflows/$expected" || fail "$expected was asked for and never written"
 done
 test -f "$WITH/.coderabbit.yaml" || fail "the review config was asked for and never written"
-grep -q "integrations: \['codecov', 'codeql', 'coderabbit'\]" "$WITH/.ket/config.ts" ||
-  fail "the config does not record which integrations were chosen"
+for chosen in codecov codeql coderabbit; do
+  grep -q "^  - $chosen\$" "$WITH/.ket/config.yaml" ||
+    fail "the config does not record that $chosen was chosen"
+done
 
 (cd "$SANDBOX" && "$KET" create unoffered --with chromatic >/dev/null 2>&1) &&
   fail "create accepted an integration the cli preset does not offer"

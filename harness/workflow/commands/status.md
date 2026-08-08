@@ -13,4 +13,5 @@ Group by status, newest key last, and name what each one is waiting on. If more
 than one item is in flight, say so plainly: the write gate refuses every source
 write while that is true, because one job means one branch.
 
-The generated board at `.ket/BOARD.md` is not written yet. Read the items.
+Read the items. Nothing generates a board file: `ket watch` draws one live from
+the same items, so this command and that screen never disagree.

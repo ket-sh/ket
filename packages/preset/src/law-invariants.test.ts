@@ -18,7 +18,7 @@ const BODY = 'Read the `tdd` skill before a test, and the `vitest` skill for the
 const TAIL = '## The gates\n\nNo gate here gets switched off to reach green.\n';
 
 function standingLawOver(body: string, tail: string): string {
-  return `${body}\n## The pipeline\n\nWork is an item in \`.ket/items/\`, and \`.ket/BOARD.md\` follows. Drive it with \`/ket:feature\`.\n\n${tail}`;
+  return `${body}\n## The pipeline\n\nWork is an item in \`.ket/items/\`, and \`ket watch\` draws it. Drive it with \`/ket:feature\`.\n\n${tail}`;
 }
 
 function plainLawOver(body: string, tail: string): string {
@@ -143,14 +143,14 @@ describe('the plain law a preset writes for a project that declines the workflow
 
 describe('the pipeline traces a plain law must never keep', () => {
   it('names each pipeline trace the plain law keeps', () => {
-    const tail = '## The gates\n\n`/ket:status` reads `.ket/items/` and `.ket/BOARD.md`.\n';
+    const tail = '## The gates\n\n`/ket:status` reads `.ket/items/`, and `ket watch` draws them.\n';
 
     expect(
       lawInvariantsOf(ITEM, { ...SHIPPED, ...pairOver(BODY, tail) }, HARNESS_SKILLS),
     ).toStrictEqual([
       'the plain law names /ket:, which a project without the workflow never has',
       'the plain law names .ket/items, which a project without the workflow never has',
-      'the plain law names BOARD.md, which a project without the workflow never has',
+      'the plain law names ket watch, which a project without the workflow never has',
     ]);
   });
 

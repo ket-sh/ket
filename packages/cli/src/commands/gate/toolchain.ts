@@ -16,12 +16,12 @@ import {
   declaredIn,
   kindArrivalsIn,
   recordAdvised,
-  seenUnder,
 } from '../../shared/toolchain.ts';
 import {
   adrTitlesUnder,
   KET_DIRECTORY,
   MANIFEST,
+  readAdvised,
   readEnvelope,
   readJson,
   TOOLCHAIN,
@@ -39,12 +39,7 @@ async function advisedArrivals(
   governing: PresetItem,
   envelope: unknown,
 ): Promise<Advised> {
-  const held = await readJson(join(root, KET_DIRECTORY, TOOLCHAIN));
-  const seen = {
-    dependencies: seenUnder(held, 'dependencies'),
-    decisions: seenUnder(held, 'decisions'),
-    kinds: seenUnder(held, 'kinds'),
-  };
+  const seen = await readAdvised(root);
   const arrivals = {
     dependencies: arrivalsIn({
       declared: declaredIn(await readJson(join(root, MANIFEST))),

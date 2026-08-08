@@ -10,7 +10,7 @@ let root = '';
 beforeEach(async () => {
   root = await mkdtemp(join(tmpdir(), 'ket-stage-'));
   await mkdir(join(root, '.ket', 'items', 'K-1'), { recursive: true });
-  await writeFile(join(root, '.ket', 'config.ts'), "export default { key: 'K' };\n");
+  await writeFile(join(root, '.ket', 'config.yaml'), 'key: K\ntargets:\n  .: cli\n');
 });
 
 afterEach(async () => {

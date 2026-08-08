@@ -3,11 +3,57 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { adrTitlesUnder, envelopeFrom } from './context.ts';
+import { adrTitlesUnder, envelopeFrom, readAdvised } from './context.ts';
 
 async function scratch(): Promise<string> {
   return mkdtemp(join(tmpdir(), 'ket-adr-'));
 }
+
+async function ketDirectory(): Promise<string> {
+  const root = await scratch();
+
+  await mkdir(join(root, '.ket'), { recursive: true });
+
+  return root;
+}
+
+describe('the record of what ket has already advised a project on', () => {
+  it('reads back the sections an earlier run wrote', async () => {
+    const root = await ketDirectory();
+
+    await writeFile(
+      join(root, '.ket', 'toolchain.yaml'),
+      'dependencies:\n  - drizzle-orm\ndecisions:\n  - A choice\nkinds: []\n',
+      'utf8',
+    );
+
+    expect(await readAdvised(root)).toStrictEqual({
+      dependencies: ['drizzle-orm'],
+      decisions: ['A choice'],
+      kinds: [],
+    });
+  });
+
+  it('holds every section empty for a project ket has never advised, so each name arrives once', async () => {
+    expect(await readAdvised(await ketDirectory())).toStrictEqual({
+      dependencies: [],
+      decisions: [],
+      kinds: [],
+    });
+  });
+
+  it('holds every section empty for a record that is not yaml, rather than throwing on it', async () => {
+    const root = await ketDirectory();
+
+    await writeFile(join(root, '.ket', 'toolchain.yaml'), 'dependencies: [oops\n', 'utf8');
+
+    expect(await readAdvised(root)).toStrictEqual({
+      dependencies: [],
+      decisions: [],
+      kinds: [],
+    });
+  });
+});
 
 async function recordsAdr(root: string, at: string, body: string): Promise<void> {
   const path = join(root, at);

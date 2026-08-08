@@ -35,14 +35,13 @@ opened() {
 }
 
 mkdir -p "$PROJECT/.ket"
-cat >"$PROJECT/.ket/config.ts" <<'CONFIG'
-export default {
-  key: 'KMA',
-  targets: { '.': 'cli' },
-  integrations: [],
-  language: 'en',
-  workflow: true,
-};
+cat >"$PROJECT/.ket/config.yaml" <<'CONFIG'
+key: KMA
+targets:
+  .: cli
+integrations: []
+language: en
+workflow: true
 CONFIG
 
 opened "ket:map" "the empty state never named the session that starts a map"

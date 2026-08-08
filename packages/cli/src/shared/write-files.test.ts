@@ -11,11 +11,11 @@ describe('writing a scaffold into a repository', () => {
     const root = await mkdtemp(join(tmpdir(), 'ket-'));
 
     await writeFiles(root, [
-      { path: '.ket/config.ts', contents: 'export default {};\n' },
+      { path: '.ket/config.yaml', contents: 'export default {};\n' },
       { path: '.ket/items/.gitkeep', contents: '' },
     ]);
 
-    await expect(readFile(join(root, '.ket/config.ts'), 'utf8')).resolves.toBe(
+    await expect(readFile(join(root, '.ket/config.yaml'), 'utf8')).resolves.toBe(
       'export default {};\n',
     );
     await expect(readFile(join(root, '.ket/items/.gitkeep'), 'utf8')).resolves.toBe('');

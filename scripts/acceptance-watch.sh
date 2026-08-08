@@ -27,14 +27,13 @@ shows() {
 }
 
 mkdir -p "$BOARD/.ket/items/KWA-1" "$BOARD/.ket/items/KWA-2"
-cat >"$BOARD/.ket/config.ts" <<'CONFIG'
-export default {
-  key: 'KWA',
-  targets: { '.': 'cli' },
-  integrations: [],
-  language: 'en',
-  workflow: true,
-};
+cat >"$BOARD/.ket/config.yaml" <<'CONFIG'
+key: KWA
+targets:
+  .: cli
+integrations: []
+language: en
+workflow: true
 CONFIG
 cat >"$BOARD/.ket/items/KWA-1/item.yaml" <<'ITEM'
 title: The acceptance item

@@ -4,9 +4,8 @@ import { join } from 'node:path';
 import type { Item } from './item.ts';
 import type { StoredItem } from './read-item.ts';
 
-import { renderBoard } from './board.ts';
+import { CONFIGURATION_FILE, configurationIn } from './configuration-file.ts';
 import { renderItem } from './item.ts';
-import { keyFrom } from './locate.ts';
 import { parseItem } from './read-item.ts';
 
 const KET_DIRECTORY = '.ket';
@@ -14,8 +13,6 @@ const KET_DIRECTORY = '.ket';
 const ITEMS = 'items';
 
 const ITEM_FILE = 'item.yaml';
-
-const BOARD_FILE = 'BOARD.md';
 
 export async function readStored(root: string): Promise<StoredItem[]> {
   const items = join(root, KET_DIRECTORY, ITEMS);
@@ -31,25 +28,15 @@ export async function readStored(root: string): Promise<StoredItem[]> {
 }
 
 export async function keyOf(root: string): Promise<string> {
-  const loaded: unknown = await import(join(root, KET_DIRECTORY, 'config.ts'));
-  const key = keyFrom(loaded);
+  const reading = await configurationIn(root);
 
-  if (key === undefined) {
-    throw new Error(`${KET_DIRECTORY}/config.ts declares no project key`);
+  if (!('configuration' in reading)) {
+    throw new Error(
+      `${KET_DIRECTORY}/${CONFIGURATION_FILE} declares no project key, so nothing says how to name an item`,
+    );
   }
 
-  return key;
-}
-
-// The board is derived from the items, so it is rewritten wherever they are.
-// Written once at create and never again, it went on saying the project had no
-// items long after it had them, and a board that lies is worse than none.
-async function refreshBoard(root: string): Promise<void> {
-  await writeFile(
-    join(root, KET_DIRECTORY, BOARD_FILE),
-    renderBoard(await keyOf(root), await readStored(root)),
-    'utf8',
-  );
+  return reading.configuration.key;
 }
 
 export async function write(root: string, key: string, item: Item): Promise<void> {
@@ -57,7 +44,6 @@ export async function write(root: string, key: string, item: Item): Promise<void
 
   await mkdir(directory, { recursive: true });
   await writeFile(join(directory, ITEM_FILE), renderItem(item), 'utf8');
-  await refreshBoard(root);
 }
 
 export async function read(root: string, key: string): Promise<Item> {
