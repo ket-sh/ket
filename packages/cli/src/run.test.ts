@@ -1,4 +1,4 @@
-import { chmod, mkdir, mkdtemp, readdir, readFile, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -20,8 +20,14 @@ exit 1
 
 let restored = '';
 
+const scratched: string[] = [];
+
 async function scratch(): Promise<string> {
-  return mkdtemp(join(tmpdir(), 'ket-'));
+  const where = await mkdtemp(join(tmpdir(), 'ket-'));
+
+  scratched.push(where);
+
+  return where;
 }
 
 // Every create reaches for the skills the preset locks, and a suite that let it
@@ -41,8 +47,12 @@ beforeEach(async () => {
   await installerThat(OBLIGING);
 });
 
-afterEach(() => {
+afterEach(async () => {
   process.env['PATH'] = restored;
+
+  await Promise.all(
+    scratched.splice(0).map(async (where) => rm(where, { recursive: true, force: true })),
+  );
 });
 
 describe('the ket command line', () => {
