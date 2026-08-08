@@ -1,9 +1,11 @@
+import type { MouseEvent } from '@opentui/core';
 import type { ReactNode } from 'react';
 
 import type { DocsRowView } from '../../../shared/model';
 import type { Theme } from '../../../shared/theme';
 import type { DocsLine } from '../lib/docs.ts';
 import type { Frame } from '../model/frames.ts';
+import type { WatchMouse } from '../model/mouse.ts';
 
 import { useTheme } from '../../../shared/theme';
 import { catalogLines, catalogRows, detailLinesOf, detailRoomOf, rotWordOf } from '../lib/docs.ts';
@@ -18,12 +20,42 @@ function rotColorOf(word: string, theme: Theme): string {
   return word === 'unpinned' ? theme.yellow : theme.red;
 }
 
-function CatalogRow({ row, chosen }: { row: DocsRowView; chosen: boolean }): ReactNode {
+function groundedOn(mouse: WatchMouse): (pressed: MouseEvent) => void {
+  return (pressed) => {
+    pressed.stopPropagation();
+    mouse.heldGround();
+  };
+}
+
+function wheeledThrough(mouse: WatchMouse): (rolled: MouseEvent) => void {
+  return (rolled) => {
+    const direction = rolled.scroll?.direction;
+
+    if (direction !== undefined) {
+      mouse.docsWheel(direction);
+    }
+  };
+}
+
+function CatalogRow({
+  row,
+  chosen,
+  onPress,
+}: {
+  row: DocsRowView;
+  chosen: boolean;
+  onPress: () => void;
+}): ReactNode {
   const { theme } = useTheme();
   const word = rotWordOf(row);
 
+  const pressAt = (pressed: MouseEvent): void => {
+    pressed.stopPropagation();
+    onPress();
+  };
+
   return (
-    <text wrapMode="none">
+    <text wrapMode="none" onMouseDown={pressAt}>
       <span fg={theme.text}>{chosen ? '► ' : '  '}</span>
       <span fg={chosen ? theme.text : theme.subtext}>{row.name}</span>
       {word === '' ? null : <span fg={rotColorOf(word, theme)}>{`  ${word}`}</span>}
@@ -31,7 +63,15 @@ function CatalogRow({ row, chosen }: { row: DocsRowView; chosen: boolean }): Rea
   );
 }
 
-function CatalogLine({ line, chosen }: { line: DocsLine; chosen: number }): ReactNode {
+function CatalogLine({
+  line,
+  chosen,
+  mouse,
+}: {
+  line: DocsLine;
+  chosen: number;
+  mouse: WatchMouse;
+}): ReactNode {
   const { theme } = useTheme();
 
   if (line.kind === 'header') {
@@ -42,7 +82,15 @@ function CatalogLine({ line, chosen }: { line: DocsLine; chosen: number }): Reac
     );
   }
 
-  return <CatalogRow row={line.row} chosen={line.at === chosen} />;
+  return (
+    <CatalogRow
+      row={line.row}
+      chosen={line.at === chosen}
+      onPress={() => {
+        mouse.docsRow(line.at);
+      }}
+    />
+  );
 }
 
 function shownWindowOf(lines: DocsLine[], chosen: number, room: number): DocsLine[] {
@@ -56,9 +104,10 @@ interface ShelfProps {
   frame: DocsFrame;
   chosen: number;
   room: number;
+  mouse: WatchMouse;
 }
 
-function CatalogPane({ frame, chosen, room }: ShelfProps): ReactNode {
+function CatalogPane({ frame, chosen, room, mouse }: ShelfProps): ReactNode {
   const { theme } = useTheme();
   const held = frame.focus === 'detail';
 
@@ -73,10 +122,12 @@ function CatalogPane({ frame, chosen, room }: ShelfProps): ReactNode {
       paddingLeft={1}
       paddingRight={1}
       overflow="hidden"
+      onMouseDown={groundedOn(mouse)}
+      onMouseScroll={wheeledThrough(mouse)}
     >
       {shownWindowOf(catalogLines(frame.catalog), chosen, room).map(
         (line, seatAt): ReactNode => (
-          <CatalogLine key={String(seatAt)} line={line} chosen={chosen} />
+          <CatalogLine key={String(seatAt)} line={line} chosen={chosen} mouse={mouse} />
         ),
       )}
     </box>
@@ -88,9 +139,10 @@ interface DetailProps {
   held: boolean;
   now: string;
   width: number;
+  mouse: WatchMouse;
 }
 
-function DetailPane({ row, held, now, width }: DetailProps): ReactNode {
+function DetailPane({ row, held, now, width, mouse }: DetailProps): ReactNode {
   const { theme } = useTheme();
 
   return (
@@ -104,6 +156,7 @@ function DetailPane({ row, held, now, width }: DetailProps): ReactNode {
       paddingLeft={1}
       paddingRight={1}
       overflow="hidden"
+      onMouseDown={groundedOn(mouse)}
     >
       {detailLinesOf(row, now).map(
         (line, at): ReactNode => (
@@ -121,11 +174,13 @@ export function DocsView({
   now,
   width,
   height,
+  mouse,
 }: {
   frame: DocsFrame;
   now: string;
   width: number;
   height: number;
+  mouse: WatchMouse;
 }): ReactNode {
   const rows = catalogRows(frame.catalog);
   const chosen = seatedRow(frame.sel, rows.length);
@@ -133,8 +188,14 @@ export function DocsView({
 
   return (
     <box flexDirection="row">
-      <CatalogPane frame={frame} chosen={chosen} room={room} />
-      <DetailPane row={rows[chosen]} held={frame.focus === 'detail'} now={now} width={width} />
+      <CatalogPane frame={frame} chosen={chosen} room={room} mouse={mouse} />
+      <DetailPane
+        row={rows[chosen]}
+        held={frame.focus === 'detail'}
+        now={now}
+        width={width}
+        mouse={mouse}
+      />
     </box>
   );
 }

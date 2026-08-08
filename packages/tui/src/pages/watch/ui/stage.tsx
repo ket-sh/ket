@@ -87,7 +87,9 @@ function heldPageOf(room: RoomProps): ReactNode | undefined {
   }
 
   if (stack.top.kind === 'docs') {
-    return <DocsView frame={stack.top} now={now} width={width} height={height} />;
+    return (
+      <DocsView frame={stack.top} now={now} width={width} height={height} mouse={room.mouse} />
+    );
   }
 
   return undefined;

@@ -25,17 +25,23 @@ function journeyStageOf(held: Record<string, unknown>): OpeningStage | undefined
   return { kind: 'journey', key, tab };
 }
 
+function screenStageOf(kind: unknown): OpeningStage | undefined {
+  if (kind === 'map' || kind === 'oplog' || kind === 'docs') {
+    return { kind };
+  }
+
+  return undefined;
+}
+
 function stageOf(declared: unknown): OpeningStage | undefined {
   if (!isRecord(declared)) {
     return undefined;
   }
 
-  if (declared['kind'] === 'map') {
-    return { kind: 'map' };
-  }
+  const screen = screenStageOf(declared['kind']);
 
-  if (declared['kind'] === 'oplog') {
-    return { kind: 'oplog' };
+  if (screen !== undefined) {
+    return screen;
   }
 
   return declared['kind'] === 'journey' ? journeyStageOf(declared) : undefined;

@@ -27,7 +27,7 @@ const watch = defineCommand({
     },
     screen: {
       type: 'string',
-      description: 'The screen to land on: list, map, or oplog',
+      description: 'The screen to land on: list, map, oplog, or docs',
     },
   },
   async run({ args }) {

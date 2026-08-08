@@ -35,7 +35,7 @@ describe('the deep link watch refuses to open', () => {
 
   it('refuses a screen watch never shows', async () => {
     await expect(runCommand('watch', ['--screen', 'nowhere', '--cwd', root])).rejects.toThrow(
-      'nowhere names no watch screen. watch opens list, map, or oplog',
+      'nowhere names no watch screen. watch opens list, map, oplog, or docs',
     );
   });
 });

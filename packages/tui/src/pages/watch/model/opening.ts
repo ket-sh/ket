@@ -7,7 +7,8 @@ import type { Seat } from './seat.ts';
 export type OpeningStage =
   | { kind: 'journey'; key: string; tab: JourneyTab }
   | { kind: 'map' }
-  | { kind: 'oplog' };
+  | { kind: 'oplog' }
+  | { kind: 'docs' };
 
 export interface WatchView {
   layout?: BoardLayout;
@@ -30,6 +31,12 @@ function stagedThrough(stage: OpeningStage, stack: FrameStack): void {
 
   if (stage.kind === 'oplog') {
     stack.openLog();
+
+    return;
+  }
+
+  if (stage.kind === 'docs') {
+    stack.openDocs();
 
     return;
   }

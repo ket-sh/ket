@@ -128,6 +128,15 @@ describe('the memory a reopening honors', () => {
     expect(frame).toContain('board › oplog');
   });
 
+  it('reopens the remembered docs screen', async () => {
+    const frame = await openedWith({ opening: { stage: { kind: 'docs' } } }, (seen) =>
+      seen.includes('board › docs'),
+    );
+
+    expect(frame).toContain('board › docs');
+    expect(frame).toContain('handbook');
+  });
+
   it('seats the remembered chosen card', async () => {
     const frame = await openedWith({ opening: { chosen: 'K-1' } }, (seen) =>
       seen.includes('║ K-1'),
@@ -138,19 +147,26 @@ describe('the memory a reopening honors', () => {
   });
 });
 
+async function reportedAfter(
+  key: string,
+  until: (frame: string) => boolean,
+): Promise<WatchView | undefined> {
+  const reported: WatchView[] = [];
+
+  const remember = (view: WatchView): void => {
+    reported.push(view);
+  };
+
+  await openedWith({ remember }, (seen) => seen.includes('K-2'));
+  pressed(key);
+  await landed(until);
+
+  return reported.at(-1);
+}
+
 describe('the standing watch reports to be remembered', () => {
   it('reports the journey once a dive lands there', async () => {
-    const reported: WatchView[] = [];
-
-    const remember = (view: WatchView): void => {
-      reported.push(view);
-    };
-
-    await openedWith({ remember }, (seen) => seen.includes('K-2'));
-    pressed('RETURN');
-    await landed((seen) => seen.includes('K-2 · journey'));
-
-    expect(reported.at(-1)).toStrictEqual({
+    expect(await reportedAfter('RETURN', (seen) => seen.includes('K-2 · journey'))).toStrictEqual({
       layout: 'kanban',
       chosen: 'K-2',
       stage: { kind: 'journey', key: 'K-2', tab: 'overview' },
@@ -158,20 +174,18 @@ describe('the standing watch reports to be remembered', () => {
   });
 
   it('reports the operation log once the l key lands there', async () => {
-    const reported: WatchView[] = [];
-
-    const remember = (view: WatchView): void => {
-      reported.push(view);
-    };
-
-    await openedWith({ remember }, (seen) => seen.includes('K-2'));
-    pressed('l');
-    await landed((seen) => seen.includes('oplog · last 500'));
-
-    expect(reported.at(-1)).toStrictEqual({
+    expect(await reportedAfter('l', (seen) => seen.includes('oplog · last 500'))).toStrictEqual({
       layout: 'kanban',
       chosen: 'K-2',
       stage: { kind: 'oplog' },
+    });
+  });
+
+  it('reports the docs screen once the d key lands there', async () => {
+    expect(await reportedAfter('d', (seen) => seen.includes('board › docs'))).toStrictEqual({
+      layout: 'kanban',
+      chosen: 'K-2',
+      stage: { kind: 'docs' },
     });
   });
 

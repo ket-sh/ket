@@ -59,6 +59,8 @@ const MAP: Frame = {
 
 const BOARD: Frame = { kind: 'board' };
 
+const DOCS: Frame = { kind: 'docs', catalog: { groups: [] }, sel: 0, focus: 'catalog' };
+
 describe('the standing watch would remember', () => {
   it('stands on the board with its chosen card', () => {
     expect(standingOf('kanban', [BOARD], 'K-2')).toStrictEqual({
@@ -108,5 +110,9 @@ describe('the standing watch would remember', () => {
 
   it('stands on the map while the map is open', () => {
     expect(standingOf('kanban', [BOARD, MAP], undefined).stage).toStrictEqual({ kind: 'map' });
+  });
+
+  it('stands on the docs screen while the catalog is open', () => {
+    expect(standingOf('kanban', [BOARD, DOCS], undefined).stage).toStrictEqual({ kind: 'docs' });
   });
 });
