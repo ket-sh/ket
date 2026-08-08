@@ -1,3 +1,5 @@
+import { NODE_H } from './layout.ts';
+
 export interface PanePlace {
   side: 'right' | 'bottom';
   paneWidth: number;
@@ -19,4 +21,28 @@ export function panePlaceOf(width: number): PanePlace {
   }
 
   return { side: 'right', paneWidth, canvasWidth };
+}
+
+export interface PaneFit {
+  canvasHeight: number;
+  paneLines: number;
+}
+
+const WHOLE_STAGE_FRAME = NODE_H + 2;
+
+const PANE_BORDERS = 2;
+
+export function paneFitOf(height: number, lineCount: number): PaneFit {
+  const roomy = height - lineCount - PANE_BORDERS;
+
+  if (roomy >= WHOLE_STAGE_FRAME) {
+    return { canvasHeight: roomy, paneLines: lineCount };
+  }
+
+  const paneLines = Math.max(0, Math.min(lineCount, height - WHOLE_STAGE_FRAME - PANE_BORDERS));
+
+  return {
+    canvasHeight: Math.max(WHOLE_STAGE_FRAME, height - paneLines - PANE_BORDERS),
+    paneLines,
+  };
 }
