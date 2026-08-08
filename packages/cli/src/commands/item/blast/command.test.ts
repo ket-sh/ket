@@ -88,7 +88,7 @@ beforeEach(async () => {
   itemDir = join(root, '.ket', 'items', 'K-1');
   await mkdir(itemDir, { recursive: true });
   await mkdir(join(root, 'node_modules', '.bin'), { recursive: true });
-  await writeFile(join(root, '.ket', 'config.ts'), 'export default {};\n');
+  await writeFile(join(root, '.ket', 'config.yaml'), 'key: K\ntargets: {}\n');
   await writeFile(join(itemDir, 'item.yaml'), 'title: The blast item\nstatus: verifying\n');
   lines = [];
   vi.spyOn(process, 'cwd').mockReturnValue(root);

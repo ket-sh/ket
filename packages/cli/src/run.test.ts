@@ -51,7 +51,7 @@ describe('the ket command line', () => {
 
     await runCommand('create', [where]);
 
-    await expect(readFile(join(where, '.ket/config.ts'), 'utf8')).resolves.toContain("key: 'OS'");
+    await expect(readFile(join(where, '.ket/config.yaml'), 'utf8')).resolves.toContain('key: OS');
   });
 
   it('makes the project a repository, since .ket lives at a git root', async () => {
@@ -89,12 +89,12 @@ describe('the ket command line', () => {
 });
 
 describe('creating a project that can update itself later', () => {
-  it('records what it wrote in .ket/scaffold.json, so an update compares by hash', async () => {
+  it('records what it wrote in .ket/scaffold.yaml, so an update compares by hash', async () => {
     const where = join(await scratch(), 'ledger-service');
 
     await runCommand('create', [where]);
 
-    const record = parseScaffoldRecord(await readFile(join(where, '.ket/scaffold.json'), 'utf8'));
+    const record = parseScaffoldRecord(await readFile(join(where, '.ket/scaffold.yaml'), 'utf8'));
 
     expect(record?.ket).toBe(KET_VERSION);
     expect(record?.files['tsconfig.json']).toBe(
@@ -110,8 +110,8 @@ describe('creating a project that documents in another language', () => {
 
     await runCommand('create', [where, '--language', 'tr']);
 
-    await expect(readFile(join(where, '.ket/config.ts'), 'utf8')).resolves.toContain(
-      "language: 'tr'",
+    await expect(readFile(join(where, '.ket/config.yaml'), 'utf8')).resolves.toContain(
+      'language: tr',
     );
 
     const vale = await readFile(join(where, '.vale.ini'), 'utf8');
@@ -132,8 +132,8 @@ describe('creating a project that documents in another language', () => {
 
     await runCommand('create', [where]);
 
-    await expect(readFile(join(where, '.ket/config.ts'), 'utf8')).resolves.toContain(
-      "language: 'en'",
+    await expect(readFile(join(where, '.ket/config.yaml'), 'utf8')).resolves.toContain(
+      'language: en',
     );
     await expect(readFile(join(where, '.vale.core.ini'), 'utf8')).rejects.toThrow();
     await expect(readFile(join(where, '.vale.ini'), 'utf8')).resolves.toContain(
@@ -151,17 +151,9 @@ describe('creating a project that takes the gates without the pipeline', () => {
 
     await runCommand('create', [where, '--no-workflow']);
 
-    await expect(readFile(join(where, '.ket/config.ts'), 'utf8')).resolves.toContain(
-      'workflow: false,',
+    await expect(readFile(join(where, '.ket/config.yaml'), 'utf8')).resolves.toContain(
+      'workflow: false',
     );
-  });
-
-  it('opens no board, since nothing will ever file an item onto it', async () => {
-    const where = join(await scratch(), 'order-service');
-
-    await runCommand('create', [where, '--no-workflow']);
-
-    await expect(readFile(join(where, '.ket/BOARD.md'), 'utf8')).rejects.toThrow();
   });
 
   it('enables the gates plugin alone, leaving the pipeline bundle out', async () => {
@@ -180,7 +172,7 @@ describe('creating a project that takes the gates without the pipeline', () => {
 
     await runCommand('create', [where, '--preset', 'web', '--no-workflow']);
 
-    await expect(readFile(join(where, '.ket/config.ts'), 'utf8')).resolves.toContain("'.': 'web'");
+    await expect(readFile(join(where, '.ket/config.yaml'), 'utf8')).resolves.toContain('.: web');
   });
 
   it('leaves no hint token unresolved in anything it installs', async () => {
@@ -201,18 +193,18 @@ describe('creating a project that drives the pipeline, the default', () => {
 
     await runCommand('create', [where]);
 
-    await expect(readFile(join(where, '.ket/config.ts'), 'utf8')).resolves.toContain(
-      'workflow: true,',
+    await expect(readFile(join(where, '.ket/config.yaml'), 'utf8')).resolves.toContain(
+      'workflow: true',
     );
   });
 
-  it('opens the board and a home for items', async () => {
+  it('opens a home for items and renders no board beside it', async () => {
     const where = join(await scratch(), 'order-service');
 
     await runCommand('create', [where]);
 
-    await expect(readFile(join(where, '.ket/BOARD.md'), 'utf8')).resolves.toContain('board');
     await expect(readFile(join(where, '.ket/items/.gitkeep'), 'utf8')).resolves.toBe('');
+    await expect(readFile(join(where, '.ket/BOARD.md'), 'utf8')).rejects.toThrow();
   });
 
   it('enables the pipeline bundle beside the gates', async () => {

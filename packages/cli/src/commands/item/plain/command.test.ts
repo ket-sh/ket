@@ -14,7 +14,7 @@ beforeEach(async () => {
   root = await mkdtemp(join(tmpdir(), 'ket-plain-'));
   itemDir = join(root, '.ket', 'items', 'K-1');
   await mkdir(itemDir, { recursive: true });
-  await writeFile(join(root, '.ket', 'config.ts'), 'export default {};\n');
+  await writeFile(join(root, '.ket', 'config.yaml'), 'key: K\ntargets: {}\n');
   await writeFile(join(itemDir, 'item.yaml'), 'title: The plain item\nstatus: designing\n');
   lines = [];
   vi.spyOn(process, 'cwd').mockReturnValue(root);

@@ -1,5 +1,6 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
+import { parse } from 'yaml';
 
 import { arrivalsIn, recordAdvised, seenUnder } from './toolchain.ts';
 
@@ -8,7 +9,7 @@ const packageName = fc.stringMatching(/^[a-z][a-z0-9-]{0,11}$/);
 const names = fc.array(packageName, { maxLength: 12 });
 
 function readBack(record: string): string[] {
-  const written: unknown = JSON.parse(record);
+  const written: unknown = parse(record);
 
   return seenUnder(written, 'dependencies');
 }

@@ -47,7 +47,7 @@ when the shape is already clear. Come here when it is not.
 
 Read what exists before asking the user to repeat it.
 
-- `.ket/config.ts` names the targets and the paths a gate governs.
+- `.ket/config.yaml` names the targets and the paths a gate governs.
 - `.ket/items/*/item.yaml` says what has been filed, and at which stage.
 - An item's own directory carries what its design stage wrote beside it.
 

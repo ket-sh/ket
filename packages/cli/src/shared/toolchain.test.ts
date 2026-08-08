@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { parse } from 'yaml';
 
 import {
   arrivalsIn,
@@ -226,8 +227,14 @@ describe('recording what it has looked at, in three sections', () => {
     record: string,
     section: 'dependencies' | 'decisions' | 'kinds',
   ): string[] {
-    return seenUnder(JSON.parse(record), section);
+    return seenUnder(parse(record), section);
   }
+
+  it('writes the record as yaml, the way the rest of the ket directory reads', () => {
+    const record = recordAdvised({ dependencies: ['redis'], decisions: [], kinds: [] });
+
+    expect(record).toBe('dependencies:\n  - redis\ndecisions: []\nkinds: []\n');
+  });
 
   it('records a name under the section it belongs to', () => {
     const record = recordAdvised({ dependencies: ['drizzle-orm'], decisions: [], kinds: [] });

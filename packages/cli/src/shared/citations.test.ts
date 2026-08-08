@@ -10,7 +10,9 @@ describe('the paths a design artifact cites', () => {
   });
 
   it('reads a path that starts at a dot directory', () => {
-    expect(citationsFrom('Read `.ket/config.ts` first.').paths).toStrictEqual(['.ket/config.ts']);
+    expect(citationsFrom('Read `.ket/config.yaml` first.').paths).toStrictEqual([
+      '.ket/config.yaml',
+    ]);
   });
 
   it('reads a cited directory, since a design names where a slice lands', () => {
@@ -37,7 +39,7 @@ describe('the paths a design artifact cites', () => {
 
 describe('what a design backticks that names no file in the repository', () => {
   it('leaves a bare file name alone, since a member expression looks the same', () => {
-    expect(citationsFrom('It reads `config.ts` and `process.stdout`.').paths).toStrictEqual([]);
+    expect(citationsFrom('It reads `config.yaml` and `process.stdout`.').paths).toStrictEqual([]);
   });
 
   it('leaves a pattern alone, since a glob names no file to read', () => {

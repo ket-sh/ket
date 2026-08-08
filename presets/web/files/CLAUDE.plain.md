@@ -7,8 +7,8 @@ an index: a new rationale, example, or edge case belongs in a skill, never here.
 
 ## The architecture
 
-`.ket/config.ts` maps each directory to the preset that governs it. This project
-maps `.` to the `web` preset: a TanStack Start application laid out under
+`.ket/config.yaml` maps each directory to the preset that governs it. This
+project maps `.` to the `web` preset: a TanStack Start application laid out under
 Feature-Sliced Design, so one slice means one piece of the product.
 
 A slice lives in whichever layer it belongs to, and `src/pages/`, `src/widgets/`,

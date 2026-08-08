@@ -6,8 +6,8 @@ that applies and work from it rather than from a summary of it.
 
 ## What this project is
 
-`.ket/config.ts` maps each directory to the preset that governs it. This project
-maps `.` to the `cli` preset, so one slice means one command.
+`.ket/config.yaml` maps each directory to the preset that governs it. This
+project maps `.` to the `cli` preset, so one slice means one command.
 
 A slice lives in `src/commands/<slice>/`. Its adapter is `command.ts`: argument
 parsing and process behavior stop there, and the domain beside it stays pure.
@@ -26,10 +26,10 @@ the six checks a scenario passes.
 
 ## The pipeline
 
-Work is an item. An item lives in `.ket/items/<key>/`, and `.ket/BOARD.md`
-follows from those items rather than from a hand edit. The `stages` skill
-carries the statuses, the commands that move an item between them, and the
-points where the pipeline stops for you.
+Work is an item. An item lives in `.ket/items/<key>/`, and `ket watch` draws
+the board from those items as they stand. The `stages` skill carries the
+statuses, the commands that move an item between them, and the points where the
+pipeline stops for you.
 
 Drive it with `/ket:feature`, `/ket:explore`, `/ket:approve`, `/ket:continue`,
 `/ket:review`, `/ket:ship`, and `/ket:status`.

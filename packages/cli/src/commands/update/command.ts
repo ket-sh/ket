@@ -1,5 +1,5 @@
 import { defineCommand, showUsage } from 'citty';
-import { readFile } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 
 import type { Configuration } from '../../shared/configuration.ts';
@@ -7,16 +7,9 @@ import type { FileFate, PlannedFate, ScaffoldRecord } from '../../shared/scaffol
 import type { ProjectNames } from '../../shared/scaffold/name-token.ts';
 import type { ScaffoldFile } from '../../shared/write-files.ts';
 
+import { CONFIGURATION_FILE, configurationIn } from '../../shared/configuration-file.ts';
 import { uncommittedIn } from '../../shared/git.ts';
-import {
-  integrationsFrom,
-  KET_DIRECTORY,
-  keyFrom,
-  ketRootOrThrow,
-  languageFrom,
-  targetsFrom,
-  workflowFrom,
-} from '../../shared/locate.ts';
+import { KET_DIRECTORY, ketRootOrThrow } from '../../shared/locate.ts';
 import {
   hashOf,
   parseScaffoldRecord,
@@ -31,6 +24,7 @@ import { crowdedRefusal, offeredIntegrations } from '../../shared/scaffold/integ
 import { heroHint } from '../../shared/scaffold/name-token.ts';
 import { KET_VERSION } from '../../shared/version.ts';
 import { writeFiles } from '../../shared/write-files.ts';
+import { LEGACY_STATE, legacyRefusal } from './legacy.ts';
 
 const WRITE_FATES = new Set<FileFate>(['refreshed', 'restored', 'arrived']);
 
@@ -39,30 +33,46 @@ function say(line: string): void {
 }
 
 async function configurationOf(root: string): Promise<Configuration> {
-  const loaded: unknown = await import(join(root, KET_DIRECTORY, 'config.ts'));
-  const key = keyFrom(loaded);
-  const targets = targetsFrom(loaded);
+  const reading = await configurationIn(root);
 
-  if (key === undefined || Object.keys(targets).length === 0) {
-    throw new Error(
-      `${KET_DIRECTORY}/config.ts names no key or no targets, so nothing says what governs this project`,
-    );
+  if ('absent' in reading) {
+    throw new Error(`no ${KET_DIRECTORY}/${CONFIGURATION_FILE} says what governs this project`);
   }
 
-  const integrations = integrationsFrom(loaded);
-  const crowded = crowdedRefusal(integrations, offeredIntegrations(Object.values(targets)));
+  if ('refusals' in reading) {
+    throw new Error(`${KET_DIRECTORY}/${CONFIGURATION_FILE} ${reading.refusals.join(', and ')}`);
+  }
+
+  const { configuration } = reading;
+  const offered = offeredIntegrations(Object.values(configuration.targets));
+  const crowded = crowdedRefusal(configuration.integrations, offered);
 
   if (crowded !== undefined) {
-    throw new Error(`${KET_DIRECTORY}/config.ts names ${crowded}`);
+    throw new Error(`${KET_DIRECTORY}/${CONFIGURATION_FILE} names ${crowded}`);
   }
 
-  return {
-    key,
-    targets,
-    integrations,
-    language: languageFrom(loaded),
-    workflow: workflowFrom(loaded),
-  };
+  return configuration;
+}
+
+async function legacyStateIn(root: string): Promise<string[]> {
+  const found = await Promise.all(
+    LEGACY_STATE.map(async (path) =>
+      access(join(root, path)).then(
+        () => path,
+        () => undefined,
+      ),
+    ),
+  );
+
+  return found.filter((path): path is string => path !== undefined);
+}
+
+async function refusingAnOlderScaffold(root: string): Promise<void> {
+  const refusal = legacyRefusal(await legacyStateIn(root));
+
+  if (refusal !== undefined) {
+    throw new Error(refusal);
+  }
 }
 
 async function recordOf(root: string): Promise<ScaffoldRecord> {
@@ -177,6 +187,9 @@ const update = defineCommand({
   },
   async run({ args }) {
     const root = await ketRootOrThrow(process.cwd());
+
+    await refusingAnOlderScaffold(root);
+
     const record = await recordOf(root);
 
     if (!args.plan) {

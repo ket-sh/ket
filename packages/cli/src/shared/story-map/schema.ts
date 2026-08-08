@@ -1,7 +1,6 @@
-import { parse } from 'yaml';
-
 import type { MapReading, MapStory, StoryMap } from './story-map.ts';
 
+import { heldInYaml } from '../yaml-source.ts';
 import { mapFrom } from './shape.ts';
 
 export type { MapReading, MapStory, StoryMap } from './story-map.ts';
@@ -74,22 +73,12 @@ function readingOf(held: unknown): MapReading {
   return refusals.length > 0 ? { refusals } : { map: shaped.node };
 }
 
-function parsedOf(source: string): { held: unknown } | { refusals: string[] } {
-  try {
-    const held: unknown = parse(source);
-
-    return { held };
-  } catch (cause) {
-    return { refusals: [`the map is not yaml: ${String(cause)}`] };
-  }
-}
-
 export function readMap(source: string | undefined): MapReading {
   if (source === undefined) {
     return { absent: true };
   }
 
-  const parsed = parsedOf(source);
+  const parsed = heldInYaml(source, 'map');
 
   return 'refusals' in parsed ? parsed : readingOf(parsed.held);
 }

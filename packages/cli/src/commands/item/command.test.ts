@@ -19,8 +19,8 @@ beforeEach(async () => {
   root = await mkdtemp(join(tmpdir(), 'ket-item-'));
   await mkdir(join(root, '.ket', 'items', 'K-1'), { recursive: true });
   await writeFile(
-    join(root, '.ket', 'config.ts'),
-    "export default { key: 'K', targets: { '.': 'cli' }, integrations: [], language: 'en', workflow: true };\n",
+    join(root, '.ket', 'config.yaml'),
+    'key: K\ntargets:\n  .: cli\nintegrations: []\nlanguage: en\nworkflow: true\n',
   );
   await writeFile(
     join(root, '.ket', 'items', 'K-1', 'item.yaml'),

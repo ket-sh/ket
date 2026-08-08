@@ -7,8 +7,8 @@ an index: a new rationale, example, or edge case belongs in a skill, never here.
 
 ## The architecture
 
-`.ket/config.ts` maps each directory to the preset that governs it. This project
-maps `.` to the `web` preset: a TanStack Start application laid out under
+`.ket/config.yaml` maps each directory to the preset that governs it. This
+project maps `.` to the `web` preset: a TanStack Start application laid out under
 Feature-Sliced Design, so one slice means one piece of the product.
 
 A slice lives in whichever layer it belongs to, and `src/pages/`, `src/widgets/`,
@@ -59,12 +59,11 @@ the runner, its config, and its coverage.
 
 ## The pipeline
 
-Work is an item. An item lives in `.ket/items/<key>/`, and `.ket/BOARD.md`
-follows from those items rather than from a hand edit. Drive it with
-`/ket:feature`, `/ket:explore`, `/ket:approve`, `/ket:continue`, `/ket:review`,
-`/ket:ship`, and `/ket:status`. The `stages` skill carries the statuses, the
-commands that move an item between them, and the points where the pipeline
-stops for you.
+Work is an item. An item lives in `.ket/items/<key>/`, and `ket watch` draws
+the board from those items as they stand. Drive it with `/ket:feature`,
+`/ket:explore`, `/ket:approve`, `/ket:continue`, `/ket:review`, `/ket:ship`,
+and `/ket:status`. The `stages` skill carries the statuses, the commands that
+move an item between them, and the points where the pipeline stops for you.
 
 ## The gates
 

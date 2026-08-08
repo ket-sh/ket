@@ -32,6 +32,22 @@ describe('recording what ket wrote', () => {
     expect(parseScaffoldRecord(renderScaffoldRecord(record))).toStrictEqual(record);
   });
 
+  it('renders the record as yaml, the way the rest of the ket directory reads', () => {
+    const rendered = renderScaffoldRecord(scaffoldRecordOf(FILES, '0.0.0'));
+
+    expect(rendered.startsWith('version: 1\nket: 0.0.0\nfiles:\n')).toBe(true);
+  });
+
+  it('reads a record written as yaml by hand', () => {
+    expect(parseScaffoldRecord('version: 1\nket: 0.0.0\nfiles:\n  a.ts: 0f\n')).toStrictEqual({
+      version: 1,
+      ket: '0.0.0',
+      files: { 'a.ts': '0f' },
+    });
+  });
+});
+
+describe('a scaffold record nothing can compare against', () => {
   it('parses nothing from a document that is not a record', () => {
     expect(parseScaffoldRecord('not json')).toBeUndefined();
     expect(parseScaffoldRecord('{"version": 2, "ket": "0.0.0", "files": {}}')).toBeUndefined();
@@ -67,7 +83,7 @@ describe('recording what ket wrote', () => {
   it('writes the record where the update command reads it', () => {
     const file = scaffoldRecordFile(FILES, '0.0.0');
 
-    expect(file.path).toBe('.ket/scaffold.json');
+    expect(file.path).toBe('.ket/scaffold.yaml');
     expect(parseScaffoldRecord(file.contents)).toStrictEqual(scaffoldRecordOf(FILES, '0.0.0'));
   });
 });

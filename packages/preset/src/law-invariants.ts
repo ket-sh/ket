@@ -15,7 +15,7 @@ const PIPELINE_HEADING = '## The pipeline';
 
 const SECTION_OPENER = '## ';
 
-const PIPELINE_TRACES = ['/ket:', '.ket/items', 'BOARD.md'];
+const PIPELINE_TRACES = ['/ket:', '.ket/items', 'ket watch'];
 
 const QUOTE = '`';
 

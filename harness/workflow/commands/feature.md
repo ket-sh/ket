@@ -11,7 +11,7 @@ write source in this turn; the gate will refuse it and it should.
 
 ## 1. Classify
 
-Read `.ket/config.ts` to learn the targets, then read enough of the codebase to
+Read `.ket/config.yaml` to learn the targets, then read enough of the codebase to
 answer two questions.
 
 **Kind** is `feature`, `bug`, `refactor` or `chore`.

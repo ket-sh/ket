@@ -52,7 +52,7 @@ async function committed(root: string): Promise<void> {
 }
 
 async function recordOn(root: string): Promise<Record<string, string>> {
-  const record = parseScaffoldRecord(await readFile(join(root, '.ket/scaffold.json'), 'utf8'));
+  const record = parseScaffoldRecord(await readFile(join(root, '.ket/scaffold.yaml'), 'utf8'));
 
   if (record === undefined) {
     throw new Error(`${root} carries no readable scaffold record`);
@@ -63,7 +63,7 @@ async function recordOn(root: string): Promise<Record<string, string>> {
 
 async function rewriteRecord(root: string, files: Record<string, string>): Promise<void> {
   await writeFile(
-    join(root, '.ket/scaffold.json'),
+    join(root, '.ket/scaffold.yaml'),
     `${JSON.stringify({ version: 1, ket: '0.0.0', files }, null, 2)}\n`,
   );
 }
@@ -119,15 +119,16 @@ describe('planning an update', () => {
 describe('applying an update to a configuration that names two tools for one slot', () => {
   it('refuses rather than writing one tool over the other, since whichever ran last would win', async () => {
     await writeFile(
-      join(where, '.ket/config.ts'),
+      join(where, '.ket/config.yaml'),
       [
-        'export default {',
-        "  key: 'ORD',",
-        "  targets: { '.': 'cli' },",
-        "  integrations: ['codecov', 'qlty'],",
-        "  language: 'en',",
-        '  workflow: true,',
-        '};',
+        'key: ORD',
+        'targets:',
+        '  .: cli',
+        'integrations:',
+        '  - codecov',
+        '  - qlty',
+        'language: en',
+        'workflow: true',
         '',
       ].join('\n'),
     );
@@ -185,9 +186,29 @@ describe('applying an update', () => {
   });
 
   it('names the missing record when a scaffold predates it', async () => {
-    await rm(join(where, '.ket/scaffold.json'));
+    await rm(join(where, '.ket/scaffold.yaml'));
     await committed(where);
 
-    await expect(runCommand('update', [])).rejects.toThrow(/scaffold\.json/);
+    await expect(runCommand('update', [])).rejects.toThrow(/scaffold\.yaml/);
+  });
+});
+
+describe('applying an update to a project an older ket scaffolded', () => {
+  it('refuses every old name in one breath rather than migrating what it would have to run', async () => {
+    await rm(join(where, '.ket/scaffold.yaml'));
+    await writeFile(join(where, '.ket/scaffold.json'), '{}\n');
+    await writeFile(join(where, '.ket/config.ts'), 'export default {};\n');
+    await committed(where);
+
+    await expect(runCommand('update', [])).rejects.toThrow(
+      /update cannot rewrite it for you.*rewrite \.ket\/config\.ts.*rename \.ket\/scaffold\.json/su,
+    );
+  });
+
+  it('says nothing about an old name the project never carried', async () => {
+    await writeFile(join(where, '.ket/config.ts'), 'export default {};\n');
+    await committed(where);
+
+    await expect(runCommand('update', [])).rejects.toThrow(/^(?:(?!toolchain).)*$/su);
   });
 });

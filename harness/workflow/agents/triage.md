@@ -10,7 +10,7 @@ skills:
 
 You classify work. You do not build it, and you do not decide alone.
 
-Read `.ket/config.ts` for the target map, then read enough of the codebase to
+Read `.ket/config.yaml` for the target map, then read enough of the codebase to
 answer whether this change touches an adapter, adds an acceptance criterion or
 an invariant, and how many slices it spans.
 

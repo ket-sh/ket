@@ -192,7 +192,7 @@ describe('the feed the board drinks from', () => {
 
 describe('the gate a feed acts through', () => {
   it('moves an eligible item and the next snapshot shows it', async () => {
-    await writeFile(join(root, '.ket', 'config.ts'), "export default { key: 'K' };\n");
+    await writeFile(join(root, '.ket', 'config.yaml'), 'key: K\ntargets:\n  .: cli\n');
     await writeFile(itemAt(root), itemYaml('awaiting-approval'));
 
     const feed = boardFeedFor(root);

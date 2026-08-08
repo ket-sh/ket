@@ -3,9 +3,6 @@ import { dirname, isAbsolute, join, relative } from 'node:path';
 
 import type { PresetName } from './configuration.ts';
 
-import { PRESET_NAMES } from './configuration.ts';
-import { DEFAULT_LANGUAGE } from './scaffold/language.ts';
-
 export const KET_DIRECTORY = '.ket';
 
 const SOURCE_DIRECTORY = 'src';
@@ -37,27 +34,6 @@ export async function ketRootFrom(start: string): Promise<string | undefined> {
   return found;
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
-
-function isPreset(value: unknown): value is PresetName {
-  return PRESET_NAMES.some((known) => known === value);
-}
-
-export function targetsFrom(loaded: unknown): Record<string, PresetName> {
-  const exported = isRecord(loaded) ? loaded['default'] : undefined;
-  const declared = isRecord(exported) ? exported['targets'] : undefined;
-
-  if (!isRecord(declared)) {
-    return {};
-  }
-
-  return Object.fromEntries(
-    Object.entries(declared).filter((entry): entry is [string, PresetName] => isPreset(entry[1])),
-  );
-}
-
 // A hook sends an absolute path, and every rule here is written against a path
 // relative to the repository. Reading one as the other silently governs nothing.
 export function insideRepository(root: string, path: string): string | undefined {
@@ -80,36 +56,6 @@ export async function ketRootOrThrow(from: string): Promise<string> {
   }
 
   return root;
-}
-
-export function keyFrom(loaded: unknown): string | undefined {
-  const exported = isRecord(loaded) ? loaded['default'] : undefined;
-  const declared = isRecord(exported) ? exported['key'] : undefined;
-
-  return typeof declared === 'string' && declared !== '' ? declared : undefined;
-}
-
-export function integrationsFrom(loaded: unknown): string[] {
-  const exported = isRecord(loaded) ? loaded['default'] : undefined;
-  const declared = isRecord(exported) ? exported['integrations'] : undefined;
-
-  return Array.isArray(declared)
-    ? declared.filter((name): name is string => typeof name === 'string')
-    : [];
-}
-
-export function languageFrom(loaded: unknown): string {
-  const exported = isRecord(loaded) ? loaded['default'] : undefined;
-  const declared = isRecord(exported) ? exported['language'] : undefined;
-
-  return typeof declared === 'string' ? declared : DEFAULT_LANGUAGE;
-}
-
-export function workflowFrom(loaded: unknown): boolean {
-  const exported = isRecord(loaded) ? loaded['default'] : undefined;
-  const declared = isRecord(exported) ? exported['workflow'] : undefined;
-
-  return typeof declared === 'boolean' ? declared : true;
 }
 
 export function sourceRootsOf(targets: Record<string, PresetName>): string[] {

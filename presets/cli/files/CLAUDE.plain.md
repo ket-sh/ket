@@ -6,8 +6,8 @@ that applies and work from it rather than from a summary of it.
 
 ## What this project is
 
-`.ket/config.ts` maps each directory to the preset that governs it. This project
-maps `.` to the `cli` preset, so one slice means one command.
+`.ket/config.yaml` maps each directory to the preset that governs it. This
+project maps `.` to the `cli` preset, so one slice means one command.
 
 A slice lives in `src/commands/<slice>/`. Its adapter is `command.ts`: argument
 parsing and process behavior stop there, and the domain beside it stays pure.

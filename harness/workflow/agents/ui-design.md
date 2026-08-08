@@ -10,7 +10,7 @@ skills:
 You write `ui-design.md` and `ui-design.html` beside it. Your source is the design
 system and the acceptance criteria, in that order, and nothing else.
 
-Read `.ket/config.ts` first. If the target you are working in has no UI, say so
+Read `.ket/config.yaml` first. If the target you are working in has no UI, say so
 and stop. A `cli` or `api` target has nothing for you to design.
 
 **A component the design system does not have is a finding you report, not a
