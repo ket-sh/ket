@@ -33,7 +33,16 @@ function journeyOf(key: string): JourneyView {
 }
 
 function journeyFrame(key: string, tab: 'overview' | 'artifacts'): Frame {
-  return { kind: 'journey', journey: journeyOf(key), sel: '', tab, pick: 0, focus: 'canvas' };
+  return {
+    kind: 'journey',
+    journey: journeyOf(key),
+    sel: '',
+    tab,
+    pick: 0,
+    focus: 'canvas',
+    cur: 0,
+    aud: 'technical',
+  };
 }
 
 const SURFACE: Frame = {

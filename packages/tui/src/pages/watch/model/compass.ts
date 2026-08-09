@@ -1,5 +1,14 @@
 export type Direction = 'up' | 'down' | 'left' | 'right';
 
+export type WheelDirection = Direction;
+
+export const ACROSS: Record<WheelDirection, 'left' | 'right'> = {
+  up: 'left',
+  left: 'left',
+  down: 'right',
+  right: 'right',
+};
+
 const DIRECTIONS: Direction[] = ['up', 'down', 'left', 'right'];
 
 export interface Nudge {

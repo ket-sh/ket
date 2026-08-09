@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { Ln } from '../../../shared/lib';
 import type { SurfaceDocView } from '../../../shared/model';
 
-import { docLines } from './lines.ts';
+import { audienceAt, docLines } from './lines.ts';
 
 function textOf(lines: Ln[]): string {
   return lines.map((line) => line.map((span) => span.text).join('')).join('\n');
@@ -51,6 +51,38 @@ describe('the audience switch a prose doc wears', () => {
 
     expect(spansOf(lines).some((span) => span.text.includes(' src/auth.ts '))).toBe(true);
     expect(textOf(lines)).toContain('• no override');
+  });
+});
+
+describe('the audience a pill column names', () => {
+  it('reads technical across the first pill', () => {
+    expect(audienceAt(PROSE, 0)).toBe('technical');
+    expect(audienceAt(PROSE, 10)).toBe('technical');
+  });
+
+  it('reads plain across the second pill', () => {
+    expect(audienceAt(PROSE, 13)).toBe('plain');
+    expect(audienceAt(PROSE, 28)).toBe('plain');
+  });
+
+  it('reads nothing between and past the pills', () => {
+    expect(audienceAt(PROSE, 11)).toBeUndefined();
+    expect(audienceAt(PROSE, 29)).toBeUndefined();
+  });
+
+  it('offers no side where no plain version exists', () => {
+    expect(audienceAt({ ...PROSE, plain: undefined }, 5)).toBeUndefined();
+  });
+
+  it('offers no side on a doc without audiences', () => {
+    const flat: SurfaceDocView = {
+      kind: 'criteria',
+      label: 'Criteria',
+      name: 'locking.feature',
+      source: 'Feature: locking',
+    };
+
+    expect(audienceAt(flat, 5)).toBeUndefined();
   });
 });
 

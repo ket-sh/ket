@@ -25,11 +25,17 @@ function pillOf(label: string, audience: Audience, side: Audience, theme: Theme)
   return audience === side ? wornPill(label, theme) : restingPill(label, theme);
 }
 
+const TECHNICAL_PILL = ' Technical ';
+
+const PILL_GAP = '  ';
+
+const PLAIN_PILL = ' Plain language ';
+
 function audienceTabs(doc: Sided, audience: Audience, theme: Theme): Ln {
-  const tabs: Ln = [pillOf('Technical', audience, 'technical', theme), { text: '  ' }];
+  const tabs: Ln = [pillOf('Technical', audience, 'technical', theme), { text: PILL_GAP }];
 
   if (doc.plain === undefined) {
-    tabs.push({ text: ' Plain language ', fg: theme.surface1 });
+    tabs.push({ text: PLAIN_PILL, fg: theme.surface1 });
     tabs.push({ text: '  No plain version written.', fg: theme.overlay });
 
     return tabs;
@@ -116,4 +122,24 @@ export function docLines(doc: SurfaceDocView, audience: Audience, theme: Theme =
   }
 
   return flatLines(doc, theme);
+}
+
+function sidedOf(doc: SurfaceDocView): Sided | undefined {
+  return doc.kind === 'prose' || doc.kind === 'design' || doc.kind === 'decision' ? doc : undefined;
+}
+
+function pillSideAt(column: number): Audience | undefined {
+  if (column >= 0 && column < TECHNICAL_PILL.length) {
+    return 'technical';
+  }
+
+  const start = TECHNICAL_PILL.length + PILL_GAP.length;
+
+  return column >= start && column < start + PLAIN_PILL.length ? 'plain' : undefined;
+}
+
+export function audienceAt(doc: SurfaceDocView, column: number): Audience | undefined {
+  const sided = sidedOf(doc);
+
+  return sided?.plain === undefined ? undefined : pillSideAt(column);
 }

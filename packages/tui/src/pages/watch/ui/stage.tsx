@@ -123,6 +123,8 @@ export function StageArea(room: RoomProps): ReactNode {
         tab={stack.top.tab}
         pick={stack.top.pick}
         focus={stack.top.focus}
+        cur={stack.top.cur}
+        aud={stack.top.aud}
         now={now}
         tick={tick}
         width={width - 2}
@@ -133,7 +135,7 @@ export function StageArea(room: RoomProps): ReactNode {
   }
 
   if (stack.top.kind === 'surface') {
-    return <SurfacePage frame={stack.top} height={height} />;
+    return <SurfacePage frame={stack.top} height={height} mouse={mouse} />;
   }
 
   return <BoardArea {...room} />;

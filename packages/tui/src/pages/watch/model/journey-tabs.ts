@@ -1,8 +1,10 @@
 import type { JourneyView, SurfaceDocView } from '../../../shared/model';
+import type { Audience } from '../lib/lines.ts';
 import type { Direction } from './compass.ts';
 import type { Frame, JourneyTab } from './frames.ts';
 
 import { neighborOf, placedOf } from '../lib/layout.ts';
+import { docLines } from '../lib/lines.ts';
 import { selectedNodeOf } from './frames.ts';
 
 // The children tab only exists while the item has children, so a tab walk
@@ -25,7 +27,7 @@ export function tabbed(stack: Frame[]): Frame[] {
   const tabs = tabsOf(above.journey);
   const next = tabs[(tabs.indexOf(above.tab) + 1) % tabs.length] ?? 'overview';
 
-  return [...stack.slice(0, -1), { ...above, tab: next, pick: 0 }];
+  return [...stack.slice(0, -1), { ...above, tab: next, pick: 0, cur: 0, focus: 'canvas' }];
 }
 
 export type Opened = Extract<Frame, { kind: 'journey' }>;
@@ -76,9 +78,65 @@ function walkedPane(above: Opened, direction: Direction): Opened {
   return direction === 'left' ? { ...above, focus: 'canvas' } : above;
 }
 
+function readDocOf(above: Opened): SurfaceDocView | undefined {
+  return above.journey.artifacts[above.pick]?.doc;
+}
+
+function walkedTabs(above: Opened, direction: Direction): Opened {
+  if (direction === 'down') {
+    return { ...above, focus: 'canvas' };
+  }
+
+  if (direction === 'up') {
+    return above;
+  }
+
+  const tabs = tabsOf(above.journey);
+  const at = tabs.indexOf(above.tab) + (direction === 'right' ? 1 : -1);
+  const landing = tabs[Math.min(Math.max(at, 0), tabs.length - 1)] ?? above.tab;
+
+  return { ...above, tab: landing, pick: 0, cur: 0 };
+}
+
+function walkedReading(above: Opened, direction: Direction): Opened {
+  if (direction === 'left') {
+    return { ...above, focus: 'canvas' };
+  }
+
+  const doc = readDocOf(above);
+  const held = doc === undefined ? 0 : docLines(doc, above.aud).length;
+  const cur = Math.min(Math.max(above.cur + stepOf(direction), 0), Math.max(0, held - 1));
+
+  return { ...above, cur };
+}
+
+function enteredReading(above: Opened): Opened {
+  return above.tab === 'artifacts' && readDocOf(above) !== undefined
+    ? { ...above, focus: 'content', cur: 0 }
+    : above;
+}
+
+function steppedRows(above: Opened, direction: Direction): Opened {
+  if (above.focus === 'content') {
+    return walkedReading(above, direction);
+  }
+
+  if (direction === 'right') {
+    return enteredReading(above);
+  }
+
+  return direction === 'up' && above.pick === 0
+    ? { ...above, focus: 'tabs' }
+    : walkedRows(above, direction);
+}
+
 function steppedIn(above: Opened, direction: Direction): Opened {
+  if (above.focus === 'tabs') {
+    return walkedTabs(above, direction);
+  }
+
   if (listsRows(above.tab)) {
-    return walkedRows(above, direction);
+    return steppedRows(above, direction);
   }
 
   return above.focus === 'pane' ? walkedPane(above, direction) : walkedCanvas(above, direction);
@@ -101,7 +159,29 @@ export function tabbedTo(stack: Frame[], tab: JourneyTab): Frame[] {
     return stack;
   }
 
-  return [...stack.slice(0, -1), { ...above, tab, pick: 0, focus: 'canvas' }];
+  return [...stack.slice(0, -1), { ...above, tab, pick: 0, cur: 0, focus: 'canvas' }];
+}
+
+export function picked(stack: Frame[], at: number): Frame[] {
+  const above = stack[stack.length - 1];
+
+  if (above?.kind !== 'journey' || !listsRows(above.tab)) {
+    return stack;
+  }
+
+  const pick = Math.min(Math.max(at, 0), Math.max(0, roomIn(above) - 1));
+
+  return [...stack.slice(0, -1), { ...above, pick, cur: 0 }];
+}
+
+export function sided(stack: Frame[], aud: Audience): Frame[] {
+  const above = stack[stack.length - 1];
+
+  if (above?.kind !== 'journey') {
+    return stack;
+  }
+
+  return [...stack.slice(0, -1), { ...above, aud, cur: 0 }];
 }
 
 export function aimedAt(stack: Frame[], sel: string): Frame[] {

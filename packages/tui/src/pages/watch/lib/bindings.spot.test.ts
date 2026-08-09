@@ -95,7 +95,16 @@ function journeyOf(children: JourneyChildView[]): JourneyView {
 }
 
 function journeyFrameAt(tab: JourneyTab, focus: JourneyFocus, sel: string): Frame {
-  return { kind: 'journey', journey: journeyOf([CHILD]), sel, tab, pick: 0, focus };
+  return {
+    kind: 'journey',
+    journey: journeyOf([CHILD]),
+    sel,
+    tab,
+    pick: 0,
+    focus,
+    cur: 0,
+    aud: 'technical',
+  };
 }
 
 describe('the spot the board stands in', () => {
@@ -155,9 +164,22 @@ describe('the spot a journey stands in', () => {
       tab: 'workflow',
       pick: 0,
       focus: 'canvas',
+      cur: 0,
+      aud: 'technical',
     };
 
     expect(spotOf(frame, 'kanban', [], HELD)).toStrictEqual({ kind: 'journey', pane: 'canvas' });
+  });
+
+  it('reads the focused tab row and the focused content by their own standings', () => {
+    expect(spotOf(journeyFrameAt('artifacts', 'tabs', 'n1'), 'kanban', [], HELD)).toStrictEqual({
+      kind: 'journey',
+      pane: 'tabs',
+    });
+    expect(spotOf(journeyFrameAt('artifacts', 'content', 'n1'), 'kanban', [], HELD)).toStrictEqual({
+      kind: 'journey',
+      pane: 'reading',
+    });
   });
 });
 

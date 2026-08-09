@@ -14,7 +14,7 @@ import type { Direction } from './compass.ts';
 
 export type JourneyTab = 'overview' | 'workflow' | 'children' | 'artifacts';
 
-export type JourneyFocus = 'canvas' | 'pane';
+export type JourneyFocus = 'canvas' | 'pane' | 'tabs' | 'content';
 
 export type DocsFocus = 'catalog' | 'detail';
 
@@ -32,6 +32,8 @@ export type Frame =
       tab: JourneyTab;
       pick: number;
       focus: JourneyFocus;
+      cur: number;
+      aud: Audience;
     }
   | {
       kind: 'surface';
@@ -80,6 +82,8 @@ export interface FrameStack {
   docsFocus: (focus: DocsFocus) => void;
   enter: () => void;
   walk: (direction: Direction) => void;
+  pickAt: (at: number) => void;
+  readAs: (aud: Audience) => void;
   scroll: (delta: number, most: number) => void;
   tune: (tuning: Tuning) => void;
   gate: (action: GateActionView, card: KanbanCardView, tick: number) => void;

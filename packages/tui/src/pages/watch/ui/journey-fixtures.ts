@@ -60,6 +60,21 @@ export const JOURNEY: JourneyView = {
         note: undefined,
       },
     },
+    {
+      path: '.ket/items/K-1/notes.md',
+      name: 'notes.md',
+      at: undefined,
+      doc: {
+        kind: 'prose',
+        label: 'Notes',
+        tech: Array.from(
+          { length: 40 },
+          (_, held) => `line ${String(held + 1).padStart(2, '0')}`,
+        ).join('\n'),
+        plain: undefined,
+        note: undefined,
+      },
+    },
   ],
   children: [
     {

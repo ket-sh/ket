@@ -1,6 +1,10 @@
 import { createMockKeys } from '@opentui/core/testing';
 import { testRender } from '@opentui/react/test-utils';
-import { afterEach, describe, expect, it } from 'bun:test';
+import { afterEach, describe, expect, it, setDefaultTimeout } from 'bun:test';
+
+// The landed() waits commit to a 15s deadline; a loaded runner can spend more
+// than bun's 5s default across two of them before a frame settles.
+setDefaultTimeout(40_000);
 
 import { WatchPage } from './index.tsx';
 import { feedOf, NOW } from './watch-fixtures.ts';
@@ -114,6 +118,55 @@ describe('the journey a pointer click steers', () => {
     await clickedIn(frame, 'children 0/1', 'children 0/1');
 
     expect(await landed((seen) => seen.includes('1 children'))).toContain('1 children');
+  });
+});
+
+async function landedOnArtifacts(): Promise<string> {
+  await landedOnWorkflow(WIDE);
+  pressed('TAB');
+  await landed((seen) => seen.includes('A quiet fix'));
+  pressed('TAB');
+
+  return landed((seen) => seen.includes('spec.md'));
+}
+
+describe('the artifacts tab the pointer works', () => {
+  it('chooses the file under the click', async () => {
+    const frame = await landedOnArtifacts();
+
+    await clickedIn(frame, 'notes.md', 'notes.md');
+
+    expect(await landed((seen) => seen.includes('line 01'))).toContain('line 01');
+  });
+
+  it('retunes the reading through the audience pills', async () => {
+    const frame = await landedOnArtifacts();
+
+    await clickedIn(frame, 'Plain language', 'Plain language');
+
+    const plain = await landed((seen) => seen.includes('Five tries and you wait.'));
+
+    expect(plain).toContain('Five tries and you wait.');
+    expect(plain).not.toContain('Five failures lock the account.');
+
+    await clickedIn(plain, 'Technical', 'Technical');
+
+    const back = await landed((seen) => !seen.includes('Five tries and you wait.'));
+
+    expect(back).toContain('Five failures lock the account.');
+  });
+
+  it('retunes the opened surface through the same pills', async () => {
+    await landedOnArtifacts();
+    pressed('RETURN');
+
+    const surface = await landed((seen) => seen.includes('K-1 · Spec'));
+
+    await clickedIn(surface, 'Plain language', 'Plain language');
+
+    expect(await landed((seen) => seen.includes('Five tries and you wait.'))).toContain(
+      'Five tries and you wait.',
+    );
   });
 });
 

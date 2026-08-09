@@ -1,5 +1,5 @@
 import type { Direction } from './compass.ts';
-import type { FrameStack } from './frames.ts';
+import type { Frame, FrameStack } from './frames.ts';
 
 import { asDirection } from './compass.ts';
 
@@ -18,6 +18,15 @@ const JOURNEY_KEYS: Record<string, (stack: FrameStack) => void> = {
   },
 };
 
+const READ_KEYS: Record<string, Direction> = {
+  j: 'down',
+  k: 'up',
+};
+
+function readDirectionOf(name: string, top: Frame): Direction | undefined {
+  return top.kind === 'journey' && top.focus === 'content' ? READ_KEYS[name] : undefined;
+}
+
 export function journeyPress(name: string, stack: FrameStack): void {
   const answer = JOURNEY_KEYS[name];
 
@@ -27,7 +36,7 @@ export function journeyPress(name: string, stack: FrameStack): void {
     return;
   }
 
-  const direction: Direction | undefined = asDirection(name);
+  const direction = readDirectionOf(name, stack.top) ?? asDirection(name);
 
   if (direction !== undefined) {
     stack.walk(direction);

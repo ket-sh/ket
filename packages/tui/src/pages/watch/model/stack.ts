@@ -8,7 +8,6 @@ import type {
   SurfaceDocView,
 } from '../../../shared/model';
 import type { Draft } from '../lib/edit.ts';
-import type { Direction } from './compass.ts';
 import type { Frame, FrameStack, Grow, JourneyTab, Tuning } from './frames.ts';
 import type { Doors } from './journey-tabs.ts';
 
@@ -24,8 +23,9 @@ import {
   surfaceFrame,
   tuned,
 } from './frames.ts';
-import { aimedAt, enteredIn, tabbedTo, tabbed, walked } from './journey-tabs.ts';
+import { enteredIn } from './journey-tabs.ts';
 import { logSeated, logSlid, mapSeated, mapWalked } from './screen-frames.ts';
+import { useSteering } from './steering.ts';
 
 type Ceremony = Pick<FrameStack, 'gate' | 'pass'>;
 
@@ -168,6 +168,8 @@ function useDiving(
               tab,
               pick: 0,
               focus: 'canvas',
+              cur: 0,
+              aud: 'technical',
             },
           ]);
         }
@@ -191,35 +193,32 @@ function useDiving(
   return { dive, enter };
 }
 
-type Steering = Pick<FrameStack, 'showTab' | 'aim' | 'walk' | 'tab'>;
+type Holding = Pick<FrameStack, 'scroll' | 'tune' | 'pop' | 'home'>;
 
-function useSteering(setFrames: Grow): Steering {
-  const showTab = useCallback(
-    (tab: JourneyTab) => {
-      setFrames((stack) => tabbedTo(stack, tab));
+function useHolding(setFrames: Grow): Holding {
+  const scroll = useCallback(
+    (delta: number, most: number) => {
+      setFrames((stack) => scrolled(stack, delta, most));
     },
     [setFrames],
   );
 
-  const aim = useCallback(
-    (sel: string) => {
-      setFrames((stack) => aimedAt(stack, sel));
+  const tune = useCallback(
+    (tuning: Tuning) => {
+      setFrames((stack) => tuned(stack, tuning));
     },
     [setFrames],
   );
 
-  const walk = useCallback(
-    (direction: Direction) => {
-      setFrames((stack) => walked(stack, direction));
-    },
-    [setFrames],
-  );
-
-  const tab = useCallback(() => {
-    setFrames((stack) => tabbed(stack));
+  const pop = useCallback(() => {
+    setFrames((stack) => (stack.length > 1 ? stack.slice(0, -1) : stack));
   }, [setFrames]);
 
-  return { showTab, aim, walk, tab };
+  const home = useCallback(() => {
+    setFrames(() => [{ kind: 'board' }]);
+  }, [setFrames]);
+
+  return { scroll, tune, pop, home };
 }
 
 export function useFrameStack(feed: BoardFeed): FrameStack {
@@ -230,24 +229,9 @@ export function useFrameStack(feed: BoardFeed): FrameStack {
   const { openMap, mapWalk, mapSeat } = useMapping(feed, setFrames);
   const { openLog, logSeat, logSlide } = useLogging(feed, setFrames);
   const shelved = useDocsShelf(feed, setFrames);
-  const { showTab, aim, walk, tab } = useSteering(setFrames);
+  const { showTab, aim, walk, tab, pickAt, readAs } = useSteering(setFrames);
   const { dive, enter } = useDiving(feed, top, setFrames, showTab);
-
-  const scroll = useCallback((delta: number, most: number) => {
-    setFrames((stack) => scrolled(stack, delta, most));
-  }, []);
-
-  const tune = useCallback((tuning: Tuning) => {
-    setFrames((stack) => tuned(stack, tuning));
-  }, []);
-
-  const pop = useCallback(() => {
-    setFrames((stack) => (stack.length > 1 ? stack.slice(0, -1) : stack));
-  }, []);
-
-  const home = useCallback(() => {
-    setFrames([{ kind: 'board' }]);
-  }, []);
+  const { scroll, tune, pop, home } = useHolding(setFrames);
 
   return {
     frames,
@@ -265,6 +249,8 @@ export function useFrameStack(feed: BoardFeed): FrameStack {
     ...shelved,
     enter,
     walk,
+    pickAt,
+    readAs,
     scroll,
     tune,
     gate,
