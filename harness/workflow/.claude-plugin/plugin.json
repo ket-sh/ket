@@ -1,7 +1,7 @@
 {
   "name": "ket-workflow",
   "displayName": "ket-workflow",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Drives an item from filed to shipped through the ket pipeline",
   "author": { "name": "ket", "url": "https://github.com/ket-sh/ket" },
   "homepage": "https://github.com/ket-sh/ket",
