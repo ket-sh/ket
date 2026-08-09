@@ -94,6 +94,15 @@ describe('the moments the side pane dates', () => {
     expect(foldJourney(STORED, WALKED, 'K-1')?.pane.arrivedAt).toBe('2026-08-07T10:00:00.000Z');
   });
 
+  it('dates the arrival by the newest move when several stand behind it', () => {
+    const log =
+      WALKED +
+      moved('K-1', 'awaiting-approval', '2026-08-07T11:00:00.000Z') +
+      moved('K-1', 'designing', '2026-08-07T12:00:00.000Z');
+
+    expect(foldJourney(STORED, log, 'K-1')?.pane.arrivedAt).toBe('2026-08-07T12:00:00.000Z');
+  });
+
   it('dates the last event the item recorded, whatever gate wrote it', () => {
     const log = WALKED + turnedAway('K-1', '2026-08-07T11:00:00.000Z', 'no test covers it');
 

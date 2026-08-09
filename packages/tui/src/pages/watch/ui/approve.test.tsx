@@ -67,6 +67,9 @@ describe('the offer the item legend extends at a human gate', () => {
     expect(frame).toContain(OFFERED);
   });
 
+  // The escape key is left alone here: the ceremony curtain closes a passed
+  // gate on its own after sixteen ticks, and a pressed escape racing that
+  // curtain on a slow runner pops the journey instead of the gate.
   it('opens the ceremony on a and moves the item through it', async () => {
     const feed = feedOf();
     const keys = await openedWaitingJourney(feed);
@@ -79,9 +82,10 @@ describe('the offer the item legend extends at a human gate', () => {
 
     expect(feed.acted).toContain('K-2 approve');
 
-    keys.pressKey('ESCAPE');
-
-    const refolded = await landed((seen) => seen.includes('implementing'));
+    const refolded = await landed(
+      (seen) =>
+        seen.includes('K-2 · journey') && seen.includes('implementing') && !seen.includes('passed'),
+    );
 
     expect(refolded).toContain('K-2 · journey');
     expect(refolded).toContain('implementing');

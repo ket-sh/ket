@@ -92,3 +92,17 @@ describe('the sub-steps a stage wears on the canvas', () => {
     ]);
   });
 });
+
+describe("the boundary a visit's window draws", () => {
+  const STAMPED = WALKED + wrote('.ket/items/K-1/spec.md', '2026-08-07T10:00:00.000Z');
+
+  it('claims a write stamped at the very arrival for the arriving stage', () => {
+    expect(stepsAt(itemOf('designing'), STAMPED, 'designing')).toStrictEqual([
+      { name: 'spec.md', at: '2026-08-07T10:00:00.000Z' },
+    ]);
+  });
+
+  it('leaves a write stamped at the departure to the next visit alone', () => {
+    expect(stepsAt(itemOf('designing'), STAMPED, 'triaged')).toStrictEqual([]);
+  });
+});
