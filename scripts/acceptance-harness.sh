@@ -803,6 +803,34 @@ status_is OS-1 shipped
 allows src/auth.ts
 CHECKED=$((CHECKED + 1))
 
+echo "acceptance: a watcher hears the gate open, whichever hand opens it"
+# The gate commands park this watcher in the background, so the session learns
+# about an approval given anywhere: the log is the one place every path writes.
+only_item OS-1 feature story awaiting-approval 'login with lockout'
+AWAIT_LOG="$SANDBOX/await.log"
+(cd "$PROJECT" && "$KET" item await OS-1 --past awaiting-approval >"$AWAIT_LOG" 2>&1) &
+AWAIT_PID=$!
+ket item approve OS-1 >/dev/null || fail "approve refused an item awaiting approval"
+for _ in $(seq 1 50); do
+  kill -0 "$AWAIT_PID" 2>/dev/null || break
+  sleep 0.2
+done
+if kill -0 "$AWAIT_PID" 2>/dev/null; then
+  kill "$AWAIT_PID" 2>/dev/null || true
+  fail "the watcher never returned after the item moved: $(cat "$AWAIT_LOG")"
+fi
+wait "$AWAIT_PID" || fail "the watcher exited refusing: $(cat "$AWAIT_LOG")"
+AWAITED="$(cat "$AWAIT_LOG")"
+case "$AWAITED" in
+*'{"key":"OS-1","from":"awaiting-approval","to":"implementing"}'*) ;;
+*) fail "the watcher never said the move, it said: ${AWAITED:-nothing}" ;;
+esac
+status_is OS-1 implementing
+CHECKED=$((CHECKED + 2))
+
+refuses_command 'OS-99 has no item this repository can read' \
+  item await OS-99 --past awaiting-approval
+
 echo "acceptance: the harness says how an item finishes"
 # A grep of the whole skill proves only that the words survived somewhere in it.
 # The row is what an agent reads to know what ends a status, so the row is what

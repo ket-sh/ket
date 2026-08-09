@@ -6,7 +6,7 @@ sources:
   - presets/cli/src/**
   - presets/web/src/**
   - harness/**
-stamp: f53d54bdca5f
+stamp: c0e8579fa9ea
 ---
 
 # The ket handbook
@@ -90,7 +90,9 @@ runs without asking.
    pipeline, and only a person knows the product changed.
 
 At the third and fourth gate, the review surface opens in the browser so you
-decide looking at the work, not at a summary of it.
+decide looking at the work, not at a summary of it. While either gate holds,
+the session waits on the event log through `ket item await`, so an answer
+given from any surface picks the pipeline back up by itself.
 
 ### Watching it run
 

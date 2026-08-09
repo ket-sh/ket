@@ -1,8 +1,9 @@
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { openerThrough } from './command.ts';
 import { stopSurface } from './server.ts';
 import { showSurface } from './show.ts';
 
@@ -20,6 +21,7 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  vi.restoreAllMocks();
   await stopSurface(join(root, '.ket', 'items', 'K-1'));
   await rm(root, { recursive: true, force: true });
 });
@@ -58,5 +60,27 @@ describe('showing an item its surface', () => {
     });
 
     expect(openedAt).toEqual([handle.address]);
+  });
+
+  it('says how to reach the surface when the opener cannot start, and serves anyway', async () => {
+    await filed('K-1');
+
+    const said: string[] = [];
+    const told = new Promise<void>((heard) => {
+      vi.spyOn(process.stderr, 'write').mockImplementation((chunk) => {
+        said.push(String(chunk));
+        heard();
+
+        return true;
+      });
+    });
+
+    const handle = await showSurface(root, 'K-1', openerThrough('ket-opener-nobody-installed'));
+
+    await told;
+
+    expect((await fetch(handle.address)).status).toBe(200);
+    expect(said.join('')).toContain('could not open the browser:');
+    expect(said.join('')).toContain(`open ${handle.address} yourself`);
   });
 });

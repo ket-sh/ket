@@ -22,19 +22,48 @@ chat. The page opens on the change brief with the surviving findings under it, s
 the user sees what landed rather than a key and a status. Add `--headless` when
 no browser can open.
 
-## 2. Say what is closing
+## 2. Start the watcher
+
+```
+ket item await $ARGUMENTS --past awaiting-merge
+```
+
+Run it as a background task beside the surface, after saying the address. It
+blocks until the item leaves `awaiting-merge`, then prints the move as one json
+line, so the confirmation reaches this session the moment it lands.
+
+The watcher follows `.ket/events.jsonl`, and every path that ships the item
+writes that log: the command in step 5, the TUI's offer key, any other session.
+Whichever path moves the item completes this watcher, so a merge recorded
+somewhere else cancels the wait by itself. One watcher hears every path, so
+never start a second.
+
+Then tell the user plainly: ship it in the browser, in the TUI (choose the
+card, press its offer key), or tell me here. I'll continue the moment it lands.
+
+When the watcher returns, the gate is passed: read the json line it printed,
+skip step 5, and let the next `/ket:continue` pick up what is behind the item.
+
+## 3. Say what is closing
 
 Read the item and tell the user: the title, the kind, the size, and the pull
 request it went out on. Lead with what shipping records, then the detail. This is
 the last of the four human gates, so it is worth more than a silent transition.
 
-## 3. Ask whether it merged
+## 4. Ask whether it merged
 
 Ask with AskUserQuestion: it merged, or it has not merged yet. A machine can read
 a green pipeline, and only the person watching the repository knows the work
 landed. If they say it has not, stop and leave the item where it stands.
 
-## 4. Move it
+A confirmation can land while the question is open: the watcher completing is
+the user answering from another surface. Take it as the confirmation, skip the
+move below, and continue.
+
+## 5. Move it
+
+Stop the watcher task first, belt and suspenders: the move below completes it
+anyway, and a watcher with nothing left to hear has no business running.
 
 ```
 ket item ship $ARGUMENTS

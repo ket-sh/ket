@@ -4,10 +4,23 @@ import { spawn } from 'node:child_process';
 import { ketRootOrThrow } from '../../../shared/locate.ts';
 import { showSurface } from './show.ts';
 
+export function openerThrough(command: string): (address: string) => void {
+  return (address) => {
+    const opening = spawn(command, [address], { stdio: 'ignore', detached: true });
+
+    opening.on('error', (refusal) => {
+      process.stderr.write(
+        `could not open the browser: ${refusal.message}; open ${address} yourself\n`,
+      );
+    });
+    opening.unref();
+  };
+}
+
 function opensBrowser(address: string): void {
   const command = process.platform === 'darwin' ? 'open' : 'xdg-open';
 
-  spawn(command, [address], { stdio: 'ignore', detached: true }).unref();
+  openerThrough(command)(address);
 }
 
 export const show = defineCommand({

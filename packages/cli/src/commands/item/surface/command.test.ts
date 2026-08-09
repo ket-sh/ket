@@ -11,13 +11,18 @@ const opened = vi.hoisted(
 );
 
 vi.mock('node:child_process', () => ({
-  spawn: (command: string, flags: string[], options: object): { unref: () => void } => {
+  spawn: (
+    command: string,
+    flags: string[],
+    options: object,
+  ): { unref: () => void; on: () => void } => {
     opened.calls.push({ command, flags, options });
 
     return {
       unref: (): void => {
         opened.released += 1;
       },
+      on: (): void => {},
     };
   },
 }));

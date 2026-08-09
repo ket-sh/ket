@@ -26,6 +26,7 @@ import {
   submissionOf,
   verificationOf,
 } from '../../shared/transition.ts';
+import { awaitItem } from './await/command.ts';
 import { blast } from './blast/command.ts';
 import { describeItem } from './describe/command.ts';
 import { note } from './note/command.ts';
@@ -195,6 +196,7 @@ const item = defineCommand({
     reopen,
     ship,
     show,
+    await: awaitItem,
     note,
     drift,
     stamp,
