@@ -208,7 +208,7 @@ describe('the bricks the sections lay', () => {
   });
 });
 
-describe('the diff the page folds', () => {
+describe('the diff the page stages', () => {
   const CHANGE = [
     'diff --git a/src/app.ts b/src/app.ts',
     'index 1111111..2222222 100644',
@@ -220,13 +220,13 @@ describe('the diff the page folds', () => {
     '',
   ].join('\n');
 
-  it('collapses every changed file behind its index entry', () => {
+  it('opens the changed files from the explorer tree', () => {
     const page = assemblePage(surfaceOf({ artifacts: { features: [], diff: CHANGE } }), {
       sessionKey: KEY,
     });
 
-    expect(page).toContain('class="diff-index"');
-    expect(page).toContain('<details class="diff-file"');
+    expect(page).toContain('class="diff-tree"');
+    expect(page).toContain('<article class="diff-file is-shown"');
     expect(page.match(/src\/app\.ts/g)?.length).toBeGreaterThanOrEqual(2);
   });
 

@@ -149,25 +149,14 @@ function writtenProse(source: string | undefined): boolean {
   return source !== undefined && source.trim() !== '';
 }
 
-const FORMAT_SWITCH =
-  '<span class="diff-format" role="group" aria-label="Diff layout"><button type="button" class="diff-format-option is-selected" data-diff-format="unified">Unified</button><button type="button" class="diff-format-option" data-diff-format="side">Side by side</button></span>';
-
 function blastBody(blast: BlastArtifact | undefined): Panel {
   return blast === undefined ? panelOf('Blast radius', '') : blastPanel(blast);
 }
 
-function diffPanels(change: string): Panel[] {
-  const body =
-    change === '' ? '<p class="unwritten">No change to show at this stage.</p>' : diffBleed(change);
-
-  return [
-    panelOf('Diff', body, {
-      controls: FORMAT_SWITCH,
-      hook: 'diff-panel',
-      width: 'full',
-      height: 'viewport',
-    }),
-  ];
+function diffExplorer(change: string): string {
+  return change === ''
+    ? '<div class="bleed-empty"><p class="unwritten">No change to show at this stage.</p></div>'
+    : diffBleed(change);
 }
 
 export function sectionsOf(artifacts: SurfaceArtifacts, sessionKey: string): Section[] {
@@ -208,8 +197,8 @@ export function sectionsOf(artifacts: SurfaceArtifacts, sessionKey: string): Sec
       panels: [blastBody(artifacts.blast)],
     }),
     sectionOf('diff', 'Diff', 'Verify', change !== '', {
-      mode: 'masonry',
-      panels: diffPanels(change),
+      mode: 'bleed',
+      bleed: diffExplorer(change),
     }),
     sectionOf('findings', 'Findings', 'Verify', writtenProse(artifacts.findings), {
       mode: 'masonry',

@@ -203,13 +203,12 @@ describe('the diff panel and the blast section beside it', () => {
     render: { drawn: { light: '<svg>captured</svg>', dark: '<svg>captured</svg>' } },
   };
 
-  it('folds the change inside a full-width viewport panel wearing the format switch', () => {
+  it('bleeds the change as a tree beside a full-height stage', () => {
     const page = pageOf({ artifacts: { features: [], diff: CHANGE } });
     const section = sectionMarkup(page, 'diff');
 
-    expect(section).toContain('diff-panel');
-    expect(section).toContain('<span class="panel-label">Diff</span>');
-    expect(section).toContain('is-full is-viewport');
+    expect(page).toContain('<section class="section is-bleed" id="section-diff"');
+    expect(section).toContain('class="diff-explorer diff-panel"');
     expect(section).toContain(
       '<span class="diff-format" role="group" aria-label="Diff layout"><button type="button" class="diff-format-option is-selected" data-diff-format="unified">Unified</button><button type="button" class="diff-format-option" data-diff-format="side">Side by side</button></span>',
     );

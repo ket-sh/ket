@@ -46,7 +46,7 @@ describe('the change the page carries', () => {
     const page = await (await fetch(handle.address)).text();
 
     await handle.stop();
-    expect(page).toContain('class="diff-index"');
+    expect(page).toContain('class="diff-tree"');
     expect(page).toContain('app.ts');
   });
 

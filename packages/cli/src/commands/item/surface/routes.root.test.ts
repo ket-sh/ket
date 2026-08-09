@@ -52,13 +52,13 @@ describe('the repository an item claims through its nest', () => {
     const page = await pageAt(join(projectRoot, 'box', 'items', 'K-9'));
 
     expect(page).toContain('No change to show at this stage.');
-    expect(page).not.toContain('class="diff-index"');
+    expect(page).not.toContain('class="diff-tree"');
   });
 
   it('shows no change to a ket home holding no items directory', async () => {
     const page = await pageAt(join(projectRoot, '.ket', 'box', 'K-9'));
 
     expect(page).toContain('No change to show at this stage.');
-    expect(page).not.toContain('class="diff-index"');
+    expect(page).not.toContain('class="diff-tree"');
   });
 });

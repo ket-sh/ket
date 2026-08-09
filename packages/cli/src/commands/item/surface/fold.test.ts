@@ -21,39 +21,51 @@ const change = [
   '',
 ].join('\n');
 
-describe('the index the folded diff pins on top', () => {
-  it('heads the index with the file count and the total line counts', () => {
+describe('the tree the explorer pins beside the diff', () => {
+  it('heads the tree with the file count and the total line counts', () => {
     expect(diffBleed(change)).toContain(
-      '<nav class="diff-index" aria-label="Files in this change"><p class="diff-index-head"><span class="diff-index-count">2 files</span><span class="diff-stat"><span class="added">+2</span><span class="deleted">-1</span></span></p>',
+      '<nav class="diff-tree" aria-label="Files in this change"><p class="diff-tree-head"><span class="diff-tree-count">2 files</span><span class="diff-stat"><span class="added">+2</span><span class="deleted">-1</span></span></p>',
     );
   });
 
-  it('indexes every touched file with a jump button and its counts', () => {
+  it('lists every touched file as a button with its counts', () => {
     const page = diffBleed(change);
 
     expect(page).toContain(
-      '<li class="diff-index-row"><button type="button" class="diff-index-item" data-diff-target="file-alpha-ts"><span class="diff-index-path">alpha.ts</span><span class="diff-stat"><span class="added">+1</span><span class="deleted">-1</span></span></button></li>',
+      '<li class="diff-tree-row"><button type="button" class="diff-tree-item is-selected" data-diff-target="file-alpha-ts"><span class="diff-tree-path">alpha.ts</span><span class="diff-stat"><span class="added">+1</span><span class="deleted">-1</span></span></button></li>',
     );
     expect(page).toContain('data-diff-target="file-beta-ts"');
   });
 
-  it('lists the index rows inside one ordered list', () => {
-    expect(diffBleed(change)).toContain('<ol class="diff-index-list"><li class="diff-index-row">');
-    expect(diffBleed(change)).toContain('</li><li class="diff-index-row">');
+  it('chains the rows inside one ordered list', () => {
+    expect(diffBleed(change)).toContain('<ol class="diff-tree-list"><li class="diff-tree-row">');
+    expect(diffBleed(change)).toContain('</li><li class="diff-tree-row">');
+  });
+
+  it('selects the first row alone', () => {
+    expect(diffBleed(change).match(/diff-tree-item is-selected/g)).toHaveLength(1);
   });
 });
 
-describe('the folds the files land in', () => {
-  it('folds each file behind a summary carrying the same anchor and counts', () => {
+describe('the stage the chosen file fills', () => {
+  it('shows the first file and holds the rest ready', () => {
+    const page = diffBleed(change);
+
+    expect(page).toContain('<article class="diff-file is-shown" id="file-alpha-ts">');
+    expect(page).toContain('<article class="diff-file" id="file-beta-ts">');
+    expect(page).toContain('</article><article');
+  });
+
+  it('heads each file with its path, its counts, and the format switch', () => {
     const page = diffBleed(change);
 
     expect(page).toContain(
-      '<details class="diff-file" id="file-alpha-ts"><summary class="diff-file-summary"><span class="diff-file-path">alpha.ts</span><span class="diff-stat"><span class="added">+1</span><span class="deleted">-1</span></span></summary>',
+      '<header class="diff-file-head"><span class="diff-file-path">alpha.ts</span><span class="diff-stat"><span class="added">+1</span><span class="deleted">-1</span></span><span class="diff-format" role="group" aria-label="Diff layout">',
     );
-    expect(page).toContain('</details><details');
+    expect(page.match(/aria-label="Diff layout"/g)).toHaveLength(2);
   });
 
-  it('renders both layouts of each file inside its fold', () => {
+  it('renders both layouts of each file inside its body', () => {
     const page = diffBleed(change);
 
     expect(page.match(/<div class="diff-render diff-render-unified">/g)).toHaveLength(2);
@@ -61,11 +73,13 @@ describe('the folds the files land in', () => {
     expect(page).toContain('d2h-file-side-diff');
   });
 
-  it('carries the hunk lines of each file inside its own fold', () => {
+  it('carries the hunk lines of each file inside its own pane', () => {
     expect(diffBleed(change)).toContain('const ring = 3;');
     expect(diffBleed(change)).toContain('const item = 1;');
   });
+});
 
+describe('the paths the panes are named by', () => {
   it('names a deleted file by the path it had', () => {
     const gone = [
       'diff --git a/gone.ts b/gone.ts',
@@ -98,7 +112,7 @@ describe('the folds the files land in', () => {
     expect(diffBleed(born)).toContain('<span class="diff-file-path">born.ts</span>');
   });
 
-  it('shows one file per fold without a global file list', () => {
+  it('shows one file per pane without a global file list', () => {
     expect(diffBleed(change)).not.toContain('d2h-file-list');
   });
 });

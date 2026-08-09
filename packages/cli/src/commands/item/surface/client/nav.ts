@@ -44,47 +44,9 @@ function show(wanted: string): void {
   document.dispatchEvent(new CustomEvent('ket-surface-shown'));
 }
 
-function settleJump(target: HTMLDetailsElement, surface: Element): void {
-  requestAnimationFrame(() => {
-    const pinned = surface.querySelector<HTMLElement>('.diff-index');
-    const covered = pinned === null ? 0 : pinned.getBoundingClientRect().height;
-
-    surface.scrollTop +=
-      target.getBoundingClientRect().top - surface.getBoundingClientRect().top - covered;
-  });
-}
-
-function jumpTo(target: HTMLDetailsElement): void {
-  for (const other of document.querySelectorAll<HTMLElement>('.diff-file.is-jumped')) {
-    other.classList.remove('is-jumped');
-  }
-
-  target.open = true;
-  target.classList.add('is-jumped');
-
-  const surface = target.closest('.panel-body');
-
-  if (surface !== null) {
-    settleJump(target, surface);
-  }
-}
-
-function wireDiffJump(): void {
-  for (const target of document.querySelectorAll<HTMLDetailsElement>('details.diff-file')) {
-    const opener = document.querySelector<HTMLElement>(`[data-diff-target="${target.id}"]`);
-
-    if (opener !== null) {
-      opener.addEventListener('click', () => {
-        jumpTo(target);
-      });
-    }
-  }
-}
-
 export function wireNav(): void {
   show(location.hash.slice(1));
   addEventListener('hashchange', () => {
     show(location.hash.slice(1));
   });
-  wireDiffJump();
 }
