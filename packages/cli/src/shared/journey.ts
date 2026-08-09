@@ -3,6 +3,7 @@ import type {
   Journey,
   JourneyChild,
   JourneyNode,
+  JourneyStep,
   RepoFacts,
   StageState,
   Visit,
@@ -11,7 +12,7 @@ import type { ItemNote, KanbanRefusal, LoggedEvent } from './kanban.ts';
 import type { StoredItem } from './read-item.ts';
 
 import { ITEM_STATUSES } from './item.ts';
-import { artifactsOf } from './journey-artifacts.ts';
+import { artifactsOf, stepsOf } from './journey-artifacts.ts';
 import { paneOf } from './journey-pane.ts';
 import { arrivalOf, eventsAbout, noteAfter, refusalAfter } from './kanban.ts';
 import { parseItem } from './read-item.ts';
@@ -97,6 +98,7 @@ function stageNode(
   state: StageState,
   refusal: KanbanRefusal | undefined,
   note: ItemNote | undefined,
+  steps: JourneyStep[],
 ): JourneyNode {
   return {
     id: visit.id,
@@ -107,6 +109,7 @@ function stageNode(
     refusal,
     note,
     doc: undefined,
+    steps,
   };
 }
 
@@ -169,17 +172,18 @@ function stageNodes(
   walk: Walk,
   refusal: KanbanRefusal | undefined,
   note: ItemNote | undefined,
+  steppedOf: (visit: Visit) => JourneyStep[],
 ): JourneyNode[] {
   const last = walk.visited.length - 1;
   const walked = walk.visited.map((visit, index) =>
     index === last
-      ? stageNode(visit, standingState(visit.status, refusal), refusal, note)
-      : stageNode(visit, 'done', undefined, undefined),
+      ? stageNode(visit, standingState(visit.status, refusal), refusal, note, steppedOf(visit))
+      : stageNode(visit, 'done', undefined, undefined, steppedOf(visit)),
   );
 
   return [
     ...walked,
-    ...walk.ahead.map((visit) => stageNode(visit, 'future', undefined, undefined)),
+    ...walk.ahead.map((visit) => stageNode(visit, 'future', undefined, undefined, [])),
   ];
 }
 
@@ -202,7 +206,7 @@ function journeyOf(item: Item, stored: StoredItem[], log: string, key: string, r
     item: key,
     title: item.title,
     description: item.description,
-    nodes: stageNodes(walk, refusal, note),
+    nodes: stageNodes(walk, refusal, note, (visit) => stepsOf(events, key, visit)),
     edges: stageEdges([...walk.visited, ...walk.ahead]),
     standing: refusal?.reason,
     artifacts: artifactsOf(events, key),

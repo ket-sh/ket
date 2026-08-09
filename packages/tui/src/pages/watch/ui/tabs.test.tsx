@@ -119,10 +119,10 @@ describe('the workflow tab', () => {
     expect(frame).toContain('awaiting-approval');
   });
 
-  it('draws no artifact on the canvas, naming it once in the pane instead', async () => {
+  it('draws the sub-steps as boxes under their stage, naming each once', async () => {
     const frame = await opening(OPENED);
 
-    expect(frame).toContain('artifacts spec.md');
+    expect(frame).toContain('✓ spec.md');
     expect(frame.split('spec.md')).toHaveLength(2);
   });
 });

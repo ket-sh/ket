@@ -34,6 +34,7 @@ const JOURNEY: JourneyView = {
       until: undefined,
       note: undefined,
       doc: undefined,
+      steps: [],
     },
   ],
   edges: [],

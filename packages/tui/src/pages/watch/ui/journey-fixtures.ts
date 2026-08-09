@@ -27,6 +27,7 @@ export const JOURNEY: JourneyView = {
       until: '2026-08-07T10:00:00.000Z',
       note: undefined,
       doc: undefined,
+      steps: [],
     },
     {
       id: 'designing',
@@ -37,6 +38,7 @@ export const JOURNEY: JourneyView = {
       until: undefined,
       note: NARRATED,
       doc: undefined,
+      steps: [{ name: 'spec.md', at: '2026-08-07T11:00:00.000Z' }],
     },
     {
       id: 'awaiting-approval',
@@ -47,6 +49,7 @@ export const JOURNEY: JourneyView = {
       until: undefined,
       note: undefined,
       doc: undefined,
+      steps: [],
     },
   ],
   edges: [
@@ -124,6 +127,7 @@ export const CHILD_JOURNEY: JourneyView = {
       until: undefined,
       note: undefined,
       doc: undefined,
+      steps: [],
     },
   ],
   edges: [],

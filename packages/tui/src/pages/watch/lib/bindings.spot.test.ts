@@ -78,6 +78,7 @@ function nodeOf(id: string): JourneyNodeView {
     until: undefined,
     note: undefined,
     doc: undefined,
+    steps: [],
   };
 }
 

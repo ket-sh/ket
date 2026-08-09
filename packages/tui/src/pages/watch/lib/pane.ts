@@ -120,14 +120,6 @@ function childrenLines(children: JourneyChildView[]): PaneLine[] {
   return [lineOf(`children ${String(done)}/${String(children.length)} shipped`, 'link')];
 }
 
-function artifactLines(journey: JourneyView): PaneLine[] {
-  if (journey.artifacts.length === 0) {
-    return [];
-  }
-
-  return [lineOf(`artifacts ${journey.artifacts.map((one) => one.name).join(', ')}`, 'quiet')];
-}
-
 function branchLines(branch: JourneyBranchView | undefined): PaneLine[] {
   if (branch === undefined) {
     return [];
@@ -142,11 +134,7 @@ function stateSection(journey: JourneyView, now: string, room: number): PaneLine
   const facts = journey.pane;
   const stage = `${facts.status} · stage ${String(facts.stageAt)} of ${String(facts.stageOf)}`;
 
-  return sectionOf(
-    'state',
-    [lineOf(stage, 'state'), ...agedLines(facts, now), ...artifactLines(journey)],
-    room,
-  );
+  return sectionOf('state', [lineOf(stage, 'state'), ...agedLines(facts, now)], room);
 }
 
 function yoursSection(journey: JourneyView, room: number): PaneLine[] {

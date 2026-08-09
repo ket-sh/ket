@@ -45,6 +45,7 @@ const someJourney = fc
       until: undefined,
       note: undefined,
       doc: undefined,
+      steps: [],
     }));
     const edges: [string, string][] = picks
       .filter((pick) => pick.from < pick.to)

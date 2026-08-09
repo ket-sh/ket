@@ -3,10 +3,11 @@ import type { JourneyView, StageStateView } from '../../../shared/model';
 import type { Theme } from '../../../shared/theme';
 import type { Placed, PlacedNode } from './layout.ts';
 
-import { ageOf, boxAt, gridOf, lerpHex, put, spansOf, writeText } from '../../../shared/lib';
+import { ageOf, boxAt, gridOf, lerpHex, spansOf, writeText } from '../../../shared/lib';
 import { KANAGAWA, stageColorOf } from '../../../shared/theme';
 import { waitsOnAHuman } from './attention.ts';
-import { NODE_H, NODE_W, placedOf } from './layout.ts';
+import { drawEdges } from './canvas-edges.ts';
+import { heightOf, NODE_H, NODE_W, placedOf, STEP_H } from './layout.ts';
 
 const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 
@@ -121,6 +122,26 @@ interface Clock {
   tick: number;
 }
 
+const STEP_INSET = 2;
+
+function drawSteps(grid: Cell[][], node: PlacedNode, theme: Theme): void {
+  const frame = lerpHex(frameColorOf(node, theme), theme.base, 0.55);
+
+  node.steps.forEach((step, at) => {
+    const y = node.y + NODE_H + at * STEP_H;
+
+    boxAt(grid, node.x + STEP_INSET, y, NODE_W - STEP_INSET * 2, STEP_H, 'rounded', frame);
+    writeText(grid, node.x + STEP_INSET + 2, y + 1, '✓', theme.green);
+    writeText(
+      grid,
+      node.x + STEP_INSET + 4,
+      y + 1,
+      trimmedTo(step.name, NODE_W - STEP_INSET * 2 - 6),
+      theme.subtext,
+    );
+  });
+}
+
 function drawNode(
   grid: Cell[][],
   node: PlacedNode,
@@ -129,6 +150,7 @@ function drawNode(
   theme: Theme,
 ): void {
   boxAt(grid, node.x, node.y, NODE_W, NODE_H, border.style, border.fg);
+  drawSteps(grid, node, theme);
 
   writeText(
     grid,
@@ -152,72 +174,6 @@ function drawNode(
     node.note === undefined ? '' : trimmedTo(node.note.text, NODE_W - 4),
     theme.gray,
   );
-}
-
-type Tracer = (x: number, y: number, ch: string) => void;
-
-function traceBend(step: Tracer, midX: number, y1: number, y2: number): void {
-  step(midX, y1, y2 > y1 ? '╮' : '╯');
-
-  const [low, high] = y1 < y2 ? [y1, y2] : [y2, y1];
-
-  for (let y = low + 1; y < high; y += 1) {
-    step(midX, y, '│');
-  }
-
-  step(midX, y2, y2 > y1 ? '╰' : '╭');
-}
-
-function drawEdge(grid: Cell[][], from: PlacedNode, to: PlacedNode, fg: string): void {
-  const step: Tracer = (x, y, ch) => {
-    put(grid, x, y, ch, fg);
-  };
-  const startX = from.x + NODE_W;
-  const y1 = from.y + 2;
-  const y2 = to.y + 2;
-  const endX = to.x - 1;
-  const midX = to.x - 4;
-
-  if (y1 === y2) {
-    for (let x = startX; x < endX; x += 1) {
-      step(x, y1, '─');
-    }
-  } else {
-    for (let x = startX; x < midX; x += 1) {
-      step(x, y1, '─');
-    }
-
-    traceBend(step, midX, y1, y2);
-
-    for (let x = midX + 1; x < endX; x += 1) {
-      step(x, y2, '─');
-    }
-  }
-
-  step(endX, y2, '►');
-}
-
-function edgeTone(edge: [string, string], selectedId: string, theme: Theme): string {
-  return edge.includes(selectedId) ? theme.overlay : theme.surface1;
-}
-
-function drawEdges(
-  grid: Cell[][],
-  journey: JourneyView,
-  nodes: PlacedNode[],
-  selectedId: string,
-  theme: Theme,
-): void {
-  const byId = new Map(nodes.map((node) => [node.id, node]));
-
-  for (const edge of journey.edges) {
-    const source = byId.get(edge[0]);
-    const target = byId.get(edge[1]);
-
-    if (source !== undefined && target !== undefined) {
-      drawEdge(grid, source, target, edgeTone(edge, selectedId, theme));
-    }
-  }
 }
 
 function panOf(center: number, view: number, size: number): number {
@@ -244,7 +200,7 @@ function pansOf(placed: Placed, selectedId: string, view: Viewport): Pans {
 }
 
 function holds(node: PlacedNode, x: number, y: number): boolean {
-  return x >= node.x && x < node.x + NODE_W && y >= node.y && y < node.y + NODE_H;
+  return x >= node.x && x < node.x + NODE_W && y >= node.y && y < node.y + heightOf(node);
 }
 
 export function stageAt(

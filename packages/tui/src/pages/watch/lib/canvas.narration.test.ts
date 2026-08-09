@@ -22,6 +22,7 @@ function stageOf(id: string, patch: Partial<JourneyNodeView> = {}): JourneyNodeV
     until: undefined,
     refusal: undefined,
     doc: undefined,
+    steps: [],
     note: undefined,
     ...patch,
   };

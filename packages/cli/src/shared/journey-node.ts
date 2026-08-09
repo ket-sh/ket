@@ -11,6 +11,11 @@ export type StageState =
   | 'sent-back'
   | 'future';
 
+export interface JourneyStep {
+  name: string;
+  at: string | undefined;
+}
+
 export interface JourneyNode {
   id: string;
   title: string;
@@ -20,6 +25,7 @@ export interface JourneyNode {
   refusal: KanbanRefusal | undefined;
   note: ItemNote | undefined;
   doc: SurfaceDoc | undefined;
+  steps: JourneyStep[];
 }
 
 export interface JourneyArtifact {

@@ -35,6 +35,7 @@ function nodeOf(id: string, patch: Partial<JourneyNodeView> = {}): JourneyNodeVi
     until: undefined,
     note: undefined,
     doc: undefined,
+    steps: [],
     ...patch,
   };
 }

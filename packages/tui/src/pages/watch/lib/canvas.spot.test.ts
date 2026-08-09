@@ -14,6 +14,7 @@ function nodeOf(id: string): JourneyView['nodes'][number] {
     until: undefined,
     note: undefined,
     doc: undefined,
+    steps: [],
   };
 }
 
