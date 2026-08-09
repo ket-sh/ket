@@ -37,13 +37,13 @@ describe('the components.json a shadcn preset writes against the helper apply la
     expect(invariantsLanding('@/shared/lib/utils', 'src/shared/lib/utils.ts')).toStrictEqual([]);
   });
 
-  it('derives the landing from the directory the utils alias resolves into', () => {
+  it('names a helper the preset houses away from where apply lands', () => {
     expect(invariantsLanding('@/shared/cn', 'src/shared/cn.ts')).toStrictEqual([
       'shadcn apply lands its helper at src/shared/utils.ts, which the preset ships nowhere',
     ]);
   });
 
-  it('reads an alias that resolves straight to the source root', () => {
+  it('holds an alias at the source root to the same landing', () => {
     expect(invariantsLanding('@/cn', 'src/cn.ts')).toStrictEqual([
       'shadcn apply lands its helper at src/utils.ts, which the preset ships nowhere',
     ]);
@@ -61,6 +61,12 @@ describe('the components.json a shadcn preset writes against the helper apply la
         'files/components.json': JSON.stringify({ aliases: {} }),
       }),
     ).toStrictEqual(['the components.json the preset writes names no utils alias']);
+  });
+
+  it('answers a components.json that parses as no JSON with the finding, not a crash', () => {
+    expect(
+      designSystemInvariantsOf(SHADCN_ITEM, { 'files/components.json': 'not json' }),
+    ).toStrictEqual(['the components.json the preset writes does not parse as JSON']);
   });
 
   it('answers a components.json that holds no record with the finding, not a crash', () => {
