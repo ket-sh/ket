@@ -18,6 +18,12 @@ describe('the mutation gate the web preset arms against a change', () => {
   });
 });
 
+describe('the slow gates the web preset arms beside the mutation gate', () => {
+  it('checks types incrementally, so a clean look costs the change', async () => {
+    expect(await readsPresetFile('tsconfig.json')).toContain('"incremental": true');
+  });
+});
+
 describe('the pipeline the web preset writes for the mutation gate', () => {
   it('retests a pull request against its merge base alone', async () => {
     expect(await readsPresetFile('github-ci.yml')).toContain(

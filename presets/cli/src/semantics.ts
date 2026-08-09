@@ -10,7 +10,8 @@ export const CLI_SEMANTICS: PresetSemantics = {
     'test:mutation:full': 'stryker run',
     'test:acceptance': 'bun run build && cucumber-js',
     lint: 'oxlint --deny-warnings .',
-    'lint:boundaries': 'depcruise src --config .dependency-cruiser.cjs',
+    'lint:boundaries':
+      'depcruise src --config .dependency-cruiser.cjs --cache --cache-strategy content',
     'lint:dead': 'knip',
     'lint:dup': 'jscpd -c .jscpd.json src',
     'lint:spell': 'cspell --no-progress --dot "**"',
@@ -43,7 +44,10 @@ export const CLI_SEMANTICS: PresetSemantics = {
     ],
     two: [
       { runs: 'tsc --noEmit -p tsconfig.json', scope: 'project' },
-      { runs: 'depcruise src --config .dependency-cruiser.cjs', scope: 'project' },
+      {
+        runs: 'depcruise src --config .dependency-cruiser.cjs --cache --cache-strategy content',
+        scope: 'project',
+      },
       { runs: 'vitest run', scope: 'project' },
     ],
   },

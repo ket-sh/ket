@@ -24,7 +24,8 @@
     "skipLibCheck": true,
     "types": ["bun"],
     "allowImportingTsExtensions": true,
-    "noEmit": true
+    "noEmit": true,
+    "incremental": true
   },
   "include": ["src/**/*.ts", "scripts/**/*.mts", "vitest.config.ts"]
 }

@@ -22,6 +22,30 @@ describe('the mutation gate the cli preset arms against a change', () => {
   });
 });
 
+describe('the slow gates the cli preset arms beside the mutation gate', () => {
+  it('checks types incrementally, so a clean look costs the change', async () => {
+    expect(await readsPresetFile('tsconfig.json')).toContain('"incremental": true');
+  });
+
+  it('cruises the import graph off a content cache, as the web preset already does', () => {
+    expect(CLI_SEMANTICS.scripts['lint:boundaries']).toBe(
+      'depcruise src --config .dependency-cruiser.cjs --cache --cache-strategy content',
+    );
+  });
+
+  it('ends a stage on the same cached cruise, since one decision takes one spelling', () => {
+    expect(CLI_SEMANTICS.rings.two.map((check) => check.runs)).toContain(
+      CLI_SEMANTICS.scripts['lint:boundaries'],
+    );
+  });
+
+  it('arms the same cached cruise at commit', async () => {
+    expect(await readsPresetFile('lefthook.yml')).toContain(
+      'depcruise src --config .dependency-cruiser.cjs --cache --cache-strategy content',
+    );
+  });
+});
+
 describe('the pipeline the cli preset writes for the mutation gate', () => {
   it('retests a pull request against its merge base alone', async () => {
     expect(await readsPresetFile('github-ci.yml')).toContain(
