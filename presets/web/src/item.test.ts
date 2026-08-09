@@ -1,4 +1,4 @@
-import { filesOf } from '@ket/preset';
+import { comes, filesOf, installsOf, skillsOf } from '@ket/preset';
 import { describe, expect, it } from 'vitest';
 
 import { contentOf } from './contents.ts';
@@ -50,7 +50,7 @@ describe('what the web preset offers a project that wants its screens reviewed',
   const CHROMATIC = WEB_PRESET.integrations.find((offered) => offered.name === 'chromatic');
 
   it('installs the runner Chromatic uploads its archives from', () => {
-    expect(CHROMATIC?.installs).toStrictEqual([
+    expect(CHROMATIC === undefined ? [] : installsOf(CHROMATIC)).toStrictEqual([
       'chromatic@18.1.0',
       '@chromatic-com/playwright@0.14.11',
     ]);
@@ -80,7 +80,7 @@ describe('what the web preset offers a project that wants its screens reviewed',
   });
 
   it('brings the official skills beside the tool', () => {
-    expect(CHROMATIC?.skills).toStrictEqual([
+    expect(CHROMATIC === undefined ? [] : skillsOf(CHROMATIC)).toStrictEqual([
       { name: 'chromatic-setup-ci', source: 'chromaui/chromatic-skills' },
       { name: 'chromatic-workflow-debug', source: 'chromaui/chromatic-skills' },
     ]);
@@ -139,6 +139,7 @@ describe('the binding every generated spec resolves its test through', () => {
 
 describe('what the web preset offers a project that wants a supply-chain risk score', () => {
   const SCORECARD = WEB_PRESET.integrations.find((offered) => offered.name === 'scorecard');
+  const SENTENCE = SCORECARD === undefined || comes(SCORECARD) ? '' : SCORECARD.asks;
 
   it('offers it beside the other services that answer for a repository', () => {
     expect(SCORECARD).toBeDefined();
@@ -151,7 +152,7 @@ describe('what the web preset offers a project that wants a supply-chain risk sc
   });
 
   it('says what a public repository gets and what a private one still needs', () => {
-    expect(SCORECARD?.asks.toLowerCase()).toContain('public');
-    expect(SCORECARD?.asks.toLowerCase()).toContain('private');
+    expect(SENTENCE.toLowerCase()).toContain('public');
+    expect(SENTENCE.toLowerCase()).toContain('private');
   });
 });

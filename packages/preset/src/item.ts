@@ -15,6 +15,7 @@ export interface StageReference {
 }
 
 export type IntegrationCategory =
+  | 'design tool'
   | 'design reference'
   | 'visual review'
   | 'AI pull-request review'
@@ -36,23 +37,35 @@ interface OfferedIntegration {
   mcp?: PresetMcpServer[];
 }
 
-// An integration either puts files in a project or changes what an agent
-// reaches for at a stage. A design gallery is the second kind, and demanding a
-// file from it would be demanding the wrong thing.
+export interface ComingIntegration {
+  name: string;
+  category: IntegrationCategory;
+  soon: true;
+}
+
+// An integration either puts files in a project, changes what an agent
+// reaches for at a stage, or is only announced for now. A design gallery is
+// the second kind, and demanding a file from it would be demanding the wrong
+// thing. A tool that arrives soon is the third, and it promises nothing yet.
 export type PresetIntegration =
   | (OfferedIntegration & { files: PresetFile[] })
-  | (OfferedIntegration & { reaches: StageReference });
+  | (OfferedIntegration & { reaches: StageReference })
+  | ComingIntegration;
+
+export function comes(integration: PresetIntegration): integration is ComingIntegration {
+  return 'soon' in integration;
+}
 
 export function installsOf(integration: PresetIntegration): string[] {
-  return integration.installs ?? [];
+  return comes(integration) ? [] : (integration.installs ?? []);
 }
 
 export function skillsOf(integration: PresetIntegration): PresetSkill[] {
-  return integration.skills ?? [];
+  return comes(integration) ? [] : (integration.skills ?? []);
 }
 
 export function mcpServersOf(integration: PresetIntegration): PresetMcpServer[] {
-  return integration.mcp ?? [];
+  return comes(integration) ? [] : (integration.mcp ?? []);
 }
 
 export function filesOf(integration: PresetIntegration): PresetFile[] {

@@ -16,6 +16,7 @@ export { writeContentsModule } from './contents-module.ts';
 export { harnessSkillsOf } from './harness-skills.ts';
 export { brokenInvariantsOf } from './invariants.ts';
 export {
+  comes,
   copies,
   dependencyNamesOf,
   fileKindOf,

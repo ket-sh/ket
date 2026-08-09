@@ -50,6 +50,22 @@ describe('an integration that changes nothing when it is asked for', () => {
   });
 });
 
+describe('an integration that arrives soon', () => {
+  it('is not at fault for promising nothing yet', () => {
+    expect(
+      integrationInvariantsOf(
+        itemOffering([{ name: 'figma', category: 'design tool', soon: true }]),
+      ),
+    ).toStrictEqual([]);
+  });
+
+  it('still goes by a name, since the wizard shows it', () => {
+    expect(
+      integrationInvariantsOf(itemOffering([{ name: '', category: 'design tool', soon: true }])),
+    ).toContain('an integration goes by no name, and a person picks one by name');
+  });
+});
+
 describe('two integrations reaching for one file', () => {
   it('names the target, since which of them lands is whichever ran last', () => {
     const chromatic: PresetIntegration = {
