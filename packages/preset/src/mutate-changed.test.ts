@@ -100,10 +100,10 @@ describe('the scoped mutation gate in a newborn project', () => {
     expect(status).toBe(0);
   });
 
-  it('skips loudly when the scaffold commit sits on a branch that is not main', () => {
+  it('skips loudly when the scaffold commit sits on a branch no trunk name answers for', () => {
     const project = scaffolded();
 
-    git(project, ['init', '--quiet', '-b', 'master']);
+    git(project, ['init', '--quiet', '-b', 'work']);
     git(project, ['add', '--all']);
     git(project, ['commit', '--quiet', '-m', 'chore: scaffold with ket']);
 
@@ -112,6 +112,21 @@ describe('the scoped mutation gate in a newborn project', () => {
     expect(said).toContain('skips');
     expect(said).toContain('test:mutation:full');
     expect(status).toBe(0);
+  });
+
+  it('diffs against master where main never was, so a stock git init still gets the gate', () => {
+    const project = scaffolded();
+
+    git(project, ['init', '--quiet', '-b', 'master']);
+    git(project, ['add', '--all']);
+    git(project, ['commit', '--quiet', '-m', 'chore: scaffold with ket']);
+    mkdirSync(join(project, 'src'), { recursive: true });
+    writeFileSync(join(project, 'src', 'lockout.ts'), 'export const lockedOut = true;\n');
+
+    const { said } = gateRun(project);
+
+    expect(said).toContain('mutating what changed against master');
+    expect(said).toContain('src/lockout.ts');
   });
 
   it('ignores the base CI exported for some outer repository, since ambience is not intent', () => {
@@ -123,7 +138,7 @@ describe('the scoped mutation gate in a newborn project', () => {
 
     const { status, said } = gateRun(project, { env: { GITHUB_BASE_REF: 'main' } });
 
-    expect(said).toContain('skips');
+    expect(said).toContain('against master');
     expect(status).toBe(0);
   });
 

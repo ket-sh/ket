@@ -51,7 +51,7 @@ function baseBranch(): string {
   }
 
   return (
-    ['origin/main', 'main'].find(resolves) ??
+    ['origin/main', 'main', 'origin/master', 'master'].find(resolves) ??
     skip(
       `no main to diff against yet, so the scoped mutation gate skips; ${FULL_BATTERY} runs everything`,
     )
