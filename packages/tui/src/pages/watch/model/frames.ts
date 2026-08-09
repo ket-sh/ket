@@ -34,6 +34,7 @@ export type Frame =
       focus: JourneyFocus;
       cur: number;
       aud: Audience;
+      wide: boolean;
     }
   | {
       kind: 'surface';
@@ -82,6 +83,7 @@ export interface FrameStack {
   docsFocus: (focus: DocsFocus) => void;
   enter: () => void;
   walk: (direction: Direction) => void;
+  widen: () => void;
   pickAt: (at: number) => void;
   readAs: (aud: Audience) => void;
   scroll: (delta: number, most: number) => void;

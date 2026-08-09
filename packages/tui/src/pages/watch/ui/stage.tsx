@@ -125,6 +125,7 @@ export function StageArea(room: RoomProps): ReactNode {
         focus={stack.top.focus}
         cur={stack.top.cur}
         aud={stack.top.aud}
+        wide={stack.top.wide}
         now={now}
         tick={tick}
         width={width - 2}

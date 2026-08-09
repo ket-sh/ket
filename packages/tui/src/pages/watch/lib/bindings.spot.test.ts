@@ -104,6 +104,7 @@ function journeyFrameAt(tab: JourneyTab, focus: JourneyFocus, sel: string): Fram
     focus,
     cur: 0,
     aud: 'technical',
+    wide: false,
   };
 }
 
@@ -132,6 +133,7 @@ describe('the spot a journey stands in', () => {
     expect(spotOf(journeyFrameAt('overview', 'canvas', 'n1'), 'kanban', [], HELD)).toStrictEqual({
       kind: 'journey',
       pane: 'canvas',
+      wide: false,
     });
   });
 
@@ -139,6 +141,7 @@ describe('the spot a journey stands in', () => {
     expect(spotOf(journeyFrameAt('workflow', 'canvas', 'n0'), 'kanban', [], HELD)).toStrictEqual({
       kind: 'journey',
       pane: 'canvas',
+      wide: false,
     });
   });
 
@@ -146,6 +149,7 @@ describe('the spot a journey stands in', () => {
     expect(spotOf(journeyFrameAt('workflow', 'canvas', 'n1'), 'kanban', [], HELD)).toStrictEqual({
       kind: 'journey',
       pane: 'brink',
+      wide: false,
     });
   });
 
@@ -153,32 +157,44 @@ describe('the spot a journey stands in', () => {
     expect(spotOf(journeyFrameAt('workflow', 'pane', 'n1'), 'kanban', [], HELD)).toStrictEqual({
       kind: 'journey',
       pane: 'held',
+      wide: false,
     });
   });
 
   it('reads a childless workflow as the plain canvas', () => {
-    const frame: Frame = {
+    expect(spotOf(childlessFrame(), 'kanban', [], HELD)).toStrictEqual({
       kind: 'journey',
-      journey: journeyOf([]),
-      sel: 'n1',
-      tab: 'workflow',
-      pick: 0,
-      focus: 'canvas',
-      cur: 0,
-      aud: 'technical',
-    };
-
-    expect(spotOf(frame, 'kanban', [], HELD)).toStrictEqual({ kind: 'journey', pane: 'canvas' });
+      pane: 'canvas',
+      wide: false,
+    });
   });
+});
 
+function childlessFrame(): Frame {
+  return {
+    kind: 'journey',
+    journey: journeyOf([]),
+    sel: 'n1',
+    tab: 'workflow',
+    pick: 0,
+    focus: 'canvas',
+    cur: 0,
+    aud: 'technical',
+    wide: false,
+  };
+}
+
+describe('the spot the journey chrome stands in', () => {
   it('reads the focused tab row and the focused content by their own standings', () => {
     expect(spotOf(journeyFrameAt('artifacts', 'tabs', 'n1'), 'kanban', [], HELD)).toStrictEqual({
       kind: 'journey',
       pane: 'tabs',
+      wide: false,
     });
     expect(spotOf(journeyFrameAt('artifacts', 'content', 'n1'), 'kanban', [], HELD)).toStrictEqual({
       kind: 'journey',
       pane: 'reading',
+      wide: false,
     });
   });
 });

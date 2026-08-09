@@ -16,6 +16,9 @@ const JOURNEY_KEYS: Record<string, (stack: FrameStack) => void> = {
   tab: (stack) => {
     stack.tab();
   },
+  f: (stack) => {
+    stack.widen();
+  },
 };
 
 const READ_KEYS: Record<string, Direction> = {

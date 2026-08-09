@@ -5,6 +5,7 @@ import { useRef } from 'react';
 
 import type { JourneyView } from '../../../shared/model';
 import type { CanvasSpot } from '../lib/canvas.ts';
+import type { PaneLine } from '../lib/pane.ts';
 import type { JourneyFocus, JourneyTab } from '../model/frames.ts';
 import type { WatchMouse } from '../model/mouse.ts';
 import type { PanelProps } from './artifacts-panel.tsx';
@@ -26,6 +27,7 @@ export interface JourneyPageProps extends PanelProps {
   now: string;
   tick: number;
   width: number;
+  wide: boolean;
 }
 
 function TabBar({
@@ -63,7 +65,7 @@ function TabBar({
   );
 }
 
-type CanvasProps = Omit<JourneyPageProps, 'tab' | 'pick' | 'focus'>;
+type CanvasProps = Omit<JourneyPageProps, 'tab' | 'pick' | 'focus' | 'wide'>;
 
 function viewOf(width: number, height: number): { width: number; height: number } {
   return { width: Math.max(20, width - 2), height: Math.max(6, height) };
@@ -109,40 +111,7 @@ function CanvasRows({ journey, sel, now, tick, width, height, mouse }: CanvasPro
 
 const PANE_CHROME = 6;
 
-function WorkflowPanel(props: Omit<JourneyPageProps, 'tab' | 'pick'>): ReactNode {
-  const place = panePlaceOf(props.width);
-  const lines = paneLinesOf(props.journey, props.now, place.paneWidth - PANE_CHROME);
-
-  if (place.side === 'right') {
-    return (
-      <box flexDirection="row">
-        <CanvasRows {...props} width={place.canvasWidth} height={Math.max(6, props.height)} />
-        <SidePane
-          lines={lines}
-          focus={props.focus}
-          width={place.paneWidth}
-          onChildren={props.mouse.paneChildren}
-        />
-      </box>
-    );
-  }
-
-  const fit = paneFitOf(props.height, lines.length);
-
-  return (
-    <box flexDirection="column">
-      <CanvasRows {...props} width={place.canvasWidth} height={fit.canvasHeight} />
-      {fit.paneLines === 0 ? null : (
-        <SidePane
-          lines={lines.slice(0, fit.paneLines)}
-          focus={props.focus}
-          width={place.paneWidth}
-          onChildren={props.mouse.paneChildren}
-        />
-      )}
-    </box>
-  );
-}
+const STAGE_CHROME = 5;
 
 function PanelFor(props: JourneyPageProps): ReactNode {
   if (props.tab === 'overview') {
@@ -167,7 +136,89 @@ function PanelFor(props: JourneyPageProps): ReactNode {
     );
   }
 
-  return <WorkflowPanel {...props} />;
+  return <CanvasRows {...props} />;
+}
+
+function StageLegend(props: JourneyPageProps): ReactNode {
+  const { theme } = useTheme();
+
+  return (
+    <box
+      border
+      borderStyle="rounded"
+      borderColor={theme.overlay}
+      title={` ${props.journey.item} · journey `}
+      width={props.width}
+      flexDirection="column"
+      flexShrink={0}
+      overflow="hidden"
+    >
+      <TabBar journey={props.journey} tab={props.tab} focus={props.focus} mouse={props.mouse} />
+      <PanelFor
+        {...props}
+        width={Math.max(20, props.width - 2)}
+        height={Math.max(6, props.height - STAGE_CHROME)}
+      />
+    </box>
+  );
+}
+
+function paneRoomOf(width: number): number {
+  return Math.max(10, width - PANE_CHROME);
+}
+
+function ItemLegend({
+  lines,
+  focus,
+  width,
+  mouse,
+}: {
+  lines: PaneLine[];
+  focus: JourneyFocus;
+  width: number;
+  mouse: WatchMouse;
+}): ReactNode {
+  return <SidePane lines={lines} focus={focus} width={width} onChildren={mouse.paneChildren} />;
+}
+
+function WideLegend(props: JourneyPageProps): ReactNode {
+  if (props.focus !== 'pane') {
+    return <StageLegend {...props} />;
+  }
+
+  const lines = paneLinesOf(props.journey, props.now, paneRoomOf(props.width));
+
+  return <ItemLegend lines={lines} focus={props.focus} width={props.width} mouse={props.mouse} />;
+}
+
+function SplitLegends(props: JourneyPageProps): ReactNode {
+  const place = panePlaceOf(props.width);
+  const lines = paneLinesOf(props.journey, props.now, paneRoomOf(place.paneWidth));
+
+  if (place.side === 'right') {
+    return (
+      <box flexDirection="row">
+        <StageLegend {...props} width={place.canvasWidth} />
+        <ItemLegend lines={lines} focus={props.focus} width={place.paneWidth} mouse={props.mouse} />
+      </box>
+    );
+  }
+
+  const fit = paneFitOf(Math.max(6, props.height - STAGE_CHROME), lines.length);
+
+  return (
+    <box flexDirection="column">
+      <StageLegend {...props} height={fit.canvasHeight + STAGE_CHROME} />
+      {fit.paneLines === 0 ? null : (
+        <ItemLegend
+          lines={lines.slice(0, fit.paneLines)}
+          focus={props.focus}
+          width={place.paneWidth}
+          mouse={props.mouse}
+        />
+      )}
+    </box>
+  );
 }
 
 export function JourneyPage(props: JourneyPageProps): ReactNode {
@@ -176,16 +227,7 @@ export function JourneyPage(props: JourneyPageProps): ReactNode {
 
   return (
     <box flexDirection="column">
-      <box
-        border
-        borderStyle="rounded"
-        borderColor={theme.overlay}
-        title={` ${journey.item} · journey `}
-        flexDirection="column"
-      >
-        <TabBar journey={journey} tab={props.tab} focus={props.focus} mouse={props.mouse} />
-        <PanelFor {...props} height={Math.max(6, props.height - 5)} />
-      </box>
+      {props.wide ? <WideLegend {...props} /> : <SplitLegends {...props} />}
       {journey.standing === undefined ? null : (
         <text fg={theme.red} wrapMode="none">{`! ${journey.standing}`}</text>
       )}

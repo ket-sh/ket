@@ -18,7 +18,7 @@ type PaneStanding = 'canvas' | 'brink' | 'held' | 'tabs' | 'reading';
 
 export type BindingSpot =
   | { kind: 'board'; layout: BoardLayout; offers: GateActionView[]; holds: boolean }
-  | { kind: 'journey'; pane: PaneStanding }
+  | { kind: 'journey'; pane: PaneStanding; wide: boolean }
   | { kind: 'docs'; focus: DocsFocus; holds: boolean }
   | { kind: 'map'; holds: boolean }
   | { kind: 'oplog'; holds: boolean }
@@ -74,42 +74,36 @@ function boardBindings({ layout, offers, holds }: BoardSpot): Binding[] {
   ];
 }
 
-const JOURNEY_WAYS: Record<PaneStanding, Binding[]> = {
-  canvas: [MOVE, { keys: '⏎', action: 'open', group: 'open' }, GOES, HELPS, ESC_BOARD, QUIT],
+const JOURNEY_MOVES: Record<PaneStanding, Binding[]> = {
+  canvas: [MOVE, { keys: '⏎', action: 'open', group: 'open' }],
   brink: [
     MOVE,
     { keys: '→', action: 'item pane', group: 'move' },
     { keys: '⏎', action: 'open', group: 'open' },
-    GOES,
-    HELPS,
-    ESC_BOARD,
-    QUIT,
   ],
   held: [
     { keys: '←', action: 'canvas', group: 'move' },
     { keys: '⏎', action: 'children', group: 'open' },
-    GOES,
-    HELPS,
-    ESC_BOARD,
-    QUIT,
   ],
   tabs: [
     { keys: '←→', action: 'tabs', group: 'move' },
     { keys: '↓', action: 'panel', group: 'move' },
-    GOES,
-    HELPS,
-    ESC_BOARD,
-    QUIT,
   ],
   reading: [
     { keys: '↑↓ j k', action: 'read', group: 'move' },
     { keys: '←', action: 'files', group: 'move' },
-    GOES,
-    HELPS,
-    ESC_BOARD,
-    QUIT,
   ],
 };
+
+const SPLITS: Binding = { keys: 'f', action: 'split', group: 'open' };
+
+const FILLS: Binding = { keys: 'f', action: 'full', group: 'open' };
+
+type JourneySpot = Extract<BindingSpot, { kind: 'journey' }>;
+
+function journeyBindings(spot: JourneySpot): Binding[] {
+  return [...JOURNEY_MOVES[spot.pane], spot.wide ? SPLITS : FILLS, ...WAYS_OUT];
+}
 
 const HELD_SCREENS: Record<'surface' | 'gate' | 'edit', Binding[]> = {
   surface: [
@@ -170,7 +164,7 @@ function heldBindings(spot: Exclude<BindingSpot, BoardSpot | DocsSpot>): Binding
     return workedOrOut(spot);
   }
 
-  return spot.kind === 'journey' ? JOURNEY_WAYS[spot.pane] : HELD_SCREENS[spot.kind];
+  return spot.kind === 'journey' ? journeyBindings(spot) : HELD_SCREENS[spot.kind];
 }
 
 export function bindingsAt(spot: BindingSpot): Binding[] {
@@ -258,7 +252,7 @@ export function spotOf(
   }
 
   if (frame.kind === 'journey') {
-    return { kind: 'journey', pane: paneStandingOf(frame) };
+    return { kind: 'journey', pane: paneStandingOf(frame), wide: frame.wide };
   }
 
   return heldSpotOf(frame, shown);

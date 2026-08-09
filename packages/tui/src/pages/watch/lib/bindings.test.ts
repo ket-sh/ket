@@ -81,10 +81,11 @@ describe('the bindings an idle or queued board answers', () => {
 });
 
 describe('the bindings the journey answers', () => {
-  it('moves, opens, and falls back to the board from the canvas', () => {
-    expect(hintsAt({ kind: 'journey', pane: 'canvas' })).toStrictEqual([
+  it('moves, opens, widens, and falls back to the board from the canvas', () => {
+    expect(hintsAt({ kind: 'journey', pane: 'canvas', wide: false })).toStrictEqual([
       '←↑↓→ move',
       '⏎ open',
+      'f full',
       'ctrl+p go',
       '? help',
       'esc board',
@@ -93,10 +94,11 @@ describe('the bindings the journey answers', () => {
   });
 
   it('says the pane is one arrow away where the canvas runs out', () => {
-    expect(hintsAt({ kind: 'journey', pane: 'brink' })).toStrictEqual([
+    expect(hintsAt({ kind: 'journey', pane: 'brink', wide: false })).toStrictEqual([
       '←↑↓→ move',
       '→ item pane',
       '⏎ open',
+      'f full',
       'ctrl+p go',
       '? help',
       'esc board',
@@ -105,22 +107,28 @@ describe('the bindings the journey answers', () => {
   });
 
   it('hands enter to the children once the pane holds the selection', () => {
-    expect(hintsAt({ kind: 'journey', pane: 'held' })).toStrictEqual([
+    expect(hintsAt({ kind: 'journey', pane: 'held', wide: false })).toStrictEqual([
       '← canvas',
       '⏎ children',
+      'f full',
       'ctrl+p go',
       '? help',
       'esc board',
       'q quit',
     ]);
   });
+
+  it('offers the way back to the split while one legend fills the width', () => {
+    expect(hintsAt({ kind: 'journey', pane: 'canvas', wide: true })).toContain('f split');
+  });
 });
 
 describe('the bindings the focused chrome answers', () => {
   it('walks the tabs while the tab row holds the focus', () => {
-    expect(hintsAt({ kind: 'journey', pane: 'tabs' })).toStrictEqual([
+    expect(hintsAt({ kind: 'journey', pane: 'tabs', wide: false })).toStrictEqual([
       '←→ tabs',
       '↓ panel',
+      'f full',
       'ctrl+p go',
       '? help',
       'esc board',
@@ -129,9 +137,10 @@ describe('the bindings the focused chrome answers', () => {
   });
 
   it('reads the doc while the content holds the focus', () => {
-    expect(hintsAt({ kind: 'journey', pane: 'reading' })).toStrictEqual([
+    expect(hintsAt({ kind: 'journey', pane: 'reading', wide: false })).toStrictEqual([
       '↑↓ j k read',
       '← files',
+      'f full',
       'ctrl+p go',
       '? help',
       'esc board',

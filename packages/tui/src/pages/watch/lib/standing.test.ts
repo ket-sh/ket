@@ -42,6 +42,7 @@ function journeyFrame(key: string, tab: 'overview' | 'artifacts'): Frame {
     focus: 'canvas',
     cur: 0,
     aud: 'technical',
+    wide: false,
   };
 }
 

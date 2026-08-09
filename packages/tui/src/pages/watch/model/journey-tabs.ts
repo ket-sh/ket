@@ -184,6 +184,16 @@ export function sided(stack: Frame[], aud: Audience): Frame[] {
   return [...stack.slice(0, -1), { ...above, aud, cur: 0 }];
 }
 
+export function widened(stack: Frame[]): Frame[] {
+  const above = stack[stack.length - 1];
+
+  if (above?.kind !== 'journey') {
+    return stack;
+  }
+
+  return [...stack.slice(0, -1), { ...above, wide: !above.wide }];
+}
+
 export function aimedAt(stack: Frame[], sel: string): Frame[] {
   const above = stack[stack.length - 1];
 

@@ -170,6 +170,7 @@ function useDiving(
               focus: 'canvas',
               cur: 0,
               aud: 'technical',
+              wide: false,
             },
           ]);
         }
@@ -229,7 +230,7 @@ export function useFrameStack(feed: BoardFeed): FrameStack {
   const { openMap, mapWalk, mapSeat } = useMapping(feed, setFrames);
   const { openLog, logSeat, logSlide } = useLogging(feed, setFrames);
   const shelved = useDocsShelf(feed, setFrames);
-  const { showTab, aim, walk, tab, pickAt, readAs } = useSteering(setFrames);
+  const { showTab, aim, walk, widen, tab, pickAt, readAs } = useSteering(setFrames);
   const { dive, enter } = useDiving(feed, top, setFrames, showTab);
   const { scroll, tune, pop, home } = useHolding(setFrames);
 
@@ -249,6 +250,7 @@ export function useFrameStack(feed: BoardFeed): FrameStack {
     ...shelved,
     enter,
     walk,
+    widen,
     pickAt,
     readAs,
     scroll,
