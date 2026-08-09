@@ -63,8 +63,9 @@ export async function uncommittedIn(root: string): Promise<string[]> {
   return said.split('\n').filter((line) => line !== '');
 }
 
-// The commit hooks arrive with bun install, which the user runs afterwards, so
-// there is nothing here to step around.
+// A shadcn preset runs bun install before this commit, and that install arms
+// the commit hooks. The scaffold passes the gates it just wrote rather than
+// stepping around them, and without that install the hooks are not there yet.
 export async function commitScaffold(root: string): Promise<FirstCommit> {
   const staged = await ran(['git', 'add', '--all'], root);
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { cn } from './cn.ts';
+import { cn } from './utils.ts';
 
 describe('joining the classes a component was given', () => {
   it('keeps classes that set different properties', () => {
