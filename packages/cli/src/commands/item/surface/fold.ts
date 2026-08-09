@@ -1,7 +1,7 @@
-import type { DiffFile } from 'diff2html/lib/types';
+import type { DiffFile } from 'diff2html/lib/types.js';
 
 import { html as diffHtml, parse as parseDiff } from 'diff2html';
-import { ColorSchemeType } from 'diff2html/lib/types';
+import { ColorSchemeType } from 'diff2html/lib/types.js';
 
 import { escaped, slugOf } from './text.ts';
 
