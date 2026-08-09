@@ -130,9 +130,15 @@ function steppedRows(above: Opened, direction: Direction): Opened {
     : walkedRows(above, direction);
 }
 
+// The overview arrows belong to the preview's own scroll, so the walk leaves
+// them alone rather than steering a canvas nobody sees.
 function steppedIn(above: Opened, direction: Direction): Opened {
   if (above.focus === 'tabs') {
     return walkedTabs(above, direction);
+  }
+
+  if (above.tab === 'overview') {
+    return above;
   }
 
   if (listsRows(above.tab)) {
@@ -241,7 +247,7 @@ function enteredWorkflow(frame: Opened, doors: Doors): void {
 }
 
 const DOORWAYS: Record<JourneyTab, (frame: Opened, doors: Doors) => void> = {
-  overview: enteredStage,
+  overview: () => undefined,
   workflow: enteredWorkflow,
   children: enteredChild,
   artifacts: enteredArtifact,

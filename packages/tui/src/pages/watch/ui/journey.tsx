@@ -28,6 +28,7 @@ export interface JourneyPageProps extends PanelProps {
   tick: number;
   width: number;
   wide: boolean;
+  live: boolean;
 }
 
 function TabBar({
@@ -115,7 +116,14 @@ const STAGE_CHROME = 5;
 
 function PanelFor(props: JourneyPageProps): ReactNode {
   if (props.tab === 'overview') {
-    return <OverviewPanel journey={props.journey} width={props.width} />;
+    return (
+      <OverviewPanel
+        journey={props.journey}
+        width={props.width}
+        height={props.height}
+        live={props.live}
+      />
+    );
   }
 
   if (props.tab === 'children') {

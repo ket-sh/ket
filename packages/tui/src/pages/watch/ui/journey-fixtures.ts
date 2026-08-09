@@ -6,10 +6,17 @@ export const NARRATED = {
   at: '2026-08-07T11:30:00.000Z',
 };
 
+const DESCRIBED = [
+  'The keeper locks the account after five failures.',
+  '## Acceptance',
+  'The keeper **counts** each failure and clears the tally on success.',
+  ...Array.from({ length: 30 }, (_, held) => `over ${String(held + 1).padStart(2, '0')}`),
+].join('\n\n');
+
 export const JOURNEY: JourneyView = {
   item: 'K-1',
   title: 'The watched item',
-  description: 'The keeper locks the account after five failures.',
+  description: DESCRIBED,
   nodes: [
     {
       id: 'triaged',

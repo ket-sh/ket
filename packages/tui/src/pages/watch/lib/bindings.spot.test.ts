@@ -129,10 +129,10 @@ describe('the spot the board stands in', () => {
 });
 
 describe('the spot a journey stands in', () => {
-  it('reads a journey outside the workflow tab as the plain canvas', () => {
+  it('reads the overview tab as the preview', () => {
     expect(spotOf(journeyFrameAt('overview', 'canvas', 'n1'), 'kanban', [], HELD)).toStrictEqual({
       kind: 'journey',
-      pane: 'canvas',
+      pane: 'preview',
       wide: false,
     });
   });

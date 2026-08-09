@@ -121,6 +121,17 @@ describe('the bindings the journey answers', () => {
   it('offers the way back to the split while one legend fills the width', () => {
     expect(hintsAt({ kind: 'journey', pane: 'canvas', wide: true })).toContain('f split');
   });
+
+  it('hands the overview preview its scroll instead of the canvas walk', () => {
+    expect(hintsAt({ kind: 'journey', pane: 'preview', wide: false })).toStrictEqual([
+      '↑↓ j k scroll',
+      'f full',
+      'ctrl+p go',
+      '? help',
+      'esc board',
+      'q quit',
+    ]);
+  });
 });
 
 describe('the bindings the focused chrome answers', () => {

@@ -28,6 +28,7 @@ export interface RoomProps {
   width: number;
   height: number;
   layout: BoardLayout;
+  calm: boolean;
   mouse: WatchMouse;
 }
 
@@ -126,6 +127,7 @@ export function StageArea(room: RoomProps): ReactNode {
         cur={stack.top.cur}
         aud={stack.top.aud}
         wide={stack.top.wide}
+        live={room.calm}
         now={now}
         tick={tick}
         width={width - 2}

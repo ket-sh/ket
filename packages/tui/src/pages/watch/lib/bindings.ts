@@ -14,7 +14,7 @@ export interface Binding {
   group: BindingGroup;
 }
 
-type PaneStanding = 'canvas' | 'brink' | 'held' | 'tabs' | 'reading';
+type PaneStanding = 'canvas' | 'brink' | 'held' | 'tabs' | 'reading' | 'preview';
 
 export type BindingSpot =
   | { kind: 'board'; layout: BoardLayout; offers: GateActionView[]; holds: boolean }
@@ -93,6 +93,7 @@ const JOURNEY_MOVES: Record<PaneStanding, Binding[]> = {
     { keys: '↑↓ j k', action: 'read', group: 'move' },
     { keys: '←', action: 'files', group: 'move' },
   ],
+  preview: [{ keys: '↑↓ j k', action: 'scroll', group: 'move' }],
 };
 
 const SPLITS: Binding = { keys: 'f', action: 'split', group: 'open' };
@@ -223,7 +224,11 @@ function workflowStandingOf(frame: Extract<Frame, { kind: 'journey' }>): PaneSta
 }
 
 function paneStandingOf(frame: Extract<Frame, { kind: 'journey' }>): PaneStanding {
-  return frame.focus === 'canvas' ? workflowStandingOf(frame) : FOCUS_STANDING[frame.focus];
+  if (frame.focus !== 'canvas') {
+    return FOCUS_STANDING[frame.focus];
+  }
+
+  return frame.tab === 'overview' ? 'preview' : workflowStandingOf(frame);
 }
 
 function heldSpotOf(
