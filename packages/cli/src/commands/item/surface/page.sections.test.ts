@@ -58,6 +58,7 @@ describe('the sections the navigation names', () => {
       ['criteria', 'Criteria'],
       ['wireframe', 'Wireframe'],
       ['change', 'Change'],
+      ['blast', 'Blast Radius'],
       ['diff', 'Diff'],
       ['findings', 'Findings'],
     ];
@@ -195,37 +196,56 @@ describe('the matrix the decision declares', () => {
   });
 });
 
-describe('the diff panel and the blast above it', () => {
-  it('folds the change inside a full-width viewport panel wearing the format switch', () => {
+describe('the diff panel and the blast section beside it', () => {
+  const blast = {
+    source: 'a: { class: module }\n',
+    measure: '{}',
+    render: { drawn: { light: '<svg>captured</svg>', dark: '<svg>captured</svg>' } },
+  };
+
+  it('bleeds the change as a tree beside a full-height stage', () => {
     const page = pageOf({ artifacts: { features: [], diff: CHANGE } });
     const section = sectionMarkup(page, 'diff');
 
-    expect(section).toContain('diff-panel');
-    expect(section).toContain('<span class="panel-label">Diff</span>');
-    expect(section).toContain('is-full is-viewport');
+    expect(page).toContain('<section class="section is-bleed" id="section-diff"');
+    expect(section).toContain('class="diff-explorer diff-panel"');
     expect(section).toContain(
       '<span class="diff-format" role="group" aria-label="Diff layout"><button type="button" class="diff-format-option is-selected" data-diff-format="unified">Unified</button><button type="button" class="diff-format-option" data-diff-format="side">Side by side</button></span>',
     );
   });
 
-  it('seats the blast radius above the diff at full width', () => {
-    const blast = {
-      source: 'a: { class: module }\n',
-      measure: '{}',
-      render: { drawn: { light: '<svg>captured</svg>', dark: '<svg>captured</svg>' } },
-    };
+  it('gives the captured blast its own full-width section', () => {
     const page = pageOf({ artifacts: { features: [], diff: CHANGE, blast } });
-    const section = sectionMarkup(page, 'diff');
+    const section = sectionMarkup(page, 'blast');
 
-    expect(section).toContain('is-full is-content panel-collapsible" data-panel="blast-radius"');
-    expect(section.indexOf('blast-radius')).toBeLessThan(section.indexOf('diff-panel'));
+    expect(section).toContain('is-full');
+    expect(section).toContain('data-panel="blast-radius"');
     expect(section).toContain('measure-line');
   });
 
-  it('lays no blast panel without a captured graph', () => {
-    const page = pageOf({ artifacts: { features: [], diff: CHANGE } });
+  it('keeps the blast radius out of the diff section', () => {
+    const page = pageOf({ artifacts: { features: [], diff: CHANGE, blast } });
 
     expect(sectionMarkup(page, 'diff')).not.toContain('blast-radius');
+  });
+
+  it('dims the blast entry and admits nothing was measured without a capture', () => {
+    const page = pageOf({ artifacts: { features: [] } });
+
+    expect(page).toMatch(/class="nav-item is-empty"[^>]*data-section="blast"/);
+    expect(sectionMarkup(page, 'blast')).toContain('Not written at this stage.');
+  });
+
+  it('heads the fallback panel with the blast radius name', () => {
+    const page = pageOf({ artifacts: { features: [] } });
+
+    expect(sectionMarkup(page, 'blast')).toContain('<span class="panel-label">Blast radius</span>');
+  });
+
+  it('lights the blast entry once a graph is captured', () => {
+    const page = pageOf({ artifacts: { features: [], diff: CHANGE, blast } });
+
+    expect(page).not.toMatch(/class="nav-item is-empty"[^>]*data-section="blast"/);
   });
 });
 

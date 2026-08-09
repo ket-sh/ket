@@ -30,7 +30,7 @@ afterEach(async () => {
 });
 
 describe('the blast the served page carries', () => {
-  it('renders the captured graph through the named renderer into the diff section', async () => {
+  it('renders the captured graph through the named renderer into the blast section', async () => {
     const binary = join(itemDir, 'echo-d2');
 
     await writeFile(binary, '#!/bin/sh\nprintf "<svg>the captured graph</svg>"\n');
@@ -45,9 +45,12 @@ describe('the blast the served page carries', () => {
     expect(page).toContain('<svg>the captured graph</svg>');
   });
 
-  it('serves a page without a blast panel when nothing was captured', async () => {
+  it('admits nothing was measured when no graph was captured', async () => {
     const page = await pageThrough('ket-no-such-d2');
+    const start = page.indexOf('id="section-blast"');
+    const section = page.slice(start, page.indexOf('</section>', start));
 
-    expect(page).not.toContain('blast-radius');
+    expect(start).toBeGreaterThan(-1);
+    expect(section).toContain('Not written at this stage.');
   });
 });
