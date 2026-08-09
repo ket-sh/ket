@@ -158,8 +158,12 @@ async function reportedAfter(
   };
 
   await openedWith({ remember }, (seen) => seen.includes('K-2'));
+
+  const before = reported.length;
+
   pressed(key);
   await landed(until);
+  await landed(() => reported.length > before);
 
   return reported.at(-1);
 }
