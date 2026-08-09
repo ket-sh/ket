@@ -12,7 +12,7 @@ import type { CitationReply } from './citations.ts';
 import type { Denial } from './envelope.ts';
 import type { ProbeReply } from './ring.ts';
 
-import { failuresAmong } from '../../shared/checks.ts';
+import { failuresAmong, localBinsOf } from '../../shared/checks.ts';
 import { record } from '../../shared/event-log.ts';
 import { readStored } from '../../shared/item-store.ts';
 import { inFlightFrom } from '../../shared/read-item.ts';
@@ -79,8 +79,9 @@ async function ringOne(
   semantics: PresetSemantics,
 ): Promise<RingFailure[]> {
   const covering = await coveringOn(root, path, semantics);
+  const localBins = await localBinsOf(root);
   const planned = ringOneOf(semantics).flatMap((check): PlannedCheck[] => {
-    const argv = argvFor(check, covering, path);
+    const argv = argvFor(check, covering, path, localBins);
 
     return argv === undefined ? [] : [{ runs: check.runs, argv }];
   });

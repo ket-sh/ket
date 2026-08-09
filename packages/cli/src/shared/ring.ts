@@ -18,16 +18,24 @@ function asPath(path: string): string {
   return path.startsWith(ANCHOR) || path.startsWith('/') ? path : `${ANCHOR}${path}`;
 }
 
-export function argvOf(runs: string): string[] {
+// A tool the project's bin directory shims runs through that shim, so a global
+// install cannot shadow it. Anything else, like the runtime itself, has no shim
+// to run through and resolves from the PATH.
+export function argvOf(runs: string, localBins: ReadonlySet<string>): string[] {
   return runs
     .split(ARGUMENT_SEPARATOR)
-    .map((part, at) => (at === 0 ? `${LOCAL_BIN}${part}` : part));
+    .map((part, at) => (at === 0 && localBins.has(part) ? `${LOCAL_BIN}${part}` : part));
 }
 
 // A check with nothing to look at has no command. Running it bare would sweep
 // the whole project, which is the cost ring one exists to avoid.
-export function argvFor(check: RingCheck, covering: string[], path: string): string[] | undefined {
-  const argv = argvOf(check.runs);
+export function argvFor(
+  check: RingCheck,
+  covering: string[],
+  path: string,
+  localBins: ReadonlySet<string>,
+): string[] | undefined {
+  const argv = argvOf(check.runs, localBins);
 
   if (check.scope === 'file') {
     return [...argv, asPath(path)];

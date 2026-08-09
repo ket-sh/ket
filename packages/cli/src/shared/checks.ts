@@ -1,10 +1,20 @@
 import { spawn } from 'node:child_process';
+import { readdir } from 'node:fs/promises';
+import { join } from 'node:path';
 
 import type { RingFailure } from './ring.ts';
 
 export interface PlannedCheck {
   runs: string;
   argv: string[];
+}
+
+// A project without a readable bin directory holds no shims, so every check
+// resolves from the PATH, which is what a spawn would have answered anyway.
+export async function localBinsOf(root: string): Promise<Set<string>> {
+  const names = await readdir(join(root, 'node_modules', '.bin')).catch((): string[] => []);
+
+  return new Set(names);
 }
 
 async function saidBy(argv: string[], root: string): Promise<string | undefined> {

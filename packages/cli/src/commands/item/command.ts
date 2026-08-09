@@ -9,7 +9,7 @@ import type { RingFailure } from '../../shared/ring.ts';
 import type { Decision } from '../../shared/stage.ts';
 import type { Transition } from '../../shared/transition.ts';
 
-import { failuresAmong } from '../../shared/checks.ts';
+import { failuresAmong, localBinsOf } from '../../shared/checks.ts';
 import { record } from '../../shared/event-log.ts';
 import { semanticsOf } from '../../shared/governing.ts';
 import { describing } from '../../shared/item-description.ts';
@@ -109,8 +109,8 @@ function stage(name: string, description: string, decide: Decision) {
   });
 }
 
-function plannedOnProject(checks: RingCheck[]): PlannedCheck[] {
-  return checks.map((check) => ({ runs: check.runs, argv: argvOf(check.runs) }));
+function plannedOnProject(checks: RingCheck[], localBins: ReadonlySet<string>): PlannedCheck[] {
+  return checks.map((check) => ({ runs: check.runs, argv: argvOf(check.runs, localBins) }));
 }
 
 // The checks a stage ends on belong to the preset that governs the project, so
@@ -127,7 +127,10 @@ function afterRunning(
       throw new Error(`no preset ket writes governs ${root}, so nothing says what to run`);
     }
 
-    return move(item, await failuresAmong(root, plannedOnProject(checks(semantics))));
+    return move(
+      item,
+      await failuresAmong(root, plannedOnProject(checks(semantics), await localBinsOf(root))),
+    );
   };
 }
 
