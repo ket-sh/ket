@@ -51,11 +51,12 @@ const BOARD_AREAS: Record<BoardLayout, (held: BoardAreaProps) => ReactNode> = {
       onWheel={mouse.listWheel}
     />
   ),
-  kanban: ({ columns, now, width, seat, totals, mouse }): ReactNode => (
+  kanban: ({ columns, now, width, tick, seat, totals, mouse }): ReactNode => (
     <BoardView
       columns={columns}
       now={now}
       room={width - PAGE_SIDE * 2}
+      tick={tick}
       seat={seat}
       totals={totals}
       mouse={mouse}

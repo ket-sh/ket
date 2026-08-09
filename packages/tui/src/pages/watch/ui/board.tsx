@@ -154,27 +154,50 @@ function Column({ column, now, least, total, selectedRow, mouse }: ColumnProps):
   );
 }
 
+function unmeasured(board: ScrollBoxRenderable): boolean {
+  return board.viewport.width === 0;
+}
+
 function useLaneFollow(
   boardRef: RefObject<ScrollBoxRenderable | null>,
   chosenStatus: string | undefined,
+  tick: number,
 ): void {
+  const seated = useRef<string | undefined>(undefined);
+
   useEffect(() => {
-    if (chosenStatus !== undefined) {
-      boardRef.current?.scrollChildIntoView(laneIdOf(chosenStatus));
+    if (chosenStatus === undefined || seated.current === chosenStatus) {
+      return;
     }
-  }, [boardRef, chosenStatus]);
+
+    const board = boardRef.current;
+
+    if (board === null || unmeasured(board)) {
+      return;
+    }
+
+    seated.current = chosenStatus;
+    board.scrollChildIntoView(laneIdOf(chosenStatus));
+  }, [boardRef, chosenStatus, tick]);
 }
 
 interface BoardViewProps {
   columns: KanbanColumnView[];
   now: string;
   room: number;
+  tick: number;
   seat: Seat;
   totals: Map<string, number>;
   mouse: WatchMouse;
 }
 
-function Lanes({ columns, now, seat, totals, mouse }: Omit<BoardViewProps, 'room'>): ReactNode {
+function Lanes({
+  columns,
+  now,
+  seat,
+  totals,
+  mouse,
+}: Omit<BoardViewProps, 'room' | 'tick'>): ReactNode {
   const least = laneLeast(columns, totals);
 
   return columns.map(
@@ -192,11 +215,19 @@ function Lanes({ columns, now, seat, totals, mouse }: Omit<BoardViewProps, 'room
   );
 }
 
-export function BoardView({ columns, now, room, seat, totals, mouse }: BoardViewProps): ReactNode {
+export function BoardView({
+  columns,
+  now,
+  room,
+  tick,
+  seat,
+  totals,
+  mouse,
+}: BoardViewProps): ReactNode {
   const { theme } = useTheme();
   const boardRef = useRef<ScrollBoxRenderable>(null);
 
-  useLaneFollow(boardRef, columns[seat.col]?.status);
+  useLaneFollow(boardRef, columns[seat.col]?.status, tick);
 
   const wheelAt = (event: MouseEvent): void => {
     const direction = event.scroll?.direction;
