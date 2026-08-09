@@ -43,12 +43,21 @@ interface GateRun {
   said: string;
 }
 
-function gateRun(project: string, env: Record<string, string> = {}): GateRun {
-  const ran = spawnSync(process.execPath, [join('scripts', 'mutate-changed.mts')], {
-    cwd: project,
-    encoding: 'utf8',
-    env: { ...process.env, ...HERMETIC_GIT, ...env },
-  });
+interface GateAsk {
+  args?: string[];
+  env?: Record<string, string>;
+}
+
+function gateRun(project: string, ask: GateAsk = {}): GateRun {
+  const ambient: Record<string, string | undefined> = { ...process.env, ...HERMETIC_GIT };
+
+  delete ambient['GITHUB_BASE_REF'];
+
+  const ran = spawnSync(
+    process.execPath,
+    [join('scripts', 'mutate-changed.mts'), ...(ask.args ?? [])],
+    { cwd: project, encoding: 'utf8', env: { ...ambient, ...ask.env } },
+  );
 
   return { status: ran.status, said: `${ran.stdout}${ran.stderr}` };
 }
@@ -82,6 +91,19 @@ describe('the scoped mutation gate in a newborn project', () => {
     expect(status).toBe(0);
   });
 
+  it('ignores the base CI exported for some outer repository, since ambience is not intent', () => {
+    const project = scaffolded();
+
+    git(project, ['init', '--quiet', '-b', 'master']);
+    git(project, ['add', '--all']);
+    git(project, ['commit', '--quiet', '-m', 'chore: scaffold with ket']);
+
+    const { status, said } = gateRun(project, { env: { GITHUB_BASE_REF: 'main' } });
+
+    expect(said).toContain('skips');
+    expect(status).toBe(0);
+  });
+
   it('still refuses a base that was asked for and answers nothing, since CI must stay loud', () => {
     const project = scaffolded();
 
@@ -89,7 +111,7 @@ describe('the scoped mutation gate in a newborn project', () => {
     git(project, ['add', '--all']);
     git(project, ['commit', '--quiet', '-m', 'chore: scaffold with ket']);
 
-    const { status, said } = gateRun(project, { GITHUB_BASE_REF: 'nowhere' });
+    const { status, said } = gateRun(project, { args: ['--base', 'origin/nowhere'] });
 
     expect(said).toContain('origin/nowhere');
     expect(status).toBe(1);

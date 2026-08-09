@@ -80,7 +80,9 @@ jobs:
       - run: bun install --frozen-lockfile
       - name: Retest what changed against the merge base
         if: github.event_name == 'pull_request'
-        run: bun run test:mutation
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: bun run test:mutation -- --base "origin/$BASE_REF"
       - name: Retest everything, since main anchors the scoped runs
         if: github.event_name == 'push'
         run: bun run test:mutation:full

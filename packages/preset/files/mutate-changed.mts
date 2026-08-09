@@ -34,13 +34,11 @@ function resolves(reference: string): boolean {
 function askedBase(): string | undefined {
   const argued = process.argv.indexOf('--base');
 
-  if (argued !== -1) {
-    return process.argv[argued + 1] ?? refuse('--base names no reference to diff against');
+  if (argued === -1) {
+    return undefined;
   }
 
-  const pulled = process.env['GITHUB_BASE_REF'];
-
-  return pulled === undefined || pulled === '' ? undefined : `origin/${pulled}`;
+  return process.argv[argued + 1] ?? refuse('--base names no reference to diff against');
 }
 
 function baseBranch(): string {

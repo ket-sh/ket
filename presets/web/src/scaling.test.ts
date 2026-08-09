@@ -25,12 +25,14 @@ describe('the slow gates the web preset arms beside the mutation gate', () => {
 });
 
 describe('the pipeline the web preset writes for the mutation gate', () => {
-  it('retests a pull request against its merge base alone', async () => {
+  it('retests a pull request against a base it names out loud, never an ambient one', async () => {
     expect(await readsPresetFile('github-ci.yml')).toContain(
       [
         '      - name: Retest what changed against the merge base',
         "        if: github.event_name == 'pull_request'",
-        '        run: bun run test:mutation',
+        '        env:',
+        '          BASE_REF: ${{ github.base_ref }}',
+        '        run: bun run test:mutation -- --base "origin/$BASE_REF"',
       ].join('\n'),
     );
   });
