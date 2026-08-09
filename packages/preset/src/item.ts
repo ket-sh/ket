@@ -53,7 +53,7 @@ export type PresetIntegration =
   | ComingIntegration;
 
 export function comes(integration: PresetIntegration): integration is ComingIntegration {
-  return 'soon' in integration;
+  return 'soon' in integration && integration.soon;
 }
 
 export function installsOf(integration: PresetIntegration): string[] {
