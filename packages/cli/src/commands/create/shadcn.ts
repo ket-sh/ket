@@ -1,10 +1,11 @@
 import type { PresetItem } from '@ket/preset';
 
 import type { PresetName } from '../../shared/configuration.ts';
+import type { ToolArgv } from './project-tools.ts';
 
 const SHADCN_CLI = 'shadcn@4.16.2';
 
-export const TOOLCHAIN_ARGV = ['bun', 'install'];
+export const TOOLCHAIN_ARGV: ToolArgv = ['bun', 'install'];
 
 const EMITTED_CODE = /^[ab][0-9A-Za-z]{1,9}$/u;
 
@@ -44,7 +45,7 @@ export function shadcnPresetFrom(
   return refusal === undefined ? { code: given } : { refused: refusal };
 }
 
-export function applyArgvFor(code: string): string[] {
+export function applyArgvFor(code: string): ToolArgv {
   return ['bunx', SHADCN_CLI, 'apply', '--preset', code, '--yes'];
 }
 

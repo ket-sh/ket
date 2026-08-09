@@ -35,12 +35,18 @@ async function landedAmong(
   return { installed, refused };
 }
 
+const UNSHIPPED = 'the preset shipped no skills lockfile to install from';
+
 export async function installSkills(
   root: string,
   lockfile: string | undefined,
   brought: PresetSkill[] = [],
 ): Promise<SkillsInstalled> {
-  const locked = skillsFrom(lockfile ?? '');
+  if (lockfile === undefined) {
+    return { refused: UNSHIPPED };
+  }
+
+  const locked = skillsFrom(lockfile);
 
   if ('unreadable' in locked) {
     return { refused: locked.unreadable };

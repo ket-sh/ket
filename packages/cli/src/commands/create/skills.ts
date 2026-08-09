@@ -1,5 +1,7 @@
 import type { PresetSkill } from '@ket/preset';
 
+import type { ToolArgv } from './project-tools.ts';
+
 export type SkillsInstalled = { installed: string[] } | { refused: string };
 
 const UNINSTALLED = 'The project is ready, but its skills did not install:';
@@ -24,7 +26,7 @@ export const INSTALL_ENVIRONMENT: Record<string, string> = {
 
 export const INSTALL_DEADLINE_MS = CLONE_TIMEOUT_MS + DEADLINE_GRACE_MS;
 
-export function installArgvFor(skill: PresetSkill): string[] {
+export function installArgvFor(skill: PresetSkill): ToolArgv {
   return [
     RUNNER,
     SKILLS_CLI,

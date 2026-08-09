@@ -7,6 +7,8 @@ import { toolRefusal } from './project-tools.ts';
 
 const DEADLINE_MS = 5000;
 
+const SHORT_DEADLINE_MS = 250;
+
 const COMPLAINING_ON_STDERR = `#!/bin/sh
 echo "the registry said no" >&2
 exit 1
@@ -15,6 +17,10 @@ exit 1
 const TRAILING_WHITESPACE = `#!/bin/sh
 printf 'said with a tail   \\n\\n'
 exit 1
+`;
+
+const HANGING = `#!/bin/sh
+sleep 60
 `;
 
 async function toolThat(behaves: string): Promise<string> {
@@ -50,5 +56,13 @@ describe('quoting a tool that ran inside the project', () => {
     const tool = await toolThat(TRAILING_WHITESPACE);
 
     expect(await toolRefusal([tool], await project(), DEADLINE_MS, {})).toBe('said with a tail');
+  });
+
+  it('gives up on a tool that never finishes, saying how long it waited', async () => {
+    const tool = await toolThat(HANGING);
+
+    expect(await toolRefusal([tool], await project(), SHORT_DEADLINE_MS, {})).toBe(
+      'it was still running after 250ms',
+    );
   });
 });

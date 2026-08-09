@@ -1,17 +1,19 @@
 import { spawn } from 'node:child_process';
 
+export type ToolArgv = [string, ...string[]];
+
 // A tool may log its failures through a prompt library that writes to stdout,
 // so a reader watching stderr would call every failure a success. The exit code
 // is the only answer, and both streams are gathered only to quote it back.
 export async function toolRefusal(
-  argv: string[],
+  argv: ToolArgv,
   root: string,
   deadlineMs: number,
   environment: Record<string, string>,
 ): Promise<string | undefined> {
   return new Promise((settle) => {
     const [binary, ...rest] = argv;
-    const tool = spawn(binary ?? '', rest, {
+    const tool = spawn(binary, rest, {
       cwd: root,
       env: { ...process.env, ...environment },
     });
