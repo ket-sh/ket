@@ -173,8 +173,8 @@ describe('creating a project that takes the gates without the pipeline', () => {
 
     const settings = await readFile(join(where, '.claude/settings.json'), 'utf8');
 
-    expect(settings).toContain('ket@ket');
-    expect(settings).not.toContain('ket-workflow@ket');
+    expect(settings).toContain('"ket-gates@ket": true');
+    expect(settings).not.toContain('"ket@ket"');
   });
 
   it('takes the refusal beside a preset, so a headless run needs no wizard', async () => {
@@ -222,9 +222,10 @@ describe('creating a project that drives the pipeline, the default', () => {
 
     await runCommand('create', [where]);
 
-    await expect(readFile(join(where, '.claude/settings.json'), 'utf8')).resolves.toContain(
-      'ket-workflow@ket',
-    );
+    const settings = await readFile(join(where, '.claude/settings.json'), 'utf8');
+
+    expect(settings).toContain('"ket-gates@ket": true');
+    expect(settings).toContain('"ket@ket": true');
   });
 });
 

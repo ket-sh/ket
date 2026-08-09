@@ -6,15 +6,15 @@
   },
   "plugins": [
     {
-      "name": "ket",
+      "name": "ket-gates",
       "source": "./harness/gates",
-      "version": "0.1.0",
+      "version": "0.3.0",
       "description": "The gates that keep a status honest"
     },
     {
-      "name": "ket-workflow",
+      "name": "ket",
       "source": "./harness/workflow",
-      "version": "0.1.0",
+      "version": "0.3.0",
       "description": "The pipeline ket drives through those gates"
     }
   ],

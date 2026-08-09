@@ -155,10 +155,44 @@ test -e "$PROJECT/.ket/BOARD.md" &&
   fail "create rendered a board file, which ket watch replaced"
 
 echo "acceptance: create registered the harness"
+grep -q '"ket-gates@ket": true' "$PROJECT/.claude/settings.json" ||
+  fail "create did not enable the gates plugin"
 grep -q '"ket@ket": true' "$PROJECT/.claude/settings.json" ||
-  fail "create did not enable the harness plugin"
+  fail "create did not enable the pipeline plugin the default workflow takes"
+grep -q 'ket-workflow@ket' "$PROJECT/.claude/settings.json" &&
+  fail "create enabled the pipeline under its old name"
 grep -q '"repo": "ket-sh/ket"' "$PROJECT/.claude/settings.json" ||
   fail "create did not register the marketplace the harness ships from"
+
+echo "acceptance: update migrates the plugin keys an older ket enabled"
+python3 - "$PROJECT/.claude/settings.json" <<'OLD_KEYS'
+import json, sys
+
+path = sys.argv[1]
+with open(path) as held:
+    settings = json.load(held)
+settings["enabledPlugins"] = {"ket@ket": True, "ket-workflow@ket": True}
+with open(path, "w") as held:
+    json.dump(settings, held, indent=2)
+    held.write("\n")
+OLD_KEYS
+(cd "$PROJECT" &&
+  git add --all &&
+  git -c user.name=ket -c user.email=ket@test commit -qm 'chore: enable plugins under the old names') ||
+  fail "the old-keyed settings could not be committed"
+(cd "$PROJECT" && "$KET" update >"$SANDBOX/update.log" 2>&1) || {
+  tail -20 "$SANDBOX/update.log" >&2
+  fail "update refused a project whose plugins an older ket enabled"
+}
+grep -q 'migrated .claude/settings.json' "$SANDBOX/update.log" ||
+  fail "update never said it migrated the settings"
+grep -q '"ket-gates@ket": true' "$PROJECT/.claude/settings.json" ||
+  fail "update left the gates under their old key"
+grep -q '"ket@ket": true' "$PROJECT/.claude/settings.json" ||
+  fail "update dropped the workflow the project took"
+grep -q 'ket-workflow@ket' "$PROJECT/.claude/settings.json" &&
+  fail "update left the pipeline under its old name"
+CHECKED=$((CHECKED + 4))
 
 echo "acceptance: the harness ships what it declares"
 for name in feature explore approve status continue review ship; do

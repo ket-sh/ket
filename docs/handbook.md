@@ -6,7 +6,7 @@ sources:
   - presets/cli/src/**
   - presets/web/src/**
   - harness/**
-stamp: 0e6af98d0976
+stamp: 8e735e95d567
 ---
 
 # The ket handbook
@@ -43,8 +43,8 @@ plugins registered, and the pipeline ready.
 - `.ket/toolchain.yaml` and `.ket/scaffold.yaml` are machine state: which
   dependencies the toolchain gate has already named, and which files the
   scaffold wrote.
-- Two Claude Code plugins carry the law: `ket` arms the gates, and
-  `ket-workflow` carries the pipeline commands and their skills.
+- Two Claude Code plugins carry the law: `ket-gates` arms the gates, and
+  `ket` carries the pipeline commands and their skills.
 
 ## The pipeline
 
@@ -200,7 +200,7 @@ maintainer decides, and an authorized change lands with an ADR recording why.
 Skills are the law in loadable form. Each says when it applies. The session
 loads the one that applies and works from it rather than from a summary.
 
-### Carried by the `ket` plugin (the gates)
+### Carried by the `ket-gates` plugin (the gates)
 
 | Skill               | When it applies                                                   |
 | ------------------- | ----------------------------------------------------------------- |
@@ -219,7 +219,7 @@ loads the one that applies and works from it rather than from a summary.
 | `mechanical-checks` | Turn a hand-kept rule into a machine, and propose it              |
 | `verification`      | What counts as evidence of finished work                          |
 
-### Carried by the `ket-workflow` plugin (the pipeline)
+### Carried by the `ket` plugin (the pipeline)
 
 | Skill           | When it applies                                                |
 | --------------- | -------------------------------------------------------------- |

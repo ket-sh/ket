@@ -212,3 +212,64 @@ describe('applying an update to a project an older ket scaffolded', () => {
     await expect(runCommand('update', [])).rejects.toThrow(/^(?:(?!toolchain).)*$/su);
   });
 });
+
+describe('applying an update to a project whose plugins an older ket enabled', () => {
+  function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+  }
+
+  async function settingsOn(root: string): Promise<Record<string, unknown>> {
+    const held: unknown = JSON.parse(await readFile(join(root, '.claude/settings.json'), 'utf8'));
+
+    return isRecord(held) ? held : {};
+  }
+
+  async function enabledPluginsRewrittenTo(enabled: Record<string, boolean>): Promise<void> {
+    const held = await settingsOn(where);
+
+    await writeFile(
+      join(where, '.claude/settings.json'),
+      `${JSON.stringify({ ...held, enabledPlugins: enabled }, undefined, 2)}\n`,
+    );
+    await committed(where);
+  }
+
+  async function enabledAfterUpdate(): Promise<unknown> {
+    return (await settingsOn(where))['enabledPlugins'];
+  }
+
+  it('rewrites both keys, keeping the workflow the project took', async () => {
+    await enabledPluginsRewrittenTo({ 'ket@ket': true, 'ket-workflow@ket': true });
+
+    await runCommand('update', []);
+
+    expect(await enabledAfterUpdate()).toStrictEqual({ 'ket-gates@ket': true, 'ket@ket': true });
+    expect(lines.join('')).toContain('migrated .claude/settings.json');
+  });
+
+  it('rewrites the gates key alone for a project that declined the pipeline', async () => {
+    await enabledPluginsRewrittenTo({ 'ket@ket': true });
+
+    await runCommand('update', []);
+
+    expect(await enabledAfterUpdate()).toStrictEqual({ 'ket-gates@ket': true });
+  });
+
+  it('says the migration in the plan and writes nothing', async () => {
+    await enabledPluginsRewrittenTo({ 'ket@ket': true, 'ket-workflow@ket': true });
+
+    await runCommand('update', ['--plan']);
+
+    expect(lines.join('')).toContain('migrated .claude/settings.json');
+    expect(await enabledAfterUpdate()).toStrictEqual({ 'ket@ket': true, 'ket-workflow@ket': true });
+  });
+
+  it('leaves settings already under the current names byte for byte', async () => {
+    const before = await readFile(join(where, '.claude/settings.json'), 'utf8');
+
+    await runCommand('update', []);
+
+    await expect(readFile(join(where, '.claude/settings.json'), 'utf8')).resolves.toBe(before);
+    expect(lines.join('')).not.toContain('migrated');
+  });
+});
