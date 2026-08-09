@@ -7,6 +7,7 @@ import type { FirstCommit } from '../../shared/git.ts';
 import type { Shade } from './banner.ts';
 import type { Step } from './next-steps.ts';
 import type { PipelineCommand } from './pipeline-commands.generated.ts';
+import type { ShadcnPresetApplied } from './shadcn.ts';
 import type { SkillsInstalled } from './skills.ts';
 
 import { gradientOver, KET_BANNER, supportsTrueColor, toriiBeside } from './banner.ts';
@@ -15,6 +16,7 @@ import { confetti } from './confetti.ts';
 import { gateTable } from './gate-table.ts';
 import { ketTable } from './ket-table.ts';
 import { nextSteps } from './next-steps.ts';
+import { shadcnPresetNote } from './shadcn.ts';
 import { skillsNote } from './skills.ts';
 import { graphLines, paintedGraphLines, WORKFLOW_GRAPH } from './workflow-graph.ts';
 
@@ -115,6 +117,7 @@ export function announce(
   gates: GateSemantics[],
   first: FirstCommit,
   skills: SkillsInstalled,
+  shadcn: ShadcnPresetApplied,
   pipeline: PipelineCommand[],
 ): void {
   outro(color.dim('Project created'));
@@ -129,6 +132,7 @@ export function announce(
   console.log(`${INDENT}${color.dim(PARTS)}\n\n${ketTable()}\n`);
   console.log(pipelineNote(pipeline));
   console.log(asNoteLines(skillsNote(skills)));
+  console.log(asNoteLines(shadcnPresetNote(shadcn)));
   console.log(commitNote(first));
   console.log(`${INDENT}${color.dim('More at')} ${color.cyan(DOCS)}\n`);
 }

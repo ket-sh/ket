@@ -6,6 +6,7 @@ export interface Configuration {
   key: string;
   targets: Record<string, PresetName>;
   integrations: string[];
+  shadcnPreset?: string;
   language: string;
   workflow: boolean;
 }
