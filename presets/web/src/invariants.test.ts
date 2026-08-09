@@ -62,3 +62,44 @@ describe("the web preset's skills lock against the shared lock it starts from", 
     expect(webCarries).toStrictEqual(sharedSkills);
   });
 });
+
+function sourceHeldBy(held: unknown): unknown {
+  return isRecord(held) ? held['source'] : undefined;
+}
+
+describe("the web preset's skills lock against the stack it scaffolds", () => {
+  it('locks a skill for each piece of the stack, each from the source that publishes it', async () => {
+    const webSkills = await skillsLockAt(PRESET_ROOT);
+
+    const lockedSources = Object.fromEntries(
+      Object.entries(webSkills).map(([name, held]) => [name, sourceHeldBy(held)]),
+    );
+
+    expect(lockedSources).toStrictEqual({
+      'design-system-patterns': 'wshobson/agents',
+      'e2e-testing-patterns': 'wshobson/agents',
+      'error-handling-patterns': 'wshobson/agents',
+      'feature-sliced-design': 'feature-sliced/skills',
+      'find-skills': 'vercel-labs/skills',
+      'frontend-design': 'anthropics/skills',
+      'github-actions-docs': 'xixu-me/skills',
+      'javascript-testing-expert': 'dubzzz/fast-check',
+      'javascript-testing-patterns': 'wshobson/agents',
+      'playwright-best-practices': 'currents-dev/playwright-best-practices-skill',
+      'playwright-cli': 'microsoft/playwright-cli',
+      'react-doctor': 'millionco/react-doctor',
+      shadcn: 'shadcn/ui',
+      'tailwind-design-system': 'wshobson/agents',
+      'tanstack-router': 'tanstack-skills/tanstack-skills',
+      'tanstack-start': 'tanstack-skills/tanstack-skills',
+      'typescript-advanced-types': 'wshobson/agents',
+      varlock: 'dmno-dev/varlock',
+      'vercel-composition-patterns': 'vercel-labs/agent-skills',
+      'vercel-react-best-practices': 'vercel-labs/agent-skills',
+      'vercel-react-view-transitions': 'vercel-labs/agent-skills',
+      vitest: 'antfu/skills',
+      'webapp-testing': 'anthropics/skills',
+      'writing-guidelines': 'vercel-labs/agent-skills',
+    });
+  });
+});
