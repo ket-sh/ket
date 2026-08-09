@@ -6,6 +6,8 @@
   "vitest": {
     "configFile": "vitest.mutation.config.ts"
   },
+  "ignorePatterns": ["**/*.bun-build", "/dist", "/.turbo", "/reports"],
+  "cleanTempDir": "always",
   "mutate": [
     "src/**/*.ts",
     "!src/**/*.test.ts",
