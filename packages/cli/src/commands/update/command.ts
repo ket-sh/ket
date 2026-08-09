@@ -21,7 +21,12 @@ import {
   updatePlanOf,
 } from '../../shared/scaffold-manifest.ts';
 import { installedFor } from '../../shared/scaffold/install.ts';
-import { crowdedRefusal, offeredIntegrations } from '../../shared/scaffold/integrations.ts';
+import {
+  crowdedRefusal,
+  mcpServersFor,
+  offeredIntegrations,
+} from '../../shared/scaffold/integrations.ts';
+import { MCP_FILE, mcpFileOf } from '../../shared/scaffold/mcp.ts';
 import { heroHint } from '../../shared/scaffold/name-token.ts';
 import { KET_VERSION } from '../../shared/version.ts';
 import { readTextIfPresent, writeFiles } from '../../shared/write-files.ts';
@@ -85,6 +90,16 @@ async function plannedMigrationOf(root: string): Promise<ScaffoldFile | undefine
   return current === undefined ? undefined : { path: SETTINGS_PATH, contents: current };
 }
 
+async function plannedRegistrationOf(
+  root: string,
+  configuration: Configuration,
+): Promise<ScaffoldFile | undefined> {
+  return mcpFileOf(
+    await readTextIfPresent(root, MCP_FILE),
+    mcpServersFor(Object.values(configuration.targets), configuration.integrations),
+  );
+}
+
 async function recordOf(root: string): Promise<ScaffoldRecord> {
   const read = await readFile(join(root, SCAFFOLD_RECORD_PATH), 'utf8').catch(() => undefined);
   const record = read === undefined ? undefined : parseScaffoldRecord(read);
@@ -129,13 +144,21 @@ async function plannedOn(root: string, record: ScaffoldRecord, fresh: ScaffoldFi
   return updatePlanOf(record, await diskHashesFor(root, paths), fresh);
 }
 
-function saidFates(plan: PlannedFate[], migration: ScaffoldFile | undefined): void {
+function saidFates(
+  plan: PlannedFate[],
+  migration: ScaffoldFile | undefined,
+  registration: ScaffoldFile | undefined,
+): void {
   for (const planned of plan.filter((fated) => fated.fate !== 'settled')) {
     say(`${planned.fate} ${planned.path}`);
   }
 
   if (migration !== undefined) {
     say(`migrated ${migration.path}`);
+  }
+
+  if (registration !== undefined) {
+    say(`merged ${registration.path}`);
   }
 }
 
@@ -173,14 +196,14 @@ async function applied(
   record: ScaffoldRecord,
   fresh: ScaffoldFile[],
   plan: PlannedFate[],
-  migration: ScaffoldFile | undefined,
+  merges: ScaffoldFile[],
 ): Promise<void> {
   const fates = new Map(plan.map((planned) => [planned.path, planned.fate]));
   const writing = fresh.filter((file) => WRITE_FATES.has(fates.get(file.path) ?? 'settled'));
 
   await writeFiles(root, [
     ...writing,
-    ...(migration === undefined ? [] : [migration]),
+    ...merges,
     { path: SCAFFOLD_RECORD_PATH, contents: recordAfter(record, fresh, fates) },
   ]);
 
@@ -227,14 +250,19 @@ const update = defineCommand({
     const fresh = recordedAmong(installedFor(configuration, project));
     const plan = forced(await plannedOn(root, record, fresh), args.force);
     const migration = await plannedMigrationOf(root);
+    const registration = await plannedRegistrationOf(root, configuration);
 
-    saidFates(plan, migration);
+    saidFates(plan, migration, registration);
 
     if (args.plan) {
       return;
     }
 
-    await applied(root, record, fresh, plan, migration);
+    const merges = [migration, registration].filter(
+      (file): file is ScaffoldFile => file !== undefined,
+    );
+
+    await applied(root, record, fresh, plan, merges);
   },
 });
 

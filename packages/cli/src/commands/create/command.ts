@@ -17,10 +17,12 @@ import { installedFor, shippedContents } from '../../shared/scaffold/install.ts'
 import {
   chosenFrom,
   installsFor,
+  mcpServersFor,
   offeredIntegrations,
   skillsFor,
 } from '../../shared/scaffold/integrations.ts';
 import { dictionaryInstallsFor, refuseLanguage } from '../../shared/scaffold/language.ts';
+import { MCP_FILE, mcpFileOf } from '../../shared/scaffold/mcp.ts';
 import { heroHint } from '../../shared/scaffold/name-token.ts';
 import { KET_VERSION } from '../../shared/version.ts';
 import { readTextIfPresent, writeFiles } from '../../shared/write-files.ts';
@@ -127,6 +129,10 @@ async function writeScaffold(plan: CreationPlan, configuration: Configuration): 
   };
 
   const installed = installedFor(configuration, project);
+  const registration = mcpFileOf(
+    await readTextIfPresent(plan.root, MCP_FILE),
+    mcpServersFor(targets, configuration.integrations),
+  );
 
   // A preset ignores what its own toolchain downloads and builds, and ket adds
   // the state it keeps. The scaffold writes last, so it appends to the file
@@ -143,6 +149,7 @@ async function writeScaffold(plan: CreationPlan, configuration: Configuration): 
         installed.map((file) => file.path),
       ),
     },
+    ...(registration === undefined ? [] : [registration]),
     ...installed,
     scaffoldRecordFile(recordedAmong(installed), KET_VERSION),
     ...scaffoldFor(configuration, ignored),
