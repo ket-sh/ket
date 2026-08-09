@@ -68,8 +68,8 @@ afterEach(() => {
   }
 });
 
-describe('the scoped mutation gate on a machine that only has bun', () => {
-  it('reaches stryker through its own runtime, never through a shim that wants node', () => {
+describe('the stryker the scoped gate reaches', () => {
+  it('runs the shim the project ships, handing it the scope', () => {
     const project = scaffolded();
 
     git(project, ['init', '--quiet', '-b', 'main']);
@@ -78,7 +78,8 @@ describe('the scoped mutation gate on a machine that only has bun', () => {
     mkdirSync(join(project, 'node_modules', '.bin'), { recursive: true });
     writeFileSync(
       join(project, 'node_modules', '.bin', 'stryker'),
-      "console.log(['stryker', ...process.argv.slice(2)].join(' '));\n",
+      "#!/usr/bin/env node\nconsole.log(['stryker', ...process.argv.slice(2)].join(' '));\n",
+      { mode: 0o755 },
     );
     mkdirSync(join(project, 'src'));
     writeFileSync(join(project, 'src', 'lockout.ts'), 'export const lockedOut = true;\n');

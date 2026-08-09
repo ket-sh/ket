@@ -118,7 +118,7 @@ function sourcesBehind(path: string): string[] {
 }
 
 function runsStryker(mutate: string[]): never {
-  const ran = spawnSync(process.execPath, ['./node_modules/.bin/stryker', 'run', ...mutate], {
+  const ran = spawnSync('./node_modules/.bin/stryker', ['run', ...mutate], {
     stdio: 'inherit',
   });
 
