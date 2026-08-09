@@ -16,6 +16,11 @@ function refuse(reason: string): never {
   process.exit(1);
 }
 
+function skip(reason: string): never {
+  console.log(reason);
+  process.exit(0);
+}
+
 function git(args: string[]): string | undefined {
   const asked = spawnSync('git', args, { encoding: 'utf8' });
 
@@ -49,8 +54,8 @@ function baseBranch(): string {
 
   return (
     ['origin/main', 'main'].find(resolves) ??
-    refuse(
-      `neither origin/main nor main resolves to a commit; name one with --base, or run ${FULL_BATTERY}`,
+    skip(
+      `no main to diff against yet, so the scoped mutation gate skips; ${FULL_BATTERY} runs everything`,
     )
   );
 }

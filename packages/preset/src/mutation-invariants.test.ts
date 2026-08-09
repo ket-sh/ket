@@ -105,6 +105,12 @@ describe('the mutation gate a preset declares against the size of the change', (
     ]);
   });
 
+  it('says nothing about a scoped script a preset has yet to declare, since the required gate owns that hole', () => {
+    expect(
+      mutationScalingInvariantsOf(declaring({ 'test:mutation:full': 'stryker run' })),
+    ).toStrictEqual([]);
+  });
+
   it('names the missing full battery, since scoped runs lean on it', () => {
     expect(
       mutationScalingInvariantsOf(declaring({ 'test:mutation': 'bun scripts/mutate-changed.mts' })),
