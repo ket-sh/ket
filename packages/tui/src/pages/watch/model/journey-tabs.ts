@@ -10,7 +10,7 @@ import { selectedNodeOf } from './frames.ts';
 // The children tab only exists while the item has children, so a tab walk
 // never lands on a panel with nothing to show.
 export function tabsOf(journey: JourneyView): JourneyTab[] {
-  const held: JourneyTab[] = ['overview', 'workflow'];
+  const held: JourneyTab[] = ['workflow', 'overview'];
 
   return journey.children.length === 0
     ? [...held, 'artifacts']

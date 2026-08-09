@@ -68,7 +68,7 @@ async function opening(presses: Press[]): Promise<string> {
 const ARTIFACTS_TAB: Press[] = [
   { key: 'ARROW_RIGHT', lands: '║ K-1' },
   { key: 'RETURN', lands: 'K-1 · journey' },
-  { key: 'TAB', lands: '║ designing' },
+  { key: 'TAB', lands: 'The keeper locks' },
   { key: 'TAB', lands: 'A quiet fix' },
   { key: 'TAB', lands: '► spec.md' },
 ];
@@ -100,7 +100,7 @@ describe('the surface a node opens', () => {
     const frame = await opening([
       { key: 'ARROW_RIGHT', lands: '║ K-1' },
       { key: 'RETURN', lands: 'K-1 · journey' },
-      { key: 'TAB', lands: '║ designing' },
+      { key: 'TAB', lands: 'The keeper locks' },
       { key: 'TAB', lands: 'A quiet fix' },
       { key: 'RETURN', lands: 'K-2 · journey' },
     ]);

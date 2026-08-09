@@ -85,13 +85,6 @@ async function landedOnJourney(width: number): Promise<string> {
   return landed((seen) => seen.includes('K-1 · journey'));
 }
 
-async function landedOnWorkflow(width: number): Promise<string> {
-  await landedOnJourney(width);
-  pressed('TAB');
-
-  return landed((seen) => seen.includes('║ designing'));
-}
-
 describe('the journey a pointer click steers', () => {
   it('switches the panel through a tab label click', async () => {
     const frame = await landedOnJourney(WIDE);
@@ -102,7 +95,7 @@ describe('the journey a pointer click steers', () => {
   });
 
   it('chooses the stage under the click', async () => {
-    const frame = await landedOnWorkflow(WIDE);
+    const frame = await landedOnJourney(WIDE);
 
     await clickedIn(frame, 'triaged', 'triaged');
 
@@ -113,7 +106,7 @@ describe('the journey a pointer click steers', () => {
   });
 
   it('dives into the children from the pane summary', async () => {
-    const frame = await landedOnWorkflow(WIDE);
+    const frame = await landedOnJourney(WIDE);
 
     await clickedIn(frame, 'children 0/1', 'children 0/1');
 
@@ -122,7 +115,9 @@ describe('the journey a pointer click steers', () => {
 });
 
 async function landedOnArtifacts(): Promise<string> {
-  await landedOnWorkflow(WIDE);
+  await landedOnJourney(WIDE);
+  pressed('TAB');
+  await landed((seen) => seen.includes('The keeper locks'));
   pressed('TAB');
   await landed((seen) => seen.includes('A quiet fix'));
   pressed('TAB');
@@ -172,7 +167,7 @@ describe('the artifacts tab the pointer works', () => {
 
 describe('the canvas the wheel walks', () => {
   it('walks the selection sideways where the canvas overflows', async () => {
-    const frame = await landedOnWorkflow(SNUG);
+    const frame = await landedOnJourney(SNUG);
 
     await scrolledIn(frame, '║ designing', 'designing', 'down');
 
@@ -184,7 +179,7 @@ describe('the canvas the wheel walks', () => {
   });
 
   it('keeps the selection still where the canvas fits', async () => {
-    const frame = await landedOnWorkflow(WIDE);
+    const frame = await landedOnJourney(WIDE);
 
     await scrolledIn(frame, '║ designing', 'designing', 'down');
 

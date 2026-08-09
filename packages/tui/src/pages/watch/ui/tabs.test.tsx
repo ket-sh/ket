@@ -84,53 +84,43 @@ describe('the tabs an opened item wears', () => {
     expect(frame).toContain('artifacts');
   });
 
-  it('lands on the overview carrying the item title', async () => {
+  it('lands on the workflow with the active stage in hand', async () => {
     const frame = await opening(OPENED);
 
+    expect(frame).toContain('║ designing');
+  });
+
+  it('hands the overview the second seat, carrying the description', async () => {
+    const frame = await opening([...OPENED, { key: 'TAB', lands: 'The keeper locks' }]);
+
     expect(frame).toContain('The watched item');
+    expect(frame).toContain('The keeper locks the account after five failures.');
+    expect(frame).not.toContain('No description written.');
   });
 
   it('says so when the item carries no description', async () => {
     const frame = await opening([
       ...OPENED,
-      { key: 'TAB', lands: '║ designing' },
+      { key: 'TAB', lands: 'The keeper locks' },
       { key: 'TAB', lands: 'A quiet fix' },
       { key: 'RETURN', lands: 'K-2 · journey' },
+      { key: 'TAB', lands: 'No description written.' },
     ]);
 
     expect(frame).toContain('No description written.');
-  });
-
-  it('reads out the description the item was written with', async () => {
-    const feed = feedOf();
-    const opened = await testRender(
-      <WatchPage feed={feed} clock={() => NOW} onQuit={() => undefined} />,
-      { width: 160, height: 40 },
-    );
-
-    rendered = opened;
-    await landed((seen) => seen.includes('K-2'));
-    createMockKeys(opened.renderer).pressKey('ARROW_RIGHT');
-    await landed((seen) => seen.includes('║ K-1'));
-    createMockKeys(opened.renderer).pressKey('RETURN');
-
-    const frame = await landed((seen) => seen.includes('K-1 · journey'));
-
-    expect(frame).toContain('The keeper locks the account after five failures.');
-    expect(frame).not.toContain('No description written.');
   });
 });
 
 describe('the workflow tab', () => {
   it('shows the stage canvas', async () => {
-    const frame = await opening([...OPENED, { key: 'TAB', lands: '║ designing' }]);
+    const frame = await opening(OPENED);
 
     expect(frame).toContain('designing');
     expect(frame).toContain('awaiting-approval');
   });
 
   it('draws no artifact on the canvas, naming it once in the pane instead', async () => {
-    const frame = await opening([...OPENED, { key: 'TAB', lands: '║ designing' }]);
+    const frame = await opening(OPENED);
 
     expect(frame).toContain('artifacts spec.md');
     expect(frame.split('spec.md')).toHaveLength(2);
@@ -141,7 +131,7 @@ describe('the children tab', () => {
   it('lists a child row with the state the board would show', async () => {
     const frame = await opening([
       ...OPENED,
-      { key: 'TAB', lands: '║ designing' },
+      { key: 'TAB', lands: 'The keeper locks' },
       { key: 'TAB', lands: 'A quiet fix' },
     ]);
 
@@ -153,7 +143,7 @@ describe('the children tab', () => {
   it('drills into the child journey on enter', async () => {
     const frame = await opening([
       ...OPENED,
-      { key: 'TAB', lands: '║ designing' },
+      { key: 'TAB', lands: 'The keeper locks' },
       { key: 'TAB', lands: 'A quiet fix' },
       { key: 'RETURN', lands: 'K-2 · journey' },
     ]);
@@ -166,7 +156,7 @@ describe('the artifacts tab', () => {
   it('lists the artifacts the item wrote beside the chosen one', async () => {
     const frame = await opening([
       ...OPENED,
-      { key: 'TAB', lands: '║ designing' },
+      { key: 'TAB', lands: 'The keeper locks' },
       { key: 'TAB', lands: 'A quiet fix' },
       { key: 'TAB', lands: 'spec.md' },
     ]);
@@ -178,7 +168,7 @@ describe('the artifacts tab', () => {
 
 const ON_ARTIFACTS: Press[] = [
   ...OPENED,
-  { key: 'TAB', lands: '║ designing' },
+  { key: 'TAB', lands: 'The keeper locks' },
   { key: 'TAB', lands: 'A quiet fix' },
   { key: 'TAB', lands: 'spec.md' },
 ];

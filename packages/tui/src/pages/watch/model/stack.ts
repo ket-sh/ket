@@ -152,7 +152,7 @@ function useDiving(
   showTab: (tab: JourneyTab) => void,
 ): Diving {
   const dive = useCallback(
-    (key: string | undefined, tab: JourneyTab = 'overview') => {
+    (key: string | undefined, tab: JourneyTab = 'workflow') => {
       if (key === undefined) {
         return;
       }

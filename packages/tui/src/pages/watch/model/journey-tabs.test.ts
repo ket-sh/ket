@@ -130,7 +130,7 @@ describe('the tabs the focused tab row walks', () => {
   });
 
   it('holds the first tab rather than walking past it', () => {
-    expect(topOf(walked(framed({ tab: 'overview', focus: 'tabs' }), 'left'))?.tab).toBe('overview');
+    expect(topOf(walked(framed({ tab: 'workflow', focus: 'tabs' }), 'left'))?.tab).toBe('workflow');
   });
 
   it('drops the focus into the panel on the way down', () => {
