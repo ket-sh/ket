@@ -1,7 +1,7 @@
 {
-  "name": "ket",
-  "displayName": "ket",
-  "version": "0.2.0",
+  "name": "ket-gates",
+  "displayName": "ket-gates",
+  "version": "0.3.0",
   "description": "Refuses a write the work has not earned, and keeps a status honest",
   "author": { "name": "ket", "url": "https://github.com/ket-sh/ket" },
   "homepage": "https://github.com/ket-sh/ket",

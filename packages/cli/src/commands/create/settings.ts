@@ -1,8 +1,8 @@
 const MARKETPLACE = 'ket';
 
-const PLUGIN = 'ket@ket';
+const GATES_PLUGIN = 'ket-gates@ket';
 
-const WORKFLOW_PLUGIN = 'ket-workflow@ket';
+const PIPELINE_PLUGIN = 'ket@ket';
 
 const SOURCE = { source: 'github', repo: 'ket-sh/ket' };
 
@@ -94,12 +94,12 @@ function withPluginsEnabled(
 }
 
 export function withHarnessRegistered(settings: string, paths: string[]): string {
-  return withPluginsEnabled(settings, paths, { [PLUGIN]: true });
+  return withPluginsEnabled(settings, paths, { [GATES_PLUGIN]: true });
 }
 
 export function withHarnessAndWorkflowRegistered(settings: string, paths: string[]): string {
   return withPluginsEnabled(settings, paths, {
-    [PLUGIN]: true,
-    [WORKFLOW_PLUGIN]: true,
+    [GATES_PLUGIN]: true,
+    [PIPELINE_PLUGIN]: true,
   });
 }

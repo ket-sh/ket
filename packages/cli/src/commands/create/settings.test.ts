@@ -13,9 +13,9 @@ describe('registering the harness in a project that has no settings', () => {
     });
   });
 
-  it('enables the plugin, so nobody has to install it', () => {
+  it('enables the gates plugin, so nobody has to install it', () => {
     expect(parsed(withHarnessRegistered('', []))).toMatchObject({
-      enabledPlugins: { 'ket@ket': true },
+      enabledPlugins: { 'ket-gates@ket': true },
     });
   });
 
@@ -52,7 +52,7 @@ describe('registering the harness beside settings a project already had', () => 
     const existing = JSON.stringify({ enabledPlugins: { 'other@house': true } });
 
     expect(parsed(withHarnessRegistered(existing, []))).toMatchObject({
-      enabledPlugins: { 'other@house': true, 'ket@ket': true },
+      enabledPlugins: { 'other@house': true, 'ket-gates@ket': true },
     });
   });
 
@@ -66,13 +66,13 @@ describe('registering the harness beside settings a project already had', () => 
 describe('settings a project left in no state to merge', () => {
   it('starts fresh rather than throwing on unreadable json', () => {
     expect(parsed(withHarnessRegistered('{ not json', []))).toMatchObject({
-      enabledPlugins: { 'ket@ket': true },
+      enabledPlugins: { 'ket-gates@ket': true },
     });
   });
 
   it('starts fresh when the file holds something that is not an object', () => {
     expect(parsed(withHarnessRegistered('[1, 2]', []))).toMatchObject({
-      enabledPlugins: { 'ket@ket': true },
+      enabledPlugins: { 'ket-gates@ket': true },
     });
   });
 });
@@ -173,15 +173,15 @@ describe('recognizing the guard hook already running, past whatever shape a proj
 describe('registering the pipeline bundle beside the gates', () => {
   it('enables both bundles for a project that took the pipeline', () => {
     expect(parsed(withHarnessAndWorkflowRegistered('', []))).toMatchObject({
-      enabledPlugins: { 'ket@ket': true, 'ket-workflow@ket': true },
+      enabledPlugins: { 'ket-gates@ket': true, 'ket@ket': true },
     });
   });
 
   it('enables the gates alone for a project that declined the pipeline', () => {
     const merged: unknown = parsed(withHarnessRegistered('', []));
 
-    expect(merged).toMatchObject({ enabledPlugins: { 'ket@ket': true } });
-    expect(merged).not.toMatchObject({ enabledPlugins: { 'ket-workflow@ket': true } });
+    expect(merged).toMatchObject({ enabledPlugins: { 'ket-gates@ket': true } });
+    expect(merged).not.toMatchObject({ enabledPlugins: { 'ket@ket': true } });
   });
 
   it('names the same marketplace either way, since one marketplace publishes both', () => {
@@ -194,7 +194,7 @@ describe('registering the pipeline bundle beside the gates', () => {
     const existing = JSON.stringify({ enabledPlugins: { 'other@house': true } });
 
     expect(parsed(withHarnessAndWorkflowRegistered(existing, []))).toMatchObject({
-      enabledPlugins: { 'other@house': true, 'ket@ket': true, 'ket-workflow@ket': true },
+      enabledPlugins: { 'other@house': true, 'ket-gates@ket': true, 'ket@ket': true },
     });
   });
 
