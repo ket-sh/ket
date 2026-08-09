@@ -29,9 +29,15 @@ echo "a dependency did not resolve"
 exit 1
 `;
 
+const TRACKING_BUNX = `#!/bin/sh
+echo "track=\${DO_NOT_TRACK-unset}" >> tool.log
+exit 0
+`;
+
 const PATH_SEPARATOR = ':';
 
 let restored = '';
+let restoredTracking: string | undefined;
 
 async function toolsThat(bun: string, bunx: string): Promise<void> {
   const where = await mkdtemp(join(tmpdir(), 'ket-shadcn-tools-'));
@@ -58,10 +64,17 @@ function refusalIn(outcome: ShadcnPresetApplied): string {
 
 beforeEach(() => {
   restored = process.env['PATH'] ?? '';
+  restoredTracking = process.env['DO_NOT_TRACK'];
 });
 
 afterEach(() => {
   process.env['PATH'] = restored;
+
+  if (restoredTracking === undefined) {
+    delete process.env['DO_NOT_TRACK'];
+  } else {
+    process.env['DO_NOT_TRACK'] = restoredTracking;
+  }
 });
 
 describe('landing a shadcn preset in a written scaffold', () => {
@@ -94,6 +107,17 @@ describe('landing a shadcn preset in a written scaffold', () => {
     expect(refusal).toContain(
       `Apply it in the project later with: bun install && bunx shadcn@4.16.2 apply --preset ${A_CODE} --yes`,
     );
+  });
+
+  it('declines telemetry for the official CLI, whatever the parent says', async () => {
+    await toolsThat(RECORDING_BUN, TRACKING_BUNX);
+    process.env['DO_NOT_TRACK'] = '0';
+
+    const root = await project();
+
+    await applyShadcnPreset(root, A_CODE);
+
+    expect(await ranIn(root)).toContain('track=1');
   });
 
   it('stops at a toolchain that did not install, never reaching the CLI', async () => {
