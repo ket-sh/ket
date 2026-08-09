@@ -68,6 +68,28 @@ afterEach(() => {
   }
 });
 
+describe('the scoped mutation gate on a machine that only has bun', () => {
+  it('reaches stryker through its own runtime, never through a shim that wants node', () => {
+    const project = scaffolded();
+
+    git(project, ['init', '--quiet', '-b', 'main']);
+    git(project, ['add', '--all']);
+    git(project, ['commit', '--quiet', '-m', 'chore: scaffold with ket']);
+    mkdirSync(join(project, 'node_modules', '.bin'), { recursive: true });
+    writeFileSync(
+      join(project, 'node_modules', '.bin', 'stryker'),
+      "console.log(['stryker', ...process.argv.slice(2)].join(' '));\n",
+    );
+    mkdirSync(join(project, 'src'));
+    writeFileSync(join(project, 'src', 'lockout.ts'), 'export const lockedOut = true;\n');
+
+    const { status, said } = gateRun(project);
+
+    expect(said).toContain('stryker run --mutate src/lockout.ts');
+    expect(status).toBe(0);
+  });
+});
+
 describe('the scoped mutation gate in a newborn project', () => {
   it('skips loudly when git tracks nothing yet, since there is no change to measure', () => {
     const { status, said } = gateRun(scaffolded());
