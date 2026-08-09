@@ -26,6 +26,11 @@ import {
   mcpServersFor,
   offeredIntegrations,
 } from '../../shared/scaffold/integrations.ts';
+import {
+  MANIFEST_FILE,
+  manifestFileOf,
+  manifestSourceFor,
+} from '../../shared/scaffold/manifest.ts';
 import { MCP_FILE, mcpFileOf } from '../../shared/scaffold/mcp.ts';
 import { heroHint } from '../../shared/scaffold/name-token.ts';
 import { KET_VERSION } from '../../shared/version.ts';
@@ -100,6 +105,18 @@ async function plannedRegistrationOf(
   );
 }
 
+async function plannedManifestOf(
+  root: string,
+  configuration: Configuration,
+  name: string,
+): Promise<ScaffoldFile | undefined> {
+  return manifestFileOf(
+    await readTextIfPresent(root, MANIFEST_FILE),
+    name,
+    manifestSourceFor(configuration),
+  );
+}
+
 async function recordOf(root: string): Promise<ScaffoldRecord> {
   const read = await readFile(join(root, SCAFFOLD_RECORD_PATH), 'utf8').catch(() => undefined);
   const record = read === undefined ? undefined : parseScaffoldRecord(read);
@@ -147,7 +164,7 @@ async function plannedOn(root: string, record: ScaffoldRecord, fresh: ScaffoldFi
 function saidFates(
   plan: PlannedFate[],
   migration: ScaffoldFile | undefined,
-  registration: ScaffoldFile | undefined,
+  merged: ScaffoldFile[],
 ): void {
   for (const planned of plan.filter((fated) => fated.fate !== 'settled')) {
     say(`${planned.fate} ${planned.path}`);
@@ -157,8 +174,8 @@ function saidFates(
     say(`migrated ${migration.path}`);
   }
 
-  if (registration !== undefined) {
-    say(`merged ${registration.path}`);
+  for (const file of merged) {
+    say(`merged ${file.path}`);
   }
 }
 
@@ -250,17 +267,18 @@ const update = defineCommand({
     const fresh = recordedAmong(installedFor(configuration, project));
     const plan = forced(await plannedOn(root, record, fresh), args.force);
     const migration = await plannedMigrationOf(root);
-    const registration = await plannedRegistrationOf(root, configuration);
+    const merged = [
+      await plannedRegistrationOf(root, configuration),
+      await plannedManifestOf(root, configuration, project.name),
+    ].filter((file): file is ScaffoldFile => file !== undefined);
 
-    saidFates(plan, migration, registration);
+    saidFates(plan, migration, merged);
 
     if (args.plan) {
       return;
     }
 
-    const merges = [migration, registration].filter(
-      (file): file is ScaffoldFile => file !== undefined,
-    );
+    const merges = migration === undefined ? merged : [migration, ...merged];
 
     await applied(root, record, fresh, plan, merges);
   },

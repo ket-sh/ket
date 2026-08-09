@@ -17,15 +17,18 @@ import { partSays } from '../../shared/parts.ts';
 import { governingPresets } from '../../shared/registry.ts';
 import { recordedAmong, scaffoldRecordFile } from '../../shared/scaffold-manifest.ts';
 import { installedFor, shippedContents } from '../../shared/scaffold/install.ts';
-import { installsFor, mcpServersFor, skillsFor } from '../../shared/scaffold/integrations.ts';
-import { dictionaryInstallsFor } from '../../shared/scaffold/language.ts';
+import { mcpServersFor, skillsFor } from '../../shared/scaffold/integrations.ts';
+import {
+  MANIFEST_FILE,
+  manifestSourceFor,
+  renderManifest,
+} from '../../shared/scaffold/manifest.ts';
 import { MCP_FILE, mcpFileOf } from '../../shared/scaffold/mcp.ts';
 import { heroHint } from '../../shared/scaffold/name-token.ts';
 import { KET_VERSION } from '../../shared/version.ts';
 import { readTextIfPresent, writeFiles } from '../../shared/write-files.ts';
 import { announce, openCreate } from './announce.ts';
 import { configuredFromFlags } from './flags.ts';
-import { renderManifest } from './manifest.ts';
 import { PIPELINE_COMMANDS } from './pipeline-commands.generated.ts';
 import { planCreation } from './plan.ts';
 import { scaffoldFor } from './scaffold.ts';
@@ -108,7 +111,7 @@ async function writeScaffold(plan: CreationPlan, configuration: Configuration): 
   const ignored = shippedContents(installed, '.gitignore') ?? gitignore;
 
   const written = [
-    manifestEntry(project.name, governing, targets, configuration),
+    manifestEntry(project.name, configuration),
     {
       path: '.claude/settings.json',
       contents: settingsFor(
@@ -173,23 +176,10 @@ function settingsFor(configuration: Configuration, settings: string, paths: stri
     : withHarnessRegistered(settings, paths);
 }
 
-function manifestEntry(
-  name: string,
-  governing: RegisteredPreset,
-  targets: PresetName[],
-  configuration: Configuration,
-): ScaffoldFile {
+function manifestEntry(name: string, configuration: Configuration): ScaffoldFile {
   return {
-    path: 'package.json',
-    contents: renderManifest(name, {
-      dependencies: governing.item.dependencies,
-      devDependencies: [
-        ...governing.item.devDependencies,
-        ...installsFor(targets, configuration.integrations),
-        ...dictionaryInstallsFor(configuration.language),
-      ],
-      scripts: governing.semantics.scripts,
-    }),
+    path: MANIFEST_FILE,
+    contents: renderManifest(name, manifestSourceFor(configuration)),
   };
 }
 
