@@ -4,12 +4,13 @@ import { intro, outro } from '@clack/prompts';
 import color from 'picocolors';
 
 import type { FirstCommit } from '../../shared/git.ts';
+import type { SkillsInstalled } from '../../shared/skills.ts';
 import type { Shade } from './banner.ts';
 import type { Step } from './next-steps.ts';
 import type { PipelineCommand } from './pipeline-commands.generated.ts';
 import type { ShadcnPresetApplied } from './shadcn.ts';
-import type { SkillsInstalled } from './skills.ts';
 
+import { skillsNote } from '../../shared/skills.ts';
 import { gradientOver, KET_BANNER, supportsTrueColor, toriiBeside } from './banner.ts';
 import { commandTable } from './command-table.ts';
 import { confetti } from './confetti.ts';
@@ -17,7 +18,6 @@ import { gateTable } from './gate-table.ts';
 import { ketTable } from './ket-table.ts';
 import { nextSteps } from './next-steps.ts';
 import { shadcnPresetNote } from './shadcn.ts';
-import { skillsNote } from './skills.ts';
 import { graphLines, paintedGraphLines, WORKFLOW_GRAPH } from './workflow-graph.ts';
 
 const OPENS_AT: Shade = [34, 211, 238];

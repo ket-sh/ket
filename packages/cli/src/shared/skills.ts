@@ -4,6 +4,8 @@ import type { ToolArgv } from './project-tools.ts';
 
 export type SkillsInstalled = { installed: string[] } | { refused: string };
 
+export const SKILLS_LOCKFILE = 'skills-lock.json';
+
 const UNINSTALLED = 'The project is ready, but its skills did not install:';
 
 const RUNNER = 'bunx';
@@ -43,6 +45,10 @@ export function installArgvFor(skill: PresetSkill): ToolArgv {
 
 export function skillsNote(skills: SkillsInstalled): string[] {
   return 'installed' in skills ? [] : [UNINSTALLED, ...skills.refused.split('\n')];
+}
+
+export function skillsAbsentFrom(held: string[], promised: PresetSkill[]): PresetSkill[] {
+  return promised.filter((skill) => !held.includes(skill.name));
 }
 
 export function refusalFor(skill: PresetSkill, said: string): string {

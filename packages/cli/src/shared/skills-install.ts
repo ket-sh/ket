@@ -1,11 +1,21 @@
 import type { PresetSkill } from '@ket/preset';
 
 import { skillsFrom } from '@ket/preset';
+import { readdir } from 'node:fs/promises';
+import { join } from 'node:path';
 
 import type { SkillsInstalled } from './skills.ts';
 
 import { toolRefusal } from './project-tools.ts';
-import { INSTALL_DEADLINE_MS, INSTALL_ENVIRONMENT, installArgvFor, refusalFor } from './skills.ts';
+import {
+  INSTALL_DEADLINE_MS,
+  INSTALL_ENVIRONMENT,
+  installArgvFor,
+  refusalFor,
+  skillsAbsentFrom,
+} from './skills.ts';
+
+const SKILLS_DIRECTORY = join('.claude', 'skills');
 
 async function added(skill: PresetSkill, root: string): Promise<string | undefined> {
   return toolRefusal(installArgvFor(skill), root, INSTALL_DEADLINE_MS, INSTALL_ENVIRONMENT);
@@ -37,6 +47,12 @@ async function landedAmong(
 
 const UNSHIPPED = 'the preset shipped no skills lockfile to install from';
 
+export async function installEach(root: string, skills: PresetSkill[]): Promise<SkillsInstalled> {
+  const { installed, refused } = await landedAmong(skills, root);
+
+  return outcomeOf(installed, refused);
+}
+
 export async function installSkills(
   root: string,
   lockfile: string | undefined,
@@ -52,7 +68,23 @@ export async function installSkills(
     return { refused: locked.unreadable };
   }
 
-  const { installed, refused } = await landedAmong([...locked.skills, ...brought], root);
+  return installEach(root, [...locked.skills, ...brought]);
+}
 
-  return outcomeOf(installed, refused);
+async function heldSkillsIn(root: string): Promise<string[]> {
+  return readdir(join(root, SKILLS_DIRECTORY)).catch(() => []);
+}
+
+export async function absentSkillsIn(
+  root: string,
+  lockfile: string | undefined,
+  brought: PresetSkill[] = [],
+): Promise<PresetSkill[]> {
+  const locked = lockfile === undefined ? { skills: [] } : skillsFrom(lockfile);
+
+  if ('unreadable' in locked) {
+    throw new Error(`ket cannot read the skills lockfile its preset ships: ${locked.unreadable}`);
+  }
+
+  return skillsAbsentFrom(await heldSkillsIn(root), [...locked.skills, ...brought]);
 }

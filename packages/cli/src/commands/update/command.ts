@@ -1,3 +1,5 @@
+import type { PresetSkill } from '@ket/preset';
+
 import { defineCommand, showUsage } from 'citty';
 import { access, readFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
@@ -21,26 +23,15 @@ import {
   updatePlanOf,
 } from '../../shared/scaffold-manifest.ts';
 import { installedFor } from '../../shared/scaffold/install.ts';
-import {
-  crowdedRefusal,
-  mcpServersFor,
-  offeredIntegrations,
-} from '../../shared/scaffold/integrations.ts';
-import {
-  MANIFEST_FILE,
-  manifestFileOf,
-  manifestSourceFor,
-} from '../../shared/scaffold/manifest.ts';
-import { MCP_FILE, mcpFileOf } from '../../shared/scaffold/mcp.ts';
+import { crowdedRefusal, offeredIntegrations } from '../../shared/scaffold/integrations.ts';
 import { heroHint } from '../../shared/scaffold/name-token.ts';
 import { KET_VERSION } from '../../shared/version.ts';
-import { readTextIfPresent, writeFiles } from '../../shared/write-files.ts';
+import { writeFiles } from '../../shared/write-files.ts';
 import { LEGACY_STATE, legacyRefusal } from './legacy.ts';
-import { withCurrentPluginNames } from './plugin-names.ts';
+import { plannedMergesOf, plannedMigrationOf } from './merges.ts';
+import { installPending, skillsPendingIn } from './skills.ts';
 
 const WRITE_FATES = new Set<FileFate>(['refreshed', 'restored', 'arrived']);
-
-const SETTINGS_PATH = '.claude/settings.json';
 
 function say(line: string): void {
   process.stdout.write(`${line}\n`);
@@ -87,34 +78,6 @@ async function refusingAnOlderScaffold(root: string): Promise<void> {
   if (refusal !== undefined) {
     throw new Error(refusal);
   }
-}
-
-async function plannedMigrationOf(root: string): Promise<ScaffoldFile | undefined> {
-  const current = withCurrentPluginNames(await readTextIfPresent(root, SETTINGS_PATH));
-
-  return current === undefined ? undefined : { path: SETTINGS_PATH, contents: current };
-}
-
-async function plannedRegistrationOf(
-  root: string,
-  configuration: Configuration,
-): Promise<ScaffoldFile | undefined> {
-  return mcpFileOf(
-    await readTextIfPresent(root, MCP_FILE),
-    mcpServersFor(Object.values(configuration.targets), configuration.integrations),
-  );
-}
-
-async function plannedManifestOf(
-  root: string,
-  configuration: Configuration,
-  name: string,
-): Promise<ScaffoldFile | undefined> {
-  return manifestFileOf(
-    await readTextIfPresent(root, MANIFEST_FILE),
-    name,
-    manifestSourceFor(configuration),
-  );
 }
 
 async function recordOf(root: string): Promise<ScaffoldRecord> {
@@ -176,6 +139,12 @@ function saidFates(
 
   for (const file of merged) {
     say(`merged ${file.path}`);
+  }
+}
+
+function saidPending(pending: PresetSkill[]): void {
+  for (const skill of pending) {
+    say(`installed ${skill.name}`);
   }
 }
 
@@ -264,15 +233,15 @@ const update = defineCommand({
       key: configuration.key,
       hint: heroHint(configuration),
     };
-    const fresh = recordedAmong(installedFor(configuration, project));
+    const installed = installedFor(configuration, project);
+    const fresh = recordedAmong(installed);
     const plan = forced(await plannedOn(root, record, fresh), args.force);
     const migration = await plannedMigrationOf(root);
-    const merged = [
-      await plannedRegistrationOf(root, configuration),
-      await plannedManifestOf(root, configuration, project.name),
-    ].filter((file): file is ScaffoldFile => file !== undefined);
+    const merged = await plannedMergesOf(root, configuration, project.name);
+    const pending = await skillsPendingIn(root, configuration, installed);
 
     saidFates(plan, migration, merged);
+    saidPending(pending);
 
     if (args.plan) {
       return;
@@ -281,6 +250,10 @@ const update = defineCommand({
     const merges = migration === undefined ? merged : [migration, ...merged];
 
     await applied(root, record, fresh, plan, merges);
+
+    for (const refusal of await installPending(root, pending)) {
+      say(refusal);
+    }
   },
 });
 
