@@ -75,6 +75,7 @@ describe('the grouping the help screen reads', () => {
       'm map',
       'v list',
       'b backlog',
+      'x archive',
       'l log',
       'd docs',
       'ctrl+p go',

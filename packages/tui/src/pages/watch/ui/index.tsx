@@ -8,6 +8,7 @@ import type { Ring } from '../model/chime.ts';
 import type { Filter } from '../model/filter.ts';
 import type { FrameStack } from '../model/frames.ts';
 import type { Help } from '../model/help.ts';
+import type { PressDeps } from '../model/keys.ts';
 import type { WatchMouse } from '../model/mouse.ts';
 import type { WatchView } from '../model/opening.ts';
 import type { Palette } from '../model/palette.ts';
@@ -18,6 +19,7 @@ import type { RoomProps } from './stage.tsx';
 import { ThemeProvider } from '../../../shared/theme';
 import { Banner } from '../../../shared/ui';
 import { shownWorkOf } from '../lib/bindings.ts';
+import { laneTotalsOf } from '../lib/lanes.ts';
 import { standingOf } from '../lib/standing.ts';
 import { useBoardLayout } from '../model/board-layout.ts';
 import { useBoardState } from '../model/board-state.ts';
@@ -67,7 +69,10 @@ function CeremonyOverlay({
   tick,
   width,
   height,
-}: Omit<RoomProps, 'seat' | 'now' | 'layout' | 'mouse' | 'logRows' | 'calm'>): ReactNode {
+}: Omit<
+  RoomProps,
+  'seat' | 'now' | 'layout' | 'mouse' | 'logRows' | 'calm' | 'totals'
+>): ReactNode {
   if (stack.top.kind !== 'gate') {
     return null;
   }
@@ -118,7 +123,30 @@ interface Room {
   width: number;
   height: number;
   calm: boolean;
+  totals: Map<string, number>;
   mouse: WatchMouse;
+}
+
+interface Rituals {
+  columns: KanbanColumnView[];
+  loaded: boolean;
+  ring: Ring | undefined;
+  opening: WatchView | undefined;
+  wear: (landing: BoardLayout) => void;
+  remember: ((view: WatchView) => void) | undefined;
+  standing: WatchView;
+  pressDeps: PressDeps;
+}
+
+function useWatchRituals(held: Rituals): void {
+  const { stack, seat, tick } = held.pressDeps;
+
+  useChime(held.columns, held.loaded, held.ring);
+  useCeremonyCurtain(stack, tick);
+  useMovedCardFollow(stack, seat, held.columns);
+  useOpening(held.opening, held.loaded, { stack, seat, wear: held.wear });
+  useRemember(held.remember, held.standing);
+  useWatchKeys(held.pressDeps);
 }
 
 function useWatchRoom({
@@ -132,7 +160,7 @@ function useWatchRoom({
   const { columns, loaded, now, tick, refresh } = useBoardState(feed, clock);
   const stack = useFrameStack(feed);
   const { width, height } = useTerminalDimensions();
-  const { layout, swap, queue, wear } = useBoardLayout();
+  const { layout, swap, queue, shelve, wear } = useBoardLayout();
   const picker = usePicker(stack);
   const { filter, logFilter, shown, logRows } = useNarrowing(columns, layout, stack.top);
   const seat = useSeat(shown);
@@ -141,19 +169,15 @@ function useWatchRoom({
   const most = stack.top.kind === 'surface' ? surfaceMost(stack.top, height - CHROME) : 0;
   const standing = standingOf(layout, stack.frames, seat.chosen?.key);
   const leave = leavingOf(remember, standing, onQuit);
-  const deps = { onQuit: leave, refresh, stack, seat, most, tick, layout, swap, queue };
+  const deps = { onQuit: leave, refresh, stack, seat, most, tick, layout, swap, queue, shelve };
   const pressDeps = { ...deps, picker, filter, logFilter, palette, help };
   const mouse = mouseOf(pressDeps);
-  const calm = calmOf(picker, palette, help);
 
-  useChime(columns, loaded, ring);
-  useCeremonyCurtain(stack, tick);
-  useMovedCardFollow(stack, seat, columns);
-  useOpening(opening, loaded, { stack, seat, wear });
-  useRemember(remember, standing);
-  useWatchKeys(pressDeps);
+  useWatchRituals({ columns, loaded, ring, opening, wear, remember, standing, pressDeps });
 
   return {
+    calm: calmOf(picker, palette, help),
+    totals: laneTotalsOf(columns),
     columns,
     shown,
     logRows,
@@ -169,7 +193,6 @@ function useWatchRoom({
     help,
     width,
     height,
-    calm,
     mouse,
   };
 }
@@ -226,6 +249,7 @@ function WatchRoom(props: WatchPageProps): ReactNode {
           height={height - CHROME}
           layout={layout}
           calm={room.calm}
+          totals={room.totals}
           mouse={mouse}
         />
       </box>

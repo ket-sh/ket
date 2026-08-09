@@ -41,7 +41,7 @@ function narrowableAt(kind: Frame['kind'], layout: BoardLayout): boolean {
     return true;
   }
 
-  return kind === 'board' && layout !== 'backlog';
+  return kind === 'board' && layout !== 'backlog' && layout !== 'archive';
 }
 
 export function filterOpened(

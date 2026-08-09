@@ -12,7 +12,7 @@ type OpeningReading = { opening: WatchView | undefined } | { refused: string };
 
 const TABS: JourneyTab[] = ['overview', 'workflow', 'children', 'artifacts'];
 
-const LAYOUTS: BoardLayout[] = ['kanban', 'list', 'backlog'];
+const LAYOUTS: BoardLayout[] = ['kanban', 'list', 'backlog', 'archive'];
 
 export function isTab(word: string): word is JourneyTab {
   return TABS.some((tab) => tab === word);

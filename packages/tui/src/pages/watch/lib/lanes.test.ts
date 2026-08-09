@@ -16,6 +16,26 @@ describe('the title a lane wears', () => {
   it('spells the status beside the count it holds', () => {
     expect(laneTitle({ status: 'triaged', cards: [] })).toBe(' triaged 0 ');
   });
+
+  it('carries the true total and names the cap where the lane shows less', () => {
+    const lane: KanbanColumnView = {
+      status: 'shipped',
+      cards: Array.from({ length: 5 }, (_, held) => ({
+        key: `K-${String(held)}`,
+        title: 'shipped work',
+        size: 'story',
+        status: 'shipped',
+        parent: undefined,
+        since: undefined,
+        refusal: undefined,
+        note: undefined,
+        offers: [],
+      })),
+    };
+
+    expect(laneTitle(lane, 12)).toBe(' shipped 12 · last 5 ');
+    expect(laneTitle(lane, 5)).toBe(' shipped 5 ');
+  });
 });
 
 describe('the least width a lane accepts', () => {

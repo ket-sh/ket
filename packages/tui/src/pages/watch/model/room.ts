@@ -14,6 +14,7 @@ import type { Seat } from './seat.ts';
 
 import { narrowedBy } from '../lib/filter.ts';
 import { narrowedEvents } from '../lib/oplog.ts';
+import { cappedShipped } from '../lib/shipped.ts';
 import { useFilter } from './filter.ts';
 import { outstayed } from './frames.ts';
 import { press } from './keys.ts';
@@ -58,7 +59,8 @@ export function useNarrowing(
 ): Narrowing {
   const filter = useFilter();
   const logFilter = useFilter();
-  const shown = layout === 'backlog' ? columns : narrowedBy(columns, filter.query);
+  const whole = layout === 'backlog' || layout === 'archive';
+  const shown = whole ? columns : cappedShipped(narrowedBy(columns, filter.query));
   const logRows = top.kind === 'oplog' ? narrowedEvents(top.events, logFilter.query) : [];
 
   return { filter, logFilter, shown, logRows };

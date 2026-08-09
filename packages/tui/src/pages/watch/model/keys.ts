@@ -93,6 +93,9 @@ const BOARD_CHORDS: Record<string, (deps: PressDeps) => void> = {
   b: (deps) => {
     deps.queue();
   },
+  x: (deps) => {
+    deps.shelve();
+  },
   m: (deps) => {
     deps.stack.openMap();
   },
@@ -138,6 +141,7 @@ export interface PressDeps {
   layout: BoardLayout;
   swap: () => void;
   queue: () => void;
+  shelve: () => void;
   picker: Picker;
   filter: Filter;
   logFilter: Filter;

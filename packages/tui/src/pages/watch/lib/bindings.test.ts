@@ -16,6 +16,7 @@ describe('the bindings the board answers', () => {
       'm map',
       'v list',
       'b backlog',
+      'x archive',
       'l log',
       'd docs',
       '/ filter',
@@ -37,6 +38,7 @@ describe('the bindings the board answers', () => {
       'm map',
       'v list',
       'b backlog',
+      'x archive',
       'l log',
       'd docs',
       '/ filter',
@@ -70,6 +72,7 @@ describe('the bindings an idle or queued board answers', () => {
       'm map',
       'v list',
       'b backlog',
+      'x archive',
       'l log',
       'd docs',
       'ctrl+p go',
@@ -77,6 +80,14 @@ describe('the bindings an idle or queued board answers', () => {
       'r refresh',
       'q quit',
     ]);
+  });
+
+  it('names the way back to the board from the archive', () => {
+    const hints = hintsAt({ kind: 'board', layout: 'archive', offers: [], holds: true });
+
+    expect(hints).toContain('x board');
+    expect(hints).toContain('b backlog');
+    expect(hints).not.toContain('/ filter');
   });
 });
 

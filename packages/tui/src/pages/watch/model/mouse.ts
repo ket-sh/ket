@@ -217,8 +217,16 @@ function overlayMouseOf(deps: PressDeps): OverlayMouse {
       return;
     }
 
-    if (deps.stack.top.kind === 'board' && deps.layout === 'backlog') {
+    if (deps.stack.top.kind !== 'board') {
+      return;
+    }
+
+    if (deps.layout === 'backlog') {
       deps.queue();
+    }
+
+    if (deps.layout === 'archive') {
+      deps.shelve();
     }
   };
 

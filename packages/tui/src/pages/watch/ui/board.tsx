@@ -97,11 +97,17 @@ interface ColumnProps {
   column: KanbanColumnView;
   now: string;
   least: number;
+  total: number;
   selectedRow: number | undefined;
   mouse: WatchMouse;
 }
 
-function LaneCards({ column, now, selectedRow, mouse }: Omit<ColumnProps, 'least'>): ReactNode {
+function LaneCards({
+  column,
+  now,
+  selectedRow,
+  mouse,
+}: Omit<ColumnProps, 'least' | 'total'>): ReactNode {
   const { theme } = useTheme();
 
   return column.cards.map(
@@ -117,7 +123,7 @@ function LaneCards({ column, now, selectedRow, mouse }: Omit<ColumnProps, 'least
   );
 }
 
-function Column({ column, now, least, selectedRow, mouse }: ColumnProps): ReactNode {
+function Column({ column, now, least, total, selectedRow, mouse }: ColumnProps): ReactNode {
   const { theme } = useTheme();
   const laneRef = useRef<BoxRenderable>(null);
 
@@ -133,7 +139,7 @@ function Column({ column, now, least, selectedRow, mouse }: ColumnProps): ReactN
       border
       borderStyle="rounded"
       borderColor={theme.surface1}
-      title={laneTitle(column)}
+      title={laneTitle(column, total)}
       paddingLeft={1}
       paddingRight={1}
       onMouseDown={(event: MouseEvent) => {
@@ -164,11 +170,12 @@ interface BoardViewProps {
   now: string;
   room: number;
   seat: Seat;
+  totals: Map<string, number>;
   mouse: WatchMouse;
 }
 
-function Lanes({ columns, now, seat, mouse }: Omit<BoardViewProps, 'room'>): ReactNode {
-  const least = laneLeast(columns);
+function Lanes({ columns, now, seat, totals, mouse }: Omit<BoardViewProps, 'room'>): ReactNode {
+  const least = laneLeast(columns, totals);
 
   return columns.map(
     (column, columnAt): ReactNode => (
@@ -177,6 +184,7 @@ function Lanes({ columns, now, seat, mouse }: Omit<BoardViewProps, 'room'>): Rea
         column={column}
         now={now}
         least={least}
+        total={totals.get(column.status) ?? column.cards.length}
         selectedRow={columnAt === seat.col ? seat.row : undefined}
         mouse={mouse}
       />
@@ -184,7 +192,7 @@ function Lanes({ columns, now, seat, mouse }: Omit<BoardViewProps, 'room'>): Rea
   );
 }
 
-export function BoardView({ columns, now, room, seat, mouse }: BoardViewProps): ReactNode {
+export function BoardView({ columns, now, room, seat, totals, mouse }: BoardViewProps): ReactNode {
   const { theme } = useTheme();
   const boardRef = useRef<ScrollBoxRenderable>(null);
 
@@ -193,7 +201,10 @@ export function BoardView({ columns, now, room, seat, mouse }: BoardViewProps): 
   const wheelAt = (event: MouseEvent): void => {
     const direction = event.scroll?.direction;
 
-    if ((direction === 'up' || direction === 'down') && lanesOverflowAcross(columns, room)) {
+    if (
+      (direction === 'up' || direction === 'down') &&
+      lanesOverflowAcross(columns, room, totals)
+    ) {
       mouse.boardWheel(direction);
     }
   };
@@ -212,7 +223,7 @@ export function BoardView({ columns, now, room, seat, mouse }: BoardViewProps): 
       }}
       onMouseScroll={wheelAt}
     >
-      <Lanes columns={columns} now={now} seat={seat} mouse={mouse} />
+      <Lanes columns={columns} now={now} seat={seat} totals={totals} mouse={mouse} />
     </scrollbox>
   );
 }

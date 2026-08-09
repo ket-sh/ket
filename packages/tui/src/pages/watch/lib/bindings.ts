@@ -51,11 +51,17 @@ type BoardSpot = Extract<BindingSpot, { kind: 'board' }>;
 function layoutSwaps(layout: BoardLayout): Binding[] {
   const laid = layout === 'kanban' ? 'list' : 'kanban';
   const queued = layout === 'backlog' ? 'board' : 'backlog';
+  const shelved = layout === 'archive' ? 'board' : 'archive';
 
   return [
     { keys: 'v', action: laid, group: 'open' },
     { keys: 'b', action: queued, group: 'open' },
+    { keys: 'x', action: shelved, group: 'open' },
   ];
+}
+
+function narrowable(layout: BoardLayout): boolean {
+  return layout !== 'backlog' && layout !== 'archive';
 }
 
 function boardBindings({ layout, offers, holds }: BoardSpot): Binding[] {
@@ -66,7 +72,7 @@ function boardBindings({ layout, offers, holds }: BoardSpot): Binding[] {
     ...layoutSwaps(layout),
     { keys: 'l', action: 'log', group: 'open' },
     { keys: 'd', action: 'docs', group: 'open' },
-    ...(holds && layout !== 'backlog' ? [NARROWS] : []),
+    ...(holds && narrowable(layout) ? [NARROWS] : []),
     GOES,
     HELPS,
     { keys: 'r', action: 'refresh', group: 'tools' },
