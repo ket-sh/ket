@@ -229,6 +229,12 @@ describe('the refusal the next word demotes', () => {
 
     expect(cardOf(log)?.refusal?.reason).toBe('still no failing test');
   });
+
+  it('never revives a refusal backdated before the arrival', () => {
+    const log = ARRIVED + turnedAway('K-1', 'src/a.ts', '2026-08-07T09:00:00.000Z', 'stale word');
+
+    expect(cardOf(log)?.refusal).toBeUndefined();
+  });
 });
 
 describe('what the fold reads past', () => {

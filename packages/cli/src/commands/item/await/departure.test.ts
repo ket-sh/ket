@@ -30,6 +30,13 @@ describe('picking the departure out of the logged events', () => {
     expect(departureAmong(events, 'K-1', 'awaiting-approval')).toBe('implementing');
   });
 
+  it('passes over a transition that names no destination', () => {
+    const nowhere = { gate: 'transition', outcome: 'allowed', item: 'K-1' };
+    const events = logged([nowhere, moved('K-1', 'implementing')]);
+
+    expect(departureAmong(events, 'K-1', 'awaiting-approval')).toBe('implementing');
+  });
+
   it('passes over a transition about another item', () => {
     const events = logged([moved('K-2', 'implementing'), moved('K-1', 'verifying')]);
 

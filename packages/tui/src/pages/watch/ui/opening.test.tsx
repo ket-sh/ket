@@ -173,7 +173,7 @@ describe('the standing watch reports to be remembered', () => {
     expect(await reportedAfter('RETURN', (seen) => seen.includes('K-2 · journey'))).toStrictEqual({
       layout: 'kanban',
       chosen: 'K-2',
-      stage: { kind: 'journey', key: 'K-2', tab: 'overview' },
+      stage: { kind: 'journey', key: 'K-2', tab: 'workflow' },
     });
   });
 

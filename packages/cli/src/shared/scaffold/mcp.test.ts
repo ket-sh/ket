@@ -75,4 +75,10 @@ describe('a file left in no state to merge', () => {
       mcpServers: { mobbin: { type: 'http', url: 'https://api.mobbin.com/mcp' } },
     });
   });
+
+  it('starts fresh on a file that holds null', () => {
+    expect(parsed(mcpFileOf('null', [MOBBIN]))).toStrictEqual({
+      mcpServers: { mobbin: { type: 'http', url: 'https://api.mobbin.com/mcp' } },
+    });
+  });
 });

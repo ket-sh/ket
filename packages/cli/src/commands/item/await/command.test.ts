@@ -82,6 +82,12 @@ describe('waiting on an item until it moves', () => {
     expect(written).toContain('{"key":"K-1","from":"triaged","to":"designing"}\n');
   });
 
+  it('answers from the item alone, leaving no log behind', async () => {
+    await runItem(['await', 'K-1', '--past', 'triaged']);
+
+    await expect(stat(join(root, '.ket', 'events.jsonl'))).rejects.toThrow();
+  });
+
   it('blocks until the named status is left, then says the move as one json line', async () => {
     const waited = runItem(['await', 'K-1', '--past', 'designing']);
 
