@@ -10,6 +10,7 @@ import type { ScaffoldFile } from '../../shared/write-files.ts';
 import type { CreationPlan } from './plan.ts';
 
 import { commitScaffold, initializeRepository } from '../../shared/git.ts';
+import { partSays } from '../../shared/parts.ts';
 import { governingPresets } from '../../shared/registry.ts';
 import { recordedAmong, scaffoldRecordFile } from '../../shared/scaffold-manifest.ts';
 import { installedFor, shippedContents } from '../../shared/scaffold/install.ts';
@@ -199,7 +200,7 @@ function manifestEntry(
 const create = defineCommand({
   meta: {
     name: 'create',
-    description: 'Create a project under ket',
+    description: partSays('create'),
   },
   args: {
     directory: {

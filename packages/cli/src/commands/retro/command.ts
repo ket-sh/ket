@@ -12,6 +12,7 @@ import { readLog } from '../../shared/event-log.ts';
 import { semanticsOf } from '../../shared/governing.ts';
 import { readStored } from '../../shared/item-store.ts';
 import { ketRootOrThrow } from '../../shared/locate.ts';
+import { partSays } from '../../shared/parts.ts';
 import { adoptNumbered } from './adopt.ts';
 import { foldRetro } from './fold.ts';
 import { renderRetro } from './report.ts';
@@ -108,7 +109,7 @@ const adopt = defineCommand({
 const retro = defineCommand({
   meta: {
     name: 'retro',
-    description: 'Fold the event log into the week it covers',
+    description: partSays('retro'),
   },
   args: RETRO_ARGS,
   subCommands: { adopt, report },

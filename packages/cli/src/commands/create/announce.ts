@@ -13,6 +13,7 @@ import { gradientOver, KET_BANNER, supportsTrueColor, toriiBeside } from './bann
 import { commandTable } from './command-table.ts';
 import { confetti } from './confetti.ts';
 import { gateTable } from './gate-table.ts';
+import { ketTable } from './ket-table.ts';
 import { nextSteps } from './next-steps.ts';
 import { skillsNote } from './skills.ts';
 import { graphLines, paintedGraphLines, WORKFLOW_GRAPH } from './workflow-graph.ts';
@@ -28,6 +29,8 @@ const CELEBRATION = '🎉  ';
 const READY = ' is ready';
 
 const DRIVING = 'Then open Claude Code and drive it';
+
+const PARTS = 'The ket command, part by part';
 
 const DOCS = 'ket.sh/docs';
 
@@ -123,6 +126,7 @@ export function announce(
   console.log(`${scattered(ready.length, `${directory} again`)}\n`);
   console.log(`${asStepLines(nextSteps(directory, scripts))}\n`);
   console.log(`${gateTable(gates)}\n`);
+  console.log(`${INDENT}${color.dim(PARTS)}\n\n${ketTable()}\n`);
   console.log(pipelineNote(pipeline));
   console.log(asNoteLines(skillsNote(skills)));
   console.log(commitNote(first));
