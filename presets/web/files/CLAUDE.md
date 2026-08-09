@@ -1,6 +1,6 @@
 # `__PROJECT_NAME__`
 
-A project under ket. The `ket` plugin, which `.claude/settings.json` registers,
+A project under ket. The `ket-gates` plugin, which `.claude/settings.json` registers,
 carries the rules as skills, and each skill says when it applies. Load the one
 that applies and work from it rather than from a summary of it. This file stays
 an index: a new rationale, example, or edge case belongs in a skill, never here.
