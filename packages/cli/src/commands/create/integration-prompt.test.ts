@@ -18,6 +18,10 @@ function takingOne(offers: PresetIntegration[]): OfferedCategory {
   return { category: 'coverage', admits: 'one', offers };
 }
 
+function designTools(offers: PresetIntegration[]): OfferedCategory {
+  return { category: 'design tool', admits: 'one', offers };
+}
+
 function takingSeveral(offers: PresetIntegration[]): OfferedCategory {
   return { category: 'AI pull-request review', admits: 'several', offers };
 }
@@ -61,6 +65,21 @@ describe('what a person picks from', () => {
     const [first] = choicesFor(takingOne([offering('codecov')]));
 
     expect(first).toStrictEqual({ value: '', label: 'none', hint: 'no such service' });
+  });
+});
+
+describe('a tool that only arrives soon', () => {
+  const FIGMA: PresetIntegration = { name: 'figma', category: 'design tool', soon: true };
+
+  it('appears in the list reading soon, and nobody can choose it', () => {
+    expect(choicesFor(designTools([FIGMA]))).toStrictEqual([
+      { value: '', label: 'none', hint: 'no such service' },
+      { value: 'figma', label: 'figma', hint: 'soon', disabled: true },
+    ]);
+  });
+
+  it('reads an answer naming it as no tool at all', () => {
+    expect(pickedNames('figma', designTools([FIGMA]))).toStrictEqual([]);
   });
 });
 
