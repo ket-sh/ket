@@ -6,7 +6,7 @@ sources:
   - presets/cli/src/**
   - presets/web/src/**
   - harness/**
-stamp: da0bb9bdbc8c
+stamp: 93c6f6c1a900
 ---
 
 # The ket handbook
@@ -239,11 +239,17 @@ loads the one that applies and works from it rather than from a summary.
 
 ### Installed in the project
 
-Each scaffold carries project-level skills under `.claude/skills/`.
-`find-skills` looks for a skill the project has yet to install, `varlock`
-grows the env schema, and `vitest` covers the runner and its config. Chosen
-integrations bring their vendors' own skills beside them, and one that
-serves an MCP server lands its registration in `.mcp.json`.
+Each scaffold carries project-level skills under `.claude/skills/`. The
+`skills-lock.json` a preset ships records each skill and its source, and
+`ket create` installs them through the skills.sh CLI. Every preset locks
+`find-skills`, which looks for a skill the project has yet to install, and
+`vitest`, which covers the runner and its config. The web preset locks a
+skill for each piece of its stack beside them. TanStack Start and its
+router, React, Feature-Sliced Design, Tailwind, shadcn, and Playwright each
+get one. So do testing patterns down to property-based, advanced TypeScript
+types, and the env schema `varlock` grows. Chosen integrations bring their
+vendors' own skills beside them, and one that serves an MCP server lands
+its registration in `.mcp.json`.
 
 ## The vocabulary
 
