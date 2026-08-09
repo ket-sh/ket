@@ -58,6 +58,7 @@ describe('the sections the navigation names', () => {
       ['criteria', 'Criteria'],
       ['wireframe', 'Wireframe'],
       ['change', 'Change'],
+      ['blast', 'Blast Radius'],
       ['diff', 'Diff'],
       ['findings', 'Findings'],
     ];
@@ -195,7 +196,13 @@ describe('the matrix the decision declares', () => {
   });
 });
 
-describe('the diff panel and the blast above it', () => {
+describe('the diff panel and the blast section beside it', () => {
+  const blast = {
+    source: 'a: { class: module }\n',
+    measure: '{}',
+    render: { drawn: { light: '<svg>captured</svg>', dark: '<svg>captured</svg>' } },
+  };
+
   it('folds the change inside a full-width viewport panel wearing the format switch', () => {
     const page = pageOf({ artifacts: { features: [], diff: CHANGE } });
     const section = sectionMarkup(page, 'diff');
@@ -208,24 +215,26 @@ describe('the diff panel and the blast above it', () => {
     );
   });
 
-  it('seats the blast radius above the diff at full width', () => {
-    const blast = {
-      source: 'a: { class: module }\n',
-      measure: '{}',
-      render: { drawn: { light: '<svg>captured</svg>', dark: '<svg>captured</svg>' } },
-    };
+  it('gives the captured blast its own full-width section', () => {
     const page = pageOf({ artifacts: { features: [], diff: CHANGE, blast } });
-    const section = sectionMarkup(page, 'diff');
+    const section = sectionMarkup(page, 'blast');
 
-    expect(section).toContain('is-full is-content panel-collapsible" data-panel="blast-radius"');
-    expect(section.indexOf('blast-radius')).toBeLessThan(section.indexOf('diff-panel'));
+    expect(section).toContain('is-full');
+    expect(section).toContain('data-panel="blast-radius"');
     expect(section).toContain('measure-line');
   });
 
-  it('lays no blast panel without a captured graph', () => {
-    const page = pageOf({ artifacts: { features: [], diff: CHANGE } });
+  it('keeps the blast radius out of the diff section', () => {
+    const page = pageOf({ artifacts: { features: [], diff: CHANGE, blast } });
 
     expect(sectionMarkup(page, 'diff')).not.toContain('blast-radius');
+  });
+
+  it('dims the blast entry and admits nothing was measured without a capture', () => {
+    const page = pageOf({ artifacts: { features: [] } });
+
+    expect(page).toMatch(/class="nav-item is-empty"[^>]*data-section="blast"/);
+    expect(sectionMarkup(page, 'blast')).toContain('Not written at this stage.');
   });
 });
 

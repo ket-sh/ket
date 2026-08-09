@@ -87,7 +87,7 @@ describe('the two groups the navigation keeps apart', () => {
       expect(verify).not.toContain(`data-section="${id}"`);
     }
 
-    for (const id of ['change', 'diff', 'findings']) {
+    for (const id of ['change', 'blast', 'diff', 'findings']) {
       expect(verify).toContain(`data-section="${id}"`);
       expect(design).not.toContain(`data-section="${id}"`);
     }
