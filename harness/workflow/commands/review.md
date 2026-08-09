@@ -32,11 +32,13 @@ Send both in one message so they run at once, each as the `ket:reviewer` agent,
 each with the model and the lens its row names. Tell each seat what is under
 review and nothing about what the other seat is doing.
 
-Remind each seat of its standing rule: it never runs tests, lint, typecheck,
-formatters, mutation, coverage, or any gate the machine already runs. Those
-verdicts arrive on their own, and repeating them burns the session. A seat
-exists for what machines cannot check: it reads the diff and reasons about the
-behavior.
+Remind each seat of its standing rule: a seat never runs test suites, linters,
+typecheck, spell, prose or format checks, secret scanners, or accessibility
+sweeps. Those are automatic gates whose results carry no review information.
+The seat reads the change and judges the implementation against the spec, the
+edge cases, the names, and the behavior the user sees, citing file and line.
+Its sole allowance is a minimal reproduction of one specific suspected defect,
+never a suite.
 
 Ask each seat for every finding it evaluated, with location, defect, failure
 scenario, confidence, whether it reproduced, verdict and reason.
