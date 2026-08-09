@@ -6,7 +6,7 @@ sources:
   - presets/cli/src/**
   - presets/web/src/**
   - harness/**
-stamp: 73f4fab80e8f
+stamp: 983cc26422fd
 ---
 
 # The ket handbook
@@ -99,9 +99,17 @@ decide looking at the work, not at a summary of it.
 ### Watching it run
 
 Bare `ket` on a terminal opens the board: every stage as a lane, cards with
-their ages, refusals in red, a bell on any card that needs you. From the
-board, `enter` opens an item behind its tabs: overview, workflow with the
-stage canvas and the item pane, children, and artifacts. The `b` key shows
+their ages, refusals in red, a bell on any card that needs you. The shipped
+lane shows only its five newest cards while its title carries the true
+total, and the `x` key opens the archive, which lists everything shipped,
+newest first. From the board, `enter` opens an item as two legends: the
+tabbed stage area beside the item pane, with `f` handing the focused legend
+the full width. The tabs are overview, workflow, children, and artifacts.
+The overview renders the description as a markdown preview that scrolls
+under the arrows, `j`, and `k`. The workflow draws the stage canvas with
+each stage's sub-steps as boxes, one per artifact the stage wrote. The item
+pane frames its facts under labeled rules and spells any waiting gate as a
+key to press, so `a` approves from the journey too. The `b` key shows
 the backlog, `m` opens the story map, `v` flips to a flat list, `l` opens the
 oplog over the last 500 logged events newest first, and `t` picks a theme.
 The `d` key opens the docs screen. The catalog groups the pages by category,
