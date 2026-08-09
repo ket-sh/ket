@@ -1,9 +1,12 @@
 import type { OfferedCategory } from '@ket/preset';
 
+import { comes } from '@ket/preset';
+
 export interface IntegrationChoice {
   value: string;
   label: string;
   hint: string;
+  disabled?: boolean;
 }
 
 // A single-select has no empty pick, so declining is itself an option.
@@ -15,18 +18,22 @@ export function promptFor(offered: OfferedCategory): string {
   return `Which ${offered.category} ${service} do you want?`;
 }
 
+// A tool that arrives soon stays visible so a person learns it is on the way,
+// and stays disabled so nobody chooses a promise.
 function offeredChoices(offered: OfferedCategory): IntegrationChoice[] {
-  return offered.offers.map((offer) => ({
-    value: offer.name,
-    label: offer.name,
-    hint: offer.asks,
-  }));
+  return offered.offers.map((offer) =>
+    comes(offer)
+      ? { value: offer.name, label: offer.name, hint: 'soon', disabled: true }
+      : { value: offer.name, label: offer.name, hint: offer.asks },
+  );
 }
 
 // The answer that declines carries no tool name, and neither does a stale one,
 // so what a category got is whatever of it the category actually offered.
 export function pickedNames(answer: string, offered: OfferedCategory): string[] {
-  return offered.offers.filter((offer) => offer.name === answer).map((offer) => offer.name);
+  return offered.offers
+    .filter((offer) => !comes(offer) && offer.name === answer)
+    .map((offer) => offer.name);
 }
 
 export function choicesFor(offered: OfferedCategory): IntegrationChoice[] {

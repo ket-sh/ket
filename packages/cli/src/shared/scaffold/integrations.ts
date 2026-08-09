@@ -1,6 +1,13 @@
 import type { PresetFile, PresetIntegration, PresetMcpServer, PresetSkill } from '@ket/preset';
 
-import { crowdedCategoriesOf, filesOf, installsOf, mcpServersOf, skillsOf } from '@ket/preset';
+import {
+  comes,
+  crowdedCategoriesOf,
+  filesOf,
+  installsOf,
+  mcpServersOf,
+  skillsOf,
+} from '@ket/preset';
 
 import type { PresetName } from '../../shared/configuration.ts';
 import type { ScaffoldFile } from '../../shared/write-files.ts';
@@ -49,7 +56,17 @@ export function chosenFrom(
   }
 
   const asked = named.split(',').map((name) => name.trim());
-  const names = offered.map((integration) => integration.name);
+  const coming = asked.find((name) =>
+    offered.some((integration) => comes(integration) && integration.name === name),
+  );
+
+  if (coming !== undefined) {
+    return { refused: `${coming} arrives soon and cannot be chosen yet` };
+  }
+
+  const names = offered
+    .filter((integration) => !comes(integration))
+    .map((integration) => integration.name);
   const unknown = asked.find((name) => !names.includes(name));
 
   if (unknown !== undefined) {

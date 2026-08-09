@@ -33,6 +33,26 @@ const EVERY_CATEGORY = [
   offers('codeql', 'code scanning'),
 ];
 
+const PEN = offers('pen', 'design tool');
+
+const FIGMA: PresetIntegration = { name: 'figma', category: 'design tool', soon: true };
+
+describe('the design tool a project is asked about', () => {
+  it('asks about the design tool before the design reference gallery', () => {
+    expect(
+      categoriesOffering([offers('mobbin', 'design reference'), PEN]).map(
+        (offered) => offered.category,
+      ),
+    ).toStrictEqual(['design tool', 'design reference']);
+  });
+
+  it('takes one design tool, offering what works beside what arrives soon', () => {
+    expect(categoriesOffering([PEN, FIGMA])).toStrictEqual([
+      { category: 'design tool', admits: 'one', offers: [PEN, FIGMA] },
+    ]);
+  });
+});
+
 describe('the categories a project is asked about', () => {
   it('asks about design first, and takes several tools for review alone', () => {
     expect(

@@ -1,3 +1,5 @@
+import type { PresetIntegration } from '@ket/preset';
+
 import { copies, writes } from '@ket/preset';
 import { Buffer } from 'node:buffer';
 import { describe, expect, it } from 'vitest';
@@ -34,6 +36,9 @@ describe('what a preset offers', () => {
 
   it('offers the tools that suit a frontend project', () => {
     expect(integrationsOffered('web').map((offered) => offered.name)).toStrictEqual([
+      'pen',
+      'figma',
+      'paper',
       'mobbin',
       'chromatic',
       'scorecard',
@@ -167,6 +172,34 @@ describe('reading the integrations named on the command line', () => {
   it('refuses an empty name rather than reading it as nothing', () => {
     expect(chosenFrom('codecov,', offeredIntegrations(['cli']))).toStrictEqual({
       refused: ` is not an integration this project offers. It offers ${CLI_OFFERS}`,
+    });
+  });
+});
+
+describe('naming a tool that only arrives soon', () => {
+  const DESIGN_TOOLS: PresetIntegration[] = [
+    {
+      name: 'pen',
+      category: 'design tool',
+      asks: 'pen, free on a public repository and a private one.',
+      files: [writes('designs/gitkeep', 'designs/.gitkeep')],
+    },
+    { name: 'figma', category: 'design tool', soon: true },
+  ];
+
+  it('refuses the name and says it arrives soon', () => {
+    expect(chosenFrom('figma', DESIGN_TOOLS)).toStrictEqual({
+      refused: 'figma arrives soon and cannot be chosen yet',
+    });
+  });
+
+  it('still lets the tool that works be chosen beside it', () => {
+    expect(chosenFrom('pen', DESIGN_TOOLS)).toStrictEqual({ chosen: ['pen'] });
+  });
+
+  it('leaves a coming tool out of what it says the project offers', () => {
+    expect(chosenFrom('argos', DESIGN_TOOLS)).toStrictEqual({
+      refused: 'argos is not an integration this project offers. It offers pen',
     });
   });
 });

@@ -1,7 +1,7 @@
 import type { PresetIntegration, PresetItem } from './item.ts';
 
 import { substitutes } from './category.ts';
-import { filesOf, mcpServersOf, reachesNothing } from './item.ts';
+import { comes, filesOf, mcpServersOf, reachesNothing } from './item.ts';
 
 const PUBLIC_REPOSITORY = 'public';
 
@@ -10,6 +10,10 @@ const PRIVATE_REPOSITORY = 'private';
 const LANDS_NOWHERE = '~/';
 
 function fileInvariants(integration: PresetIntegration): string[] {
+  if (comes(integration)) {
+    return [];
+  }
+
   return reachesNothing(integration)
     ? [`the integration ${integration.name} changes nothing a project can see`]
     : [];
@@ -45,6 +49,10 @@ function contestedTargets(integrations: PresetIntegration[]): string[] {
 }
 
 function sentenceInvariants(integration: PresetIntegration): string[] {
+  if (comes(integration)) {
+    return [];
+  }
+
   const asks = integration.asks.toLowerCase();
 
   return [

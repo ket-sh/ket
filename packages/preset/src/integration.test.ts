@@ -2,7 +2,15 @@ import { describe, expect, it } from 'vitest';
 
 import type { PresetIntegration } from './item.ts';
 
-import { filesOf, installsOf, mcpServersOf, reachesNothing, writes } from './item.ts';
+import {
+  comes,
+  filesOf,
+  installsOf,
+  mcpServersOf,
+  reachesNothing,
+  skillsOf,
+  writes,
+} from './item.ts';
 
 const WRITING: PresetIntegration = {
   name: 'codeql',
@@ -17,6 +25,23 @@ const REACHING: PresetIntegration = {
   asks: 'mobbin costs the same for a public repo and a private one.',
   reaches: { stage: 'designing', reference: 'https://mobbin.com' },
 };
+
+const COMING: PresetIntegration = { name: 'figma', category: 'design tool', soon: true };
+
+describe('an integration that arrives soon', () => {
+  it('reads as coming, while one that offers anything reads as here', () => {
+    expect(comes(COMING)).toBe(true);
+    expect(comes(WRITING)).toBe(false);
+    expect(comes(REACHING)).toBe(false);
+  });
+
+  it('brings a project nothing while it is still coming', () => {
+    expect(filesOf(COMING)).toStrictEqual([]);
+    expect(installsOf(COMING)).toStrictEqual([]);
+    expect(skillsOf(COMING)).toStrictEqual([]);
+    expect(mcpServersOf(COMING)).toStrictEqual([]);
+  });
+});
 
 describe('what an integration brings a project', () => {
   it('names the files one that writes files brings', () => {

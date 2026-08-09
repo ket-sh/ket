@@ -3,6 +3,7 @@ import type { IntegrationCategory, PresetIntegration } from './item.ts';
 type CategoryAdmission = 'one' | 'several';
 
 const ADMISSIONS: Record<IntegrationCategory, CategoryAdmission> = {
+  'design tool': 'one',
   'design reference': 'one',
   'visual review': 'one',
   'AI pull-request review': 'several',
@@ -12,6 +13,7 @@ const ADMISSIONS: Record<IntegrationCategory, CategoryAdmission> = {
 };
 
 const INTEGRATION_CATEGORIES: IntegrationCategory[] = [
+  'design tool',
   'design reference',
   'visual review',
   'AI pull-request review',

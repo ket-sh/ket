@@ -6,7 +6,7 @@ sources:
   - presets/cli/src/**
   - presets/web/src/**
   - harness/**
-stamp: e0fe4d721ab3
+stamp: e6a615738941
 ---
 
 # The ket handbook
@@ -47,6 +47,11 @@ plugins registered, and the pipeline ready.
   Protocol (MCP) server. Choosing mobbin registers the hosted Mobbin server
   there, the design stage searches it before drawing a screen, and
   `ket update` merges the entry into a project scaffolded before it existed.
+  pen registers nothing there: its app brings its own `pencil` server along
+  when it runs.
+- `designs/` appears when the project chose pen as its design tool. It holds
+  `design-system.pen` and one `.pen` file per module, versioned like any
+  source and authored on the pen canvas during the design stage.
 - Two Claude Code plugins carry the law: `ket-gates` arms the gates, and
   `ket` carries the pipeline commands and their skills.
 
