@@ -131,6 +131,10 @@ export function ArtifactsPanel({
 }: PanelProps): ReactNode {
   const { theme } = useTheme();
 
+  if (journey.artifacts.length === 0) {
+    return <text fg={theme.overlay}>{NOTHING_WRITTEN}</text>;
+  }
+
   return (
     <box flexDirection="row">
       <box flexDirection="column" width={SIDEBAR}>
