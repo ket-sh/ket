@@ -20,6 +20,7 @@ const ACROSS: Record<WheelDirection, 'left' | 'right'> = {
 interface BoardMouse {
   boardCard: (key: string) => void;
   laneHead: (key: string | undefined) => void;
+  boardWheel: (direction: WheelDirection) => void;
   hint: (pressed: Pressed) => void;
 }
 
@@ -48,11 +49,19 @@ function boardMouseOf(deps: PressDeps): BoardMouse {
     }
   };
 
+  const boardWheel = (direction: WheelDirection): void => {
+    if (overlayHeld(deps) || deps.stack.top.kind !== 'board') {
+      return;
+    }
+
+    deps.seat.move({ col: ACROSS[direction] === 'left' ? -1 : 1, row: 0 });
+  };
+
   const hint = (pressed: Pressed): void => {
     press(pressed, deps);
   };
 
-  return { boardCard, laneHead, hint };
+  return { boardCard, laneHead, boardWheel, hint };
 }
 
 const WHEEL_SLIDE: Record<WheelDirection, number> = {

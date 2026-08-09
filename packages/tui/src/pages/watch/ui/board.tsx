@@ -1,7 +1,7 @@
-import type { BoxRenderable, MouseEvent } from '@opentui/core';
-import type { ReactNode } from 'react';
+import type { BoxRenderable, MouseEvent, ScrollBoxRenderable } from '@opentui/core';
+import type { ReactNode, RefObject } from 'react';
 
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 import type { KanbanCardView, KanbanColumnView } from '../../../shared/model';
 import type { Theme } from '../../../shared/theme';
@@ -11,7 +11,7 @@ import type { Seat } from '../model/seat.ts';
 import { stageColorOf, useTheme } from '../../../shared/theme';
 import { agedOf } from '../lib/aged.ts';
 import { accentOf, BELL, needsYou } from '../lib/attention.ts';
-import { laneTitle } from '../lib/lanes.ts';
+import { laneLeast, lanesOverflowAcross, laneTitle } from '../lib/lanes.ts';
 
 interface CardFrame {
   style: 'rounded' | 'double';
@@ -89,28 +89,46 @@ function Card({
   );
 }
 
-function Column({
-  column,
-  now,
-  inRow,
-  selectedRow,
-  mouse,
-}: {
+function laneIdOf(status: string): string {
+  return `lane ${status}`;
+}
+
+interface ColumnProps {
   column: KanbanColumnView;
   now: string;
-  inRow: boolean;
+  least: number;
   selectedRow: number | undefined;
   mouse: WatchMouse;
-}): ReactNode {
+}
+
+function LaneCards({ column, now, selectedRow, mouse }: Omit<ColumnProps, 'least'>): ReactNode {
+  const { theme } = useTheme();
+
+  return column.cards.map(
+    (card, cardAt): ReactNode => (
+      <Card
+        key={card.key}
+        card={card}
+        now={now}
+        frame={cardAt === selectedRow ? chosenFrame(card, theme) : restingFrame(card, theme)}
+        mouse={mouse}
+      />
+    ),
+  );
+}
+
+function Column({ column, now, least, selectedRow, mouse }: ColumnProps): ReactNode {
   const { theme } = useTheme();
   const laneRef = useRef<BoxRenderable>(null);
 
   return (
     <box
       ref={laneRef}
+      id={laneIdOf(column.status)}
       flexDirection="column"
-      flexGrow={inRow ? 1 : 0}
-      flexBasis={inRow ? 1 : 'auto'}
+      minWidth={least}
+      flexGrow={1}
+      flexBasis={1}
       flexShrink={0}
       border
       borderStyle="rounded"
@@ -125,48 +143,76 @@ function Column({
         }
       }}
     >
-      {column.cards.map(
-        (card, cardAt): ReactNode => (
-          <Card
-            key={card.key}
-            card={card}
-            now={now}
-            frame={cardAt === selectedRow ? chosenFrame(card, theme) : restingFrame(card, theme)}
-            mouse={mouse}
-          />
-        ),
-      )}
+      <LaneCards column={column} now={now} selectedRow={selectedRow} mouse={mouse} />
     </box>
   );
 }
 
-export function BoardView({
-  columns,
-  now,
-  inRow,
-  seat,
-  mouse,
-}: {
+function useLaneFollow(
+  boardRef: RefObject<ScrollBoxRenderable | null>,
+  chosenStatus: string | undefined,
+): void {
+  useEffect(() => {
+    if (chosenStatus !== undefined) {
+      boardRef.current?.scrollChildIntoView(laneIdOf(chosenStatus));
+    }
+  }, [boardRef, chosenStatus]);
+}
+
+interface BoardViewProps {
   columns: KanbanColumnView[];
   now: string;
-  inRow: boolean;
+  room: number;
   seat: Seat;
   mouse: WatchMouse;
-}): ReactNode {
+}
+
+function Lanes({ columns, now, seat, mouse }: Omit<BoardViewProps, 'room'>): ReactNode {
+  const least = laneLeast(columns);
+
+  return columns.map(
+    (column, columnAt): ReactNode => (
+      <Column
+        key={column.status}
+        column={column}
+        now={now}
+        least={least}
+        selectedRow={columnAt === seat.col ? seat.row : undefined}
+        mouse={mouse}
+      />
+    ),
+  );
+}
+
+export function BoardView({ columns, now, room, seat, mouse }: BoardViewProps): ReactNode {
+  const { theme } = useTheme();
+  const boardRef = useRef<ScrollBoxRenderable>(null);
+
+  useLaneFollow(boardRef, columns[seat.col]?.status);
+
+  const wheelAt = (event: MouseEvent): void => {
+    const direction = event.scroll?.direction;
+
+    if ((direction === 'up' || direction === 'down') && lanesOverflowAcross(columns, room)) {
+      mouse.boardWheel(direction);
+    }
+  };
+
   return (
-    <box flexDirection={inRow ? 'row' : 'column'}>
-      {columns.map(
-        (column, columnAt): ReactNode => (
-          <Column
-            key={column.status}
-            column={column}
-            now={now}
-            inRow={inRow}
-            selectedRow={columnAt === seat.col ? seat.row : undefined}
-            mouse={mouse}
-          />
-        ),
-      )}
-    </box>
+    <scrollbox
+      ref={boardRef}
+      scrollX
+      scrollY={false}
+      focusable={false}
+      flexGrow={1}
+      flexBasis={0}
+      contentOptions={{ flexDirection: 'row' }}
+      horizontalScrollbarOptions={{
+        trackOptions: { foregroundColor: theme.surface1, backgroundColor: theme.base },
+      }}
+      onMouseScroll={wheelAt}
+    >
+      <Lanes columns={columns} now={now} seat={seat} mouse={mouse} />
+    </scrollbox>
   );
 }

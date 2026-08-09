@@ -7,6 +7,7 @@ import type { Frame, FrameStack } from '../model/frames.ts';
 import type { WatchMouse } from '../model/mouse.ts';
 import type { Seat } from '../model/seat.ts';
 
+import { shownWorkOf } from '../lib/bindings.ts';
 import { FilterBar } from './filter-bar.tsx';
 import { KeyBar } from './key-bar.tsx';
 
@@ -67,6 +68,7 @@ export function FootRow(foot: FootRowProps): ReactNode {
         layout={layout}
         width={width}
         narrowed={narrowedWorn(filter, logFilter, top)}
+        shown={shownWorkOf(foot.shown, foot.logRows)}
         mouse={mouse}
       />
     </box>

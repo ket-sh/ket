@@ -7,7 +7,6 @@ import type { WatchMouse } from '../model/mouse.ts';
 import type { Seat } from '../model/seat.ts';
 
 import { MapPane } from '../../../widgets/story-map';
-import { laidInRow } from '../lib/lanes.ts';
 import { BacklogView } from './backlog.tsx';
 import { BoardView } from './board.tsx';
 import { DocsView } from './docs.tsx';
@@ -57,13 +56,7 @@ function BoardArea({
   }
 
   return (
-    <BoardView
-      columns={columns}
-      now={now}
-      inRow={laidInRow(columns, width - PAGE_SIDE * 2)}
-      seat={seat}
-      mouse={mouse}
-    />
+    <BoardView columns={columns} now={now} room={width - PAGE_SIDE * 2} seat={seat} mouse={mouse} />
   );
 }
 

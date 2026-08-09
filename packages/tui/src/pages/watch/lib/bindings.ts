@@ -1,8 +1,9 @@
-import type { GateActionView } from '../../../shared/model';
+import type { GateActionView, KanbanColumnView, OplogEventView } from '../../../shared/model';
 import type { BoardLayout } from '../model/board-layout.ts';
 import type { DocsFocus, Frame } from '../model/frames.ts';
 
 import { GATE_KEYS } from '../model/keys.ts';
+import { catalogRows } from './docs.ts';
 import { neighborOf, placedOf } from './layout.ts';
 
 type BindingGroup = 'move' | 'open' | 'filter' | 'tools';
@@ -16,11 +17,11 @@ export interface Binding {
 type PaneStanding = 'canvas' | 'brink' | 'held';
 
 export type BindingSpot =
-  | { kind: 'board'; layout: BoardLayout; offers: GateActionView[] }
+  | { kind: 'board'; layout: BoardLayout; offers: GateActionView[]; holds: boolean }
   | { kind: 'journey'; pane: PaneStanding }
-  | { kind: 'docs'; focus: DocsFocus }
-  | { kind: 'map' }
-  | { kind: 'oplog' }
+  | { kind: 'docs'; focus: DocsFocus; holds: boolean }
+  | { kind: 'map'; holds: boolean }
+  | { kind: 'oplog'; holds: boolean }
   | { kind: 'surface' }
   | { kind: 'gate' }
   | { kind: 'edit' };
@@ -43,20 +44,29 @@ const GOES: Binding = { keys: 'ctrl+p', action: 'go', group: 'open' };
 
 const HELPS: Binding = { keys: '?', action: 'help', group: 'tools' };
 
-function boardBindings(layout: BoardLayout, offers: GateActionView[]): Binding[] {
+const DIVES: Binding = { keys: '⏎', action: 'journey', group: 'open' };
+
+type BoardSpot = Extract<BindingSpot, { kind: 'board' }>;
+
+function layoutSwaps(layout: BoardLayout): Binding[] {
   const laid = layout === 'kanban' ? 'list' : 'kanban';
   const queued = layout === 'backlog' ? 'board' : 'backlog';
 
   return [
-    MOVE,
-    { keys: '⏎', action: 'journey', group: 'open' },
-    ...gateBindings(offers),
-    { keys: 'm', action: 'map', group: 'open' },
     { keys: 'v', action: laid, group: 'open' },
     { keys: 'b', action: queued, group: 'open' },
+  ];
+}
+
+function boardBindings({ layout, offers, holds }: BoardSpot): Binding[] {
+  return [
+    ...(holds ? [MOVE, DIVES] : []),
+    ...gateBindings(offers),
+    { keys: 'm', action: 'map', group: 'open' },
+    ...layoutSwaps(layout),
     { keys: 'l', action: 'log', group: 'open' },
     { keys: 'd', action: 'docs', group: 'open' },
-    ...(layout === 'backlog' ? [] : [NARROWS]),
+    ...(holds && layout !== 'backlog' ? [NARROWS] : []),
     GOES,
     HELPS,
     { keys: 'r', action: 'refresh', group: 'tools' },
@@ -85,17 +95,7 @@ const JOURNEY_WAYS: Record<PaneStanding, Binding[]> = {
   ],
 };
 
-const HELD_SCREENS: Record<'map' | 'oplog' | 'surface' | 'gate' | 'edit', Binding[]> = {
-  map: [MOVE, GOES, HELPS, ESC_BOARD, QUIT],
-  oplog: [
-    { keys: '↑↓', action: 'move', group: 'move' },
-    { keys: '⏎', action: 'journey', group: 'open' },
-    NARROWS,
-    GOES,
-    HELPS,
-    ESC_BOARD,
-    QUIT,
-  ],
+const HELD_SCREENS: Record<'surface' | 'gate' | 'edit', Binding[]> = {
   surface: [
     { keys: '↑↓', action: 'scroll', group: 'move' },
     { keys: 'tab ←→', action: 'audience', group: 'tools' },
@@ -116,34 +116,53 @@ const HELD_SCREENS: Record<'map' | 'oplog' | 'surface' | 'gate' | 'edit', Bindin
   ],
 };
 
-const DOCS_WAYS: Record<DocsFocus, Binding[]> = {
-  catalog: [
+const WAYS_OUT: Binding[] = [GOES, HELPS, ESC_BOARD, QUIT];
+
+const SHOWN_WORK: Record<'oplog' | 'map' | 'docs', Binding[]> = {
+  oplog: [
+    { keys: '↑↓', action: 'move', group: 'move' },
+    { keys: '⏎', action: 'journey', group: 'open' },
+    NARROWS,
+  ],
+  map: [MOVE],
+  docs: [
     { keys: '↑↓', action: 'move', group: 'move' },
     { keys: '⏎', action: 'detail', group: 'open' },
-    GOES,
-    HELPS,
-    ESC_BOARD,
-    QUIT,
-  ],
-  detail: [
-    { keys: '↑↓', action: 'move', group: 'move' },
-    { keys: 'esc', action: 'catalog', group: 'open' },
-    GOES,
-    HELPS,
-    QUIT,
   ],
 };
 
-export function bindingsAt(spot: BindingSpot): Binding[] {
-  if (spot.kind === 'board') {
-    return boardBindings(spot.layout, spot.offers);
-  }
+const DETAIL_WAYS: Binding[] = [
+  { keys: '↑↓', action: 'move', group: 'move' },
+  { keys: 'esc', action: 'catalog', group: 'open' },
+  GOES,
+  HELPS,
+  QUIT,
+];
 
-  if (spot.kind === 'docs') {
-    return DOCS_WAYS[spot.focus];
+type DocsSpot = Extract<BindingSpot, { kind: 'docs' }>;
+
+function workedOrOut(spot: Extract<BindingSpot, { kind: 'oplog' | 'map' | 'docs' }>): Binding[] {
+  return [...(spot.holds ? SHOWN_WORK[spot.kind] : []), ...WAYS_OUT];
+}
+
+function docsBindings(spot: DocsSpot): Binding[] {
+  return spot.focus === 'detail' ? DETAIL_WAYS : workedOrOut(spot);
+}
+
+function heldBindings(spot: Exclude<BindingSpot, BoardSpot | DocsSpot>): Binding[] {
+  if (spot.kind === 'oplog' || spot.kind === 'map') {
+    return workedOrOut(spot);
   }
 
   return spot.kind === 'journey' ? JOURNEY_WAYS[spot.pane] : HELD_SCREENS[spot.kind];
+}
+
+export function bindingsAt(spot: BindingSpot): Binding[] {
+  if (spot.kind === 'board') {
+    return boardBindings(spot);
+  }
+
+  return spot.kind === 'docs' ? docsBindings(spot) : heldBindings(spot);
 }
 
 export function hintOf(binding: Binding): string {
@@ -165,6 +184,18 @@ export function groupedOf(bindings: Binding[]): GroupedBindings[] {
   });
 }
 
+export interface ShownWork {
+  cards: number;
+  logged: number;
+}
+
+export function shownWorkOf(columns: KanbanColumnView[], logRows: OplogEventView[]): ShownWork {
+  return {
+    cards: columns.reduce((count, column) => count + column.cards.length, 0),
+    logged: logRows.length,
+  };
+}
+
 function paneStandingOf(frame: Extract<Frame, { kind: 'journey' }>): PaneStanding {
   if (frame.tab !== 'workflow' || frame.journey.children.length === 0) {
     return 'canvas';
@@ -179,26 +210,34 @@ function paneStandingOf(frame: Extract<Frame, { kind: 'journey' }>): PaneStandin
   return neighborOf(nodes, frame.sel, 'right') === frame.sel ? 'brink' : 'canvas';
 }
 
-const HELD_SPOTS: Record<'map' | 'oplog' | 'surface' | 'gate' | 'edit', BindingSpot> = {
-  map: { kind: 'map' },
-  oplog: { kind: 'oplog' },
-  surface: { kind: 'surface' },
-  gate: { kind: 'gate' },
-  edit: { kind: 'edit' },
-};
+function heldSpotOf(
+  frame: Extract<Frame, { kind: 'docs' | 'map' | 'oplog' | 'surface' | 'gate' | 'edit' }>,
+  shown: ShownWork,
+): BindingSpot {
+  if (frame.kind === 'docs') {
+    return { kind: 'docs', focus: frame.focus, holds: catalogRows(frame.catalog).length > 0 };
+  }
 
-export function spotOf(frame: Frame, layout: BoardLayout, offers: GateActionView[]): BindingSpot {
+  if (frame.kind === 'map') {
+    return { kind: 'map', holds: 'map' in frame.reading };
+  }
+
+  return frame.kind === 'oplog' ? { kind: 'oplog', holds: shown.logged > 0 } : { kind: frame.kind };
+}
+
+export function spotOf(
+  frame: Frame,
+  layout: BoardLayout,
+  offers: GateActionView[],
+  shown: ShownWork,
+): BindingSpot {
   if (frame.kind === 'board') {
-    return { kind: 'board', layout, offers };
+    return { kind: 'board', layout, offers, holds: shown.cards > 0 };
   }
 
   if (frame.kind === 'journey') {
     return { kind: 'journey', pane: paneStandingOf(frame) };
   }
 
-  if (frame.kind === 'docs') {
-    return { kind: 'docs', focus: frame.focus };
-  }
-
-  return HELD_SPOTS[frame.kind];
+  return heldSpotOf(frame, shown);
 }

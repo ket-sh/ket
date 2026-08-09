@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { useRef } from 'react';
 
 import type { GateActionView } from '../../../shared/model';
+import type { ShownWork } from '../lib/bindings.ts';
 import type { BoardLayout } from '../model/board-layout.ts';
 import type { Pressed } from '../model/compass.ts';
 import type { Frame } from '../model/frames.ts';
@@ -24,8 +25,9 @@ function entriesOf(
   offers: GateActionView[],
   layout: BoardLayout,
   narrowed: string | undefined,
+  shown: ShownWork,
 ): HintEntry[] {
-  const bound = bindingsAt(spotOf(frame, layout, offers)).map((binding) => ({
+  const bound = bindingsAt(spotOf(frame, layout, offers, shown)).map((binding) => ({
     hint: hintOf(binding),
     keys: binding.keys,
   }));
@@ -49,6 +51,7 @@ export function KeyBar({
   layout,
   width,
   narrowed,
+  shown,
   mouse,
 }: {
   frame: Frame;
@@ -56,11 +59,12 @@ export function KeyBar({
   layout: BoardLayout;
   width: number;
   narrowed: string | undefined;
+  shown: ShownWork;
   mouse: WatchMouse;
 }): ReactNode {
   const { theme } = useTheme();
   const rowRef = useRef<TextRenderable>(null);
-  const entries = entriesOf(frame, offers, layout, narrowed);
+  const entries = entriesOf(frame, offers, layout, narrowed, shown);
   const kept = keptAt(
     entries.map((entry) => entry.hint),
     width,

@@ -1,10 +1,18 @@
 import { testRender } from '@opentui/react/test-utils';
-import { afterEach, describe, expect, it } from 'bun:test';
+import { afterEach, describe, expect, it, setDefaultTimeout } from 'bun:test';
+
+// The landed() waits commit to a 15s deadline; a loaded runner can spend more
+// than bun's 5s default across one of them before a frame settles.
+setDefaultTimeout(40_000);
 
 import { WatchPage } from './index.tsx';
 import { feedOf, NOW } from './watch-fixtures.ts';
 
 const WIDE = 200;
+
+const ROOMY = 220;
+
+const NARROW = 80;
 
 let rendered: Awaited<ReturnType<typeof testRender>> | undefined;
 
@@ -34,21 +42,37 @@ async function landed(done: (frame: string) => boolean): Promise<string> {
   return frame;
 }
 
-async function clickedOn(frame: string, text: string): Promise<void> {
+function spotIn(frame: string, text: string): { x: number; y: number } {
   const rows = frame.split('\n');
   const y = rows.findIndex((row) => row.includes(text));
   const x = rows[y]?.indexOf(text) ?? -1;
 
-  await rendered?.mockMouse.click(x, y);
+  return { x, y };
 }
 
-async function openedBoard(): Promise<string> {
+async function clickedOn(frame: string, text: string): Promise<void> {
+  const spot = spotIn(frame, text);
+
+  await rendered?.mockMouse.click(spot.x, spot.y);
+}
+
+async function scrolledOn(frame: string, text: string, direction: 'up' | 'down'): Promise<void> {
+  const spot = spotIn(frame, text);
+
+  await rendered?.mockMouse.scroll(spot.x, spot.y, direction);
+}
+
+async function openedBoardAt(width: number): Promise<string> {
   rendered = await testRender(
     <WatchPage feed={feedOf()} clock={() => NOW} onQuit={() => undefined} />,
-    { width: WIDE, height: 40 },
+    { width, height: 40 },
   );
 
   return landed((frame) => frame.includes('K-2'));
+}
+
+async function openedBoard(): Promise<string> {
+  return openedBoardAt(WIDE);
 }
 
 describe('the seat a pointer click moves', () => {
@@ -93,6 +117,33 @@ describe('the seat a pointer click moves', () => {
 
     expect(moved).toContain('║ K-1');
     expect(moved).not.toContain('· journey');
+  });
+});
+
+describe('the board the wheel walks', () => {
+  it('walks the seat across the lanes where the row outruns the screen', async () => {
+    const frame = await openedBoardAt(NARROW);
+
+    await scrolledOn(frame, 'A quiet fix', 'down');
+
+    const walked = await landed((seen) => seen.includes('║ K-1'));
+
+    expect(walked).toContain('║ K-1');
+
+    await scrolledOn(walked, 'A quiet fix', 'up');
+
+    expect(await landed((seen) => seen.includes('║ K-2'))).toContain('║ K-2');
+  });
+
+  it('keeps the seat still where every lane fits the row', async () => {
+    const frame = await openedBoardAt(ROOMY);
+
+    await scrolledOn(frame, 'A quiet fix', 'down');
+
+    const rested = await settled();
+
+    expect(rested).toContain('║ K-2');
+    expect(rested).not.toContain('║ K-1');
   });
 });
 

@@ -19,6 +19,7 @@ import type { RoomProps } from './stage.tsx';
 
 import { ThemeProvider } from '../../../shared/theme';
 import { Banner } from '../../../shared/ui';
+import { shownWorkOf } from '../lib/bindings.ts';
 import { narrowedBy } from '../lib/filter.ts';
 import { narrowedEvents } from '../lib/oplog.ts';
 import { standingOf } from '../lib/standing.ts';
@@ -44,7 +45,7 @@ import { PAGE_SIDE, StageArea } from './stage.tsx';
 import { surfaceMost } from './surface.tsx';
 import { ThemePicker } from './theme.tsx';
 
-const CHROME = 6;
+const CHROME = 7;
 
 export interface WatchPageProps {
   feed: BoardFeed;
@@ -220,7 +221,7 @@ function useWatchRoom({
 
 function OverlayLayer({ room }: { room: Room }): ReactNode {
   const { columns, tick, stack, seat, layout, picker, palette, help, width, height } = room;
-  const { mouse } = room;
+  const { mouse, shown, logRows } = room;
 
   return (
     <>
@@ -232,6 +233,7 @@ function OverlayLayer({ room }: { room: Room }): ReactNode {
         frame={stack.top}
         offers={seat.chosen?.offers ?? []}
         layout={layout}
+        shown={shownWorkOf(shown, logRows)}
         width={width}
         height={height}
       />
@@ -257,7 +259,7 @@ function WatchRoom(props: WatchPageProps): ReactNode {
     >
       <Banner />
       <HeaderRow stack={stack} tick={tick} />
-      <box flexDirection="column" flexGrow={1} overflow="hidden">
+      <box flexDirection="column" flexGrow={1} flexBasis={0} overflow="hidden">
         <StageArea
           stack={stack}
           columns={shown}

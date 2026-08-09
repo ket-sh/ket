@@ -1,15 +1,17 @@
 import { createMockKeys } from '@opentui/core/testing';
 import { testRender } from '@opentui/react/test-utils';
-import { afterEach, describe, expect, it } from 'bun:test';
+import { afterEach, describe, expect, it, setDefaultTimeout } from 'bun:test';
+
+// The landed() waits commit to a 15s deadline; a loaded runner can spend more
+// than bun's 5s default across one of them before a frame settles.
+setDefaultTimeout(20_000);
 
 import type { ActedFeed } from './watch-fixtures.ts';
 
 import { WatchPage } from './index.tsx';
-import { feedOf, NOW, STAGES } from './watch-fixtures.ts';
+import { feedOf, idleFeedOf, NOW, STAGES } from './watch-fixtures.ts';
 
 const WIDE = 200;
-
-const SNUG = 160;
 
 let rendered: Awaited<ReturnType<typeof testRender>> | undefined;
 
@@ -96,19 +98,25 @@ describe('the board the watch page shows', () => {
     }
   });
 
-  it('keeps a card legible where the stacked lanes outrun the screen', async () => {
+  it('keeps the lanes in a row where they outrun the screen', async () => {
     const frame = await openedAt(80, 24);
 
+    expect(rowWith(frame, ' triaged ')).toContain('designing');
     expect(frame).toContain('K-2');
     expect(frame).toContain('A quiet fix');
   });
 
-  it('stacks the lanes where a row cannot spell every status', async () => {
-    const frame = await openedAt(SNUG, 40);
+  it('follows the chosen card into a lane past the right edge', async () => {
+    const feed = feedOf();
 
-    expect(rowWith(frame, ' triaged ')).not.toContain('designing');
-    expect(frame).toContain('K-1');
-    expect(frame).toContain('K-2');
+    await openedWith(feed, 80, 24);
+    pressed('ARROW_RIGHT');
+    await landed((seen) => seen.includes('║ K-1'));
+    feed.shift('K-1', 'shipped');
+
+    const frame = await landed((seen) => seen.includes('shipped 1'));
+
+    expect(frame).toContain('║ K-1');
   });
 
   it('raises the banner and the live dot over the board', async () => {
@@ -116,6 +124,15 @@ describe('the board the watch page shows', () => {
 
     expect(frame).toContain('▄▄█▄▄▄█▄▄');
     expect(frame).toContain('●');
+  });
+
+  it('keeps one quiet line between the banner and the breadcrumb', async () => {
+    const rows = (await openedAt(WIDE, 30)).split('\n');
+    const bannerFoot = rows.findIndex((row) => row.includes('█   █'));
+    const header = rows.findIndex((row) => row.includes('● board'));
+
+    expect(rows[bannerFoot + 1]?.trim()).toBe('');
+    expect(header).toBe(bannerFoot + 2);
   });
 });
 
@@ -233,15 +250,32 @@ describe('the key bar the chrome carries', () => {
     expect(wide).toContain('b backlog');
   });
 
-  it('leaves the header to the breadcrumb and the worn theme', async () => {
+  it('leaves the header to the breadcrumb alone', async () => {
     const frame = await openedAt(WIDE, 30);
 
     expect(rowWith(frame, '● board')).not.toContain('q quit');
+    expect(rowWith(frame, '● board')).not.toContain('kanagawa');
   });
 
   it('names the keys the view under it answers', async () => {
     const frame = await landedOnJourney();
 
     expect(bottomRow(frame)).toContain('esc board');
+  });
+
+  it('hides the hints that act on nothing while the board holds no card', async () => {
+    rendered = await testRender(
+      <WatchPage feed={idleFeedOf()} clock={() => NOW} onQuit={() => undefined} />,
+      { width: WIDE, height: 30 },
+    );
+
+    const frame = await landed((seen) => seen.includes('triaged 0'));
+    const bar = bottomRow(frame);
+
+    expect(bar).toContain('q quit');
+    expect(bar).toContain('m map');
+    expect(bar).not.toContain('move');
+    expect(bar).not.toContain('journey');
+    expect(bar).not.toContain('/ filter');
   });
 });
