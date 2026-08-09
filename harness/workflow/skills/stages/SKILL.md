@@ -74,6 +74,16 @@ an approve button, and the only thing the browser writes back is a feature file.
 the move succeeds. A tab the user closed reopens at the next gate, and an artifact
 revised while a gate holds reaches the open tab through the push channel.
 
+Beside the surface, `/ket:approve` and `/ket:ship` start
+`ket item await <key> --past <status>` as a background task, naming the status
+the item waits at. The watcher follows `.ket/events.jsonl` and returns the
+moment the item leaves that status, whichever surface moved it: the chat, the
+TUI's offer key, any other session. One watcher hears every path, so never
+start a second, and a gate answered somewhere else ends the wait by itself.
+Stop the watcher before running the move from the chat, belt and suspenders,
+since the move would complete it anyway. When it returns, take the json line it
+prints as the gate passing and carry the item onward.
+
 ## Before the work reaches anybody else
 
 Mutation gates the move out of `verifying`, and the review does not. But a push
@@ -269,7 +279,11 @@ beside the item in `.ket/items/<key>/`:
   asked for, what stays out of scope, and the acceptance criteria as testable
   statements. The conversation that filed the item is the source, and no
   subagent holds that conversation. `ket:gherkin` reads this file as its only
-  source, so a design stage that skips it starves the scenarios.
+  source, so a design stage that skips it starves the scenarios. The line under
+  the title is `> **TL;DR** <what was asked and what it costs>`, under 160
+  characters, with a verb in it. The page lifts that quote into the callout at
+  the top and falls back to `No summary written` where the spec skipped it, so
+  the first paragraph never restates it.
 - `ket:solution-design` for the approach, in `solution-design.md` with
   `architecture.d2` and `callouts.json` beside it
 - `ket:adr` when a decision is load-bearing and worth recording, in `adr.md`

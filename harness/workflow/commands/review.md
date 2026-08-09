@@ -32,6 +32,12 @@ Send both in one message so they run at once, each as the `ket:reviewer` agent,
 each with the model and the lens its row names. Tell each seat what is under
 review and nothing about what the other seat is doing.
 
+Remind each seat of its standing rule: it never runs tests, lint, typecheck,
+formatters, mutation, coverage, or any gate the machine already runs. Those
+verdicts arrive on their own, and repeating them burns the session. A seat
+exists for what machines cannot check: it reads the diff and reasons about the
+behavior.
+
 Ask each seat for every finding it evaluated, with location, defect, failure
 scenario, confidence, whether it reproduced, verdict and reason.
 
@@ -73,7 +79,8 @@ with the reason behind it.
 The judge reproduces the claim itself and rules `confirmed` or `dropped`. Its
 ruling settles the group. A judge ruling confirmed without reproducing the claim
 has settled nothing: drop the finding and record that the judge did not
-reproduce it.
+reproduce it. The seats' standing rule binds the judge too: reproducing one
+claim never means re-running a suite or a gate the machine already runs.
 
 If a judge returns nothing, say the dispute went unsettled. Never resolve it
 yourself, and never fall back to a seat's verdict.

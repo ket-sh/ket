@@ -31,6 +31,10 @@ authoritative.
 
 - Open with a `# ` title. The page drops everything above the first title, so
   a sibling without one leaks its stamp into the prose.
+- Put `> **TL;DR** <the whole document in one plain line>` right under the
+  title, under 160 characters, with a verb in it. The page lifts that quote
+  into the callout above the sibling and falls back to `No summary written`
+  where nobody wrote one, so the first paragraph never restates it.
 - One idea per sentence, under 20 words, active voice, no term the reader
   would have to look up. Name outcomes, not mechanisms.
 - Keep the shape flat: a title, a few short paragraphs, at most one list. The

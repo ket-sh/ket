@@ -35,7 +35,30 @@ The page lets the user fix a scenario's wording in place, and the save writes th
 feature file back beside the item. Nothing else on the page writes, and no status
 moves there.
 
-## 2. Read the drift
+## 2. Start the watcher
+
+```
+ket item await $ARGUMENTS --past awaiting-approval
+```
+
+Run it as a background task beside the surface, after saying the address. It
+blocks until the item leaves the status it names, then prints the move as one
+json line, so the approval reaches this session the moment it lands. Name the
+status the item actually holds: an item that skipped design waits at `triaged`.
+
+The watcher follows `.ket/events.jsonl`, and every approval path writes that
+log: the command in step 6, the TUI's offer key, any other session. Whichever
+path moves the item completes this watcher, so an approval given somewhere else
+cancels the wait by itself. One watcher hears every path, so never start a
+second.
+
+Then tell the user plainly: approve in the browser, in the TUI (choose the
+card, press its offer key), or tell me here. I'll continue the moment it lands.
+
+When the watcher returns, the gate is passed: read the json line it printed,
+skip step 6, and carry the item onward the way the `stages` skill says.
+
+## 3. Read the drift
 
 ```
 ket item drift $ARGUMENTS
@@ -46,7 +69,7 @@ re-derive or confirm that sibling the way the `plain` skill says, stamp with
 `ket item stamp $ARGUMENTS`, and only then summarize. The page shows the same
 lag beside the audience switch, so a reviewer sees what you skipped.
 
-## 3. Say what the approval turns on
+## 4. Say what the approval turns on
 
 The page carries the artifacts. The chat carries the decision, so lead with the
 decision:
@@ -66,7 +89,7 @@ Front-load all of it: the summary first, then the detail, in every bullet and
 every sentence. Split a sentence over 25 words. Give the number rather than an
 adjective about it.
 
-## 4. Take the decision in the chat
+## 5. Take the decision in the chat
 
 Ask with AskUserQuestion. Three options, each saying what follows from it:
 
@@ -76,6 +99,10 @@ Ask with AskUserQuestion. Three options, each saying what follows from it:
 | **Request changes** | the artifacts get revised and this gate runs again      |
 | **Hold**            | the item stays at `awaiting-approval` and the turn ends |
 
+An approval can land while the question is open: the watcher completing is the
+user answering from another surface. Take it as the approval, skip the move
+below, and continue.
+
 On request changes, ask what to change, revise the artifacts beside the item, and
 say what moved. The open tab updates itself through the push channel, so the user
 rereads the revision without touching the browser. Then ask again.
@@ -83,7 +110,10 @@ rereads the revision without touching the browser. Then ask again.
 Take the answer as given. A user who holds an item has told you the design is not
 ready, and that is not an invitation to argue.
 
-## 5. Move it
+## 6. Move it
+
+Stop the watcher task first, belt and suspenders: the move below completes it
+anyway, and a watcher with nothing left to hear has no business running.
 
 ```
 ket item approve $ARGUMENTS
