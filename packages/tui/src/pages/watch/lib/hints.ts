@@ -2,7 +2,7 @@ import type { Pressed } from '../model/compass.ts';
 
 import { widthOf } from '../../../shared/lib';
 
-const SEPARATOR = ' · ';
+export const SEPARATOR = ' · ';
 
 export function rowOf(hints: string[]): string {
   return hints.join(SEPARATOR);
