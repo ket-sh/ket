@@ -24,10 +24,13 @@ import { installedFor } from '../../shared/scaffold/install.ts';
 import { crowdedRefusal, offeredIntegrations } from '../../shared/scaffold/integrations.ts';
 import { heroHint } from '../../shared/scaffold/name-token.ts';
 import { KET_VERSION } from '../../shared/version.ts';
-import { writeFiles } from '../../shared/write-files.ts';
+import { readTextIfPresent, writeFiles } from '../../shared/write-files.ts';
 import { LEGACY_STATE, legacyRefusal } from './legacy.ts';
+import { withCurrentPluginNames } from './plugin-names.ts';
 
 const WRITE_FATES = new Set<FileFate>(['refreshed', 'restored', 'arrived']);
+
+const SETTINGS_PATH = '.claude/settings.json';
 
 function say(line: string): void {
   process.stdout.write(`${line}\n`);
@@ -76,6 +79,12 @@ async function refusingAnOlderScaffold(root: string): Promise<void> {
   }
 }
 
+async function plannedMigrationOf(root: string): Promise<ScaffoldFile | undefined> {
+  const current = withCurrentPluginNames(await readTextIfPresent(root, SETTINGS_PATH));
+
+  return current === undefined ? undefined : { path: SETTINGS_PATH, contents: current };
+}
+
 async function recordOf(root: string): Promise<ScaffoldRecord> {
   const read = await readFile(join(root, SCAFFOLD_RECORD_PATH), 'utf8').catch(() => undefined);
   const record = read === undefined ? undefined : parseScaffoldRecord(read);
@@ -120,6 +129,16 @@ async function plannedOn(root: string, record: ScaffoldRecord, fresh: ScaffoldFi
   return updatePlanOf(record, await diskHashesFor(root, paths), fresh);
 }
 
+function saidFates(plan: PlannedFate[], migration: ScaffoldFile | undefined): void {
+  for (const planned of plan.filter((fated) => fated.fate !== 'settled')) {
+    say(`${planned.fate} ${planned.path}`);
+  }
+
+  if (migration !== undefined) {
+    say(`migrated ${migration.path}`);
+  }
+}
+
 function forced(plan: PlannedFate[], force: boolean): PlannedFate[] {
   if (!force) {
     return plan;
@@ -154,12 +173,14 @@ async function applied(
   record: ScaffoldRecord,
   fresh: ScaffoldFile[],
   plan: PlannedFate[],
+  migration: ScaffoldFile | undefined,
 ): Promise<void> {
   const fates = new Map(plan.map((planned) => [planned.path, planned.fate]));
   const writing = fresh.filter((file) => WRITE_FATES.has(fates.get(file.path) ?? 'settled'));
 
   await writeFiles(root, [
     ...writing,
+    ...(migration === undefined ? [] : [migration]),
     { path: SCAFFOLD_RECORD_PATH, contents: recordAfter(record, fresh, fates) },
   ]);
 
@@ -205,16 +226,15 @@ const update = defineCommand({
     };
     const fresh = recordedAmong(installedFor(configuration, project));
     const plan = forced(await plannedOn(root, record, fresh), args.force);
+    const migration = await plannedMigrationOf(root);
 
-    for (const planned of plan.filter((fated) => fated.fate !== 'settled')) {
-      say(`${planned.fate} ${planned.path}`);
-    }
+    saidFates(plan, migration);
 
     if (args.plan) {
       return;
     }
 
-    await applied(root, record, fresh, plan);
+    await applied(root, record, fresh, plan, migration);
   },
 });
 
