@@ -95,6 +95,7 @@ Terms reach both prose gates. A row with a lowercase and a sentence-case form ac
 | `reframes`                   |               | Presents something in a different frame.                           |
 | `Renovate`                   |               | The dependency update service.                                     |
 | `repo`                       |               | A repository.                                                      |
+| `retunes`                    |               | Adjusts something to a different setting.                          |
 | `round-robin`, `Round-robin` | `round robin` | Taking turns in a fixed cycle.                                     |
 | `runtime`                    |               | The environment code runs in.                                      |
 | `Scorecard`                  |               | The OpenSSF repository health check.                               |

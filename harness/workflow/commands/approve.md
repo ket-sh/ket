@@ -10,7 +10,13 @@ This is one of the four human gates. Bring the work in front of the user, say
 what the decision costs, and ask. The page shows what the decision is about and
 the chat holds the decision itself, so no surface carries an approve button.
 
-## 1. Bring the surface
+## 1. Bring the surface, unless the gate already opened
+
+A gate that already opened needs no page. Start step 2's watcher before the
+browser: when its json line arrives at once, the item already left the gate,
+so skip the surface, read the move from that line, and carry the item onward
+the way the `stages` skill says. Bring the surface only while the decision is
+still open.
 
 ```
 ket item show $ARGUMENTS
@@ -41,10 +47,10 @@ moves there.
 ket item await $ARGUMENTS --past awaiting-approval
 ```
 
-Run it as a background task beside the surface, after saying the address. It
-blocks until the item leaves the status it names, then prints the move as one
-json line, so the approval reaches this session the moment it lands. Name the
-status the item actually holds: an item that skipped design waits at `triaged`.
+Run it as a background task first, before step 1's surface. It blocks until
+the item leaves the status it names, then prints the move as one json line, so
+the approval reaches this session the moment it lands. Name the status the
+item actually holds: an item that skipped design waits at `triaged`.
 
 The watcher follows `.ket/events.jsonl`, and every approval path writes that
 log: the command in step 6, the TUI's offer key, any other session. Whichever
