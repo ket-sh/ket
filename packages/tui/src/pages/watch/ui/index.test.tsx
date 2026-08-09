@@ -183,13 +183,6 @@ async function landedOnJourney(): Promise<string> {
   return landed((seen) => seen.includes('K-1 · journey'));
 }
 
-async function landedOnWorkflow(): Promise<string> {
-  await landedOnJourney();
-  pressed('TAB');
-
-  return landed((seen) => seen.includes('║ designing'));
-}
-
 describe('the journey a card opens', () => {
   it('dives into the journey on enter and spells the path', async () => {
     const frame = await landedOnJourney();
@@ -199,12 +192,12 @@ describe('the journey a card opens', () => {
     expect(frame).toContain('! no failing test covers it');
   });
 
-  it('lands the selection on the active stage once the workflow opens', async () => {
-    expect(await landedOnWorkflow()).toContain('║ designing');
+  it('lands the selection on the active stage once the journey opens', async () => {
+    expect(await landedOnJourney()).toContain('║ designing');
   });
 
   it('walks the canvas selection with the arrows', async () => {
-    await landedOnWorkflow();
+    await landedOnJourney();
     pressed('ARROW_LEFT');
 
     const frame = await landed((seen) => seen.includes('║ triaged'));

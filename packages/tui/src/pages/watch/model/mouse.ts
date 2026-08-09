@@ -1,21 +1,13 @@
-import type { Pressed } from './compass.ts';
-import type { JourneyTab } from './frames.ts';
+import type { Pressed, WheelDirection } from './compass.ts';
+import type { JourneyMouse } from './journey-mouse.ts';
 import type { PressDeps } from './keys.ts';
 
 import { catalogRows } from '../lib/docs.ts';
-import { neighborOf, placedOf } from '../lib/layout.ts';
 import { seatedRow } from '../lib/oplog.ts';
+import { ACROSS } from './compass.ts';
+import { journeyMouseOf } from './journey-mouse.ts';
 import { press, shownLogOf } from './keys.ts';
 import { overlayHeld, overlayShut } from './mouse-guards.ts';
-
-type WheelDirection = 'up' | 'down' | 'left' | 'right';
-
-const ACROSS: Record<WheelDirection, 'left' | 'right'> = {
-  up: 'left',
-  left: 'left',
-  down: 'right',
-  right: 'right',
-};
 
 interface BoardMouse {
   boardCard: (key: string) => void;
@@ -106,45 +98,6 @@ function rowsMouseOf(deps: PressDeps): RowsMouse {
   };
 
   return { backlogRow, listRow, listWheel };
-}
-
-interface JourneyMouse {
-  stage: (id: string) => void;
-  tabLabel: (tab: JourneyTab) => void;
-  paneChildren: () => void;
-  canvasWheel: (direction: WheelDirection) => void;
-}
-
-function journeyMouseOf(deps: PressDeps): JourneyMouse {
-  const stage = (id: string): void => {
-    if (!overlayShut(deps)) {
-      deps.stack.aim(id);
-    }
-  };
-
-  const tabLabel = (tab: JourneyTab): void => {
-    if (!overlayShut(deps)) {
-      deps.stack.showTab(tab);
-    }
-  };
-
-  const paneChildren = (): void => {
-    if (!overlayShut(deps)) {
-      deps.stack.showTab('children');
-    }
-  };
-
-  const canvasWheel = (direction: WheelDirection): void => {
-    const top = deps.stack.top;
-
-    if (overlayHeld(deps) || top.kind !== 'journey') {
-      return;
-    }
-
-    deps.stack.aim(neighborOf(placedOf(top.journey).nodes, top.sel, ACROSS[direction]));
-  };
-
-  return { stage, tabLabel, paneChildren, canvasWheel };
 }
 
 interface LogMouse {

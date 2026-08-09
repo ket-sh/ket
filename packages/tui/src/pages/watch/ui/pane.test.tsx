@@ -49,8 +49,6 @@ async function workflowAt(width: number, then: Key[] = []): Promise<string> {
   keys.pressKey('ARROW_RIGHT');
   await landed((seen) => seen.includes('║ K-1'));
   keys.pressKey('RETURN');
-  await landed((seen) => seen.includes('K-1 · journey'));
-  keys.pressKey('TAB');
 
   let frame = await landed((seen) => seen.includes('Not started'));
 

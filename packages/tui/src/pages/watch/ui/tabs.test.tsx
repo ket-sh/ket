@@ -1,6 +1,10 @@
 import { createMockKeys } from '@opentui/core/testing';
 import { testRender } from '@opentui/react/test-utils';
-import { afterEach, describe, expect, it } from 'bun:test';
+import { afterEach, describe, expect, it, setDefaultTimeout } from 'bun:test';
+
+// The landed() waits commit to a 15s deadline; a loaded runner can spend more
+// than bun's 5s default across two of them before a frame settles.
+setDefaultTimeout(40_000);
 
 import { WatchPage } from './index.tsx';
 import { feedOf, NOW } from './watch-fixtures.ts';
@@ -80,53 +84,43 @@ describe('the tabs an opened item wears', () => {
     expect(frame).toContain('artifacts');
   });
 
-  it('lands on the overview carrying the item title', async () => {
+  it('lands on the workflow with the active stage in hand', async () => {
     const frame = await opening(OPENED);
 
+    expect(frame).toContain('║ designing');
+  });
+
+  it('hands the overview the second seat, carrying the description', async () => {
+    const frame = await opening([...OPENED, { key: 'TAB', lands: 'The keeper locks' }]);
+
     expect(frame).toContain('The watched item');
+    expect(frame).toContain('The keeper locks the account after five failures.');
+    expect(frame).not.toContain('No description written.');
   });
 
   it('says so when the item carries no description', async () => {
     const frame = await opening([
       ...OPENED,
-      { key: 'TAB', lands: '║ designing' },
+      { key: 'TAB', lands: 'The keeper locks' },
       { key: 'TAB', lands: 'A quiet fix' },
       { key: 'RETURN', lands: 'K-2 · journey' },
+      { key: 'TAB', lands: 'No description written.' },
     ]);
 
     expect(frame).toContain('No description written.');
-  });
-
-  it('reads out the description the item was written with', async () => {
-    const feed = feedOf();
-    const opened = await testRender(
-      <WatchPage feed={feed} clock={() => NOW} onQuit={() => undefined} />,
-      { width: 160, height: 40 },
-    );
-
-    rendered = opened;
-    await landed((seen) => seen.includes('K-2'));
-    createMockKeys(opened.renderer).pressKey('ARROW_RIGHT');
-    await landed((seen) => seen.includes('║ K-1'));
-    createMockKeys(opened.renderer).pressKey('RETURN');
-
-    const frame = await landed((seen) => seen.includes('K-1 · journey'));
-
-    expect(frame).toContain('The keeper locks the account after five failures.');
-    expect(frame).not.toContain('No description written.');
   });
 });
 
 describe('the workflow tab', () => {
   it('shows the stage canvas', async () => {
-    const frame = await opening([...OPENED, { key: 'TAB', lands: '║ designing' }]);
+    const frame = await opening(OPENED);
 
     expect(frame).toContain('designing');
     expect(frame).toContain('awaiting-approval');
   });
 
   it('draws no artifact on the canvas, naming it once in the pane instead', async () => {
-    const frame = await opening([...OPENED, { key: 'TAB', lands: '║ designing' }]);
+    const frame = await opening(OPENED);
 
     expect(frame).toContain('artifacts spec.md');
     expect(frame.split('spec.md')).toHaveLength(2);
@@ -137,7 +131,7 @@ describe('the children tab', () => {
   it('lists a child row with the state the board would show', async () => {
     const frame = await opening([
       ...OPENED,
-      { key: 'TAB', lands: '║ designing' },
+      { key: 'TAB', lands: 'The keeper locks' },
       { key: 'TAB', lands: 'A quiet fix' },
     ]);
 
@@ -149,7 +143,7 @@ describe('the children tab', () => {
   it('drills into the child journey on enter', async () => {
     const frame = await opening([
       ...OPENED,
-      { key: 'TAB', lands: '║ designing' },
+      { key: 'TAB', lands: 'The keeper locks' },
       { key: 'TAB', lands: 'A quiet fix' },
       { key: 'RETURN', lands: 'K-2 · journey' },
     ]);
@@ -162,12 +156,104 @@ describe('the artifacts tab', () => {
   it('lists the artifacts the item wrote beside the chosen one', async () => {
     const frame = await opening([
       ...OPENED,
-      { key: 'TAB', lands: '║ designing' },
+      { key: 'TAB', lands: 'The keeper locks' },
       { key: 'TAB', lands: 'A quiet fix' },
       { key: 'TAB', lands: 'spec.md' },
     ]);
 
     expect(frame).toContain('spec.md');
+    expect(frame).toContain('Five failures lock the account.');
+  });
+});
+
+const ON_ARTIFACTS: Press[] = [
+  ...OPENED,
+  { key: 'TAB', lands: 'The keeper locks' },
+  { key: 'TAB', lands: 'A quiet fix' },
+  { key: 'TAB', lands: 'spec.md' },
+];
+
+function pressedTimes(key: string, times: number): void {
+  if (rendered === undefined) {
+    return;
+  }
+
+  const keys = createMockKeys(rendered.renderer);
+
+  for (let held = 0; held < times; held += 1) {
+    keys.pressKey(key);
+  }
+}
+
+describe('the focus the artifacts tab hands around', () => {
+  it('hands the tab row the focus at the top of the file list', async () => {
+    const frame = await opening([...ON_ARTIFACTS, { key: 'ARROW_UP', lands: '▸ artifacts' }]);
+
+    expect(frame).toContain('▸ artifacts');
+  });
+
+  it('walks the tabs with the arrows while the tab row holds focus', async () => {
+    const frame = await opening([
+      ...ON_ARTIFACTS,
+      { key: 'ARROW_UP', lands: '▸ artifacts' },
+      { key: 'ARROW_LEFT', lands: '▸ children' },
+    ]);
+
+    expect(frame).toContain('▸ children');
+    expect(frame).toContain('A quiet fix');
+  });
+
+  it('drops the focus back into the panel on the way down', async () => {
+    const frame = await opening([
+      ...ON_ARTIFACTS,
+      { key: 'ARROW_UP', lands: '▸ artifacts' },
+      { key: 'ARROW_DOWN', leaves: '▸ artifacts' },
+    ]);
+
+    expect(frame).not.toContain('▸ artifacts');
+    expect(frame).toContain('► spec.md');
+  });
+});
+
+describe('the reading cursor inside the chosen doc', () => {
+  it('walks the doc down with j once the content holds the focus', async () => {
+    await opening([
+      ...ON_ARTIFACTS,
+      { key: 'ARROW_DOWN', lands: 'line 01' },
+      { key: 'ARROW_RIGHT', lands: '▎' },
+    ]);
+    pressedTimes('j', 45);
+
+    const frame = await landed((seen) => seen.includes('line 40'));
+
+    expect(frame).toContain('line 40');
+    expect(frame).not.toContain('line 01');
+  });
+
+  it('walks it back up with k', async () => {
+    await opening([
+      ...ON_ARTIFACTS,
+      { key: 'ARROW_DOWN', lands: 'line 01' },
+      { key: 'ARROW_RIGHT', lands: '▎' },
+    ]);
+    pressedTimes('j', 45);
+    await landed((seen) => seen.includes('line 40'));
+    pressedTimes('k', 45);
+
+    const frame = await landed((seen) => seen.includes('line 01'));
+
+    expect(frame).toContain('line 01');
+  });
+
+  it('hands the focus back to the file list on the way left', async () => {
+    const frame = await opening([
+      ...ON_ARTIFACTS,
+      { key: 'ARROW_DOWN', lands: 'line 01' },
+      { key: 'ARROW_RIGHT', lands: '▎' },
+      { key: 'ARROW_LEFT', leaves: '▎' },
+      { key: 'ARROW_UP', lands: 'Five failures lock the account.' },
+    ]);
+
     expect(frame).toContain('Five failures lock the account.');
   });
 });

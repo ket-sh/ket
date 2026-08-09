@@ -55,7 +55,6 @@ async function onWorkflow(): Promise<string> {
   await landed((frame) => frame.includes('║ K-1'));
   keys.pressKey('RETURN');
   await landed((frame) => frame.includes('K-1 · journey'));
-  keys.pressKey('TAB');
 
   return landed((frame) => frame.includes('Not started'));
 }

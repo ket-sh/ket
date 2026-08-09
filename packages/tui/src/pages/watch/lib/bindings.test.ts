@@ -116,6 +116,30 @@ describe('the bindings the journey answers', () => {
   });
 });
 
+describe('the bindings the focused chrome answers', () => {
+  it('walks the tabs while the tab row holds the focus', () => {
+    expect(hintsAt({ kind: 'journey', pane: 'tabs' })).toStrictEqual([
+      '←→ tabs',
+      '↓ panel',
+      'ctrl+p go',
+      '? help',
+      'esc board',
+      'q quit',
+    ]);
+  });
+
+  it('reads the doc while the content holds the focus', () => {
+    expect(hintsAt({ kind: 'journey', pane: 'reading' })).toStrictEqual([
+      '↑↓ j k read',
+      '← files',
+      'ctrl+p go',
+      '? help',
+      'esc board',
+      'q quit',
+    ]);
+  });
+});
+
 describe('the bindings the map and the log answer', () => {
   it('lets the map walk and leave', () => {
     expect(hintsAt({ kind: 'map', holds: true })).toStrictEqual([

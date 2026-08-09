@@ -21,6 +21,14 @@ function turnedAway(item: string, about: string, at?: string, reason?: string): 
   return `${JSON.stringify({ gate: 'write', outcome: 'refused', about, item, at, reason })}\n`;
 }
 
+function noted(item: string, note: string, at: string): string {
+  return `${JSON.stringify({ item, note, actor: 'ket', at })}\n`;
+}
+
+function workedOn(item: string, about: string, at: string): string {
+  return `${JSON.stringify({ gate: 'write', outcome: 'allowed', about, item, at })}\n`;
+}
+
 function cardsAt(columns: ReturnType<typeof foldKanban>, status: string) {
   return columns.find((column) => column.status === status)?.cards ?? [];
 }
@@ -187,6 +195,39 @@ describe('the refusals a card wears', () => {
       turnedAway('K-1', 'src/a.ts', '2026-08-07T09:30:00.000Z', 'no failing test') + ARRIVED;
 
     expect(cardOf(log)?.refusal).toBeUndefined();
+  });
+});
+
+describe('the refusal the next word demotes', () => {
+  const ARRIVED = moved('K-1', 'designing', '2026-08-07T10:00:00.000Z');
+
+  const REFUSED = turnedAway('K-1', 'src/a.ts', '2026-08-07T11:00:00.000Z', 'no failing test');
+
+  it('keeps the refusal standing while it is the last word', () => {
+    expect(cardOf(ARRIVED + REFUSED)?.refusal?.reason).toBe('no failing test');
+  });
+
+  it('demotes the refusal once a note follows it', () => {
+    const log = ARRIVED + REFUSED + noted('K-1', 'rewriting the spec', '2026-08-07T11:30:00.000Z');
+
+    expect(cardOf(log)?.refusal).toBeUndefined();
+    expect(cardOf(log)?.note?.text).toBe('rewriting the spec');
+  });
+
+  it('demotes the refusal once allowed work follows it', () => {
+    const log = ARRIVED + REFUSED + workedOn('K-1', 'src/a.test.ts', '2026-08-07T11:40:00.000Z');
+
+    expect(cardOf(log)?.refusal).toBeUndefined();
+  });
+
+  it('keeps the newest refusal standing where refusals stack', () => {
+    const log =
+      ARRIVED +
+      REFUSED +
+      workedOn('K-1', 'src/a.test.ts', '2026-08-07T11:40:00.000Z') +
+      turnedAway('K-1', 'src/b.ts', '2026-08-07T12:00:00.000Z', 'still no failing test');
+
+    expect(cardOf(log)?.refusal?.reason).toBe('still no failing test');
   });
 });
 

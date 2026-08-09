@@ -85,18 +85,13 @@ shows "triaged 1" || fail "the child never reached its lane"
 "$PILOTTY" key -s "$SESSION" Right >/dev/null
 "$PILOTTY" key -s "$SESSION" Enter >/dev/null
 "$PILOTTY" wait-for -s "$SESSION" "KWA-1 · journey" >/dev/null || fail "the journey never opened"
+"$PILOTTY" wait-for -s "$SESSION" "║ designing" >/dev/null || fail "the workflow never opened first on the active stage"
 
 SHOWN="$(screen)"
 shows "overview" || fail "the tab bar never named the overview"
 shows "workflow" || fail "the tab bar never named the workflow"
 shows "children" || fail "the tab bar never named the children"
 shows "artifacts" || fail "the tab bar never named the artifacts"
-shows "The acceptance item" || fail "the overview never carried the title"
-
-"$PILOTTY" key -s "$SESSION" Tab >/dev/null
-"$PILOTTY" wait-for -s "$SESSION" "║ designing" >/dev/null || fail "the workflow never selected the active stage"
-
-SHOWN="$(screen)"
 shows "►" || fail "the edges never drew"
 
 for _ in 1 2 3 4 5; do
@@ -111,6 +106,9 @@ done
 sleep 1
 SHOWN="$(screen)"
 shows "║ triaged" || fail "the arrows never walked the canvas"
+
+"$PILOTTY" key -s "$SESSION" Tab >/dev/null
+"$PILOTTY" wait-for -s "$SESSION" "The acceptance item" >/dev/null || fail "the overview never carried the title"
 
 "$PILOTTY" key -s "$SESSION" Tab >/dev/null
 "$PILOTTY" wait-for -s "$SESSION" "KWA-2" >/dev/null || fail "the children tab never listed the child"

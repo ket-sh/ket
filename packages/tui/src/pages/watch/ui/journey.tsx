@@ -7,6 +7,7 @@ import type { JourneyView } from '../../../shared/model';
 import type { CanvasSpot } from '../lib/canvas.ts';
 import type { JourneyFocus, JourneyTab } from '../model/frames.ts';
 import type { WatchMouse } from '../model/mouse.ts';
+import type { PanelProps } from './artifacts-panel.tsx';
 
 import { useTheme } from '../../../shared/theme';
 import { SpanRow } from '../../../shared/ui';
@@ -19,26 +20,23 @@ import { ChildrenPanel } from './children-panel.tsx';
 import { OverviewPanel } from './overview-panel.tsx';
 import { SidePane } from './side-pane.tsx';
 
-export interface JourneyPageProps {
-  journey: JourneyView;
+export interface JourneyPageProps extends PanelProps {
   sel: string;
   tab: JourneyTab;
-  pick: number;
-  focus: JourneyFocus;
   now: string;
   tick: number;
   width: number;
-  height: number;
-  mouse: WatchMouse;
 }
 
 function TabBar({
   journey,
   tab,
+  focus,
   mouse,
 }: {
   journey: JourneyView;
   tab: JourneyTab;
+  focus: JourneyFocus;
   mouse: WatchMouse;
 }): ReactNode {
   const { theme } = useTheme();
@@ -57,7 +55,7 @@ function TabBar({
               mouse.tabLabel(name);
             }}
           >
-            {` ${name} `}
+            {` ${name === tab && focus === 'tabs' ? '▸ ' : ''}${name} `}
           </text>
         ),
       )}
@@ -156,7 +154,17 @@ function PanelFor(props: JourneyPageProps): ReactNode {
   }
 
   if (props.tab === 'artifacts') {
-    return <ArtifactsPanel journey={props.journey} pick={props.pick} height={props.height} />;
+    return (
+      <ArtifactsPanel
+        journey={props.journey}
+        pick={props.pick}
+        focus={props.focus}
+        cur={props.cur}
+        aud={props.aud}
+        height={props.height}
+        mouse={props.mouse}
+      />
+    );
   }
 
   return <WorkflowPanel {...props} />;
@@ -175,7 +183,7 @@ export function JourneyPage(props: JourneyPageProps): ReactNode {
         title={` ${journey.item} · journey `}
         flexDirection="column"
       >
-        <TabBar journey={journey} tab={props.tab} mouse={props.mouse} />
+        <TabBar journey={journey} tab={props.tab} focus={props.focus} mouse={props.mouse} />
         <PanelFor {...props} height={Math.max(6, props.height - 5)} />
       </box>
       {journey.standing === undefined ? null : (

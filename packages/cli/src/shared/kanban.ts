@@ -65,13 +65,16 @@ function refusalOf(event: LoggedEvent): KanbanRefusal | undefined {
     : { reason: event.reason ?? event.about ?? '', at: event.at, gate: event.gate ?? '' };
 }
 
+// The standing refusal is the last recorded word about the item: any event
+// after it, a note, allowed work, another move, demotes it to history.
 export function refusalAfter(events: LoggedEvent[], since: string): KanbanRefusal | undefined {
-  const refused = events
-    .filter((event) => event.outcome === 'refused')
-    .filter((event) => event.at !== undefined && event.at >= since)
-    .at(-1);
+  const last = events.at(-1);
 
-  return refused === undefined ? undefined : refusalOf(refused);
+  if (last?.outcome !== 'refused') {
+    return undefined;
+  }
+
+  return last.at !== undefined && last.at >= since ? refusalOf(last) : undefined;
 }
 
 function noteOf(event: LoggedEvent): ItemNote | undefined {

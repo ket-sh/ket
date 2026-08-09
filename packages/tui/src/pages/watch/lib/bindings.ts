@@ -14,7 +14,7 @@ export interface Binding {
   group: BindingGroup;
 }
 
-type PaneStanding = 'canvas' | 'brink' | 'held';
+type PaneStanding = 'canvas' | 'brink' | 'held' | 'tabs' | 'reading';
 
 export type BindingSpot =
   | { kind: 'board'; layout: BoardLayout; offers: GateActionView[]; holds: boolean }
@@ -88,6 +88,22 @@ const JOURNEY_WAYS: Record<PaneStanding, Binding[]> = {
   held: [
     { keys: '←', action: 'canvas', group: 'move' },
     { keys: '⏎', action: 'children', group: 'open' },
+    GOES,
+    HELPS,
+    ESC_BOARD,
+    QUIT,
+  ],
+  tabs: [
+    { keys: '←→', action: 'tabs', group: 'move' },
+    { keys: '↓', action: 'panel', group: 'move' },
+    GOES,
+    HELPS,
+    ESC_BOARD,
+    QUIT,
+  ],
+  reading: [
+    { keys: '↑↓ j k', action: 'read', group: 'move' },
+    { keys: '←', action: 'files', group: 'move' },
     GOES,
     HELPS,
     ESC_BOARD,
@@ -196,18 +212,24 @@ export function shownWorkOf(columns: KanbanColumnView[], logRows: OplogEventView
   };
 }
 
-function paneStandingOf(frame: Extract<Frame, { kind: 'journey' }>): PaneStanding {
+const FOCUS_STANDING: Record<'pane' | 'tabs' | 'content', PaneStanding> = {
+  pane: 'held',
+  tabs: 'tabs',
+  content: 'reading',
+};
+
+function workflowStandingOf(frame: Extract<Frame, { kind: 'journey' }>): PaneStanding {
   if (frame.tab !== 'workflow' || frame.journey.children.length === 0) {
     return 'canvas';
-  }
-
-  if (frame.focus === 'pane') {
-    return 'held';
   }
 
   const nodes = placedOf(frame.journey).nodes;
 
   return neighborOf(nodes, frame.sel, 'right') === frame.sel ? 'brink' : 'canvas';
+}
+
+function paneStandingOf(frame: Extract<Frame, { kind: 'journey' }>): PaneStanding {
+  return frame.focus === 'canvas' ? workflowStandingOf(frame) : FOCUS_STANDING[frame.focus];
 }
 
 function heldSpotOf(
