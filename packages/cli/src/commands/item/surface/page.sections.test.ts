@@ -235,6 +235,18 @@ describe('the diff panel and the blast section beside it', () => {
     expect(page).toMatch(/class="nav-item is-empty"[^>]*data-section="blast"/);
     expect(sectionMarkup(page, 'blast')).toContain('Not written at this stage.');
   });
+
+  it('heads the fallback panel with the blast radius name', () => {
+    const page = pageOf({ artifacts: { features: [] } });
+
+    expect(sectionMarkup(page, 'blast')).toContain('<span class="panel-label">Blast radius</span>');
+  });
+
+  it('lights the blast entry once a graph is captured', () => {
+    const page = pageOf({ artifacts: { features: [], diff: CHANGE, blast } });
+
+    expect(page).not.toMatch(/class="nav-item is-empty"[^>]*data-section="blast"/);
+  });
 });
 
 describe('the addresses the bootstrap carries', () => {

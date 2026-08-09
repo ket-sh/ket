@@ -45,6 +45,12 @@ describe('the tree the explorer pins beside the diff', () => {
   it('selects the first row alone', () => {
     expect(diffBleed(change).match(/diff-tree-item is-selected/g)).toHaveLength(1);
   });
+
+  it('leaves the other rows unadorned', () => {
+    expect(diffBleed(change)).toContain(
+      '<button type="button" class="diff-tree-item" data-diff-target="file-beta-ts">',
+    );
+  });
 });
 
 describe('the stage the chosen file fills', () => {
