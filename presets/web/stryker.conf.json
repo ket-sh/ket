@@ -6,6 +6,7 @@
   "vitest": {
     "configFile": "vitest.mutation.config.ts"
   },
+  "cleanTempDir": "always",
   "mutate": ["src/**/*.ts", "!src/**/*.test.ts", "!src/index.ts", "!src/contents.generated.ts"],
   "reporters": ["progress", "clear-text"],
   "coverageAnalysis": "perTest",

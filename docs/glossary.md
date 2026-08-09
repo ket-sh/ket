@@ -148,6 +148,7 @@ Words reach the spell list alone. Vale has no opinion on them.
 | `bunx`            | Bun's package runner command.                                              |
 | `capitalises`     | Writes with a capital first letter.                                        |
 | `carriable`       | The pattern name for characters a project name may carry.                  |
+| `catchable`       | A signal a process handler can intercept.                                  |
 | `catppuccin`      | A terminal color theme.                                                    |
 | `chpt`            | Letters inside a gitleaks token pattern.                                   |
 | `chromatic`       | The visual review service the web preset wires.                            |

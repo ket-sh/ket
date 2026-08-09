@@ -23,6 +23,7 @@ bunfig
 bunx
 capitalises
 carriable
+catchable
 catppuccin
 chai
 chpt
