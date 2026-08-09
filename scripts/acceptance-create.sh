@@ -179,6 +179,24 @@ done
 (cd "$SANDBOX" && "$KET" create crowded --with codecov,qlty >/dev/null 2>&1) &&
   fail "create took two coverage services for a slot that keeps one"
 
+# mobbin used to be the recorded choice with nothing on disk behind it: chosen
+# in config.yaml, absent everywhere else.
+echo "acceptance: choosing mobbin registers its MCP server"
+GALLERY="$SANDBOX/gallery"
+(cd "$SANDBOX" && "$KET" create gallery --preset web --with mobbin >/dev/null) ||
+  fail "create refused the mobbin integration the web preset offers"
+test -f "$GALLERY/.mcp.json" || fail "mobbin was asked for and no .mcp.json was written"
+grep -q 'api.mobbin.com/mcp' "$GALLERY/.mcp.json" ||
+  fail "the registration does not reach the hosted Mobbin server"
+grep -q '^  - mobbin$' "$GALLERY/.ket/config.yaml" ||
+  fail "the config does not record that mobbin was chosen"
+
+PLAIN_WEB="$SANDBOX/plain-web"
+(cd "$SANDBOX" && "$KET" create plain-web --preset web >/dev/null) ||
+  fail "create refused a web project that asked for no integration"
+test -f "$PLAIN_WEB/.mcp.json" &&
+  fail ".mcp.json arrived in a project that asked for no server"
+
 # The tool clones over the network, and the network is not a promise ket can
 # make. Forcing the failure is the only way to find out what the user is left
 # holding when it happens.
