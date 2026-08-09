@@ -22,12 +22,18 @@ export type IntegrationCategory =
   | 'supply chain'
   | 'code scanning';
 
+export interface PresetMcpServer {
+  name: string;
+  url: string;
+}
+
 interface OfferedIntegration {
   name: string;
   category: IntegrationCategory;
   asks: string;
   installs?: string[];
   skills?: PresetSkill[];
+  mcp?: PresetMcpServer[];
 }
 
 // An integration either puts files in a project or changes what an agent
@@ -45,12 +51,20 @@ export function skillsOf(integration: PresetIntegration): PresetSkill[] {
   return integration.skills ?? [];
 }
 
+export function mcpServersOf(integration: PresetIntegration): PresetMcpServer[] {
+  return integration.mcp ?? [];
+}
+
 export function filesOf(integration: PresetIntegration): PresetFile[] {
   return 'files' in integration ? integration.files : [];
 }
 
 export function reachesNothing(integration: PresetIntegration): boolean {
-  return filesOf(integration).length === 0 && !('reaches' in integration);
+  return (
+    filesOf(integration).length === 0 &&
+    mcpServersOf(integration).length === 0 &&
+    !('reaches' in integration)
+  );
 }
 
 export interface PresetItem {

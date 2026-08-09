@@ -1,4 +1,4 @@
-import { categoriesOffering } from '@ket/preset';
+import { categoriesOffering, mcpServersOf } from '@ket/preset';
 import { describe, expect, it } from 'vitest';
 
 import { WEB_PRESET } from './item.ts';
@@ -20,5 +20,15 @@ describe('what a frontend project is asked about, a category at a time', () => {
       'supply chain': ['scorecard'],
       'code scanning': ['codeql'],
     });
+  });
+});
+
+describe('what choosing mobbin registers', () => {
+  it('registers the hosted Mobbin MCP server the designing stage reaches through', () => {
+    const mobbin = WEB_PRESET.integrations.find((integration) => integration.name === 'mobbin');
+
+    expect(mobbin === undefined ? [] : mcpServersOf(mobbin)).toStrictEqual([
+      { name: 'mobbin', url: 'https://api.mobbin.com/mcp' },
+    ]);
   });
 });

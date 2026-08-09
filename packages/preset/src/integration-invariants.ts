@@ -1,7 +1,7 @@
 import type { PresetIntegration, PresetItem } from './item.ts';
 
 import { substitutes } from './category.ts';
-import { filesOf, reachesNothing } from './item.ts';
+import { filesOf, mcpServersOf, reachesNothing } from './item.ts';
 
 const PUBLIC_REPOSITORY = 'public';
 
@@ -84,12 +84,27 @@ function shapeInvariants(integration: PresetIntegration): string[] {
     : [];
 }
 
+function mcpInvariants(integration: PresetIntegration): string[] {
+  return mcpServersOf(integration).flatMap((server) => {
+    if (server.name.trim() === '') {
+      return [`the integration ${integration.name} registers an MCP server that goes by no name`];
+    }
+
+    return server.url.trim() === ''
+      ? [
+          `the integration ${integration.name} registers the MCP server ${server.name} with no url to reach it at`,
+        ]
+      : [];
+  });
+}
+
 export function integrationInvariantsOf(item: PresetItem): string[] {
   return [
     ...item.integrations.flatMap((integration) => [
       ...shapeInvariants(integration),
       ...fileInvariants(integration),
       ...sentenceInvariants(integration),
+      ...mcpInvariants(integration),
     ]),
     ...contestedTargets(item.integrations),
   ];

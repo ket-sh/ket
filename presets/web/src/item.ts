@@ -120,6 +120,7 @@ export const WEB_PRESET: PresetItem = {
       category: 'design reference',
       asks: 'mobbin is a gallery of shipped screens to design against. A seat costs the same whether the repository is public or private.',
       reaches: { stage: 'designing', reference: 'https://mobbin.com' },
+      mcp: [{ name: 'mobbin', url: 'https://api.mobbin.com/mcp' }],
     },
     {
       name: 'chromatic',
