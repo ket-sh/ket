@@ -1,5 +1,5 @@
 ---
-description: Sit down with a person and run the story mapping discovery session
+description: Sit down with a person and run the story mapping session
 argument-hint: what the product is, if you know yet
 order: 8
 ---

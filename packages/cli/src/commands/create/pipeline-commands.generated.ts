@@ -11,5 +11,5 @@ export const PIPELINE_COMMANDS: PipelineCommand[] = [
   { name: 'review', says: 'Review with two seats and a judge that settles them' },
   { name: 'ship', says: 'Close an item once its pull request has merged' },
   { name: 'status', says: 'Show what is in flight and what each item is waiting on' },
-  { name: 'map', says: 'Sit down with a person and run the story mapping discovery session' },
+  { name: 'map', says: 'Sit down with a person and run the story mapping session' },
 ];
