@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { useKeyboard } from '@opentui/react';
+import { useKeyboard, useTerminalDimensions } from '@opentui/react';
 import { useState } from 'react';
 
 import type { MapReadingView } from '../../../shared/model';
@@ -10,6 +10,10 @@ import { MapPane, walkedIn } from '../../../widgets/story-map';
 
 const HINTS = '←↑↓→ move · q quit';
 
+const SIDE_MARGINS = 2;
+
+const TOP_MARGIN_AND_HINTS = 2;
+
 export interface MapScreenProps {
   reading: MapReadingView;
   onQuit: () => void;
@@ -17,6 +21,7 @@ export interface MapScreenProps {
 
 function MapRoom({ reading, onQuit }: MapScreenProps): ReactNode {
   const { theme } = useTheme();
+  const { width, height } = useTerminalDimensions();
   const [at, setAt] = useState(0);
 
   useKeyboard((key) => {
@@ -31,7 +36,11 @@ function MapRoom({ reading, onQuit }: MapScreenProps): ReactNode {
 
   return (
     <box flexDirection="column" paddingTop={1} paddingLeft={1} paddingRight={1}>
-      <MapPane reading={reading} at={at} />
+      <MapPane
+        reading={reading}
+        at={at}
+        frame={{ cols: width - SIDE_MARGINS, rows: height - TOP_MARGIN_AND_HINTS }}
+      />
       <text wrapMode="none" fg={theme.overlay}>
         {HINTS}
       </text>
