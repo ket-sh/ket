@@ -89,3 +89,35 @@ describe('the state a refusal wears', () => {
     });
   });
 });
+
+function workedOn(at: string): string {
+  return `${JSON.stringify({
+    gate: 'write',
+    outcome: 'allowed',
+    about: 'src/auth.test.ts',
+    item: 'K-1',
+    at,
+  })}\n`;
+}
+
+describe('the state work after a refusal restores', () => {
+  const REFUSED =
+    WALKED + turnedAway('write', '2026-08-07T10:30:00.000Z', 'no failing test covers it');
+
+  it('runs the stage again once the machine works past the refusal', () => {
+    const journey = foldJourney(
+      storedAt('designing'),
+      REFUSED + workedOn('2026-08-07T10:45:00.000Z'),
+      'K-1',
+    );
+
+    expect(stateIn(journey, 'designing')).toBe('running');
+    expect(journey?.standing).toBeUndefined();
+  });
+
+  it('keeps the refusal on the stage while it is the last word', () => {
+    expect(stateIn(foldJourney(storedAt('designing'), REFUSED, 'K-1'), 'designing')).toBe(
+      'changes-requested',
+    );
+  });
+});
