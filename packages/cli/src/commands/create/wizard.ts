@@ -7,7 +7,7 @@ import color from 'picocolors';
 
 import type { Configuration, PresetName } from '../../shared/configuration.ts';
 
-import { registeredPresets } from '../../shared/registry.ts';
+import { presetNamed, registeredPresets } from '../../shared/registry.ts';
 import { integrationsOffered } from '../../shared/scaffold/integrations.ts';
 import { DEFAULT_LANGUAGE, refuseLanguage } from '../../shared/scaffold/language.ts';
 import { drawWorkflow } from './announce.ts';
@@ -15,6 +15,7 @@ import { directoryLabel } from './directory-label.ts';
 import { choicesFor, pickedNames, promptFor } from './integration-prompt.ts';
 import { refuseKey } from './key.ts';
 import { refuseName } from './name.ts';
+import { consumesShadcnPreset, refuseShadcnPreset } from './shadcn.ts';
 
 export type WizardOutcome = { configured: Configuration } | { cancelled: true };
 
@@ -38,6 +39,16 @@ async function askPreset(): Promise<PresetName | symbol> {
   return select({
     message: 'Please select your project type',
     options: registeredPresets().map(({ name }) => ({ value: name, label: name })),
+  });
+}
+
+async function askShadcnPreset(): Promise<string | symbol> {
+  return text({
+    message: `Do you have a shadcn preset code?\n${color.gray('│')}  ${color.dim('ui.shadcn.com/create builds one. Enter keeps stock shadcn.')}`,
+    placeholder: 'b2D0vQ7G4',
+    defaultValue: '',
+    validate: (given) =>
+      given === undefined || given === '' ? undefined : refuseShadcnPreset(given),
   });
 }
 
@@ -121,10 +132,36 @@ async function askedOrCancelled<Answer>(
   return answer;
 }
 
+// The ask sits beside the design-tool slot: the design system the scaffold
+// writes comes up right before the tools that will draw on it.
+async function askedShadcnPresetFor(preset: PresetName): Promise<string | undefined> {
+  const item = presetNamed(preset)?.item;
+
+  if (item === undefined || !consumesShadcnPreset(item)) {
+    return '';
+  }
+
+  return askedOrCancelled(askShadcnPreset);
+}
+
+function withShadcnPreset(outcome: WizardOutcome, code: string): WizardOutcome {
+  if ('cancelled' in outcome || code === '') {
+    return outcome;
+  }
+
+  return { configured: { ...outcome.configured, shadcnPreset: code } };
+}
+
 export async function runWizard(suggestedKey: string | undefined): Promise<WizardOutcome> {
   const preset = await askedOrCancelled(askPreset);
 
   if (preset === undefined) {
+    return CANCELLED;
+  }
+
+  const shadcnPreset = await askedShadcnPresetFor(preset);
+
+  if (shadcnPreset === undefined) {
     return CANCELLED;
   }
 
@@ -136,7 +173,9 @@ export async function runWizard(suggestedKey: string | undefined): Promise<Wizar
     return CANCELLED;
   }
 
-  return finishedWizard(suggestedKey, { [WHOLE_REPOSITORY]: preset }, integrations);
+  const outcome = await finishedWizard(suggestedKey, { [WHOLE_REPOSITORY]: preset }, integrations);
+
+  return withShadcnPreset(outcome, shadcnPreset);
 }
 
 async function finishedWizard(

@@ -15,6 +15,7 @@ export const WEB_PRESET: PresetItem = {
   title: 'ket web',
   description:
     'A TanStack Start application under ket, with the gate chain ket runs against itself.',
+  designSystem: 'shadcn',
   dependencies: [
     '@base-ui/react@1.6.0',
     '@tanstack/react-router@1.170.18',

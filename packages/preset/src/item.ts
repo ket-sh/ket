@@ -86,6 +86,7 @@ export interface PresetItem {
   type: 'registry:item';
   title: string;
   description: string;
+  designSystem?: 'shadcn';
   dependencies: string[];
   devDependencies: string[];
   files: PresetFile[];

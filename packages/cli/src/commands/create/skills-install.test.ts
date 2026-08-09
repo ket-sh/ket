@@ -92,7 +92,9 @@ describe('installing the skills a preset locks', () => {
       readFile(join(root, '.claude', 'skills', 'vitest', 'SKILL.md'), 'utf8'),
     ).resolves.toContain('antfu/skills');
   });
+});
 
+describe('what the install report says when something refuses', () => {
   it('refuses in the words of the tool, naming the skill that did not arrive', async () => {
     await installerThat(REFUSING);
 
@@ -121,5 +123,24 @@ describe('installing the skills a preset locks', () => {
     expect(await installSkills(await project(), 'not a lockfile')).toStrictEqual({
       refused: 'the skills lockfile is not json anything can read',
     });
+  });
+
+  it('refuses a preset that shipped no lockfile, naming what is missing', async () => {
+    await installerThat(OBLIGING);
+
+    expect(await installSkills(await project(), undefined)).toStrictEqual({
+      refused: 'the preset shipped no skills lockfile to install from',
+    });
+  });
+
+  it('separates the refusals so each reads on its own line', async () => {
+    await installerThat(REFUSING);
+
+    const lines = refusalIn(await installSkills(await project(), LOCKFILE)).split('\n');
+
+    expect(lines).toContain(
+      'find-skills did not install from vercel-labs/skills: could not reach github',
+    );
+    expect(lines).toContain('vitest did not install from antfu/skills: could not reach github');
   });
 });

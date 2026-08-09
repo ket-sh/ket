@@ -32,6 +32,12 @@ describe('what the web preset installs to render anything at all', () => {
   });
 });
 
+describe('the design system the web preset writes by default', () => {
+  it('names shadcn, so create knows a preset code has components to restyle', () => {
+    expect(WEB_PRESET.designSystem).toBe('shadcn');
+  });
+});
+
 describe('what the web preset installs to check the shape of its own import graph', () => {
   it('installs the tool that finds a cycle, an orphan and an import steiger never follows', () => {
     expect(WEB_PRESET.devDependencies).toContain('dependency-cruiser@18.1.1');

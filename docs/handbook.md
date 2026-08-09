@@ -6,7 +6,7 @@ sources:
   - presets/cli/src/**
   - presets/web/src/**
   - harness/**
-stamp: 983cc26422fd
+stamp: c287a816337c
 ---
 
 # The ket handbook
@@ -29,6 +29,15 @@ under Feature-Sliced Design. The `cli` preset writes a command line tool whose
 slices are commands. Both arrive with the whole gate chain armed, the harness
 plugins registered, and the pipeline ready.
 
+The web preset ships shadcn as its design system, and your own version of it
+can land at create time. The wizard asks for a shadcn preset code, the short
+code the builder at ui.shadcn.com/create emits, and the `--shadcn <code>` flag
+carries it without the wizard. Given a code, create installs the toolchain and
+applies it through the official CLI's `apply` command before the first commit.
+The project then starts in your design system rather than the stock one. Given
+none, stock shadcn stands. When the registry is out of reach, the scaffold
+still lands and the announcement quotes a paste-ready recovery command.
+
 ## What a created project contains
 
 - `.ket/config.yaml` maps each directory to the preset that governs it and
@@ -47,6 +56,11 @@ plugins registered, and the pipeline ready.
   Protocol (MCP) server. Choosing mobbin registers the hosted Mobbin server
   there, the design stage searches it before drawing a screen, and
   `ket update` merges the entry into a project scaffolded before it existed.
+  pen registers nothing there: its app brings its own `pencil` server along
+  when it runs.
+- `designs/` appears when the project chose pen as its design tool. It holds
+  `design-system.pen` and one `.pen` file per module, versioned like any
+  source and authored on the pen canvas during the design stage.
 - Two Claude Code plugins carry the law: `ket-gates` arms the gates, and
   `ket` carries the pipeline commands and their skills.
 
@@ -99,17 +113,9 @@ decide looking at the work, not at a summary of it.
 ### Watching it run
 
 Bare `ket` on a terminal opens the board: every stage as a lane, cards with
-their ages, refusals in red, a bell on any card that needs you. The shipped
-lane shows only its five newest cards while its title carries the true
-total, and the `x` key opens the archive, which lists everything shipped,
-newest first. From the board, `enter` opens an item as two legends: the
-tabbed stage area beside the item pane, with `f` handing the focused legend
-the full width. The tabs are overview, workflow, children, and artifacts.
-The overview renders the description as a markdown preview that scrolls
-under the arrows, `j`, and `k`. The workflow draws the stage canvas with
-each stage's sub-steps as boxes, one per artifact the stage wrote. The item
-pane frames its facts under labeled rules and spells any waiting gate as a
-key to press, so `a` approves from the journey too. The `b` key shows
+their ages, refusals in red, a bell on any card that needs you. From the
+board, `enter` opens an item behind its tabs: overview, workflow with the
+stage canvas and the item pane, children, and artifacts. The `b` key shows
 the backlog, `m` opens the story map, `v` flips to a flat list, `l` opens the
 oplog over the last 500 logged events newest first, and `t` picks a theme.
 The `d` key opens the docs screen. The catalog groups the pages by category,
@@ -247,11 +253,17 @@ loads the one that applies and works from it rather than from a summary.
 
 ### Installed in the project
 
-Each scaffold carries project-level skills under `.claude/skills/`.
-`find-skills` looks for a skill the project has yet to install, `varlock`
-grows the env schema, and `vitest` covers the runner and its config. Chosen
-integrations bring their vendors' own skills beside them, and one that
-serves an MCP server lands its registration in `.mcp.json`.
+Each scaffold carries project-level skills under `.claude/skills/`. The
+`skills-lock.json` a preset ships records each skill and its source, and
+`ket create` installs them through the skills.sh CLI. Every preset locks
+`find-skills`, which looks for a skill the project has yet to install, and
+`vitest`, which covers the runner and its config. The web preset locks a
+skill for each piece of its stack beside them. TanStack Start and its
+router, React, Feature-Sliced Design, Tailwind, shadcn, and Playwright each
+get one. So do testing patterns down to property-based, advanced TypeScript
+types, and the env schema `varlock` grows. Chosen integrations bring their
+vendors' own skills beside them, and one that serves an MCP server lands
+its registration in `.mcp.json`.
 
 ## The vocabulary
 
