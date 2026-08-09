@@ -6,7 +6,8 @@ export const CLI_SEMANTICS: PresetSemantics = {
   scripts: {
     build: 'bun build src/run.ts --compile --outfile dist/app',
     test: 'vitest run',
-    'test:mutation': 'stryker run',
+    'test:mutation': 'bun scripts/mutate-changed.mts',
+    'test:mutation:full': 'stryker run',
     'test:acceptance': 'bun run build && cucumber-js',
     lint: 'oxlint --deny-warnings .',
     'lint:boundaries': 'depcruise src --config .dependency-cruiser.cjs',

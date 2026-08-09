@@ -46,7 +46,8 @@ const SOUND: PresetSubject = {
       lint: 'oxlint .',
       'check-types': 'tsc --noEmit',
       test: 'vitest run',
-      'test:mutation': 'stryker run',
+      'test:mutation': 'bun scripts/mutate-changed.mts',
+      'test:mutation:full': 'stryker run',
     },
     slice: { roots: ['src/commands/{slice}'], adapters: ['command.ts', 'io/**'] },
     tests: { example: '{unit}.test.ts', property: '{unit}.property.test.ts' },
@@ -136,6 +137,22 @@ describe('a preset against everything a preset must be', () => {
 
     expect(brokenInvariantsOf(broken)).toStrictEqual([
       'the standing law names the turborepo skill, which neither the harness nor the lockfile the preset writes ships',
+    ]);
+  });
+});
+
+describe('a preset against the change its mutation gate faces', () => {
+  it('names the mutation gate that runs the whole battery on every change', () => {
+    const broken: PresetSubject = {
+      ...SOUND,
+      semantics: {
+        ...SOUND.semantics,
+        scripts: { ...SOUND.semantics.scripts, 'test:mutation': 'stryker run' },
+      },
+    };
+
+    expect(brokenInvariantsOf(broken)).toStrictEqual([
+      'the test:mutation script runs the whole battery on every change, and the mutation gate scales with the change',
     ]);
   });
 });

@@ -8,5 +8,5 @@
     "declaration": false,
     "declarationMap": false
   },
-  "include": ["src/**/*.ts", "vitest.config.ts"]
+  "include": ["src/**/*.ts", "files/mutate-changed.mts", "vitest.config.ts"]
 }

@@ -38,3 +38,30 @@ export function mutationScopeInvariantsOf(
         `the preset declares ${adapter} an adapter, and the mutation config it writes never excludes it`,
     );
 }
+
+const MUTATION_GATE = 'test:mutation';
+
+const FULL_BATTERY = 'test:mutation:full';
+
+const THE_BATTERY = 'stryker run';
+
+// A gate that reruns the whole battery on every change costs what the
+// repository weighs rather than what the change does, and a scoped default
+// without a reachable full run trades the cost for a hole.
+export function mutationScalingInvariantsOf(semantics: PresetSemantics): string[] {
+  const scoped = semantics.scripts[MUTATION_GATE];
+  const full = semantics.scripts[FULL_BATTERY];
+
+  return [
+    ...(scoped?.includes(THE_BATTERY) === true
+      ? [
+          `the ${MUTATION_GATE} script runs the whole battery on every change, and the mutation gate scales with the change`,
+        ]
+      : []),
+    ...(full === undefined || !full.includes(THE_BATTERY)
+      ? [
+          `the preset keeps no ${FULL_BATTERY} script running the whole battery, so the scoped runs lean on nothing`,
+        ]
+      : []),
+  ];
+}
