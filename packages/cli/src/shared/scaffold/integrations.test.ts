@@ -10,6 +10,7 @@ import {
   installsFor,
   integrationFile,
   integrationsOffered,
+  mcpServersFor,
   offeredIntegrations,
   skillsFor,
 } from './integrations.ts';
@@ -187,6 +188,26 @@ describe('naming two tools for a slot that takes one', () => {
     expect(chosenFrom('qlty,codeql', offeredIntegrations(['cli']))).toStrictEqual({
       chosen: ['qlty', 'codeql'],
     });
+  });
+});
+
+describe('the MCP servers a chosen integration registers', () => {
+  it('registers the server the chosen integration brings', () => {
+    expect(mcpServersFor(['web'], ['mobbin'])).toStrictEqual([
+      { name: 'mobbin', url: 'https://api.mobbin.com/mcp' },
+    ]);
+  });
+
+  it('registers nothing when a project chose nothing', () => {
+    expect(mcpServersFor(['web'], [])).toStrictEqual([]);
+  });
+
+  it('registers nothing for an integration that brings only files', () => {
+    expect(mcpServersFor(['web'], ['codecov'])).toStrictEqual([]);
+  });
+
+  it('registers a server once when two targets share the preset that offers it', () => {
+    expect(mcpServersFor(['web', 'web'], ['mobbin'])).toHaveLength(1);
   });
 });
 

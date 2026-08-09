@@ -1,6 +1,6 @@
-import type { PresetFile, PresetIntegration, PresetSkill } from '@ket/preset';
+import type { PresetFile, PresetIntegration, PresetMcpServer, PresetSkill } from '@ket/preset';
 
-import { crowdedCategoriesOf, filesOf, installsOf, skillsOf } from '@ket/preset';
+import { crowdedCategoriesOf, filesOf, installsOf, mcpServersOf, skillsOf } from '@ket/preset';
 
 import type { PresetName } from '../../shared/configuration.ts';
 import type { ScaffoldFile } from '../../shared/write-files.ts';
@@ -97,6 +97,18 @@ export function installsFor(presets: PresetName[], chosen: string[]): string[] {
   }
 
   return [...installed];
+}
+
+export function mcpServersFor(presets: PresetName[], chosen: string[]): PresetMcpServer[] {
+  const registered = new Map<string, PresetMcpServer>();
+
+  for (const preset of governingPresets(presets)) {
+    for (const server of chosenIn(preset.name, chosen).flatMap(mcpServersOf)) {
+      registered.set(server.name, server);
+    }
+  }
+
+  return [...registered.values()];
 }
 
 export function skillsFor(presets: PresetName[], chosen: string[]): PresetSkill[] {

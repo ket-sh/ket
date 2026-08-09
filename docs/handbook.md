@@ -6,7 +6,7 @@ sources:
   - presets/cli/src/**
   - presets/web/src/**
   - harness/**
-stamp: c38381f7fae0
+stamp: 5b167040e3f9
 ---
 
 # The ket handbook
@@ -43,6 +43,10 @@ plugins registered, and the pipeline ready.
 - `.ket/toolchain.yaml` and `.ket/scaffold.yaml` are machine state: which
   dependencies the toolchain gate has already named, and which files the
   scaffold wrote.
+- `.mcp.json` appears when a chosen integration serves a Model Context
+  Protocol (MCP) server. Choosing mobbin registers the hosted Mobbin server
+  there, the design stage searches it before drawing a screen, and
+  `ket update` merges the entry into a project scaffolded before it existed.
 - Two Claude Code plugins carry the law: `ket-gates` arms the gates, and
   `ket` carries the pipeline commands and their skills.
 
@@ -90,9 +94,7 @@ runs without asking.
    pipeline, and only a person knows the product changed.
 
 At the third and fourth gate, the review surface opens in the browser so you
-decide looking at the work, not at a summary of it. While either gate holds,
-the session waits on the event log through `ket item await`, so an answer
-given from any surface picks the pipeline back up by itself.
+decide looking at the work, not at a summary of it.
 
 ### Watching it run
 
@@ -240,7 +242,8 @@ loads the one that applies and works from it rather than from a summary.
 Each scaffold carries project-level skills under `.claude/skills/`.
 `find-skills` looks for a skill the project has yet to install, `varlock`
 grows the env schema, and `vitest` covers the runner and its config. Chosen
-integrations bring their vendors' own skills beside them.
+integrations bring their vendors' own skills beside them, and one that
+serves an MCP server lands its registration in `.mcp.json`.
 
 ## The vocabulary
 
