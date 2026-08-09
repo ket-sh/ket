@@ -6,7 +6,7 @@ sources:
   - presets/cli/src/**
   - presets/web/src/**
   - harness/**
-stamp: 93c6f6c1a900
+stamp: 80f67c49355b
 ---
 
 # The ket handbook

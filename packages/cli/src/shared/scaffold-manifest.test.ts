@@ -80,6 +80,15 @@ describe('a scaffold record nothing can compare against', () => {
     ]);
   });
 
+  it('keeps the skills lock out of the record, since the skills tool rewrites it as it installs', () => {
+    const rewritten = [{ path: 'skills-lock.json', contents: '{"skills":{}}\n' }, ...FILES];
+
+    expect(recordedAmong(rewritten).map((file) => file.path)).toStrictEqual([
+      'tsconfig.json',
+      'CLAUDE.md',
+    ]);
+  });
+
   it('writes the record where the update command reads it', () => {
     const file = scaffoldRecordFile(FILES, '0.0.0');
 

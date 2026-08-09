@@ -50,9 +50,10 @@ export function renderScaffoldRecord(record: ScaffoldRecord): string {
 
 export const SCAFFOLD_RECORD_PATH = '.ket/scaffold.yaml';
 
-// ket appends project state to the gitignore after the preset writes it, so
-// its hash never matches what landed and it stays out of the record.
-const MERGED_PATHS = new Set(['.gitignore']);
+// ket appends project state to the gitignore after the preset writes it, and
+// the skills tool rewrites the lock as it installs, so their hashes never
+// match what landed and they stay out of the record.
+const MERGED_PATHS = new Set(['.gitignore', 'skills-lock.json']);
 
 export function recordedAmong<File extends WrittenFile>(files: File[]): File[] {
   return files.filter((file) => !MERGED_PATHS.has(file.path));
