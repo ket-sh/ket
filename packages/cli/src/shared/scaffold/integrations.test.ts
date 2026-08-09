@@ -36,6 +36,9 @@ describe('what a preset offers', () => {
 
   it('offers the tools that suit a frontend project', () => {
     expect(integrationsOffered('web').map((offered) => offered.name)).toStrictEqual([
+      'pen',
+      'figma',
+      'paper',
       'mobbin',
       'chromatic',
       'scorecard',

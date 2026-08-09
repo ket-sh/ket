@@ -116,6 +116,16 @@ export const WEB_PRESET: PresetItem = {
   ],
   integrations: [
     {
+      name: 'pen',
+      category: 'design tool',
+      asks: 'pen puts an agent-editable design canvas beside the code: git-versioned .pen files, one for the design system and one per module, authored through its headless CLI. Free today on a public repository and a private one alike.',
+      installs: ['@pen.dev/cli@0.3.2'],
+      skills: [{ name: 'pen-design', source: 'https://unpkg.com/@pen.dev/cli@0.3.2/SKILL.md' }],
+      files: [writes('designs/gitkeep', 'designs/.gitkeep')],
+    },
+    { name: 'figma', category: 'design tool', soon: true },
+    { name: 'paper', category: 'design tool', soon: true },
+    {
       name: 'mobbin',
       category: 'design reference',
       asks: 'mobbin is a gallery of shipped screens to design against. A seat costs the same whether the repository is public or private.',
