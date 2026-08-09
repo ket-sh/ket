@@ -20,6 +20,10 @@ describe('the mutation gate the cli preset arms against a change', () => {
   it('typechecks the runner it ships, since an unchecked gate is a broken gate waiting', async () => {
     expect(await readsPresetFile('tsconfig.json')).toContain('"scripts/**/*.mts"');
   });
+
+  it('measures coverage against the whole suite, so an uncovered file lowers the score', async () => {
+    expect(await readsPresetFile('stryker.conf.json')).toContain('"related": false');
+  });
 });
 
 describe('the slow gates the cli preset arms beside the mutation gate', () => {

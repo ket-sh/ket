@@ -22,6 +22,10 @@ describe('the slow gates the web preset arms beside the mutation gate', () => {
   it('checks types incrementally, so a clean look costs the change', async () => {
     expect(await readsPresetFile('tsconfig.json')).toContain('"incremental": true');
   });
+
+  it('measures coverage against the whole suite, so an uncovered file lowers the score', async () => {
+    expect(await readsPresetFile('stryker.conf.json')).toContain('"related": false');
+  });
 });
 
 describe('the pipeline the web preset writes for the mutation gate', () => {
