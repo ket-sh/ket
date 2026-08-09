@@ -58,8 +58,8 @@ describe('the name a journey answers to', () => {
   });
 });
 
-describe('the stages a journey walks', () => {
-  it('folds an item without events to its status active and the rest ahead', () => {
+describe('the fold of an item the log never moved', () => {
+  it('folds it to its status active and the rest ahead', () => {
     const journey = foldJourney(STORED, '', 'K-1');
 
     expect(journey?.nodes[0]).toStrictEqual({
@@ -71,6 +71,7 @@ describe('the stages a journey walks', () => {
       refusal: undefined,
       note: undefined,
       doc: undefined,
+      steps: [],
     });
     expect(journey?.nodes.slice(1).map((node) => node.state)).toStrictEqual([
       'future',
@@ -80,7 +81,9 @@ describe('the stages a journey walks', () => {
       'future',
     ]);
   });
+});
 
+describe('the stages a journey walks', () => {
   it('walks one node per visit, done behind the active one, the rest ahead', () => {
     const journey = foldJourney(STORED, WALKED, 'K-1');
 

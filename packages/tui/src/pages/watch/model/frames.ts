@@ -34,6 +34,7 @@ export type Frame =
       focus: JourneyFocus;
       cur: number;
       aud: Audience;
+      wide: boolean;
     }
   | {
       kind: 'surface';
@@ -63,6 +64,8 @@ export type Frame =
 
 export type Tuning = 'toggle' | 'technical' | 'plain';
 
+export type GateSeat = Pick<KanbanCardView, 'key' | 'title'>;
+
 export interface FrameStack {
   frames: Frame[];
   top: Frame;
@@ -82,11 +85,12 @@ export interface FrameStack {
   docsFocus: (focus: DocsFocus) => void;
   enter: () => void;
   walk: (direction: Direction) => void;
+  widen: () => void;
   pickAt: (at: number) => void;
   readAs: (aud: Audience) => void;
   scroll: (delta: number, most: number) => void;
   tune: (tuning: Tuning) => void;
-  gate: (action: GateActionView, card: KanbanCardView, tick: number) => void;
+  gate: (action: GateActionView, card: GateSeat, tick: number) => void;
   pass: (tick: number) => void;
   edit: () => void;
   revise: (change: (draft: Draft) => Draft) => void;
@@ -215,7 +219,15 @@ export function surfaceFrame(journey: JourneyView, doc: SurfaceDocView): Frame {
   };
 }
 
-export function askFrameOf(action: GateActionView, card: KanbanCardView, tick: number): Frame {
+export function refolded(stack: Frame[], fresh: JourneyView): Frame[] {
+  return stack.map((frame) =>
+    frame.kind === 'journey' && frame.journey.item === fresh.item
+      ? { ...frame, journey: fresh, sel: landingOf(fresh) }
+      : frame,
+  );
+}
+
+export function askFrameOf(action: GateActionView, card: GateSeat, tick: number): Frame {
   return {
     kind: 'gate',
     action,

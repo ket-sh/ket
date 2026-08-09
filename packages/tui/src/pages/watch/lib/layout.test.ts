@@ -15,6 +15,7 @@ const PANE: JourneyPaneView = {
   filed: undefined,
   branch: undefined,
   note: undefined,
+  offers: [],
 };
 
 import { NODE_H, NODE_W, neighborOf, placedOf } from './layout.ts';
@@ -39,6 +40,7 @@ function nodeOf(id: string): JourneyNodeView {
     until: undefined,
     note: undefined,
     doc: undefined,
+    steps: [],
   };
 }
 
@@ -128,6 +130,39 @@ describe('the fan a layer spreads', () => {
 
     expect(neighborOf(placed, 'root', 'left')).toBe('root');
     expect(neighborOf(placed, 'gone', 'left')).toBe('gone');
+  });
+});
+
+const STEP_H = 3;
+
+function stepped(id: string, held: number): JourneyNodeView {
+  return {
+    ...nodeOf(id),
+    steps: Array.from({ length: held }, (_, at) => ({
+      name: `s${String(at)}.md`,
+      at: undefined,
+    })),
+  };
+}
+
+function journeyAmong(nodes: JourneyNodeView[], edges: [string, string][]): JourneyView {
+  return { ...journeyOf([], edges), nodes };
+}
+
+describe("the room a stage's sub-steps take", () => {
+  it('drops the next lane below the sub-steps of the one above', () => {
+    const placed = placedOf(journeyAmong([stepped('a', 2), nodeOf('b')], []));
+
+    expect(placed.nodes.map((node) => [node.id, node.y])).toStrictEqual([
+      ['a', MARGIN],
+      ['b', MARGIN + NODE_H + STEP_H * 2 + 1],
+    ]);
+  });
+
+  it('grows the canvas height past the tallest stack', () => {
+    const placed = placedOf(journeyAmong([stepped('a', 2)], []));
+
+    expect(placed.height).toBe(MARGIN * 2 + NODE_H + STEP_H * 2);
   });
 });
 

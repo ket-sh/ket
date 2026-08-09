@@ -34,6 +34,7 @@ const JOURNEY: JourneyView = {
       until: undefined,
       note: undefined,
       doc: undefined,
+      steps: [],
     },
   ],
   edges: [],
@@ -62,6 +63,7 @@ const JOURNEY: JourneyView = {
     filed: undefined,
     branch: undefined,
     note: undefined,
+    offers: [],
   },
 };
 
@@ -85,6 +87,7 @@ function framed(standing: Standing = {}): Frame[] {
       focus: 'canvas',
       cur: 0,
       aud: 'technical',
+      wide: false,
       ...standing,
     },
   ];

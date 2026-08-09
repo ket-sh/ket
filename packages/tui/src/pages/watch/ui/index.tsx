@@ -1,13 +1,12 @@
 import type { ReactNode } from 'react';
 
-import { useKeyboard, useTerminalDimensions } from '@opentui/react';
-import { useEffect } from 'react';
+import { useTerminalDimensions } from '@opentui/react';
 
 import type { BoardFeed, KanbanColumnView, OplogEventView } from '../../../shared/model';
 import type { BoardLayout } from '../model/board-layout.ts';
 import type { Ring } from '../model/chime.ts';
 import type { Filter } from '../model/filter.ts';
-import type { Frame, FrameStack } from '../model/frames.ts';
+import type { FrameStack } from '../model/frames.ts';
 import type { Help } from '../model/help.ts';
 import type { PressDeps } from '../model/keys.ts';
 import type { WatchMouse } from '../model/mouse.ts';
@@ -20,20 +19,24 @@ import type { RoomProps } from './stage.tsx';
 import { ThemeProvider } from '../../../shared/theme';
 import { Banner } from '../../../shared/ui';
 import { shownWorkOf } from '../lib/bindings.ts';
-import { narrowedBy } from '../lib/filter.ts';
-import { narrowedEvents } from '../lib/oplog.ts';
+import { laneTotalsOf } from '../lib/lanes.ts';
 import { standingOf } from '../lib/standing.ts';
 import { useBoardLayout } from '../model/board-layout.ts';
 import { useBoardState } from '../model/board-state.ts';
 import { useChime } from '../model/chime.ts';
-import { useFilter } from '../model/filter.ts';
-import { outstayed } from '../model/frames.ts';
 import { useHelp } from '../model/help.ts';
-import { press } from '../model/keys.ts';
 import { mouseOf } from '../model/mouse.ts';
 import { useOpening, useRemember } from '../model/opening.ts';
 import { usePalette } from '../model/palette.ts';
 import { usePicker } from '../model/picker.ts';
+import {
+  calmOf,
+  leavingOf,
+  useCeremonyCurtain,
+  useMovedCardFollow,
+  useNarrowing,
+  useWatchKeys,
+} from '../model/room.ts';
 import { useSeat } from '../model/seat.ts';
 import { useFrameStack } from '../model/stack.ts';
 import { FootRow } from './foot-row.tsx';
@@ -60,21 +63,16 @@ function statusOf(columns: KanbanColumnView[], key: string): string | undefined 
   return columns.flatMap((column) => column.cards).find((card) => card.key === key)?.status;
 }
 
-function useCeremonyCurtain(stack: FrameStack, tick: number): void {
-  useEffect(() => {
-    if (outstayed(stack.top, tick)) {
-      stack.pop();
-    }
-  }, [stack, tick]);
-}
-
 function CeremonyOverlay({
   stack,
   columns,
   tick,
   width,
   height,
-}: Omit<RoomProps, 'seat' | 'now' | 'layout' | 'mouse' | 'logRows'>): ReactNode {
+}: Omit<
+  RoomProps,
+  'seat' | 'now' | 'layout' | 'mouse' | 'logRows' | 'calm' | 'totals'
+>): ReactNode {
   if (stack.top.kind !== 'gate') {
     return null;
   }
@@ -108,47 +106,6 @@ function PickerOverlay({
   return <ThemePicker at={picker.at} width={width} height={height} mouse={mouse} />;
 }
 
-function useMovedCardFollow(stack: FrameStack, seat: Seat, columns: KanbanColumnView[]): void {
-  useEffect(() => {
-    if (stack.top.kind === 'gate' && stack.top.phase === 'pass') {
-      seat.seek(stack.top.cardKey);
-    }
-  }, [columns, stack, seat]);
-}
-
-function useWatchKeys(deps: PressDeps): void {
-  useKeyboard((key) => {
-    press({ name: key.name, seq: key.sequence, ctrl: key.ctrl }, deps);
-  });
-}
-
-interface Narrowing {
-  filter: Filter;
-  logFilter: Filter;
-  shown: KanbanColumnView[];
-  logRows: OplogEventView[];
-}
-
-function useNarrowing(columns: KanbanColumnView[], layout: BoardLayout, top: Frame): Narrowing {
-  const filter = useFilter();
-  const logFilter = useFilter();
-  const shown = layout === 'backlog' ? columns : narrowedBy(columns, filter.query);
-  const logRows = top.kind === 'oplog' ? narrowedEvents(top.events, logFilter.query) : [];
-
-  return { filter, logFilter, shown, logRows };
-}
-
-function leavingOf(
-  remember: ((view: WatchView) => void) | undefined,
-  standing: WatchView,
-  onQuit: () => void,
-): () => void {
-  return () => {
-    remember?.(standing);
-    onQuit();
-  };
-}
-
 interface Room {
   columns: KanbanColumnView[];
   shown: KanbanColumnView[];
@@ -165,7 +122,31 @@ interface Room {
   help: Help;
   width: number;
   height: number;
+  calm: boolean;
+  totals: Map<string, number>;
   mouse: WatchMouse;
+}
+
+interface Rituals {
+  columns: KanbanColumnView[];
+  loaded: boolean;
+  ring: Ring | undefined;
+  opening: WatchView | undefined;
+  wear: (landing: BoardLayout) => void;
+  remember: ((view: WatchView) => void) | undefined;
+  standing: WatchView;
+  pressDeps: PressDeps;
+}
+
+function useWatchRituals(held: Rituals): void {
+  const { stack, seat, tick } = held.pressDeps;
+
+  useChime(held.columns, held.loaded, held.ring);
+  useCeremonyCurtain(stack, tick);
+  useMovedCardFollow(stack, seat, held.columns);
+  useOpening(held.opening, held.loaded, { stack, seat, wear: held.wear });
+  useRemember(held.remember, held.standing);
+  useWatchKeys(held.pressDeps);
 }
 
 function useWatchRoom({
@@ -179,7 +160,7 @@ function useWatchRoom({
   const { columns, loaded, now, tick, refresh } = useBoardState(feed, clock);
   const stack = useFrameStack(feed);
   const { width, height } = useTerminalDimensions();
-  const { layout, swap, queue, wear } = useBoardLayout();
+  const { layout, swap, queue, shelve, wear } = useBoardLayout();
   const picker = usePicker(stack);
   const { filter, logFilter, shown, logRows } = useNarrowing(columns, layout, stack.top);
   const seat = useSeat(shown);
@@ -188,18 +169,15 @@ function useWatchRoom({
   const most = stack.top.kind === 'surface' ? surfaceMost(stack.top, height - CHROME) : 0;
   const standing = standingOf(layout, stack.frames, seat.chosen?.key);
   const leave = leavingOf(remember, standing, onQuit);
-  const deps = { onQuit: leave, refresh, stack, seat, most, tick, layout, swap, queue };
+  const deps = { onQuit: leave, refresh, stack, seat, most, tick, layout, swap, queue, shelve };
   const pressDeps = { ...deps, picker, filter, logFilter, palette, help };
   const mouse = mouseOf(pressDeps);
 
-  useChime(columns, loaded, ring);
-  useCeremonyCurtain(stack, tick);
-  useMovedCardFollow(stack, seat, columns);
-  useOpening(opening, loaded, { stack, seat, wear });
-  useRemember(remember, standing);
-  useWatchKeys(pressDeps);
+  useWatchRituals({ columns, loaded, ring, opening, wear, remember, standing, pressDeps });
 
   return {
+    calm: calmOf(picker, palette, help),
+    totals: laneTotalsOf(columns),
     columns,
     shown,
     logRows,
@@ -270,6 +248,8 @@ function WatchRoom(props: WatchPageProps): ReactNode {
           width={width}
           height={height - CHROME}
           layout={layout}
+          calm={room.calm}
+          totals={room.totals}
           mouse={mouse}
         />
       </box>

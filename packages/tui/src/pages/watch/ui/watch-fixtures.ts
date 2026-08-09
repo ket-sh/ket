@@ -1,6 +1,7 @@
 import type {
   BoardFeed,
   DocsCatalogView,
+  JourneyView,
   KanbanCardView,
   KanbanColumnView,
   OplogEventView,
@@ -107,6 +108,24 @@ function movedInto(columns: KanbanColumnView[], key: string, status: string): vo
   columns.find((column) => column.status === status)?.cards.push(card);
 }
 
+function standingIn(columns: KanbanColumnView[], held: JourneyView): JourneyView {
+  const card = columns.flatMap((column) => column.cards).find((one) => one.key === held.item);
+
+  if (card === undefined) {
+    return held;
+  }
+
+  return {
+    ...held,
+    pane: {
+      ...held.pane,
+      status: card.status,
+      stageAt: STAGES.indexOf(card.status) + 1,
+      offers: card.offers,
+    },
+  };
+}
+
 async function loggedRows(): Promise<OplogEventView[]> {
   await Promise.resolve();
 
@@ -153,10 +172,10 @@ function feedWith(columns: KanbanColumnView[]): ActedFeed {
       await Promise.resolve();
 
       if (key === 'K-2') {
-        return CHILD_JOURNEY;
+        return standingIn(columns, CHILD_JOURNEY);
       }
 
-      return key === 'K-1' ? JOURNEY : undefined;
+      return key === 'K-1' ? standingIn(columns, JOURNEY) : undefined;
     },
     act: async (key, gate) => {
       await Promise.resolve();

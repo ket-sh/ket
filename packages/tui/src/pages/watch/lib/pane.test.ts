@@ -24,6 +24,7 @@ const FACTS: JourneyPaneView = {
   filed: undefined,
   branch: undefined,
   note: undefined,
+  offers: [],
 };
 
 function childOf(key: string, status: string): JourneyChildView {
@@ -208,15 +209,11 @@ describe('the narration the pane speaks for the step at work', () => {
   });
 });
 
-describe('the artifacts the pane lists', () => {
-  it('names the files the item wrote by their basenames', () => {
+describe('the artifacts the pane leaves to the canvas', () => {
+  it('lists no artifact, because the stage boxes and the artifacts tab own them', () => {
     const artifacts = [artifactOf('design.md'), artifactOf('criteria.feature')];
 
-    expect(textOf({ artifacts }, 40)).toContain('artifacts design.md, criteria.feature');
-  });
-
-  it('hides the artifacts line for an item that wrote nothing', () => {
-    expect(textOf().some((line) => line.startsWith('artifacts'))).toBe(false);
+    expect(textOf({ artifacts }, 40).some((line) => line.startsWith('artifacts'))).toBe(false);
   });
 });
 

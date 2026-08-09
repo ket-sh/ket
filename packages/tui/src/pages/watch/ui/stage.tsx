@@ -7,13 +7,13 @@ import type { WatchMouse } from '../model/mouse.ts';
 import type { Seat } from '../model/seat.ts';
 
 import { MapPane } from '../../../widgets/story-map';
-import { BacklogView } from './backlog.tsx';
 import { BoardView } from './board.tsx';
 import { DocsView } from './docs.tsx';
 import { EditorPage } from './editor.tsx';
 import { JourneyPage } from './journey.tsx';
 import { ListView } from './list.tsx';
 import { OplogView } from './oplog.tsx';
+import { ArchiveView, BacklogView } from './shelves.tsx';
 import { SurfacePage } from './surface.tsx';
 
 export const PAGE_SIDE = 1;
@@ -28,36 +28,43 @@ export interface RoomProps {
   width: number;
   height: number;
   layout: BoardLayout;
+  calm: boolean;
+  totals: Map<string, number>;
   mouse: WatchMouse;
 }
 
-function BoardArea({
-  columns,
-  seat,
-  now,
-  width,
-  layout,
-  mouse,
-}: Omit<RoomProps, 'stack'>): ReactNode {
-  if (layout === 'backlog') {
-    return <BacklogView columns={columns} chosenKey={seat.chosen?.key} mouse={mouse} />;
-  }
+type BoardAreaProps = Omit<RoomProps, 'stack'>;
 
-  if (layout === 'list') {
-    return (
-      <ListView
-        columns={columns}
-        now={now}
-        chosenKey={seat.chosen?.key}
-        onRow={mouse.listRow}
-        onWheel={mouse.listWheel}
-      />
-    );
-  }
+const BOARD_AREAS: Record<BoardLayout, (held: BoardAreaProps) => ReactNode> = {
+  backlog: ({ columns, now, seat, mouse }): ReactNode => (
+    <BacklogView columns={columns} now={now} chosenKey={seat.chosen?.key} mouse={mouse} />
+  ),
+  archive: ({ columns, now, seat, mouse }): ReactNode => (
+    <ArchiveView columns={columns} now={now} chosenKey={seat.chosen?.key} mouse={mouse} />
+  ),
+  list: ({ columns, now, seat, mouse }): ReactNode => (
+    <ListView
+      columns={columns}
+      now={now}
+      chosenKey={seat.chosen?.key}
+      onRow={mouse.listRow}
+      onWheel={mouse.listWheel}
+    />
+  ),
+  kanban: ({ columns, now, width, seat, totals, mouse }): ReactNode => (
+    <BoardView
+      columns={columns}
+      now={now}
+      room={width - PAGE_SIDE * 2}
+      seat={seat}
+      totals={totals}
+      mouse={mouse}
+    />
+  ),
+};
 
-  return (
-    <BoardView columns={columns} now={now} room={width - PAGE_SIDE * 2} seat={seat} mouse={mouse} />
-  );
+function BoardArea(held: BoardAreaProps): ReactNode {
+  return BOARD_AREAS[held.layout](held);
 }
 
 function heldPageOf(room: RoomProps): ReactNode | undefined {
@@ -125,6 +132,8 @@ export function StageArea(room: RoomProps): ReactNode {
         focus={stack.top.focus}
         cur={stack.top.cur}
         aud={stack.top.aud}
+        wide={stack.top.wide}
+        live={room.calm}
         now={now}
         tick={tick}
         width={width - 2}

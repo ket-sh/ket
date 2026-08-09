@@ -1,4 +1,5 @@
 import type {
+  GateActionView,
   ItemNoteView,
   JourneyBranchView,
   JourneyChildView,
@@ -9,8 +10,9 @@ import type {
 import type { Theme } from '../../../shared/theme';
 
 import { ageOf, clipped, wrappedTo } from '../../../shared/lib';
+import { GATE_KEYS } from '../model/gate-keys.ts';
 
-export type PaneTone = 'key' | 'title' | 'state' | 'alert' | 'quiet' | 'link';
+export type PaneTone = 'key' | 'title' | 'head' | 'state' | 'offer' | 'alert' | 'quiet' | 'link';
 
 export interface PaneLine {
   text: string;
@@ -21,7 +23,9 @@ export function toneColorOf(tone: PaneTone, theme: Theme): string {
   const tones: Record<PaneTone, string> = {
     key: theme.text,
     title: theme.text,
+    head: theme.overlay,
     state: theme.blue,
+    offer: theme.yellow,
     alert: theme.red,
     quiet: theme.subtext,
     link: theme.green,
@@ -34,8 +38,20 @@ const TITLE_LINES = 3;
 
 const SHIPPED = 'shipped';
 
+const HUMAN_GATE = '‖';
+
 function lineOf(text: string, tone: PaneTone): PaneLine {
   return { text, tone };
+}
+
+function headOf(label: string, room: number): PaneLine {
+  const lead = `─ ${label} `;
+
+  return lineOf(`${lead}${'─'.repeat(Math.max(0, room - lead.length))}`, 'head');
+}
+
+function sectionOf(label: string, lines: PaneLine[], room: number): PaneLine[] {
+  return lines.length === 0 ? [] : [headOf(label, room), ...lines];
 }
 
 function nameLines(journey: JourneyView, facts: JourneyPaneView, room: number): PaneLine[] {
@@ -43,6 +59,16 @@ function nameLines(journey: JourneyView, facts: JourneyPaneView, room: number): 
     lineOf(`${journey.item}  ${facts.kind} · ${facts.size}`, 'key'),
     ...wrappedTo(journey.title, room, TITLE_LINES).map((line) => lineOf(line, 'title')),
   ];
+}
+
+function keyFor(action: GateActionView): string {
+  return Object.entries(GATE_KEYS).find(([, offered]) => offered === action)?.[0] ?? '';
+}
+
+function offerLines(offers: GateActionView[]): PaneLine[] {
+  return offers.map((action) =>
+    lineOf(`${HUMAN_GATE} press ${keyFor(action)} to ${action}`, 'offer'),
+  );
 }
 
 function alertLines(facts: JourneyPaneView, standing: string | undefined): PaneLine[] {
@@ -94,14 +120,6 @@ function childrenLines(children: JourneyChildView[]): PaneLine[] {
   return [lineOf(`children ${String(done)}/${String(children.length)} shipped`, 'link')];
 }
 
-function artifactLines(journey: JourneyView): PaneLine[] {
-  if (journey.artifacts.length === 0) {
-    return [];
-  }
-
-  return [lineOf(`artifacts ${journey.artifacts.map((one) => one.name).join(', ')}`, 'quiet')];
-}
-
 function branchLines(branch: JourneyBranchView | undefined): PaneLine[] {
   if (branch === undefined) {
     return [];
@@ -112,19 +130,44 @@ function branchLines(branch: JourneyBranchView | undefined): PaneLine[] {
   return [lineOf(`${branch.name} · ${commits}`, 'quiet')];
 }
 
+function stateSection(journey: JourneyView, now: string, room: number): PaneLine[] {
+  const facts = journey.pane;
+  const stage = `${facts.status} · stage ${String(facts.stageAt)} of ${String(facts.stageOf)}`;
+
+  return sectionOf('state', [lineOf(stage, 'state'), ...agedLines(facts, now)], room);
+}
+
+function yoursSection(journey: JourneyView, room: number): PaneLine[] {
+  const facts = journey.pane;
+
+  return sectionOf(
+    'yours',
+    [...offerLines(facts.offers), ...alertLines(facts, journey.standing)],
+    room,
+  );
+}
+
+function lineageSection(journey: JourneyView, room: number): PaneLine[] {
+  return sectionOf(
+    'lineage',
+    [...parentLines(journey.pane.parent), ...childrenLines(journey.children)],
+    room,
+  );
+}
+
+function repoSection(facts: JourneyPaneView, now: string, room: number): PaneLine[] {
+  return sectionOf('repo', [...filedLines(facts.filed, now), ...branchLines(facts.branch)], room);
+}
+
 export function paneLinesOf(journey: JourneyView, now: string, room: number): PaneLine[] {
   const facts = journey.pane;
 
   return [
     ...nameLines(journey, facts, room),
-    lineOf(`${facts.status} · stage ${String(facts.stageAt)} of ${String(facts.stageOf)}`, 'state'),
-    ...alertLines(facts, journey.standing),
-    ...narrationLines(facts.note, now),
-    ...filedLines(facts.filed, now),
-    ...agedLines(facts, now),
-    ...parentLines(facts.parent),
-    ...childrenLines(journey.children),
-    ...artifactLines(journey),
-    ...branchLines(facts.branch),
+    ...stateSection(journey, now, room),
+    ...yoursSection(journey, room),
+    ...sectionOf('word', narrationLines(facts.note, now), room),
+    ...lineageSection(journey, room),
+    ...repoSection(facts, now, room),
   ].map((line) => lineOf(clipped(line.text, room), line.tone));
 }

@@ -61,6 +61,7 @@ const WALKED: JourneyView = {
       at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
       until: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
       doc: undefined,
+      steps: [],
     },
     {
       id: 'designing',
@@ -71,6 +72,7 @@ const WALKED: JourneyView = {
       at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
       until: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
       doc: undefined,
+      steps: [],
     },
     {
       id: 'implementing',
@@ -85,6 +87,7 @@ const WALKED: JourneyView = {
         at: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
       },
       doc: undefined,
+      steps: [],
     },
     {
       id: 'shipped',
@@ -95,6 +98,7 @@ const WALKED: JourneyView = {
       at: undefined,
       until: undefined,
       doc: undefined,
+      steps: [],
     },
   ],
   edges: [
@@ -129,6 +133,7 @@ const WALKED: JourneyView = {
       actor: 'implementer',
       at: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
     },
+    offers: [],
   },
 };
 

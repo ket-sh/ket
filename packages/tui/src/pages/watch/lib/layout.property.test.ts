@@ -16,6 +16,7 @@ const PANE: JourneyPaneView = {
   filed: undefined,
   branch: undefined,
   note: undefined,
+  offers: [],
 };
 
 import { NODE_H, NODE_W, placedOf } from './layout.ts';
@@ -44,6 +45,7 @@ const someJourney = fc
       until: undefined,
       note: undefined,
       doc: undefined,
+      steps: [],
     }));
     const edges: [string, string][] = picks
       .filter((pick) => pick.from < pick.to)

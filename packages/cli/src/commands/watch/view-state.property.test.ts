@@ -40,7 +40,12 @@ const someStage = fc.oneof(
 
 const someView = fc.record(
   {
-    layout: fc.constantFrom('kanban' as const, 'list' as const, 'backlog' as const),
+    layout: fc.constantFrom(
+      'kanban' as const,
+      'list' as const,
+      'backlog' as const,
+      'archive' as const,
+    ),
     chosen: someKey,
     stage: someStage,
   },

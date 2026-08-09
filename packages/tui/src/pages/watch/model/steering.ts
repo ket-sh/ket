@@ -4,9 +4,12 @@ import type { Audience } from '../lib/lines.ts';
 import type { Direction } from './compass.ts';
 import type { FrameStack, Grow, JourneyTab } from './frames.ts';
 
-import { aimedAt, picked, sided, tabbedTo, tabbed, walked } from './journey-tabs.ts';
+import { aimedAt, picked, sided, tabbedTo, tabbed, walked, widened } from './journey-tabs.ts';
 
-export type Steering = Pick<FrameStack, 'showTab' | 'aim' | 'walk' | 'tab' | 'pickAt' | 'readAs'>;
+export type Steering = Pick<
+  FrameStack,
+  'showTab' | 'aim' | 'walk' | 'widen' | 'tab' | 'pickAt' | 'readAs'
+>;
 
 export function useSteering(setFrames: Grow): Steering {
   const showTab = useCallback(
@@ -30,6 +33,10 @@ export function useSteering(setFrames: Grow): Steering {
     [setFrames],
   );
 
+  const widen = useCallback(() => {
+    setFrames((stack) => widened(stack));
+  }, [setFrames]);
+
   const tab = useCallback(() => {
     setFrames((stack) => tabbed(stack));
   }, [setFrames]);
@@ -48,5 +55,5 @@ export function useSteering(setFrames: Grow): Steering {
     [setFrames],
   );
 
-  return { showTab, aim, walk, tab, pickAt, readAs };
+  return { showTab, aim, walk, widen, tab, pickAt, readAs };
 }

@@ -110,6 +110,11 @@ export type StageStateView =
   | 'sent-back'
   | 'future';
 
+interface JourneyStepView {
+  name: string;
+  at: string | undefined;
+}
+
 export interface JourneyNodeView {
   id: string;
   title: string;
@@ -119,6 +124,7 @@ export interface JourneyNodeView {
   refusal: KanbanRefusalView | undefined;
   note: ItemNoteView | undefined;
   doc: SurfaceDocView | undefined;
+  steps: JourneyStepView[];
 }
 
 export interface JourneyArtifactView {
@@ -160,6 +166,7 @@ export interface JourneyPaneView {
   filed: JourneyFilingView | undefined;
   branch: JourneyBranchView | undefined;
   note: ItemNoteView | undefined;
+  offers: GateActionView[];
 }
 
 export interface JourneyView {

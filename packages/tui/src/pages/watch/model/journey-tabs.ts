@@ -130,9 +130,15 @@ function steppedRows(above: Opened, direction: Direction): Opened {
     : walkedRows(above, direction);
 }
 
+// The overview arrows belong to the preview's own scroll, so the walk leaves
+// them alone rather than steering a canvas nobody sees.
 function steppedIn(above: Opened, direction: Direction): Opened {
   if (above.focus === 'tabs') {
     return walkedTabs(above, direction);
+  }
+
+  if (above.tab === 'overview') {
+    return above;
   }
 
   if (listsRows(above.tab)) {
@@ -184,6 +190,16 @@ export function sided(stack: Frame[], aud: Audience): Frame[] {
   return [...stack.slice(0, -1), { ...above, aud, cur: 0 }];
 }
 
+export function widened(stack: Frame[]): Frame[] {
+  const above = stack[stack.length - 1];
+
+  if (above?.kind !== 'journey') {
+    return stack;
+  }
+
+  return [...stack.slice(0, -1), { ...above, wide: !above.wide }];
+}
+
 export function aimedAt(stack: Frame[], sel: string): Frame[] {
   const above = stack[stack.length - 1];
 
@@ -231,7 +247,7 @@ function enteredWorkflow(frame: Opened, doors: Doors): void {
 }
 
 const DOORWAYS: Record<JourneyTab, (frame: Opened, doors: Doors) => void> = {
-  overview: enteredStage,
+  overview: () => undefined,
   workflow: enteredWorkflow,
   children: enteredChild,
   artifacts: enteredArtifact,

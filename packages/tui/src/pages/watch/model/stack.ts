@@ -1,14 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import type {
-  BoardFeed,
-  GateActionView,
-  JourneyView,
-  KanbanCardView,
-  SurfaceDocView,
-} from '../../../shared/model';
+import type { BoardFeed, GateActionView, JourneyView, SurfaceDocView } from '../../../shared/model';
 import type { Draft } from '../lib/edit.ts';
-import type { Frame, FrameStack, Grow, JourneyTab, Tuning } from './frames.ts';
+import type { Frame, FrameStack, GateSeat, Grow, JourneyTab, Tuning } from './frames.ts';
 import type { Doors } from './journey-tabs.ts';
 
 import { useDocsShelf } from './docs-shelf.ts';
@@ -17,6 +11,7 @@ import {
   editing,
   judged,
   landingOf,
+  refolded,
   revisedIn,
   savedMark,
   scrolled,
@@ -29,9 +24,17 @@ import { useSteering } from './steering.ts';
 
 type Ceremony = Pick<FrameStack, 'gate' | 'pass'>;
 
+function refreshedJourneys(feed: BoardFeed, key: string, setFrames: Grow): void {
+  void feed.journey(key).then((fresh) => {
+    if (fresh !== undefined) {
+      setFrames((stack) => refolded(stack, fresh));
+    }
+  });
+}
+
 function useCeremony(feed: BoardFeed, top: Frame, setFrames: Grow): Ceremony {
   const gate = useCallback(
-    (action: GateActionView, card: KanbanCardView, tick: number) => {
+    (action: GateActionView, card: GateSeat, tick: number) => {
       setFrames((stack) => [...stack, askFrameOf(action, card, tick)]);
     },
     [setFrames],
@@ -43,8 +46,14 @@ function useCeremony(feed: BoardFeed, top: Frame, setFrames: Grow): Ceremony {
         return;
       }
 
-      void feed.act(top.cardKey, top.action).then((outcome) => {
+      const key = top.cardKey;
+
+      void feed.act(key, top.action).then((outcome) => {
         setFrames((stack) => judged(stack, outcome, tick));
+
+        if ('moved' in outcome) {
+          refreshedJourneys(feed, key, setFrames);
+        }
       });
     },
     [top, feed, setFrames],
@@ -170,6 +179,7 @@ function useDiving(
               focus: 'canvas',
               cur: 0,
               aud: 'technical',
+              wide: false,
             },
           ]);
         }
@@ -229,7 +239,7 @@ export function useFrameStack(feed: BoardFeed): FrameStack {
   const { openMap, mapWalk, mapSeat } = useMapping(feed, setFrames);
   const { openLog, logSeat, logSlide } = useLogging(feed, setFrames);
   const shelved = useDocsShelf(feed, setFrames);
-  const { showTab, aim, walk, tab, pickAt, readAs } = useSteering(setFrames);
+  const { showTab, aim, walk, widen, tab, pickAt, readAs } = useSteering(setFrames);
   const { dive, enter } = useDiving(feed, top, setFrames, showTab);
   const { scroll, tune, pop, home } = useHolding(setFrames);
 
@@ -249,6 +259,7 @@ export function useFrameStack(feed: BoardFeed): FrameStack {
     ...shelved,
     enter,
     walk,
+    widen,
     pickAt,
     readAs,
     scroll,

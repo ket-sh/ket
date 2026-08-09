@@ -94,6 +94,15 @@ describe('the moments the side pane dates', () => {
     expect(foldJourney(STORED, WALKED, 'K-1')?.pane.arrivedAt).toBe('2026-08-07T10:00:00.000Z');
   });
 
+  it('dates the arrival by the newest move when several stand behind it', () => {
+    const log =
+      WALKED +
+      moved('K-1', 'awaiting-approval', '2026-08-07T11:00:00.000Z') +
+      moved('K-1', 'designing', '2026-08-07T12:00:00.000Z');
+
+    expect(foldJourney(STORED, log, 'K-1')?.pane.arrivedAt).toBe('2026-08-07T12:00:00.000Z');
+  });
+
   it('dates the last event the item recorded, whatever gate wrote it', () => {
     const log = WALKED + turnedAway('K-1', '2026-08-07T11:00:00.000Z', 'no test covers it');
 
@@ -117,6 +126,24 @@ describe('the family the side pane names', () => {
     const stored = [{ key: 'K-1', contents: itemOf({ status: 'designing', parent: 'K-9' }) }];
 
     expect(foldJourney(stored, '', 'K-1')?.pane.parent).toBe('K-9');
+  });
+});
+
+describe('the gates the side pane offers', () => {
+  it('offers approve while the design awaits its approval', () => {
+    const stored = [{ key: 'K-1', contents: itemOf({ status: 'awaiting-approval' }) }];
+
+    expect(foldJourney(stored, '', 'K-1')?.pane.offers).toStrictEqual(['approve']);
+  });
+
+  it('offers ship and reopen while the merge awaits its confirmation', () => {
+    const stored = [{ key: 'K-1', contents: itemOf({ status: 'awaiting-merge' }) }];
+
+    expect(foldJourney(stored, '', 'K-1')?.pane.offers).toStrictEqual(['ship', 'reopen']);
+  });
+
+  it('offers nothing while the machine still runs the stage', () => {
+    expect(foldJourney(STORED, '', 'K-1')?.pane.offers).toStrictEqual([]);
   });
 });
 

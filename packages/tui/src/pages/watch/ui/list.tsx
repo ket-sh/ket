@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 import type { KanbanColumnView } from '../../../shared/model';
 
-import { ListRow } from './card-row.tsx';
+import { FlatRows } from './card-row.tsx';
 
 export function ListView({
   columns,
@@ -31,19 +31,7 @@ export function ListView({
         }
       }}
     >
-      {cards.map(
-        (card): ReactNode => (
-          <ListRow
-            key={card.key}
-            card={card}
-            now={now}
-            chosen={card.key === chosenKey}
-            onPress={() => {
-              onRow(card.key);
-            }}
-          />
-        ),
-      )}
+      <FlatRows kind="list" cards={cards} now={now} chosenKey={chosenKey} onRow={onRow} />
     </box>
   );
 }

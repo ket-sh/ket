@@ -67,6 +67,14 @@ describe('the side pane beside the workflow canvas', () => {
     expect(await workflowAt(160)).toContain('K-1  feature · story');
   });
 
+  it('frames its facts under labeled rules', async () => {
+    const frame = await workflowAt(160);
+
+    expect(frame).toContain('─ state ');
+    expect(frame).toContain('─ yours ');
+    expect(frame).toContain('─ repo ');
+  });
+
   it('says the status and the place it holds on the machine path', async () => {
     expect(await workflowAt(160)).toContain('designing · stage 3 of 8');
   });
@@ -89,11 +97,10 @@ describe('the side pane beside the workflow canvas', () => {
     expect(frame).toContain('last event 1h ago');
   });
 
-  it('sums the children into one line and names the artifacts', async () => {
+  it('sums the children into one line', async () => {
     const frame = await workflowAt(160);
 
     expect(frame).toContain('children 0/1 shipped');
-    expect(frame).toContain('artifacts spec.md');
   });
 
   it('names the branch the work sits on', async () => {

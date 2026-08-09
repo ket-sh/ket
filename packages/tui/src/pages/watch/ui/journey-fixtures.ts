@@ -6,10 +6,17 @@ export const NARRATED = {
   at: '2026-08-07T11:30:00.000Z',
 };
 
+const DESCRIBED = [
+  'The keeper locks the account after five failures.',
+  '## Acceptance',
+  'The keeper **counts** each failure and clears the tally on success.',
+  ...Array.from({ length: 30 }, (_, held) => `over ${String(held + 1).padStart(2, '0')}`),
+].join('\n\n');
+
 export const JOURNEY: JourneyView = {
   item: 'K-1',
   title: 'The watched item',
-  description: 'The keeper locks the account after five failures.',
+  description: DESCRIBED,
   nodes: [
     {
       id: 'triaged',
@@ -20,6 +27,7 @@ export const JOURNEY: JourneyView = {
       until: '2026-08-07T10:00:00.000Z',
       note: undefined,
       doc: undefined,
+      steps: [],
     },
     {
       id: 'designing',
@@ -30,6 +38,7 @@ export const JOURNEY: JourneyView = {
       until: undefined,
       note: NARRATED,
       doc: undefined,
+      steps: [{ name: 'spec.md', at: '2026-08-07T11:00:00.000Z' }],
     },
     {
       id: 'awaiting-approval',
@@ -40,6 +49,7 @@ export const JOURNEY: JourneyView = {
       until: undefined,
       note: undefined,
       doc: undefined,
+      steps: [],
     },
   ],
   edges: [
@@ -99,6 +109,7 @@ export const JOURNEY: JourneyView = {
     filed: { by: 'Ada Lovelace', at: '2026-08-07T08:00:00.000Z' },
     branch: { name: 'feat/watched', commits: 4 },
     note: NARRATED,
+    offers: [],
   },
 };
 
@@ -116,6 +127,7 @@ export const CHILD_JOURNEY: JourneyView = {
       until: undefined,
       note: undefined,
       doc: undefined,
+      steps: [],
     },
   ],
   edges: [],
@@ -147,5 +159,6 @@ export const CHILD_JOURNEY: JourneyView = {
     filed: undefined,
     branch: undefined,
     note: undefined,
+    offers: ['approve'],
   },
 };

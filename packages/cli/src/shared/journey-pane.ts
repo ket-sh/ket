@@ -4,6 +4,7 @@ import type { LoggedEvent } from './kanban.ts';
 
 import { ITEM_STATUSES } from './item.ts';
 import { noteAfter } from './kanban.ts';
+import { offeredBy } from './transition.ts';
 
 function refusalsSince(events: LoggedEvent[], since: string | undefined): number {
   if (since === undefined) {
@@ -34,5 +35,6 @@ export function paneOf(
     filed: repo.filed,
     branch: repo.branch,
     note: arrivedAt === undefined ? undefined : noteAfter(events, arrivedAt),
+    offers: offeredBy(item),
   };
 }

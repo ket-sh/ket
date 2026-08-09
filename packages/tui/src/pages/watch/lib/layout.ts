@@ -4,13 +4,17 @@ export const NODE_W = 26;
 
 export const NODE_H = 6;
 
+export const STEP_H = 3;
+
 const COLUMN_GAP = 7;
 
 const ROW_GAP = 1;
 
 const MARGIN = 2;
 
-const STRIDE = NODE_H + ROW_GAP;
+export function heightOf(node: JourneyNodeView): number {
+  return NODE_H + node.steps.length * STEP_H;
+}
 
 export interface PlacedNode extends JourneyNodeView {
   x: number;
@@ -46,39 +50,36 @@ function layersOf(journey: JourneyView): Map<string, number> {
   return layer;
 }
 
-function lanesOf(journey: JourneyView, layers: Map<string, number>): Map<string, number> {
-  const counts = new Map<number, number>();
-  const lanes = new Map<string, number>();
+function stacksOf(
+  journey: JourneyView,
+  layers: Map<string, number>,
+): Map<number, JourneyNodeView[]> {
+  const stacks = new Map<number, JourneyNodeView[]>();
 
   for (const node of journey.nodes) {
     const layer = layers.get(node.id) ?? 0;
-    const lane = counts.get(layer) ?? 0;
 
-    counts.set(layer, lane + 1);
-    lanes.set(node.id, lane);
+    stacks.set(layer, [...(stacks.get(layer) ?? []), node]);
   }
 
-  return lanes;
+  return stacks;
 }
 
-function tallestOf(layers: Map<string, number>): number {
-  const counts = new Map<number, number>();
-
-  for (const layer of layers.values()) {
-    counts.set(layer, (counts.get(layer) ?? 0) + 1);
-  }
-
-  return Math.max(0, ...counts.values());
+function stackHeightOf(stack: JourneyNodeView[]): number {
+  return stack.reduce((sum, node) => sum + heightOf(node), 0) + (stack.length - 1) * ROW_GAP;
 }
 
-function layerCountsOf(layers: Map<string, number>): Map<number, number> {
-  const counts = new Map<number, number>();
+function placedStack(stack: JourneyNodeView[], layer: number, tallest: number): PlacedNode[] {
+  const offset = Math.floor((tallest - stackHeightOf(stack)) / 2);
+  let y = MARGIN + offset;
 
-  for (const layer of layers.values()) {
-    counts.set(layer, (counts.get(layer) ?? 0) + 1);
-  }
+  return stack.map((node) => {
+    const placed = { ...node, x: MARGIN + layer * (NODE_W + COLUMN_GAP), y };
 
-  return counts;
+    y += heightOf(node) + ROW_GAP;
+
+    return placed;
+  });
 }
 
 export function placedOf(journey: JourneyView): Placed {
@@ -87,26 +88,17 @@ export function placedOf(journey: JourneyView): Placed {
   }
 
   const layers = layersOf(journey);
-  const lanes = lanesOf(journey, layers);
-  const counts = layerCountsOf(layers);
-  const tallestHeight = tallestOf(layers) * STRIDE - ROW_GAP;
-  const nodes = journey.nodes.map((node) => {
-    const layer = layers.get(node.id) ?? 0;
-    const count = counts.get(layer) ?? 1;
-    const offset = Math.floor((tallestHeight - (count * STRIDE - ROW_GAP)) / 2);
-
-    return {
-      ...node,
-      x: MARGIN + layer * (NODE_W + COLUMN_GAP),
-      y: MARGIN + offset + (lanes.get(node.id) ?? 0) * STRIDE,
-    };
-  });
+  const stacks = stacksOf(journey, layers);
+  const tallest = Math.max(...[...stacks.values()].map((stack) => stackHeightOf(stack)));
+  const nodes = [...stacks.entries()].flatMap(([layer, stack]) =>
+    placedStack(stack, layer, tallest),
+  );
   const lastLayer = Math.max(...layers.values());
 
   return {
     nodes,
     width: MARGIN * 2 + (lastLayer + 1) * (NODE_W + COLUMN_GAP) - COLUMN_GAP,
-    height: MARGIN * 2 + tallestHeight,
+    height: MARGIN * 2 + tallest,
   };
 }
 

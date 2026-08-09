@@ -22,6 +22,7 @@ function stageOf(id: string, patch: Partial<JourneyNodeView> = {}): JourneyNodeV
     refusal: undefined,
     note: undefined,
     doc: undefined,
+    steps: [],
     ...patch,
   };
 }
@@ -49,6 +50,7 @@ function pathOf(nodes: JourneyNodeView[]): JourneyView {
       filed: undefined,
       branch: undefined,
       note: undefined,
+      offers: [],
     },
   };
 }

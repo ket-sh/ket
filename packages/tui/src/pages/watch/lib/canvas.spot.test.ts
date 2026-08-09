@@ -14,6 +14,7 @@ function nodeOf(id: string): JourneyView['nodes'][number] {
     until: undefined,
     note: undefined,
     doc: undefined,
+    steps: [],
   };
 }
 
@@ -40,6 +41,7 @@ function journeyOf(ids: string[]): JourneyView {
       filed: undefined,
       branch: undefined,
       note: undefined,
+      offers: [],
     },
   };
 }

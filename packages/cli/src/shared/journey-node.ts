@@ -1,6 +1,7 @@
 import type { ItemStatus } from './item.ts';
 import type { ItemNote, KanbanRefusal } from './kanban.ts';
 import type { SurfaceDoc } from './surface-doc.ts';
+import type { GateAction } from './transition.ts';
 
 export type StageState =
   | 'done'
@@ -9,6 +10,11 @@ export type StageState =
   | 'changes-requested'
   | 'sent-back'
   | 'future';
+
+export interface JourneyStep {
+  name: string;
+  at: string | undefined;
+}
 
 export interface JourneyNode {
   id: string;
@@ -19,6 +25,7 @@ export interface JourneyNode {
   refusal: KanbanRefusal | undefined;
   note: ItemNote | undefined;
   doc: SurfaceDoc | undefined;
+  steps: JourneyStep[];
 }
 
 export interface JourneyArtifact {
@@ -65,6 +72,7 @@ export interface JourneyPane {
   filed: JourneyFiling | undefined;
   branch: JourneyBranch | undefined;
   note: ItemNote | undefined;
+  offers: GateAction[];
 }
 
 export interface Journey {
