@@ -6,7 +6,20 @@ order: 6
 
 Ship **$ARGUMENTS**, which means recording that its pull request merged.
 
-## 1. Bring the surface
+## 1. Bring the surface, unless the merge already happened
+
+A merge that already happened needs no page. Read the item's pull request
+number from the item, then ask the machine first:
+
+```
+gh pr view <number> --json state
+```
+
+When the state already reads `MERGED`, the decision happened somewhere else,
+and a browser opened after the merge shows nothing anyone can still act on.
+Skip the surface and the watcher, say what landed, and go straight to step 5.
+
+While the pull request is still open, bring the surface:
 
 ```
 ket item show $ARGUMENTS
