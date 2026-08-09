@@ -1,13 +1,30 @@
-import { mkdtemp } from 'node:fs/promises';
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { failuresAmong } from './checks.ts';
+import { failuresAmong, localBinsOf } from './checks.ts';
 
 async function scratch(): Promise<string> {
   return mkdtemp(join(tmpdir(), 'ket-checks-'));
 }
+
+describe('reading the shims a project keeps in its bin directory', () => {
+  it('names every shim the directory holds', async () => {
+    const root = await scratch();
+    const bins = join(root, 'node_modules', '.bin');
+
+    await mkdir(bins, { recursive: true });
+    await writeFile(join(bins, 'vitest'), '');
+    await writeFile(join(bins, 'stryker'), '');
+
+    expect(await localBinsOf(root)).toStrictEqual(new Set(['vitest', 'stryker']));
+  });
+
+  it('answers empty for a project with no bin directory, so the PATH answers instead', async () => {
+    expect(await localBinsOf(await scratch())).toStrictEqual(new Set());
+  });
+});
 
 const PASSES = ['/bin/sh', '-c', 'exit 0'];
 

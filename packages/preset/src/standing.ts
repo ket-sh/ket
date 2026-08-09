@@ -51,6 +51,7 @@ export const STANDING_FILES: PresetFile[] = [
   writes('vitest.config.ts', 'vitest.config.ts'),
   writes('stryker.conf.json', 'stryker.conf.json'),
   writes('vitest.mutation.config.ts', 'vitest.mutation.config.ts'),
+  writes('mutate-changed.mts', 'scripts/mutate-changed.mts'),
   writes('knip.json', 'knip.json'),
   writes('jscpd.json', '.jscpd.json'),
   writes('cspell.json', 'cspell.json'),

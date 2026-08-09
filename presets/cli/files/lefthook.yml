@@ -26,7 +26,7 @@ pre-commit:
     - name: boundaries
       priority: 1
       glob: 'src/**/*.ts'
-      run: ./node_modules/.bin/depcruise src --config .dependency-cruiser.cjs
+      run: ./node_modules/.bin/depcruise src --config .dependency-cruiser.cjs --cache --cache-strategy content
     - name: fmt
       priority: 2
       glob: '*.{ts,tsx,mts,js,jsx,mjs,cjs,json,md,yaml,yml}'

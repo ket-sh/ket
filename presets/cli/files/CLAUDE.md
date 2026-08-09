@@ -41,6 +41,11 @@ the plugin arms the rest at each edit. The `gates` skill says what a failure
 tells you, the `mutation` skill says how to kill a survivor, and the
 `suppression` skill says what to reach for instead of turning a gate off.
 
+The mutation gate retests what changed against the merge base, and
+`test:mutation:full` runs the whole battery. The pipeline runs the full
+battery on every push to `main` and weekly, so a scoped run hides nothing
+for long.
+
 Bun runs most of the chain. `mise.toml` pins the four tools that aren't
 JavaScript, so `lint:prose`, `lint:secrets` and `lint:workflows` need
 [mise](https://mise.jdx.dev) on the machine. Without it those three report a

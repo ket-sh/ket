@@ -5,7 +5,7 @@ import type { PresetItem } from './item.ts';
 import type { PresetSemantics } from './semantics.ts';
 
 import { writes } from './item.ts';
-import { mutationScopeInvariantsOf } from './mutation-invariants.ts';
+import { mutationScalingInvariantsOf, mutationScopeInvariantsOf } from './mutation-invariants.ts';
 
 const ITEM: PresetItem = {
   $schema: 'https://ui.shadcn.com/schema/registry-item.json',
@@ -75,6 +75,60 @@ describe('a mutation config whose shape is not the one expected', () => {
     expect(mutationScopeInvariantsOf(ITEM, SEMANTICS, shipping([]))).toStrictEqual([
       'the preset declares src/commands/*/command.ts an adapter, and the mutation config it writes never excludes it',
       'the preset declares src/commands/*/io/** an adapter, and the mutation config it writes never excludes it',
+    ]);
+  });
+});
+
+function declaring(scripts: Record<string, string>): PresetSemantics {
+  return { ...SEMANTICS, scripts };
+}
+
+describe('the mutation gate a preset declares against the size of the change', () => {
+  it('says nothing when the gate retests the change and the whole battery stays a script away', () => {
+    expect(
+      mutationScalingInvariantsOf(
+        declaring({
+          'test:mutation': 'bun scripts/mutate-changed.mts',
+          'test:mutation:full': 'stryker run',
+        }),
+      ),
+    ).toStrictEqual([]);
+  });
+
+  it('names the gate that runs the whole battery on every change', () => {
+    expect(
+      mutationScalingInvariantsOf(
+        declaring({ 'test:mutation': 'stryker run', 'test:mutation:full': 'stryker run' }),
+      ),
+    ).toStrictEqual([
+      'the test:mutation script runs the whole battery on every change, and the mutation gate scales with the change',
+    ]);
+  });
+
+  it('says nothing about a scoped script a preset has yet to declare, since the required gate owns that hole', () => {
+    expect(
+      mutationScalingInvariantsOf(declaring({ 'test:mutation:full': 'stryker run' })),
+    ).toStrictEqual([]);
+  });
+
+  it('names the missing full battery, since scoped runs lean on it', () => {
+    expect(
+      mutationScalingInvariantsOf(declaring({ 'test:mutation': 'bun scripts/mutate-changed.mts' })),
+    ).toStrictEqual([
+      'the preset keeps no test:mutation:full script running the whole battery, so the scoped runs lean on nothing',
+    ]);
+  });
+
+  it('refuses a full script that never runs the battery, since a hollow anchor holds nothing', () => {
+    expect(
+      mutationScalingInvariantsOf(
+        declaring({
+          'test:mutation': 'bun scripts/mutate-changed.mts',
+          'test:mutation:full': 'echo done',
+        }),
+      ),
+    ).toStrictEqual([
+      'the preset keeps no test:mutation:full script running the whole battery, so the scoped runs lean on nothing',
     ]);
   });
 });
