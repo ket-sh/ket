@@ -6,7 +6,7 @@ sources:
   - presets/cli/src/**
   - presets/web/src/**
   - harness/**
-stamp: 8e735e95d567
+stamp: f53d54bdca5f
 ---
 
 # The ket handbook
@@ -65,16 +65,16 @@ anything can write is a status that means nothing.
 
 ### The commands that drive it
 
-| Command               | What it does                                                                                                                                   |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/ket:feature`        | Files a piece of work, writes its title and description to the issue-writing standard, and carries it to the first gate                        |
-| `/ket:explore`        | Investigates before filing, when the shape of the work is unclear                                                                              |
-| `/ket:approve <key>`  | The human approves the design; implementation may start                                                                                        |
-| `/ket:continue <key>` | Picks an item up and runs the next machine stage                                                                                               |
-| `/ket:review <key>`   | Runs the review stage on the work                                                                                                              |
-| `/ket:ship <key>`     | The human confirms the merged work landed                                                                                                      |
-| `/ket:status`         | Reports where every item stands                                                                                                                |
-| `/ket:map`            | Sits down with you and builds the story map, challenging vague answers and researching unfamiliar domains before writing `.ket/story-map.yaml` |
+| Command               | What it does                                                                                                                                                                                                                      |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/ket:feature`        | Files a piece of work, writes its title and description to the issue-writing standard, and carries it to the first gate                                                                                                           |
+| `/ket:explore`        | Investigates before filing, when the shape of the work is unclear                                                                                                                                                                 |
+| `/ket:approve <key>`  | The human approves the design; implementation may start                                                                                                                                                                           |
+| `/ket:continue <key>` | Picks an item up and runs the next machine stage                                                                                                                                                                                  |
+| `/ket:review <key>`   | Runs the review stage on the work                                                                                                                                                                                                 |
+| `/ket:ship <key>`     | The human confirms the merged work landed                                                                                                                                                                                         |
+| `/ket:status`         | Reports where every item stands                                                                                                                                                                                                   |
+| `/ket:map`            | Runs the story mapping discovery session that frames the product, scans the market, and probes each activity in Socratic depth passes with researched proposals. Only you close it, and the result lands in `.ket/story-map.yaml` |
 
 ### The four human gates
 
@@ -226,7 +226,7 @@ loads the one that applies and works from it rather than from a summary.
 | `stages`        | The stage table, the moving commands, and the four human gates |
 | `sizing`        | Which size an item takes, and what each size owes              |
 | `issue-writing` | Titles and descriptions per kind, with the refusal list        |
-| `story-mapping` | The facilitated mapping session behind `/ket:map`              |
+| `story-mapping` | The Socratic mapping session behind `/ket:map`                 |
 | `progress`      | The notes the pipeline drops so no working step is invisible   |
 | `findings`      | How to record and answer review findings                       |
 | `regression`    | What a fix owes the suite that missed the defect               |
