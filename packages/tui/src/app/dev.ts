@@ -129,6 +129,7 @@ const WALKED: JourneyView = {
       actor: 'implementer',
       at: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
     },
+    offers: [],
   },
 };
 

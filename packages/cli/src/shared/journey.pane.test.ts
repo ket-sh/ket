@@ -120,6 +120,24 @@ describe('the family the side pane names', () => {
   });
 });
 
+describe('the gates the side pane offers', () => {
+  it('offers approve while the design awaits its approval', () => {
+    const stored = [{ key: 'K-1', contents: itemOf({ status: 'awaiting-approval' }) }];
+
+    expect(foldJourney(stored, '', 'K-1')?.pane.offers).toStrictEqual(['approve']);
+  });
+
+  it('offers ship and reopen while the merge awaits its confirmation', () => {
+    const stored = [{ key: 'K-1', contents: itemOf({ status: 'awaiting-merge' }) }];
+
+    expect(foldJourney(stored, '', 'K-1')?.pane.offers).toStrictEqual(['ship', 'reopen']);
+  });
+
+  it('offers nothing while the machine still runs the stage', () => {
+    expect(foldJourney(STORED, '', 'K-1')?.pane.offers).toStrictEqual([]);
+  });
+});
+
 describe('the repository facts the side pane borrows', () => {
   it('borrows nothing when the repository answers nothing', () => {
     const pane = foldJourney(STORED, '', 'K-1')?.pane;

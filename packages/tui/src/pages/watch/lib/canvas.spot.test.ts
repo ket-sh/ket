@@ -40,6 +40,7 @@ function journeyOf(ids: string[]): JourneyView {
       filed: undefined,
       branch: undefined,
       note: undefined,
+      offers: [],
     },
   };
 }

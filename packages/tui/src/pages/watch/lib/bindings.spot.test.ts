@@ -28,6 +28,7 @@ const PANE: JourneyPaneView = {
   filed: undefined,
   branch: undefined,
   note: undefined,
+  offers: [],
 };
 
 const CHILD: JourneyChildView = {
@@ -134,6 +135,7 @@ describe('the spot a journey stands in', () => {
       kind: 'journey',
       pane: 'preview',
       wide: false,
+      offers: [],
     });
   });
 
@@ -142,6 +144,7 @@ describe('the spot a journey stands in', () => {
       kind: 'journey',
       pane: 'canvas',
       wide: false,
+      offers: [],
     });
   });
 
@@ -150,6 +153,7 @@ describe('the spot a journey stands in', () => {
       kind: 'journey',
       pane: 'brink',
       wide: false,
+      offers: [],
     });
   });
 
@@ -158,6 +162,7 @@ describe('the spot a journey stands in', () => {
       kind: 'journey',
       pane: 'held',
       wide: false,
+      offers: [],
     });
   });
 
@@ -166,6 +171,7 @@ describe('the spot a journey stands in', () => {
       kind: 'journey',
       pane: 'canvas',
       wide: false,
+      offers: [],
     });
   });
 });
@@ -190,11 +196,13 @@ describe('the spot the journey chrome stands in', () => {
       kind: 'journey',
       pane: 'tabs',
       wide: false,
+      offers: [],
     });
     expect(spotOf(journeyFrameAt('artifacts', 'content', 'n1'), 'kanban', [], HELD)).toStrictEqual({
       kind: 'journey',
       pane: 'reading',
       wide: false,
+      offers: [],
     });
   });
 });

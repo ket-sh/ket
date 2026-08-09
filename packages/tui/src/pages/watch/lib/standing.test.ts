@@ -28,6 +28,7 @@ function journeyOf(key: string): JourneyView {
       filed: undefined,
       branch: undefined,
       note: undefined,
+      offers: [],
     },
   };
 }

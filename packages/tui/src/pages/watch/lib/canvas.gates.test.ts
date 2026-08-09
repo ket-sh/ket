@@ -49,6 +49,7 @@ function pathOf(nodes: JourneyNodeView[]): JourneyView {
       filed: undefined,
       branch: undefined,
       note: undefined,
+      offers: [],
     },
   };
 }

@@ -80,9 +80,15 @@ describe('the bindings an idle or queued board answers', () => {
   });
 });
 
+type JourneySpot = Extract<BindingSpot, { kind: 'journey' }>;
+
+function journeySpot(pane: JourneySpot['pane']): JourneySpot {
+  return { kind: 'journey', pane, wide: false, offers: [] };
+}
+
 describe('the bindings the journey answers', () => {
   it('moves, opens, widens, and falls back to the board from the canvas', () => {
-    expect(hintsAt({ kind: 'journey', pane: 'canvas', wide: false })).toStrictEqual([
+    expect(hintsAt(journeySpot('canvas'))).toStrictEqual([
       '←↑↓→ move',
       '⏎ open',
       'f full',
@@ -94,7 +100,7 @@ describe('the bindings the journey answers', () => {
   });
 
   it('says the pane is one arrow away where the canvas runs out', () => {
-    expect(hintsAt({ kind: 'journey', pane: 'brink', wide: false })).toStrictEqual([
+    expect(hintsAt(journeySpot('brink'))).toStrictEqual([
       '←↑↓→ move',
       '→ item pane',
       '⏎ open',
@@ -107,7 +113,7 @@ describe('the bindings the journey answers', () => {
   });
 
   it('hands enter to the children once the pane holds the selection', () => {
-    expect(hintsAt({ kind: 'journey', pane: 'held', wide: false })).toStrictEqual([
+    expect(hintsAt(journeySpot('held'))).toStrictEqual([
       '← canvas',
       '⏎ children',
       'f full',
@@ -117,13 +123,22 @@ describe('the bindings the journey answers', () => {
       'q quit',
     ]);
   });
+});
 
+describe('the width and the gates the journey bindings carry', () => {
   it('offers the way back to the split while one legend fills the width', () => {
-    expect(hintsAt({ kind: 'journey', pane: 'canvas', wide: true })).toContain('f split');
+    expect(hintsAt({ ...journeySpot('canvas'), wide: true })).toContain('f split');
+  });
+
+  it('offers the gate keys the pane extends, right after the moves', () => {
+    const hints = hintsAt({ ...journeySpot('canvas'), offers: ['approve'] });
+
+    expect(hints).toContain('a approve');
+    expect(hints.indexOf('a approve')).toBeLessThan(hints.indexOf('f full'));
   });
 
   it('hands the overview preview its scroll instead of the canvas walk', () => {
-    expect(hintsAt({ kind: 'journey', pane: 'preview', wide: false })).toStrictEqual([
+    expect(hintsAt(journeySpot('preview'))).toStrictEqual([
       '↑↓ j k scroll',
       'f full',
       'ctrl+p go',
@@ -136,7 +151,7 @@ describe('the bindings the journey answers', () => {
 
 describe('the bindings the focused chrome answers', () => {
   it('walks the tabs while the tab row holds the focus', () => {
-    expect(hintsAt({ kind: 'journey', pane: 'tabs', wide: false })).toStrictEqual([
+    expect(hintsAt(journeySpot('tabs'))).toStrictEqual([
       '←→ tabs',
       '↓ panel',
       'f full',
@@ -148,7 +163,7 @@ describe('the bindings the focused chrome answers', () => {
   });
 
   it('reads the doc while the content holds the focus', () => {
-    expect(hintsAt({ kind: 'journey', pane: 'reading', wide: false })).toStrictEqual([
+    expect(hintsAt(journeySpot('reading'))).toStrictEqual([
       '↑↓ j k read',
       '← files',
       'f full',

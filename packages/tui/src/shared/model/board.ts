@@ -160,6 +160,7 @@ export interface JourneyPaneView {
   filed: JourneyFilingView | undefined;
   branch: JourneyBranchView | undefined;
   note: ItemNoteView | undefined;
+  offers: GateActionView[];
 }
 
 export interface JourneyView {

@@ -15,16 +15,11 @@ import { docsPress } from './docs-keys.ts';
 import { editorPress } from './editor-keys.ts';
 import { filterOpened, filterPress } from './filter-keys.ts';
 import { ceremonyPress, journeyPress, mapPress, surfacePress } from './frame-keys.ts';
+import { GATE_KEYS } from './gate-keys.ts';
 import { helpOpened, helpPress } from './help-keys.ts';
 import { oplogPress } from './oplog-keys.ts';
 import { paletteOpened, palettePress } from './palette-keys.ts';
 import { pickerPress } from './picker-keys.ts';
-
-export const GATE_KEYS: Record<string, GateActionView> = {
-  a: 'approve',
-  s: 'ship',
-  o: 'reopen',
-};
 
 function offeredAction(
   name: string,
@@ -47,6 +42,24 @@ function ceremonyOpened(name: string, stack: FrameStack, seat: Seat, tick: numbe
   }
 
   stack.gate(action, seat.chosen, tick);
+
+  return true;
+}
+
+function journeyGateOpened(name: string, stack: FrameStack, tick: number): boolean {
+  const top = stack.top;
+
+  if (top.kind !== 'journey') {
+    return false;
+  }
+
+  const action = GATE_KEYS[name];
+
+  if (action === undefined || !top.journey.pane.offers.includes(action)) {
+    return false;
+  }
+
+  stack.gate(action, { key: top.journey.item, title: top.journey.title }, tick);
 
   return true;
 }
@@ -147,6 +160,10 @@ const FRAME_PRESSES: Record<Frame['kind'], (name: string, deps: PressDeps) => vo
     boardPress(name, deps);
   },
   journey: (name, deps) => {
+    if (journeyGateOpened(name, deps.stack, deps.tick)) {
+      return;
+    }
+
     journeyPress(name, deps.stack);
   },
   map: (name, deps) => {

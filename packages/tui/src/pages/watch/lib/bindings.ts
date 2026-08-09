@@ -2,7 +2,7 @@ import type { GateActionView, KanbanColumnView, OplogEventView } from '../../../
 import type { BoardLayout } from '../model/board-layout.ts';
 import type { DocsFocus, Frame } from '../model/frames.ts';
 
-import { GATE_KEYS } from '../model/keys.ts';
+import { GATE_KEYS } from '../model/gate-keys.ts';
 import { catalogRows } from './docs.ts';
 import { neighborOf, placedOf } from './layout.ts';
 
@@ -18,7 +18,7 @@ type PaneStanding = 'canvas' | 'brink' | 'held' | 'tabs' | 'reading' | 'preview'
 
 export type BindingSpot =
   | { kind: 'board'; layout: BoardLayout; offers: GateActionView[]; holds: boolean }
-  | { kind: 'journey'; pane: PaneStanding; wide: boolean }
+  | { kind: 'journey'; pane: PaneStanding; wide: boolean; offers: GateActionView[] }
   | { kind: 'docs'; focus: DocsFocus; holds: boolean }
   | { kind: 'map'; holds: boolean }
   | { kind: 'oplog'; holds: boolean }
@@ -103,7 +103,12 @@ const FILLS: Binding = { keys: 'f', action: 'full', group: 'open' };
 type JourneySpot = Extract<BindingSpot, { kind: 'journey' }>;
 
 function journeyBindings(spot: JourneySpot): Binding[] {
-  return [...JOURNEY_MOVES[spot.pane], spot.wide ? SPLITS : FILLS, ...WAYS_OUT];
+  return [
+    ...JOURNEY_MOVES[spot.pane],
+    ...gateBindings(spot.offers),
+    spot.wide ? SPLITS : FILLS,
+    ...WAYS_OUT,
+  ];
 }
 
 const HELD_SCREENS: Record<'surface' | 'gate' | 'edit', Binding[]> = {
@@ -257,7 +262,12 @@ export function spotOf(
   }
 
   if (frame.kind === 'journey') {
-    return { kind: 'journey', pane: paneStandingOf(frame), wide: frame.wide };
+    return {
+      kind: 'journey',
+      pane: paneStandingOf(frame),
+      wide: frame.wide,
+      offers: frame.journey.pane.offers,
+    };
   }
 
   return heldSpotOf(frame, shown);

@@ -24,6 +24,7 @@ const FACTS: JourneyPaneView = {
   filed: undefined,
   branch: undefined,
   note: undefined,
+  offers: [],
 };
 
 function childOf(key: string, status: string): JourneyChildView {

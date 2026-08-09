@@ -62,6 +62,7 @@ const JOURNEY: JourneyView = {
     filed: undefined,
     branch: undefined,
     note: undefined,
+    offers: [],
   },
 };
 

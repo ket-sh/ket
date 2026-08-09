@@ -106,6 +106,7 @@ export const JOURNEY: JourneyView = {
     filed: { by: 'Ada Lovelace', at: '2026-08-07T08:00:00.000Z' },
     branch: { name: 'feat/watched', commits: 4 },
     note: NARRATED,
+    offers: [],
   },
 };
 
@@ -154,5 +155,6 @@ export const CHILD_JOURNEY: JourneyView = {
     filed: undefined,
     branch: undefined,
     note: undefined,
+    offers: ['approve'],
   },
 };

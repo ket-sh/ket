@@ -50,6 +50,7 @@ function walked(nodes: JourneyNodeView[]): JourneyView {
       filed: undefined,
       branch: undefined,
       note: undefined,
+      offers: [],
     },
   };
 }

@@ -16,6 +16,7 @@ const PANE: JourneyPaneView = {
   filed: undefined,
   branch: undefined,
   note: undefined,
+  offers: [],
 };
 
 import { journeyRows } from './canvas.ts';
