@@ -257,7 +257,7 @@ function WatchRoom(props: WatchPageProps): ReactNode {
     >
       <Banner />
       <HeaderRow stack={stack} tick={tick} />
-      <box flexDirection="column" flexGrow={1} overflow="hidden">
+      <box flexDirection="column" flexGrow={1} flexBasis={0} overflow="hidden">
         <StageArea
           stack={stack}
           columns={shown}

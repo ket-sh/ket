@@ -1,6 +1,10 @@
 import { createMockKeys } from '@opentui/core/testing';
 import { testRender } from '@opentui/react/test-utils';
-import { afterEach, describe, expect, it } from 'bun:test';
+import { afterEach, describe, expect, it, setDefaultTimeout } from 'bun:test';
+
+// The landed() waits commit to a 15s deadline; a loaded runner can spend more
+// than bun's 5s default across one of them before a frame settles.
+setDefaultTimeout(20_000);
 
 import type { ActedFeed } from './watch-fixtures.ts';
 
@@ -8,8 +12,6 @@ import { WatchPage } from './index.tsx';
 import { feedOf, NOW, STAGES } from './watch-fixtures.ts';
 
 const WIDE = 200;
-
-const SNUG = 160;
 
 let rendered: Awaited<ReturnType<typeof testRender>> | undefined;
 
@@ -96,19 +98,25 @@ describe('the board the watch page shows', () => {
     }
   });
 
-  it('keeps a card legible where the stacked lanes outrun the screen', async () => {
+  it('keeps the lanes in a row where they outrun the screen', async () => {
     const frame = await openedAt(80, 24);
 
+    expect(rowWith(frame, ' triaged ')).toContain('designing');
     expect(frame).toContain('K-2');
     expect(frame).toContain('A quiet fix');
   });
 
-  it('stacks the lanes where a row cannot spell every status', async () => {
-    const frame = await openedAt(SNUG, 40);
+  it('follows the chosen card into a lane past the right edge', async () => {
+    const feed = feedOf();
 
-    expect(rowWith(frame, ' triaged ')).not.toContain('designing');
-    expect(frame).toContain('K-1');
-    expect(frame).toContain('K-2');
+    await openedWith(feed, 80, 24);
+    pressed('ARROW_RIGHT');
+    await landed((seen) => seen.includes('║ K-1'));
+    feed.shift('K-1', 'shipped');
+
+    const frame = await landed((seen) => seen.includes('shipped 1'));
+
+    expect(frame).toContain('║ K-1');
   });
 
   it('raises the banner and the live dot over the board', async () => {

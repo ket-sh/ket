@@ -64,8 +64,13 @@ cat >"$BOARD/.ket/events.jsonl" <<'EVENTS'
 {"gate":"write","outcome":"refused","about":"src/auth.ts","item":"KWA-1","reason":"no failing test covers it","at":"2026-08-07T08:50:00.000Z"}
 EVENTS
 
+# Card prose renders whole only where every lane stretches past its least
+# width, so the title and refusal claims read a 300-column board. The session
+# then drops back to 80x24, where the later lane claims prove the board
+# follows the seat into lanes past the right edge.
 "$PILOTTY" kill -s "$SESSION" >/dev/null 2>&1 || true
 "$PILOTTY" spawn --name "$SESSION" --cwd "$BOARD" bun "$PWD/packages/cli/src/run.ts" watch >/dev/null
+"$PILOTTY" resize -s "$SESSION" 300 30 >/dev/null
 "$PILOTTY" wait-for -s "$SESSION" "KWA-1" >/dev/null || fail "the item never appeared"
 
 SHOWN="$(screen)"
@@ -73,6 +78,9 @@ shows "designing 1" || fail "the column never named its count"
 shows "The acceptance item" || fail "the item title is missing"
 shows "no failing test covers it" || fail "the standing refusal is missing"
 shows "triaged 1" || fail "the child never reached its lane"
+
+"$PILOTTY" resize -s "$SESSION" 80 24 >/dev/null
+"$PILOTTY" wait-for -s "$SESSION" "designing 1" >/dev/null || fail "the board never reflowed to 80 columns"
 
 "$PILOTTY" key -s "$SESSION" Right >/dev/null
 "$PILOTTY" key -s "$SESSION" Enter >/dev/null
