@@ -63,7 +63,7 @@ async function askWorkflow(): Promise<boolean | symbol> {
   drawWorkflow();
 
   return confirm({
-    message: 'Should ket drive your work through this pipeline?',
+    message: 'Should ket drive your work through this pipeline? Claude Code runs it.',
     initialValue: true,
   });
 }

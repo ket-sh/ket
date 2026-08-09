@@ -9,9 +9,10 @@ import type { Pressed } from '../model/compass.ts';
 import type { Frame } from '../model/frames.ts';
 import type { WatchMouse } from '../model/mouse.ts';
 
+import { widthOf } from '../../../shared/lib';
 import { useTheme } from '../../../shared/theme';
 import { bindingsAt, hintOf, spotOf } from '../lib/bindings.ts';
-import { hintIndexAt, keptAt, pressedOf, rowOf } from '../lib/hints.ts';
+import { hintIndexAt, keptAt, pressedOf, rowOf, SEPARATOR } from '../lib/hints.ts';
 
 interface HintEntry {
   hint: string;
@@ -76,7 +77,34 @@ export function KeyBar({
 
   return (
     <text ref={rowRef} wrapMode="none" fg={theme.overlay} onMouseDown={pressAt}>
-      {rowOf(kept.map((entry) => entry.hint))}
+      <BandedHints kept={kept} width={width} />
     </text>
+  );
+}
+
+function BandedHints({ kept, width }: { kept: HintEntry[]; width: number }): ReactNode {
+  const { theme } = useTheme();
+  const band = theme.surface0;
+  const room = Math.max(0, width - widthOf(rowOf(kept.map((entry) => entry.hint))) - 1);
+
+  return (
+    <>
+      {kept.flatMap((entry, at) => [
+        ...(at === 0
+          ? []
+          : [
+              <span key={`between ${entry.hint}`} fg={theme.overlay} bg={band}>
+                {SEPARATOR}
+              </span>,
+            ]),
+        <span key={`keys ${entry.hint}`} fg={theme.blue} bg={band}>
+          {entry.keys}
+        </span>,
+        <span key={`says ${entry.hint}`} fg={theme.subtext} bg={band}>
+          {entry.hint.slice(entry.keys.length)}
+        </span>,
+      ])}
+      <span bg={band}>{' '.repeat(room)}</span>
+    </>
   );
 }

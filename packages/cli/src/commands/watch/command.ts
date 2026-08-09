@@ -5,6 +5,7 @@ import { join, resolve } from 'node:path';
 import { COMMAND_ARGS } from '../../shared/args.ts';
 import { read } from '../../shared/item-store.ts';
 import { ketRootOrThrow } from '../../shared/locate.ts';
+import { partSays } from '../../shared/parts.ts';
 import { boardFeedFor } from './feed.ts';
 import { openedFrom, openingOf } from './opening.ts';
 import { readView, rememberView } from './view-state.ts';
@@ -12,7 +13,7 @@ import { readView, rememberView } from './view-state.ts';
 const watch = defineCommand({
   meta: {
     name: 'watch',
-    description: 'Watch the pipeline as it runs',
+    description: partSays('watch'),
   },
   args: {
     ...COMMAND_ARGS,

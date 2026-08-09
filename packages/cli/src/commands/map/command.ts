@@ -2,12 +2,13 @@ import { defineCommand, showUsage } from 'citty';
 
 import { COMMAND_ARGS } from '../../shared/args.ts';
 import { ketRootOrThrow } from '../../shared/locate.ts';
+import { partSays } from '../../shared/parts.ts';
 import { mapShowingIn } from '../../shared/story-map/reading.ts';
 
 const map = defineCommand({
   meta: {
     name: 'map',
-    description: 'Read the story map this project keeps',
+    description: partSays('map'),
   },
   args: COMMAND_ARGS,
   async run() {

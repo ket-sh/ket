@@ -47,6 +47,12 @@ test -d "$PROJECT/.git" || fail "no repository was initialized"
 grep -q '"name": "order-service"' "$PROJECT/package.json" ||
   fail "the manifest is not named after the directory"
 
+echo "acceptance: the summary explains the ket command part by part"
+grep -q 'The ket command, part by part' "$SANDBOX/create.log" ||
+  said "the summary never explained the ket command"
+grep -q 'ket retro' "$SANDBOX/create.log" ||
+  said "the summary never named the retro part"
+
 echo "acceptance: a created project carries the standing law it is governed by"
 test -f "$PROJECT/CLAUDE.md" || fail "no standing law was written"
 grep -qxF "# \`order-service\`" "$PROJECT/CLAUDE.md" ||

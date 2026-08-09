@@ -10,6 +10,7 @@ import type { ScaffoldFile } from '../../shared/write-files.ts';
 import { CONFIGURATION_FILE, configurationIn } from '../../shared/configuration-file.ts';
 import { uncommittedIn } from '../../shared/git.ts';
 import { KET_DIRECTORY, ketRootOrThrow } from '../../shared/locate.ts';
+import { partSays } from '../../shared/parts.ts';
 import {
   hashOf,
   parseScaffoldRecord,
@@ -179,7 +180,7 @@ async function applied(
 const update = defineCommand({
   meta: {
     name: 'update',
-    description: 'Bring the files ket wrote back to what it ships now',
+    description: partSays('update'),
   },
   args: {
     plan: { type: 'boolean', default: false, description: 'Say every fate and write nothing' },
