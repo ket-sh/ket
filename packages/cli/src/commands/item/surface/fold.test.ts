@@ -102,3 +102,13 @@ describe('the folds the files land in', () => {
     expect(diffBleed(change)).not.toContain('d2h-file-list');
   });
 });
+
+describe('the scheme the rendered diff obeys', () => {
+  it('dresses every render in the auto scheme the dark skin keys on', () => {
+    expect(diffBleed(change).match(/d2h-wrapper d2h-auto-color-scheme/g)).toHaveLength(4);
+  });
+
+  it('never pins a render to the light scheme', () => {
+    expect(diffBleed(change)).not.toContain('d2h-light-color-scheme');
+  });
+});

@@ -1,6 +1,7 @@
 import type { DiffFile } from 'diff2html/lib/types';
 
 import { html as diffHtml, parse as parseDiff } from 'diff2html';
+import { ColorSchemeType } from 'diff2html/lib/types';
 
 import { escaped, slugOf } from './text.ts';
 
@@ -10,7 +11,12 @@ interface FoldedFile {
 }
 
 function renderedDiff(file: DiffFile, format: 'line-by-line' | 'side-by-side'): string {
-  return diffHtml([file], { drawFileList: false, matching: 'lines', outputFormat: format });
+  return diffHtml([file], {
+    drawFileList: false,
+    matching: 'lines',
+    outputFormat: format,
+    colorScheme: ColorSchemeType.AUTO,
+  });
 }
 
 function pathOf(file: DiffFile): string {
