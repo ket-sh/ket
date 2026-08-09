@@ -94,4 +94,8 @@ describe('settings no migration can read', () => {
   it('says nothing where the enabled plugins hold no record', () => {
     expect(withCurrentPluginNames('{"enabledPlugins": 7}')).toBeUndefined();
   });
+
+  it('says nothing where the enabled plugins hold null, which also calls itself an object', () => {
+    expect(withCurrentPluginNames('{"enabledPlugins": null}')).toBeUndefined();
+  });
 });

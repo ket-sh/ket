@@ -30,9 +30,14 @@ function currentNameOf(key: string, gatesAlreadyCurrent: boolean): string {
 
 export function withCurrentPluginNames(settings: string): string | undefined {
   const held = parsedRecord(settings);
-  const enabled = held?.['enabledPlugins'];
 
-  if (held === undefined || !isRecord(enabled)) {
+  if (held === undefined) {
+    return undefined;
+  }
+
+  const enabled = held['enabledPlugins'];
+
+  if (!isRecord(enabled)) {
     return undefined;
   }
 
