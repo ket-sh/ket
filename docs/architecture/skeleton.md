@@ -182,6 +182,7 @@ Depends on:
 
 Depends on:
 
+- [packages/tui shared/lib](#packagestui-sharedlib)
 - [packages/tui shared/model](#packagestui-sharedmodel)
 - [packages/tui shared/theme](#packagestui-sharedtheme)
 
