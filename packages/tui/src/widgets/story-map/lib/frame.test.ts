@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import type { MapBandView } from '../../../shared/model';
+import type { MapBandView, MapRibView } from '../../../shared/model';
 import type { MapColumn } from './columns.ts';
 
-import { bandHeightOf, cardLinesOf, columnWidthsOf, shownBandsOf } from './frame.ts';
+import { bandHeightOf, cardLinesOf, columnWidthsOf, ribWidthsOf, shownBandsOf } from './frame.ts';
 
 const COLUMNS: MapColumn[] = [
   { id: 's-playbook', name: 'pick the playbook', activity: 'start the launch' },
@@ -31,6 +31,23 @@ describe('the width every column owns inside a band', () => {
     for (const width of columnWidthsOf(3, 8)) {
       expect(width).toBeGreaterThanOrEqual(0);
     }
+  });
+});
+
+describe('the width every activity spans over its steps', () => {
+  it('hands each rib the columns its steps own', () => {
+    const spine: MapRibView[] = [
+      {
+        activity: 'start the launch',
+        steps: [
+          { id: 's-playbook', name: 'pick the playbook' },
+          { id: 's-draft', name: 'draft the notes' },
+        ],
+      },
+      { activity: 'watch your progress', steps: [{ id: 's-bar', name: 'see the bar' }] },
+    ];
+
+    expect(ribWidthsOf(spine, [25, 25, 24])).toEqual([50, 24]);
   });
 });
 

@@ -7,7 +7,7 @@ import type { MapFrame } from '../lib/frame.ts';
 
 import { useTheme } from '../../../shared/theme';
 import { columnsOf } from '../lib/columns.ts';
-import { columnWidthsOf, shownBandsOf } from '../lib/frame.ts';
+import { columnWidthsOf, ribWidthsOf, shownBandsOf } from '../lib/frame.ts';
 import { detailOf, seatIndexOf, seatsOf, walkedTo } from '../lib/spot.ts';
 import { Band } from './band.tsx';
 
@@ -66,35 +66,75 @@ function Header({ product }: { product: StoryMapView['product'] }): ReactNode {
   );
 }
 
-function Spine({ map, columns }: { map: StoryMapView; columns: MapColumn[] }): ReactNode {
+function SpineCell({
+  label,
+  width,
+  grow,
+  tone,
+}: {
+  label: string;
+  width: number | undefined;
+  grow: number;
+  tone: string;
+}): ReactNode {
+  return (
+    <box
+      flexGrow={width === undefined ? grow : 0}
+      flexBasis={width === undefined ? 1 : 'auto'}
+      width={width ?? 'auto'}
+      paddingLeft={1}
+    >
+      <text wrapMode="none" fg={tone}>
+        {label}
+      </text>
+    </box>
+  );
+}
+
+function Spine({
+  map,
+  columns,
+  widths,
+}: {
+  map: StoryMapView;
+  columns: MapColumn[];
+  widths: number[] | undefined;
+}): ReactNode {
   const { theme } = useTheme();
+  const spans = widths === undefined ? undefined : ribWidthsOf(map.spine, widths);
+  const insets = widths === undefined ? 0 : 2;
 
   return (
-    <box flexDirection="column" flexShrink={0} paddingTop={1}>
+    <box
+      flexDirection="column"
+      flexShrink={0}
+      paddingTop={1}
+      paddingLeft={insets}
+      paddingRight={insets}
+    >
       <box flexDirection="row">
         {map.spine.map(
           (rib, at): ReactNode => (
-            <box
+            <SpineCell
               key={`${rib.activity}-${String(at)}`}
-              flexGrow={rib.steps.length}
-              flexBasis={1}
-              paddingLeft={1}
-            >
-              <text wrapMode="none" fg={theme.violet}>
-                {rib.activity}
-              </text>
-            </box>
+              label={rib.activity}
+              width={spans?.[at]}
+              grow={rib.steps.length}
+              tone={theme.violet}
+            />
           ),
         )}
       </box>
       <box flexDirection="row">
         {columns.map(
-          (column): ReactNode => (
-            <box key={column.id} flexGrow={1} flexBasis={1} paddingLeft={1}>
-              <text wrapMode="none" fg={theme.subtext}>
-                {column.name}
-              </text>
-            </box>
+          (column, at): ReactNode => (
+            <SpineCell
+              key={column.id}
+              label={column.name}
+              width={widths?.[at]}
+              grow={1}
+              tone={theme.subtext}
+            />
           ),
         )}
       </box>
@@ -185,7 +225,7 @@ function MapBody({ map, at, frame, onSeat, onWheel }: MapBodyProps): ReactNode {
   return (
     <box flexDirection="column" onMouseScroll={wheelAt}>
       <Header product={map.product} />
-      <Spine map={map} columns={columns} />
+      <Spine map={map} columns={columns} widths={widths} />
       <box flexDirection="column" overflow="hidden" minHeight={0}>
         {bands.map(
           (band, bandAt): ReactNode => (

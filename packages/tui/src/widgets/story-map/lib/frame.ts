@@ -1,4 +1,4 @@
-import type { MapBandView } from '../../../shared/model';
+import type { MapBandView, MapRibView } from '../../../shared/model';
 import type { MapColumn } from './columns.ts';
 
 import { wrappedTo } from '../../../shared/lib';
@@ -29,6 +29,18 @@ export function columnWidthsOf(cols: number, count: number): number[] {
   const leftover = interior - base * count;
 
   return Array.from({ length: count }, (_, at) => (at < leftover ? base + 1 : base));
+}
+
+export function ribWidthsOf(spine: MapRibView[], widths: number[]): number[] {
+  let taken = 0;
+
+  return spine.map((rib) => {
+    const owned = widths.slice(taken, taken + rib.steps.length);
+
+    taken += rib.steps.length;
+
+    return owned.reduce((span, width) => span + width, 0);
+  });
 }
 
 export function cardLinesOf(name: string, columnWidth: number): string[] {
