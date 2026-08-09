@@ -44,7 +44,7 @@ import { PAGE_SIDE, StageArea } from './stage.tsx';
 import { surfaceMost } from './surface.tsx';
 import { ThemePicker } from './theme.tsx';
 
-const CHROME = 6;
+const CHROME = 7;
 
 export interface WatchPageProps {
   feed: BoardFeed;

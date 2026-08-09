@@ -1,3 +1,4 @@
+import { rgbToHex } from '@opentui/core';
 import { createMockKeys } from '@opentui/core/testing';
 import { testRender } from '@opentui/react/test-utils';
 import { afterEach, describe, expect, it } from 'bun:test';
@@ -66,9 +67,18 @@ async function opening(presses: Press[]): Promise<string> {
 
 const SECOND = THEMES[1]?.[0] ?? '';
 
+const SECOND_WORN = THEMES[1]?.[1];
+
 const PICKED: Press = { key: 't', lands: 'themes' };
 
 const BROWSED: Press = { key: 'ARROW_DOWN', lands: `► ${SECOND}` };
+
+function crumbTone(): string {
+  const spans = (rendered?.captureSpans().lines ?? []).flatMap((line) => line.spans);
+  const crumb = spans.find((span) => span.text === 'board');
+
+  return crumb === undefined ? '' : rgbToHex(crumb.fg).toLowerCase();
+}
 
 describe('the theme picker over the watch', () => {
   it('opens on t and lists the wardrobe with color strips', async () => {
@@ -79,32 +89,41 @@ describe('the theme picker over the watch', () => {
     expect(frame).toContain('██');
   });
 
-  it('names the worn theme in the header', async () => {
+  it('keeps the theme name out of the header', async () => {
     const frame = await opening([]);
 
-    expect(frame).toContain('kanagawa');
+    expect(frame).not.toContain('kanagawa');
   });
 
   it('previews the selection while the picker is open', async () => {
-    const frame = await opening([PICKED, BROWSED]);
+    await opening([PICKED, BROWSED]);
 
-    const header = frame.split('\n').find((row) => row.includes('●')) ?? '';
-
-    expect(header).toContain(SECOND);
+    expect(crumbTone()).toBe(
+      SECOND_WORN?.gray.toLowerCase() ?? 'the wardrobe lost its second theme',
+    );
   });
 
   it('keeps the previewed theme on enter', async () => {
-    const frame = await opening([PICKED, BROWSED, { key: 'RETURN', leaves: 'themes' }]);
+    const frame = await opening([
+      PICKED,
+      BROWSED,
+      { key: 'RETURN', leaves: 'themes' },
+      { key: 't', lands: 'themes' },
+    ]);
 
-    expect(frame).not.toContain('themes');
-    expect(frame).toContain(SECOND);
+    expect(frame).toContain(`► ${SECOND}`);
   });
 
   it('restores the kept theme on escape', async () => {
-    const frame = await opening([PICKED, BROWSED, { key: 'ESCAPE', leaves: 'themes' }]);
+    const frame = await opening([
+      PICKED,
+      BROWSED,
+      { key: 'ESCAPE', leaves: 'themes' },
+      { key: 't', lands: 'themes' },
+    ]);
 
-    expect(frame).not.toContain(SECOND);
-    expect(frame).toContain('kanagawa');
+    expect(frame).toContain('► kanagawa');
+    expect(frame).not.toContain(`► ${SECOND}`);
   });
 
   it('stays out of the way of a gate ceremony', async () => {

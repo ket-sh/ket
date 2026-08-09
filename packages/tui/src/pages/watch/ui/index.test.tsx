@@ -117,6 +117,15 @@ describe('the board the watch page shows', () => {
     expect(frame).toContain('▄▄█▄▄▄█▄▄');
     expect(frame).toContain('●');
   });
+
+  it('keeps one quiet line between the banner and the breadcrumb', async () => {
+    const rows = (await openedAt(WIDE, 30)).split('\n');
+    const bannerFoot = rows.findIndex((row) => row.includes('█   █'));
+    const header = rows.findIndex((row) => row.includes('● board'));
+
+    expect(rows[bannerFoot + 1]?.trim()).toBe('');
+    expect(header).toBe(bannerFoot + 2);
+  });
 });
 
 describe('the selection the arrows move', () => {
@@ -233,10 +242,11 @@ describe('the key bar the chrome carries', () => {
     expect(wide).toContain('b backlog');
   });
 
-  it('leaves the header to the breadcrumb and the worn theme', async () => {
+  it('leaves the header to the breadcrumb alone', async () => {
     const frame = await openedAt(WIDE, 30);
 
     expect(rowWith(frame, '● board')).not.toContain('q quit');
+    expect(rowWith(frame, '● board')).not.toContain('kanagawa');
   });
 
   it('names the keys the view under it answers', async () => {

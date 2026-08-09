@@ -162,11 +162,12 @@ describe('the theme picker the pointer works', () => {
     const opened = await landed((seen) => seen.includes('themes'));
 
     await clickedOn(opened, SECOND);
+    await landed((seen) => !seen.includes('themes'));
+    pressed('t');
 
-    const shut = await landed((seen) => !seen.includes('themes'));
-    const header = shut.split('\n').find((row) => row.includes('●')) ?? '';
+    const reopened = await landed((seen) => seen.includes('themes'));
 
-    expect(header).toContain(SECOND);
+    expect(reopened).toContain(`► ${SECOND}`);
   });
 
   it('reverts the preview on a click outside', async () => {
@@ -180,10 +181,15 @@ describe('the theme picker the pointer works', () => {
     await clickedOn(previewed, 'The watched item');
 
     const shut = await landed((seen) => !seen.includes('themes'));
-    const header = shut.split('\n').find((row) => row.includes('●')) ?? '';
 
-    expect(header).toContain('kanagawa');
     expect(shut).not.toContain('║ K-1');
+
+    pressed('t');
+
+    const reopened = await landed((seen) => seen.includes('themes'));
+
+    expect(reopened).toContain('► kanagawa');
+    expect(reopened).not.toContain(`► ${SECOND}`);
   });
 });
 

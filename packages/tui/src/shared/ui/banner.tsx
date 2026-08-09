@@ -14,7 +14,7 @@ export function Banner(): ReactNode {
   const rows = TORII.map((torii, index) => `${torii}   ${LETTERS[index] ?? ''}`);
 
   return (
-    <box flexDirection="column">
+    <box flexDirection="column" marginBottom={1}>
       {rows.map(
         (row, rowIndex): ReactNode => (
           <text key={String(rowIndex)} wrapMode="none">
