@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 import type { GateActionView } from '../../../shared/model';
-import type { GroupedBindings } from '../lib/bindings.ts';
+import type { GroupedBindings, ShownWork } from '../lib/bindings.ts';
 import type { BoardLayout } from '../model/board-layout.ts';
 import type { Frame } from '../model/frames.ts';
 import type { Help } from '../model/help.ts';
@@ -39,6 +39,7 @@ export function HelpOverlay({
   frame,
   offers,
   layout,
+  shown,
   width,
   height,
 }: {
@@ -46,6 +47,7 @@ export function HelpOverlay({
   frame: Frame;
   offers: GateActionView[];
   layout: BoardLayout;
+  shown: ShownWork;
   width: number;
   height: number;
 }): ReactNode {
@@ -55,7 +57,7 @@ export function HelpOverlay({
     return null;
   }
 
-  const grouped = groupedOf(bindingsAt(spotOf(frame, layout, offers)));
+  const grouped = groupedOf(bindingsAt(spotOf(frame, layout, offers, shown)));
   const tall = grouped.reduce((count, held) => count + held.bindings.length + 1, 0) + 5;
 
   return (

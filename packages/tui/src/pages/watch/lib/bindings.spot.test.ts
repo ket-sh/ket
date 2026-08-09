@@ -7,8 +7,13 @@ import type {
   JourneyView,
 } from '../../../shared/model';
 import type { Frame, JourneyFocus, JourneyTab } from '../model/frames.ts';
+import type { ShownWork } from './bindings.ts';
 
 import { spotOf } from './bindings.ts';
+
+const HELD: ShownWork = { cards: 2, logged: 3 };
+
+const IDLE: ShownWork = { cards: 0, logged: 0 };
 
 const PANE: JourneyPaneView = {
   kind: 'feature',
@@ -93,38 +98,50 @@ function journeyFrameAt(tab: JourneyTab, focus: JourneyFocus, sel: string): Fram
   return { kind: 'journey', journey: journeyOf([CHILD]), sel, tab, pick: 0, focus };
 }
 
-describe('the spot a frame stands in', () => {
-  it('reads the board frame with its layout and its offers', () => {
-    expect(spotOf({ kind: 'board' }, 'list', ['approve'])).toStrictEqual({
+describe('the spot the board stands in', () => {
+  it('reads the board frame with its layout, its offers, and its work', () => {
+    expect(spotOf({ kind: 'board' }, 'list', ['approve'], HELD)).toStrictEqual({
       kind: 'board',
       layout: 'list',
       offers: ['approve'],
+      holds: true,
     });
   });
 
+  it('reads a board showing no card as holding nothing', () => {
+    expect(spotOf({ kind: 'board' }, 'kanban', [], IDLE)).toStrictEqual({
+      kind: 'board',
+      layout: 'kanban',
+      offers: [],
+      holds: false,
+    });
+  });
+});
+
+describe('the spot a journey stands in', () => {
   it('reads a journey outside the workflow tab as the plain canvas', () => {
-    expect(spotOf(journeyFrameAt('overview', 'canvas', 'n1'), 'kanban', [])).toStrictEqual({
+    expect(spotOf(journeyFrameAt('overview', 'canvas', 'n1'), 'kanban', [], HELD)).toStrictEqual({
       kind: 'journey',
       pane: 'canvas',
     });
   });
 
   it('reads the canvas as plain while nodes still lie to the right', () => {
-    expect(spotOf(journeyFrameAt('workflow', 'canvas', 'n0'), 'kanban', [])).toStrictEqual({
+    expect(spotOf(journeyFrameAt('workflow', 'canvas', 'n0'), 'kanban', [], HELD)).toStrictEqual({
       kind: 'journey',
       pane: 'canvas',
     });
   });
 
   it('reads the brink where no node lies further right', () => {
-    expect(spotOf(journeyFrameAt('workflow', 'canvas', 'n1'), 'kanban', [])).toStrictEqual({
+    expect(spotOf(journeyFrameAt('workflow', 'canvas', 'n1'), 'kanban', [], HELD)).toStrictEqual({
       kind: 'journey',
       pane: 'brink',
     });
   });
 
   it('reads the pane as held once the focus sits in it', () => {
-    expect(spotOf(journeyFrameAt('workflow', 'pane', 'n1'), 'kanban', [])).toStrictEqual({
+    expect(spotOf(journeyFrameAt('workflow', 'pane', 'n1'), 'kanban', [], HELD)).toStrictEqual({
       kind: 'journey',
       pane: 'held',
     });
@@ -140,28 +157,74 @@ describe('the spot a frame stands in', () => {
       focus: 'canvas',
     };
 
-    expect(spotOf(frame, 'kanban', [])).toStrictEqual({ kind: 'journey', pane: 'canvas' });
+    expect(spotOf(frame, 'kanban', [], HELD)).toStrictEqual({ kind: 'journey', pane: 'canvas' });
+  });
+});
+
+const A_PAGE = {
+  kind: 'page' as const,
+  path: 'docs/guide.md',
+  name: 'The guide',
+  category: undefined,
+  sources: [],
+  rot: 'fresh' as const,
+  broken: undefined,
+  touch: undefined,
+};
+
+const A_MAP = {
+  product: { name: 'shop', idea: 'a place to buy a thing' },
+  spine: [],
+  bands: [],
+};
+
+describe('the spot the docs screen stands in', () => {
+  it('reads the docs screen with the focus and the pages it holds', () => {
+    const resting: Frame = {
+      kind: 'docs',
+      catalog: { groups: [{ label: 'pages', rows: [A_PAGE] }] },
+      sel: 0,
+      focus: 'catalog',
+    };
+    const bare: Frame = { kind: 'docs', catalog: { groups: [] }, sel: 0, focus: 'catalog' };
+
+    expect(spotOf(resting, 'kanban', [], IDLE)).toStrictEqual({
+      kind: 'docs',
+      focus: 'catalog',
+      holds: true,
+    });
+    expect(spotOf(bare, 'kanban', [], HELD)).toStrictEqual({
+      kind: 'docs',
+      focus: 'catalog',
+      holds: false,
+    });
   });
 });
 
 describe('the spot a held screen stands in', () => {
-  it('reads the docs screen with the focus it holds', () => {
-    const resting: Frame = { kind: 'docs', catalog: { groups: [] }, sel: 0, focus: 'catalog' };
-    const held: Frame = { kind: 'docs', catalog: { groups: [] }, sel: 0, focus: 'detail' };
+  it('reads the map by whether a story map exists to walk', () => {
+    expect(
+      spotOf({ kind: 'map', reading: { absent: true }, at: 0 }, 'kanban', [], HELD),
+    ).toStrictEqual({ kind: 'map', holds: false });
+    expect(
+      spotOf({ kind: 'map', reading: { map: A_MAP }, at: 0 }, 'kanban', [], IDLE),
+    ).toStrictEqual({ kind: 'map', holds: true });
+  });
 
-    expect(spotOf(resting, 'kanban', [])).toStrictEqual({ kind: 'docs', focus: 'catalog' });
-    expect(spotOf(held, 'kanban', [])).toStrictEqual({ kind: 'docs', focus: 'detail' });
+  it('reads the log by the events it shows', () => {
+    expect(spotOf({ kind: 'oplog', events: [], sel: 0 }, 'kanban', [], IDLE)).toStrictEqual({
+      kind: 'oplog',
+      holds: false,
+    });
+    expect(spotOf({ kind: 'oplog', events: [], sel: 0 }, 'kanban', [], HELD)).toStrictEqual({
+      kind: 'oplog',
+      holds: true,
+    });
   });
 
   it('reads every held screen by its own kind', () => {
-    expect(spotOf({ kind: 'map', reading: { absent: true }, at: 0 }, 'kanban', [])).toStrictEqual({
-      kind: 'map',
-    });
-    expect(spotOf({ kind: 'oplog', events: [], sel: 0 }, 'kanban', [])).toStrictEqual({
-      kind: 'oplog',
-    });
-    expect(spotOf(SURFACE, 'kanban', [])).toStrictEqual({ kind: 'surface' });
-    expect(spotOf(GATE, 'kanban', [])).toStrictEqual({ kind: 'gate' });
-    expect(spotOf(EDIT, 'kanban', [])).toStrictEqual({ kind: 'edit' });
+    expect(spotOf(SURFACE, 'kanban', [], HELD)).toStrictEqual({ kind: 'surface' });
+    expect(spotOf(GATE, 'kanban', [], HELD)).toStrictEqual({ kind: 'gate' });
+    expect(spotOf(EDIT, 'kanban', [], HELD)).toStrictEqual({ kind: 'edit' });
   });
 });

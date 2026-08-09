@@ -119,10 +119,17 @@ async function shelvedDocs(): Promise<DocsCatalogView> {
   return structuredClone(DOCS);
 }
 
+export function idleFeedOf(): ActedFeed {
+  return feedWith(STAGES.map((status) => ({ status, cards: [] })));
+}
+
 export function feedOf(): ActedFeed {
+  return feedWith(structuredClone(COLUMNS));
+}
+
+function feedWith(columns: KanbanColumnView[]): ActedFeed {
   const acted: string[] = [];
   const saved: string[] = [];
-  const columns = structuredClone(COLUMNS);
   let told: (() => void) | undefined;
 
   return {

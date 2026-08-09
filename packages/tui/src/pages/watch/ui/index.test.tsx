@@ -9,7 +9,7 @@ setDefaultTimeout(20_000);
 import type { ActedFeed } from './watch-fixtures.ts';
 
 import { WatchPage } from './index.tsx';
-import { feedOf, NOW, STAGES } from './watch-fixtures.ts';
+import { feedOf, idleFeedOf, NOW, STAGES } from './watch-fixtures.ts';
 
 const WIDE = 200;
 
@@ -261,5 +261,21 @@ describe('the key bar the chrome carries', () => {
     const frame = await landedOnJourney();
 
     expect(bottomRow(frame)).toContain('esc board');
+  });
+
+  it('hides the hints that act on nothing while the board holds no card', async () => {
+    rendered = await testRender(
+      <WatchPage feed={idleFeedOf()} clock={() => NOW} onQuit={() => undefined} />,
+      { width: WIDE, height: 30 },
+    );
+
+    const frame = await landed((seen) => seen.includes('triaged 0'));
+    const bar = bottomRow(frame);
+
+    expect(bar).toContain('q quit');
+    expect(bar).toContain('m map');
+    expect(bar).not.toContain('move');
+    expect(bar).not.toContain('journey');
+    expect(bar).not.toContain('/ filter');
   });
 });
