@@ -3,7 +3,7 @@ import type { RegisteredPreset } from '../registry.ts';
 import type { ScaffoldFile } from '../write-files.ts';
 
 import { governingPresets } from '../registry.ts';
-import { heldRecordIn, isRecord } from './held.ts';
+import { isRecord } from './held.ts';
 import { installsFor } from './integrations.ts';
 import { dictionaryInstallsFor } from './language.ts';
 
@@ -108,12 +108,35 @@ function mergedBlocks(
   );
 }
 
-export function manifestFileOf(
-  held: string,
+type HeldManifest = { holds: Record<string, unknown> } | { refused: string };
+
+function heldManifestOf(held: string): HeldManifest {
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(held);
+  } catch {
+    return { refused: `${MANIFEST_FILE} cannot be read, so nothing merges into it` };
+  }
+
+  if (!isRecord(parsed)) {
+    return { refused: `${MANIFEST_FILE} holds no record, so nothing merges into it` };
+  }
+
+  const broken = BLOCKS.find((field) => Object.hasOwn(parsed, field) && !isRecord(parsed[field]));
+
+  return broken === undefined
+    ? { holds: parsed }
+    : {
+        refused: `${MANIFEST_FILE} holds ${broken} in no state to merge, so nothing merges into it`,
+      };
+}
+
+function mergedManifestFile(
+  manifest: Record<string, unknown>,
   name: string,
   source: ManifestSource,
 ): ScaffoldFile | undefined {
-  const manifest = heldRecordIn(held);
   const fresh = manifestOf(name, source);
   const merged = {
     ...manifest,
@@ -123,4 +146,18 @@ export function manifestFileOf(
   const contents = rendered(merged);
 
   return contents === rendered(manifest) ? undefined : { path: MANIFEST_FILE, contents };
+}
+
+export function manifestFileOf(
+  held: string,
+  name: string,
+  source: ManifestSource,
+): ScaffoldFile | { refused: string } | undefined {
+  if (held === '') {
+    return mergedManifestFile({}, name, source);
+  }
+
+  const reading = heldManifestOf(held);
+
+  return 'refused' in reading ? reading : mergedManifestFile(reading.holds, name, source);
 }

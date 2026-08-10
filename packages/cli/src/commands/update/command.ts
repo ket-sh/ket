@@ -8,6 +8,7 @@ import type { Configuration } from '../../shared/configuration.ts';
 import type { FileFate, PlannedFate, ScaffoldRecord } from '../../shared/scaffold-manifest.ts';
 import type { ProjectNames } from '../../shared/scaffold/name-token.ts';
 import type { ScaffoldFile } from '../../shared/write-files.ts';
+import type { PlannedMerges } from './merges.ts';
 
 import { CONFIGURATION_FILE, configurationIn } from '../../shared/configuration-file.ts';
 import { uncommittedIn } from '../../shared/git.ts';
@@ -127,7 +128,7 @@ async function plannedOn(root: string, record: ScaffoldRecord, fresh: ScaffoldFi
 function saidFates(
   plan: PlannedFate[],
   migration: ScaffoldFile | undefined,
-  merged: ScaffoldFile[],
+  merged: PlannedMerges,
 ): void {
   for (const planned of plan.filter((fated) => fated.fate !== 'settled')) {
     say(`${planned.fate} ${planned.path}`);
@@ -137,8 +138,12 @@ function saidFates(
     say(`migrated ${migration.path}`);
   }
 
-  for (const file of merged) {
+  for (const file of merged.files) {
     say(`merged ${file.path}`);
+  }
+
+  for (const refusal of merged.refusals) {
+    say(refusal);
   }
 }
 
@@ -247,7 +252,7 @@ const update = defineCommand({
       return;
     }
 
-    const merges = migration === undefined ? merged : [migration, ...merged];
+    const merges = migration === undefined ? merged.files : [migration, ...merged.files];
 
     await applied(root, record, fresh, plan, merges);
 

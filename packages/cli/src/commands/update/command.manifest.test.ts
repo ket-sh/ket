@@ -167,3 +167,16 @@ describe('updating a project whose manifest already holds everything', () => {
     expect(lines.join('')).not.toContain('merged package.json');
   });
 });
+
+describe('updating a project whose manifest nothing can read', () => {
+  it('leaves the file untouched and says why nothing merges', async () => {
+    await writeFile(join(where, 'package.json'), '{ held hostage');
+    await chromaticChosen();
+
+    await runCommand('update', []);
+
+    await expect(readFile(join(where, 'package.json'), 'utf8')).resolves.toBe('{ held hostage');
+    expect(lines.join('')).toContain('package.json cannot be read, so nothing merges into it');
+    expect(lines.join('')).not.toContain('merged package.json');
+  });
+});

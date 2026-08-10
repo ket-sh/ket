@@ -6,7 +6,7 @@ sources:
   - presets/cli/src/**
   - presets/web/src/**
   - harness/**
-stamp: ad6283f081e4
+stamp: 8704ebfb5640
 ---
 
 # The ket handbook
@@ -51,7 +51,9 @@ plugins registered, and the pipeline ready.
   integration pins. `ket update` merges it the same way: it adds the pins and
   scripts the project is missing, never rewrites a version or a script the
   project made its own, and writes nothing when nothing is missing. That's
-  how an integration chosen after create still lands its dependencies.
+  how an integration chosen after create still lands its dependencies. The
+  update leaves a manifest it can't read untouched and says why nothing
+  merges rather than rebuilding the file.
 - Two Claude Code plugins carry the law: `ket-gates` arms the gates, and
   `ket` carries the pipeline commands and their skills.
 

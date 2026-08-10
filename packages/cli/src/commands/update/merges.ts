@@ -33,7 +33,7 @@ async function plannedManifestOf(
   root: string,
   configuration: Configuration,
   name: string,
-): Promise<ScaffoldFile | undefined> {
+): Promise<ScaffoldFile | { refused: string } | undefined> {
   return manifestFileOf(
     await readTextIfPresent(root, MANIFEST_FILE),
     name,
@@ -41,15 +41,27 @@ async function plannedManifestOf(
   );
 }
 
+export interface PlannedMerges {
+  files: ScaffoldFile[];
+  refusals: string[];
+}
+
 export async function plannedMergesOf(
   root: string,
   configuration: Configuration,
   name: string,
-): Promise<ScaffoldFile[]> {
-  const planned = [
-    await plannedRegistrationOf(root, configuration),
-    await plannedManifestOf(root, configuration, name),
-  ];
+): Promise<PlannedMerges> {
+  const registration = await plannedRegistrationOf(root, configuration);
+  const manifest = await plannedManifestOf(root, configuration, name);
+  const files = registration === undefined ? [] : [registration];
 
-  return planned.filter((file): file is ScaffoldFile => file !== undefined);
+  if (manifest === undefined) {
+    return { files, refusals: [] };
+  }
+
+  if ('refused' in manifest) {
+    return { files, refusals: [manifest.refused] };
+  }
+
+  return { files: [...files, manifest], refusals: [] };
 }

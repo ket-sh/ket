@@ -44,7 +44,11 @@ function afterMerging(
 ): unknown {
   const merged = manifestFileOf(JSON.stringify(held), name, source);
 
-  return merged === undefined ? held : JSON.parse(merged.contents);
+  if (merged === undefined || 'refused' in merged) {
+    return held;
+  }
+
+  return JSON.parse(merged.contents);
 }
 
 const FIELDS = ['scripts', 'dependencies', 'devDependencies'];

@@ -23,12 +23,24 @@ function namesUnder(rendered: string, field: string): string[] {
   return isRecord(section) ? Object.keys(section) : [];
 }
 
-function parsed(file: ScaffoldFile | undefined): unknown {
+function parsed(file: ScaffoldFile | { refused: string } | undefined): unknown {
   if (file === undefined) {
     throw new Error('nothing was merged to parse');
   }
 
+  if ('refused' in file) {
+    throw new Error(file.refused);
+  }
+
   return JSON.parse(file.contents);
+}
+
+function mergedFile(file: ScaffoldFile | { refused: string } | undefined): ScaffoldFile {
+  if (file === undefined || 'refused' in file) {
+    throw new Error('nothing was merged');
+  }
+
+  return file;
 }
 
 function governedBy(
@@ -171,11 +183,13 @@ describe('merging what a project is missing into the manifest it holds', () => {
   });
 
   it('lands where a package manager reads what a project depends on', () => {
-    expect(manifestFileOf(held, 'order-service', PRESET)?.path).toBe(MANIFEST_FILE);
+    expect(mergedFile(manifestFileOf(held, 'order-service', PRESET)).path).toBe(MANIFEST_FILE);
   });
 
   it('ends with a newline, so a formatter leaves it alone', () => {
-    expect(manifestFileOf(held, 'order-service', PRESET)?.contents.endsWith('\n')).toBe(true);
+    expect(mergedFile(manifestFileOf(held, 'order-service', PRESET)).contents.endsWith('\n')).toBe(
+      true,
+    );
   });
 });
 
@@ -230,22 +244,23 @@ describe('a manifest that already holds everything', () => {
 });
 
 describe('a manifest left in no state to merge', () => {
-  it('starts fresh rather than throwing on unreadable json', () => {
-    expect(parsed(manifestFileOf('{ not json', 'app', PRESET))).toMatchObject({
-      name: 'app',
-      dependencies: { citty: '0.2.2' },
+  it('refuses a file it cannot read and merges nothing, since a rewrite would drop what the project holds', () => {
+    expect(manifestFileOf('{ not json', 'app', PRESET)).toStrictEqual({
+      refused: 'package.json cannot be read, so nothing merges into it',
     });
   });
 
-  it('starts fresh on a file that holds null', () => {
-    expect(parsed(manifestFileOf('null', 'app', PRESET))).toMatchObject({ name: 'app' });
+  it('refuses a file that holds no record', () => {
+    expect(manifestFileOf('null', 'app', PRESET)).toStrictEqual({
+      refused: 'package.json holds no record, so nothing merges into it',
+    });
   });
 
-  it('starts fresh on a block that is not a block of pins', () => {
+  it('refuses a block that is not a block of pins, naming the block', () => {
     const held = JSON.stringify({ devDependencies: ['oxlint'] });
 
-    expect(parsed(manifestFileOf(held, 'app', PRESET))).toMatchObject({
-      devDependencies: { oxlint: '1.76.0', vitest: '4.1.10' },
+    expect(manifestFileOf(held, 'app', PRESET)).toStrictEqual({
+      refused: 'package.json holds devDependencies in no state to merge, so nothing merges into it',
     });
   });
 });
