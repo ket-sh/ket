@@ -107,6 +107,39 @@ describe('what a filing writes', () => {
   });
 });
 
+describe('the story a filing was promoted from', () => {
+  it('lands the story the filing named', async () => {
+    await fileAlone(root, {
+      key: 'K-1',
+      title: 'See what is for sale',
+      kind: 'feature',
+      size: 'story',
+      story: 'st-see',
+    });
+
+    await expect(read(root, 'K-1')).resolves.toMatchObject({ story: 'st-see' });
+  });
+
+  it('lands no story for a filing that named none', async () => {
+    await fileAlone(root, { key: 'K-1', title: 'Filed alone', kind: 'bug', size: 'subtask' });
+
+    await expect(read(root, 'K-1')).resolves.not.toHaveProperty('story');
+  });
+
+  it('gives a child the story it named and leaves the parent the one it had', async () => {
+    await write(root, 'K-1', { ...ITEM, size: 'epic', children: [], story: 'st-browse' });
+
+    await fileUnder(
+      root,
+      { key: 'K-2', title: 'The child', kind: 'feature', size: 'story', story: 'st-see' },
+      'K-1',
+    );
+
+    await expect(read(root, 'K-2')).resolves.toMatchObject({ story: 'st-see' });
+    await expect(read(root, 'K-1')).resolves.toMatchObject({ story: 'st-browse' });
+  });
+});
+
 describe('the description a filing carries', () => {
   it('lands the description the filing was written with', async () => {
     await fileAlone(root, {

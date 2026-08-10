@@ -28,6 +28,7 @@ export interface Item {
   status: ItemStatus;
   parent: string | undefined;
   children: string[];
+  story?: string;
   description?: string;
 }
 
@@ -67,8 +68,12 @@ function renderChildren(children: string[]): string {
   return ['children:', ...children.map((child) => `  - ${child}`)].join('\n');
 }
 
-function renderParent(parent: string | undefined): string[] {
-  return parent === undefined ? [] : [`parent: ${parent}`];
+function renderField(field: string, value: string | undefined): string[] {
+  return value === undefined ? [] : [`${field}: ${value}`];
+}
+
+export function promotedFrom(story: string | undefined): { story?: string } {
+  return story === undefined ? {} : { story };
 }
 
 export function renderItem(item: Item): string {
@@ -77,7 +82,8 @@ export function renderItem(item: Item): string {
     `kind: ${item.kind}`,
     `size: ${item.size}`,
     `status: ${item.status}`,
-    ...renderParent(item.parent),
+    ...renderField('parent', item.parent),
+    ...renderField('story', item.story),
     renderChildren(item.children),
     ...renderDescription(item.description),
     '',

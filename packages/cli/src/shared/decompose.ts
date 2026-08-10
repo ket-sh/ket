@@ -1,7 +1,7 @@
 import type { Item, ItemKind, ItemSize } from './item.ts';
 
 import { describing } from './item-description.ts';
-import { ITEM_SIZES } from './item.ts';
+import { ITEM_SIZES, promotedFrom } from './item.ts';
 
 export interface Parent {
   key: string;
@@ -13,6 +13,7 @@ export interface Filing {
   title: string;
   kind: ItemKind;
   size: ItemSize;
+  story?: string;
   description?: string;
 }
 
@@ -52,6 +53,7 @@ export function decompositionOf(parent: Parent, filing: Filing): Decomposition {
       status: 'triaged',
       parent: parent.key,
       children: [],
+      ...promotedFrom(filing.story),
       ...describing(filing.description),
     },
   };

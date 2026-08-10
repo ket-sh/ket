@@ -2,7 +2,7 @@ import type { Item, ItemKind, ItemSize, ItemStatus } from './item.ts';
 import type { GovernedItem } from './write-gate.ts';
 
 import { describing, splitDescription } from './item-description.ts';
-import { isInFlight, ITEM_KINDS, ITEM_SIZES, ITEM_STATUSES } from './item.ts';
+import { isInFlight, ITEM_KINDS, ITEM_SIZES, ITEM_STATUSES, promotedFrom } from './item.ts';
 
 const STATUSES: ItemStatus[] = [...ITEM_STATUSES];
 
@@ -56,6 +56,7 @@ export function parseItem(contents: string): Item | undefined {
     status,
     parent: valueOf(fields, 'parent'),
     children: childrenOf(fields),
+    ...promotedFrom(valueOf(fields, 'story')),
     ...describing(description),
   };
 }
@@ -74,6 +75,12 @@ function governed(stored: StoredItem): GovernedItem | undefined {
     status: item.status,
     children: item.children,
   };
+}
+
+export function filedStoriesFrom(stored: StoredItem[]): string[] {
+  return stored
+    .map((entry) => parseItem(entry.contents)?.story)
+    .filter((story): story is string => story !== undefined);
 }
 
 export function inFlightFrom(stored: StoredItem[]): GovernedItem[] {
