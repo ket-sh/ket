@@ -2,10 +2,8 @@ import type { Server, ServerResponse } from 'node:http';
 import type { WebSocket } from 'ws';
 
 import { randomBytes } from 'node:crypto';
-import { once } from 'node:events';
-import { watch } from 'node:fs';
 import { createServer } from 'node:http';
-import { basename, resolve } from 'node:path';
+import { resolve } from 'node:path';
 import { WebSocketServer } from 'ws';
 
 import type { QuietGate } from './quiet.ts';
@@ -14,10 +12,12 @@ import type { Reply } from './routes.ts';
 import { alive, readInfo, removeInfo, signalForeign, writeInfo } from './info.ts';
 import { quietGate } from './quiet.ts';
 import { keyOf, pathOf, refusing, replyTo } from './routes.ts';
+import { watching } from './watch.ts';
 
 export interface SurfaceOptions {
   idleMs?: number;
   d2Binary?: string;
+  armingMs?: number;
 }
 
 export interface SurfaceHandle {
@@ -27,6 +27,7 @@ export interface SurfaceHandle {
 }
 
 const FOUR_HOURS = 14_400_000;
+const ARMING_BOUND_MS = 10_000;
 
 const running = new Map<string, SurfaceHandle>();
 
@@ -36,30 +37,6 @@ function send(response: ServerResponse, reply: Reply): void {
 
 function refusalFor(failed: unknown): Reply {
   return refusing(500, failed instanceof Error ? failed.message : String(failed));
-}
-
-interface Watchdog {
-  close: () => void;
-  closed: Promise<unknown>;
-}
-
-function watching(itemDir: string, changed: () => void): Watchdog {
-  let pending: ReturnType<typeof setTimeout> | undefined;
-  const watcher = watch(itemDir, { recursive: true }, (_, filename) => {
-    if (typeof filename === 'string' && basename(filename).startsWith('.')) {
-      return;
-    }
-
-    clearTimeout(pending);
-    pending = setTimeout(changed, 100);
-  });
-
-  return {
-    closed: once(watcher, 'close'),
-    close: () => {
-      watcher.close();
-    },
-  };
 }
 
 function idleTimer(onIdle: () => void, idleMs: number): { rest(): void } {
@@ -75,12 +52,11 @@ function idleTimer(onIdle: () => void, idleMs: number): { rest(): void } {
 }
 
 function pushingChanges(
-  home: string,
   clients: Set<WebSocket>,
   idle: { rest(): void },
   quiet: QuietGate,
-): Watchdog {
-  return watching(home, () => {
+): () => void {
+  return () => {
     idle.rest();
 
     if (!quiet.loud()) {
@@ -90,7 +66,7 @@ function pushingChanges(
     for (const client of clients) {
       client.send('changed');
     }
-  });
+  };
 }
 
 function attachSockets(server: Server, sessionKey: string, clients: Set<WebSocket>): void {
@@ -161,7 +137,11 @@ export async function startSurface(
 
   attachSockets(server, sessionKey, clients);
 
-  const stopWatching = pushingChanges(home, clients, idle, quiet);
+  const stopWatching = await watching(
+    home,
+    pushingChanges(clients, idle, quiet),
+    options.armingMs ?? ARMING_BOUND_MS,
+  );
 
   const stop = async (): Promise<void> => {
     stopWatching.close();
