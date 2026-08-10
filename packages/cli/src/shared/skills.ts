@@ -47,10 +47,6 @@ export function skillsNote(skills: SkillsInstalled): string[] {
   return 'installed' in skills ? [] : [UNINSTALLED, ...skills.refused.split('\n')];
 }
 
-export function skillsAbsentFrom(held: string[], promised: PresetSkill[]): PresetSkill[] {
-  return promised.filter((skill) => !held.includes(skill.name));
-}
-
 export function refusalFor(skill: PresetSkill, said: string): string {
   return [
     `${skill.name} did not install from ${skill.source}: ${said}`,

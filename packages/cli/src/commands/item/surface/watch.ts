@@ -42,7 +42,7 @@ export async function confirmedByKnocking(
 }
 
 async function swept(sentinel: string): Promise<void> {
-  await rm(sentinel, { force: true, recursive: true });
+  await rm(sentinel, { force: true });
 }
 
 async function knockedFresh(sentinel: string): Promise<void> {

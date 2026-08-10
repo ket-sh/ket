@@ -5,13 +5,10 @@ import {
   INSTALL_ENVIRONMENT,
   installArgvFor,
   refusalFor,
-  skillsAbsentFrom,
   skillsNote,
 } from './skills.ts';
 
 const SKILL = { name: 'vitest', source: 'antfu/skills' };
-
-const FIND_SKILLS = { name: 'find-skills', source: 'vercel-labs/skills' };
 
 describe('what create runs to install one skill into a project', () => {
   it('names the agent and copies the files, because a fresh project detects neither', () => {
@@ -57,24 +54,6 @@ describe('what the outro says about the skills', () => {
       'vitest did not install',
       'Run it later',
     ]);
-  });
-});
-
-describe('which promised skills a project is missing', () => {
-  it('names the skill no directory under the agent holds', () => {
-    expect(skillsAbsentFrom(['find-skills'], [SKILL, FIND_SKILLS])).toStrictEqual([SKILL]);
-  });
-
-  it('names nothing when the project holds every promised skill', () => {
-    expect(skillsAbsentFrom(['vitest', 'find-skills'], [SKILL, FIND_SKILLS])).toStrictEqual([]);
-  });
-
-  it('names every promised skill when the project holds none', () => {
-    expect(skillsAbsentFrom([], [SKILL, FIND_SKILLS])).toStrictEqual([SKILL, FIND_SKILLS]);
-  });
-
-  it('says nothing about a skill the project holds that no preset promised', () => {
-    expect(skillsAbsentFrom(['opentui'], [SKILL])).toStrictEqual([SKILL]);
   });
 });
 

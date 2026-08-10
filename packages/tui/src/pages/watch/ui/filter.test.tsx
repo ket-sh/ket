@@ -153,6 +153,7 @@ describe('the way a narrowing ends or outlives the bar', () => {
     await openedBoard();
     pressed('b');
     await landed((seen) => seen.includes('waiting'));
+    await settled();
     pressed('/');
 
     const frame = await settled();

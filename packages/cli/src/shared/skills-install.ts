@@ -7,13 +7,7 @@ import { join } from 'node:path';
 import type { SkillsInstalled } from './skills.ts';
 
 import { toolRefusal } from './project-tools.ts';
-import {
-  INSTALL_DEADLINE_MS,
-  INSTALL_ENVIRONMENT,
-  installArgvFor,
-  refusalFor,
-  skillsAbsentFrom,
-} from './skills.ts';
+import { INSTALL_DEADLINE_MS, INSTALL_ENVIRONMENT, installArgvFor, refusalFor } from './skills.ts';
 
 const SKILLS_DIRECTORY = join('.claude', 'skills');
 
@@ -71,17 +65,11 @@ export async function installSkills(
   return installEach(root, [...locked.skills, ...brought]);
 }
 
-async function heldAmong(root: string, skills: PresetSkill[]): Promise<string[]> {
-  const standing = await Promise.all(
-    skills.map(async (skill) =>
-      access(join(root, SKILLS_DIRECTORY, skill.name)).then(
-        () => skill.name,
-        () => undefined,
-      ),
-    ),
+async function heldAt(root: string, skill: PresetSkill): Promise<PresetSkill | undefined> {
+  return access(join(root, SKILLS_DIRECTORY, skill.name)).then(
+    () => skill,
+    () => undefined,
   );
-
-  return standing.filter((name): name is string => name !== undefined);
 }
 
 export async function absentSkillsIn(
@@ -96,6 +84,7 @@ export async function absentSkillsIn(
   }
 
   const promised = [...locked.skills, ...brought];
+  const held = await Promise.all(promised.map(async (skill) => heldAt(root, skill)));
 
-  return skillsAbsentFrom(await heldAmong(root, promised), promised);
+  return promised.filter((skill, at) => held[at] !== skill);
 }
