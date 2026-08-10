@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { connect } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -227,5 +227,21 @@ describe('the reuse one process gets', () => {
     const again = await reuseOrStartSurface(itemDir);
 
     expect(again.address).toBe(handle.address);
+  });
+});
+
+describe('the arming sentinel a foreign hand planted', () => {
+  it('never writes through a foreign entry standing where the sentinel goes', async () => {
+    const victimDir = await mkdtemp(join(tmpdir(), 'ket-victim-'));
+    const victim = join(victimDir, 'precious.txt');
+
+    await writeFile(victim, 'precious bytes');
+    await symlink(victim, join(itemDir, '.surface-arming'));
+
+    const handle = await surfaceUp();
+
+    expect(await readFile(victim, 'utf8')).toBe('precious bytes');
+    expect((await fetch(handle.address)).status).toBe(200);
+    await rm(victimDir, { recursive: true, force: true });
   });
 });

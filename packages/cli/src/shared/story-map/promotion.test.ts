@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { MapReading, StoryMap } from './schema.ts';
+import type { MapReading, MapStory, StoryMap } from './schema.ts';
 
 import { promotionOf } from './promotion.ts';
 
@@ -70,5 +70,45 @@ describe('choosing the story a filing is promoted from', () => {
 
   it('refuses rather than throwing, so the caller decides what to say', () => {
     expect(() => promotionOf({ absent: true }, 'st-see')).not.toThrow();
+  });
+});
+
+function mapHolding(story: MapStory): MapReading {
+  const step = { id: 's-browse', name: 'browse the catalog', stories: [story] };
+
+  return { map: { ...MAP, activities: [{ id: 'a-buy', name: 'buy a thing', steps: [step] }] } };
+}
+
+describe('a story that would forge item lines', () => {
+  it('refuses a story whose name carries a line break, so it cannot title an item', () => {
+    const reading = mapHolding({
+      id: 'st-forge',
+      name: 'checkout\nstatus: implementing',
+      release: 'r-skeleton',
+    });
+
+    expect(refusalOf(reading, 'st-forge')).toBe(
+      '.ket/story-map.yaml gives st-forge a name that cannot title an item: a title is one line, and this one carries a line break',
+    );
+  });
+
+  it('refuses a story whose name is empty, since a title must say what the work is', () => {
+    const reading = mapHolding({ id: 'st-blank', name: '   ', release: 'r-skeleton' });
+
+    expect(refusalOf(reading, 'st-blank')).toBe(
+      '.ket/story-map.yaml gives st-blank a name that cannot title an item: a title says what the work is, and this one is empty',
+    );
+  });
+
+  it('refuses a story whose id carries a line break, so it cannot mark a filing', () => {
+    const reading = mapHolding({
+      id: 'st-forge\nparent: K-1',
+      name: 'checkout',
+      release: 'r-skeleton',
+    });
+
+    expect(refusalOf(reading, 'st-forge\nparent: K-1')).toBe(
+      '.ket/story-map.yaml declares a story id that carries a line break, so it cannot mark a filing',
+    );
   });
 });

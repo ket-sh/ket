@@ -23,6 +23,22 @@ async function watchConfirmed(observed: Promise<void>, withinMs: number): Promis
   ]);
 }
 
+function racedByAForeignHand(thrown: unknown): boolean {
+  return thrown instanceof Error && 'code' in thrown && thrown.code === 'EEXIST';
+}
+
+async function knockedFresh(sentinel: string): Promise<void> {
+  await rm(sentinel, { force: true });
+
+  try {
+    await writeFile(sentinel, '', { flag: 'wx' });
+  } catch (thrown) {
+    if (!racedByAForeignHand(thrown)) {
+      throw thrown;
+    }
+  }
+}
+
 async function knockUntilWatching(
   itemDir: string,
   observed: Promise<void>,
@@ -33,7 +49,7 @@ async function knockUntilWatching(
 
   try {
     for (let left = boundMs; left > 0; left = deadline - Date.now()) {
-      await writeFile(sentinel, '');
+      await knockedFresh(sentinel);
 
       if (await watchConfirmed(observed, Math.min(ARMING_KNOCK_MS, left))) {
         return;
