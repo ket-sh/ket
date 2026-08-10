@@ -17,7 +17,7 @@ import type { Seat } from '../model/seat.ts';
 import type { RoomProps } from './stage.tsx';
 
 import { ThemeProvider } from '../../../shared/theme';
-import { Banner, Sheet } from '../../../shared/ui';
+import { Banner, Scheme, Sheet } from '../../../shared/ui';
 import { shownWorkOf } from '../lib/bindings.ts';
 import { laneTotalsOf } from '../lib/lanes.ts';
 import { standingOf } from '../lib/standing.ts';
@@ -273,6 +273,7 @@ function WatchRoom(props: WatchPageProps): ReactNode {
 export function WatchPage(props: WatchPageProps): ReactNode {
   return (
     <ThemeProvider>
+      <Scheme />
       <Sheet />
       <WatchRoom {...props} />
     </ThemeProvider>
