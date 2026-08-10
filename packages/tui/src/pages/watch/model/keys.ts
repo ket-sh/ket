@@ -1,16 +1,12 @@
-import type { GateActionView, KanbanCardView, OplogEventView } from '../../../shared/model';
-import type { BoardLayout } from './board-layout.ts';
-import type { Direction, Pressed } from './compass.ts';
+import type { OplogEventView } from '../../../shared/model';
+import type { Pressed } from './compass.ts';
 import type { Filter } from './filter.ts';
 import type { Frame, FrameStack } from './frames.ts';
-import type { Help } from './help.ts';
-import type { Palette } from './palette.ts';
-import type { Picker } from './picker.ts';
-import type { Seat } from './seat.ts';
+import type { PressDeps } from './press-deps.ts';
 
 import { catalogRows } from '../lib/docs.ts';
 import { narrowedEvents } from '../lib/oplog.ts';
-import { asDirection, DELTA } from './compass.ts';
+import { boardPress } from './board-keys.ts';
 import { docsPress } from './docs-keys.ts';
 import { editorPress } from './editor-keys.ts';
 import { filterOpened, filterPress } from './filter-keys.ts';
@@ -21,29 +17,14 @@ import { oplogPress } from './oplog-keys.ts';
 import { paletteOpened, palettePress } from './palette-keys.ts';
 import { pickerPress } from './picker-keys.ts';
 
-function offeredAction(
-  name: string,
-  chosen: KanbanCardView | undefined,
-): GateActionView | undefined {
-  const action = GATE_KEYS[name];
-
-  if (action === undefined || chosen === undefined) {
-    return undefined;
-  }
-
-  return chosen.offers.includes(action) ? action : undefined;
+export function narrowerOf(deps: PressDeps): Filter {
+  return deps.stack.top.kind === 'oplog' ? deps.logFilter : deps.filter;
 }
 
-function ceremonyOpened(name: string, stack: FrameStack, seat: Seat, tick: number): boolean {
-  const action = offeredAction(name, seat.chosen);
-
-  if (action === undefined || seat.chosen === undefined) {
-    return false;
-  }
-
-  stack.gate(action, seat.chosen, tick);
-
-  return true;
+export function shownLogOf(deps: PressDeps): OplogEventView[] {
+  return deps.stack.top.kind === 'oplog'
+    ? narrowedEvents(deps.stack.top.events, deps.logFilter.query)
+    : [];
 }
 
 function journeyGateOpened(name: string, stack: FrameStack, tick: number): boolean {
@@ -62,101 +43,6 @@ function journeyGateOpened(name: string, stack: FrameStack, tick: number): boole
   stack.gate(action, { key: top.journey.item, title: top.journey.title }, tick);
 
   return true;
-}
-
-function divedIn(name: string, stack: FrameStack, seat: Seat): boolean {
-  if (name !== 'return' && name !== 'enter') {
-    return false;
-  }
-
-  stack.dive(seat.chosen?.key);
-
-  return true;
-}
-
-function walkedBoard(direction: Direction, seat: Seat, layout: BoardLayout): void {
-  if (layout === 'kanban') {
-    seat.move(DELTA[direction]);
-
-    return;
-  }
-
-  if (direction === 'up' || direction === 'down') {
-    seat.slide(direction === 'up' ? -1 : 1);
-  }
-}
-
-const BOARD_CHORDS: Record<string, (deps: PressDeps) => void> = {
-  v: (deps) => {
-    deps.swap();
-  },
-  b: (deps) => {
-    deps.queue();
-  },
-  x: (deps) => {
-    deps.shelve();
-  },
-  m: (deps) => {
-    deps.stack.openMap();
-  },
-  l: (deps) => {
-    deps.stack.openLog();
-  },
-  d: (deps) => {
-    deps.stack.openDocs();
-  },
-};
-
-function boardPress(name: string, deps: PressDeps): void {
-  if (divedIn(name, deps.stack, deps.seat)) {
-    return;
-  }
-
-  if (ceremonyOpened(name, deps.stack, deps.seat, deps.tick)) {
-    return;
-  }
-
-  const chord = BOARD_CHORDS[name];
-
-  if (chord !== undefined) {
-    chord(deps);
-
-    return;
-  }
-
-  const direction = asDirection(name);
-
-  if (direction !== undefined) {
-    walkedBoard(direction, deps.seat, deps.layout);
-  }
-}
-
-export interface PressDeps {
-  onQuit: () => void;
-  refresh: () => void;
-  stack: FrameStack;
-  seat: Seat;
-  most: number;
-  tick: number;
-  layout: BoardLayout;
-  swap: () => void;
-  queue: () => void;
-  shelve: () => void;
-  picker: Picker;
-  filter: Filter;
-  logFilter: Filter;
-  palette: Palette;
-  help: Help;
-}
-
-export function narrowerOf(deps: PressDeps): Filter {
-  return deps.stack.top.kind === 'oplog' ? deps.logFilter : deps.filter;
-}
-
-export function shownLogOf(deps: PressDeps): OplogEventView[] {
-  return deps.stack.top.kind === 'oplog'
-    ? narrowedEvents(deps.stack.top.events, deps.logFilter.query)
-    : [];
 }
 
 const FRAME_PRESSES: Record<Frame['kind'], (name: string, deps: PressDeps) => void> = {

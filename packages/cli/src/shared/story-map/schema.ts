@@ -2,6 +2,7 @@ import type { MapReading, MapStory, StoryMap } from './story-map.ts';
 
 import { heldInYaml } from '../yaml-source.ts';
 import { mapFrom } from './shape.ts';
+import { storiesIn } from './story-map.ts';
 
 export type { MapReading, MapStory, StoryMap } from './story-map.ts';
 
@@ -52,10 +53,6 @@ function refusalsOfStory(story: MapStory, map: StoryMap): string[] {
       (id) => `the story ${story.id} names ${id}, which no user declares`,
     ),
   ];
-}
-
-function storiesIn(map: StoryMap): MapStory[] {
-  return map.activities.flatMap((activity) => activity.steps.flatMap((step) => step.stories));
 }
 
 function readingOf(held: unknown): MapReading {

@@ -10,13 +10,14 @@ import type { Decision } from '../../shared/stage.ts';
 import type { Transition } from '../../shared/transition.ts';
 
 import { failuresAmong, localBinsOf } from '../../shared/checks.ts';
-import { record } from '../../shared/event-log.ts';
 import { semanticsOf } from '../../shared/governing.ts';
 import { describing } from '../../shared/item-description.ts';
-import { ITEM_KINDS, ITEM_SIZES, nextKey, titleRefusal } from '../../shared/item.ts';
+import { ITEM_KINDS, ITEM_SIZES, promotedFrom, titleRefusal } from '../../shared/item.ts';
 import { ketRootOrThrow } from '../../shared/locate.ts';
 import { argvOf } from '../../shared/ring.ts';
 import { byStatus, moveThrough, whileNothingElseWorks } from '../../shared/stage.ts';
+import { promotionOf } from '../../shared/story-map/promotion.ts';
+import { readMapIn } from '../../shared/story-map/reading.ts';
 import {
   approvalOf,
   deliveryOf,
@@ -31,7 +32,7 @@ import { blast } from './blast/command.ts';
 import { describeItem } from './describe/command.ts';
 import { note } from './note/command.ts';
 import { drift, stamp } from './plain/command.ts';
-import { fileAlone, fileUnder, itemsIn, keyOf } from './store.ts';
+import { arriveAlone, arriveUnder } from './store.ts';
 import { show } from './surface/command.ts';
 import { closingSurface } from './surface/lifecycle.ts';
 
@@ -45,6 +46,20 @@ function oneOf<Known extends string>(known: readonly Known[], given: string): Kn
   return found;
 }
 
+async function storyPromotedIn(root: string, id: string | undefined): Promise<string | undefined> {
+  if (id === undefined) {
+    return undefined;
+  }
+
+  const promotion = promotionOf(await readMapIn(root), id);
+
+  if ('refused' in promotion) {
+    throw new Error(promotion.refused);
+  }
+
+  return promotion.story.id;
+}
+
 const file = defineCommand({
   meta: { name: 'file', description: 'File a triaged item' },
   args: {
@@ -52,11 +67,11 @@ const file = defineCommand({
     kind: { type: 'string', required: true, description: 'feature, bug, refactor or chore' },
     size: { type: 'string', required: true, description: 'epic, story, subtask or trivial' },
     parent: { type: 'string', description: 'The epic or story this breaks out of' },
+    story: { type: 'string', description: 'The story on the map this work comes from' },
     description: { type: 'string', description: 'The prose the issue-writing skill wrote' },
   },
   async run({ args }) {
     const root = await ketRootOrThrow(process.cwd());
-    const allocated = nextKey(await keyOf(root), await itemsIn(root));
 
     const kind: ItemKind = oneOf(ITEM_KINDS, args.kind);
     const size: ItemSize = oneOf(ITEM_SIZES, args.size);
@@ -66,26 +81,19 @@ const file = defineCommand({
       throw new Error(`${args.title.split('\n')[0] ?? ''} is not a title: ${refused}`);
     }
 
-    const filing: Filing = {
-      key: allocated,
+    const filing: Omit<Filing, 'key'> = {
       title: args.title,
       kind,
       size,
+      ...promotedFrom(await storyPromotedIn(root, args.story)),
       ...describing(args.description),
     };
 
-    if (args.parent === undefined) {
-      await fileAlone(root, filing);
-    } else {
-      await fileUnder(root, filing, args.parent);
-    }
+    const allocated =
+      args.parent === undefined
+        ? await arriveAlone(root, filing)
+        : await arriveUnder(root, filing, args.parent);
 
-    await record(root, {
-      gate: 'transition',
-      outcome: 'allowed',
-      about: 'triaged',
-      item: allocated,
-    });
     process.stdout.write(`${allocated}\n`);
   },
 });

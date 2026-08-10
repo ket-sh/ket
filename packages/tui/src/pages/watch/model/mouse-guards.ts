@@ -1,4 +1,4 @@
-import type { PressDeps } from './keys.ts';
+import type { PressDeps } from './press-deps.ts';
 
 import { narrowerOf } from './keys.ts';
 

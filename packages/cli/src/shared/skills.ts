@@ -4,6 +4,8 @@ import type { ToolArgv } from './project-tools.ts';
 
 export type SkillsInstalled = { installed: string[] } | { refused: string };
 
+export const SKILLS_LOCKFILE = 'skills-lock.json';
+
 const UNINSTALLED = 'The project is ready, but its skills did not install:';
 
 const RUNNER = 'bunx';

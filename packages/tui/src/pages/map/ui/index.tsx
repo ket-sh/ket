@@ -6,6 +6,7 @@ import { useState } from 'react';
 import type { MapReadingView } from '../../../shared/model';
 
 import { ThemeProvider, useTheme } from '../../../shared/theme';
+import { Scheme, Sheet } from '../../../shared/ui';
 import { MapPane, walkedIn } from '../../../widgets/story-map';
 
 const HINTS = '←↑↓→ move · q quit';
@@ -51,6 +52,8 @@ function MapRoom({ reading, onQuit }: MapScreenProps): ReactNode {
 export function MapScreen({ reading, onQuit }: MapScreenProps): ReactNode {
   return (
     <ThemeProvider>
+      <Scheme />
+      <Sheet />
       <MapRoom reading={reading} onQuit={onQuit} />
     </ThemeProvider>
   );

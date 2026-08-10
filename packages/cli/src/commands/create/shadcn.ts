@@ -1,7 +1,7 @@
 import type { PresetItem } from '@ket/preset';
 
 import type { PresetName } from '../../shared/configuration.ts';
-import type { ToolArgv } from './project-tools.ts';
+import type { ToolArgv } from '../../shared/project-tools.ts';
 
 const SHADCN_CLI = 'shadcn@4.16.2';
 

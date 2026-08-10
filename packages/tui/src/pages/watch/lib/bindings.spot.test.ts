@@ -8,12 +8,15 @@ import type {
 } from '../../../shared/model';
 import type { Frame, JourneyFocus, JourneyTab } from '../model/frames.ts';
 import type { ShownWork } from './bindings.ts';
+import type { ShelfSpot } from './shelf.ts';
 
 import { spotOf } from './bindings.ts';
 
-const HELD: ShownWork = { cards: 2, logged: 3 };
+const BARE: ShelfSpot = { rows: 0, unassigned: 0, whole: false };
 
-const IDLE: ShownWork = { cards: 0, logged: 0 };
+const HELD: ShownWork = { cards: 2, logged: 3, shelf: BARE };
+
+const IDLE: ShownWork = { cards: 0, logged: 0, shelf: BARE };
 
 const PANE: JourneyPaneView = {
   kind: 'feature',
@@ -117,6 +120,7 @@ describe('the spot the board stands in', () => {
       layout: 'list',
       offers: ['approve'],
       holds: true,
+      shelf: BARE,
     });
   });
 
@@ -126,6 +130,7 @@ describe('the spot the board stands in', () => {
       layout: 'kanban',
       offers: [],
       holds: false,
+      shelf: BARE,
     });
   });
 });
@@ -271,7 +276,13 @@ describe('the spot a held screen stands in', () => {
 
   it('reads every held screen by its own kind', () => {
     expect(spotOf(SURFACE, 'kanban', [], HELD)).toStrictEqual({ kind: 'surface' });
-    expect(spotOf(GATE, 'kanban', [], HELD)).toStrictEqual({ kind: 'gate' });
+    expect(spotOf(GATE, 'kanban', [], HELD)).toStrictEqual({ kind: 'gate', asks: true });
     expect(spotOf(EDIT, 'kanban', [], HELD)).toStrictEqual({ kind: 'edit' });
+  });
+
+  it('reads a ceremony that has answered as no longer asking', () => {
+    const refused = { ...GATE, phase: 'refuse' as const, reason: 'the gate said no' };
+
+    expect(spotOf(refused, 'kanban', [], HELD)).toStrictEqual({ kind: 'gate', asks: false });
   });
 });

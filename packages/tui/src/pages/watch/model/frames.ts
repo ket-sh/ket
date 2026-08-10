@@ -7,6 +7,7 @@ import type {
   MovedView,
   OplogEventView,
   SurfaceDocView,
+  UnfiledStoryView,
 } from '../../../shared/model';
 import type { Draft } from '../lib/edit.ts';
 import type { Audience } from '../lib/lines.ts';
@@ -44,15 +45,10 @@ export type Frame =
       aud: Audience;
       off: number;
     }
-  | {
-      kind: 'gate';
-      action: GateActionView;
-      cardKey: string;
-      cardTitle: string;
-      phase: 'ask' | 'pass' | 'refuse';
-      reason: string | undefined;
-      since: number;
-    }
+  | ({ kind: 'gate'; cardKey: string; cardTitle: string; since: number } & (
+      | { action: GateActionView; phase: 'ask' | 'pass' | 'refuse'; reason: string | undefined }
+      | { action: 'promote'; phase: 'refuse'; reason: string }
+    ))
   | {
       kind: 'edit';
       item: string;
@@ -92,6 +88,7 @@ export interface FrameStack {
   tune: (tuning: Tuning) => void;
   gate: (action: GateActionView, card: GateSeat, tick: number) => void;
   pass: (tick: number) => void;
+  promote: (story: UnfiledStoryView, tick: number) => void;
   edit: () => void;
   revise: (change: (draft: Draft) => Draft) => void;
   save: (tick: number) => void;
@@ -165,7 +162,7 @@ function tunedSide(aud: Audience, tuning: Tuning): Audience {
 export function judged(stack: Frame[], outcome: MovedView, tick: number): Frame[] {
   const above = stack[stack.length - 1];
 
-  if (above?.kind !== 'gate') {
+  if (above?.kind !== 'gate' || above.phase !== 'ask') {
     return stack;
   }
 
@@ -235,6 +232,18 @@ export function askFrameOf(action: GateActionView, card: GateSeat, tick: number)
     cardTitle: card.title,
     phase: 'ask',
     reason: undefined,
+    since: tick,
+  };
+}
+
+export function refusedPromotionOf(story: UnfiledStoryView, reason: string, tick: number): Frame {
+  return {
+    kind: 'gate',
+    action: 'promote',
+    cardKey: story.id,
+    cardTitle: story.name,
+    phase: 'refuse',
+    reason,
     since: tick,
   };
 }

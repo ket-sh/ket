@@ -136,7 +136,7 @@ export function GateModal({ frame, from, tick, width, height }: GateModalProps):
       border
       borderStyle="double"
       borderColor={frame.phase === 'refuse' ? accent : pulsed(accent, tick, theme)}
-      backgroundColor={theme.base}
+      backgroundColor={theme.mantle}
       flexDirection="column"
       paddingLeft={1}
       paddingRight={1}

@@ -1,10 +1,12 @@
-import type { GateActionView, KanbanColumnView, OplogEventView } from '../../../shared/model';
+import type { GateActionView } from '../../../shared/model';
 import type { BoardLayout } from '../model/board-layout.ts';
-import type { DocsFocus, Frame } from '../model/frames.ts';
+import type { ShelfSpot } from './shelf.ts';
+import type { BindingSpot, PaneStanding } from './spot.ts';
 
 import { GATE_KEYS } from '../model/gate-keys.ts';
-import { catalogRows } from './docs.ts';
-import { neighborOf, placedOf } from './layout.ts';
+
+export type { BindingSpot, ShownWork } from './spot.ts';
+export { shownWorkOf, spotOf } from './spot.ts';
 
 type BindingGroup = 'move' | 'open' | 'filter' | 'tools';
 
@@ -13,18 +15,6 @@ export interface Binding {
   action: string;
   group: BindingGroup;
 }
-
-type PaneStanding = 'canvas' | 'brink' | 'held' | 'tabs' | 'reading' | 'preview';
-
-export type BindingSpot =
-  | { kind: 'board'; layout: BoardLayout; offers: GateActionView[]; holds: boolean }
-  | { kind: 'journey'; pane: PaneStanding; wide: boolean; offers: GateActionView[] }
-  | { kind: 'docs'; focus: DocsFocus; holds: boolean }
-  | { kind: 'map'; holds: boolean }
-  | { kind: 'oplog'; holds: boolean }
-  | { kind: 'surface' }
-  | { kind: 'gate' }
-  | { kind: 'edit' };
 
 const MOVE: Binding = { keys: '←↑↓→', action: 'move', group: 'move' };
 
@@ -64,12 +54,30 @@ function narrowable(layout: BoardLayout): boolean {
   return layout !== 'backlog' && layout !== 'archive';
 }
 
-function boardBindings({ layout, offers, holds }: BoardSpot): Binding[] {
+function shelved(layout: BoardLayout, shelf: ShelfSpot): boolean {
+  return layout === 'backlog' && shelf.rows + shelf.unassigned > 0;
+}
+
+function promotes(layout: BoardLayout, shelf: ShelfSpot): Binding[] {
+  return layout === 'backlog' && shelf.rows > 0
+    ? [{ keys: 'p', action: 'promote', group: 'tools' }]
+    : [];
+}
+
+function shelfSwaps(layout: BoardLayout, shelf: ShelfSpot): Binding[] {
+  return shelved(layout, shelf)
+    ? [{ keys: 'u', action: shelf.whole ? 'release' : 'unassigned', group: 'open' }]
+    : [];
+}
+
+function boardBindings({ layout, offers, holds, shelf }: BoardSpot): Binding[] {
   return [
     ...(holds ? [MOVE, DIVES] : []),
     ...gateBindings(offers),
+    ...promotes(layout, shelf),
     { keys: 'm', action: 'map', group: 'open' },
     ...layoutSwaps(layout),
+    ...shelfSwaps(layout, shelf),
     { keys: 'l', action: 'log', group: 'open' },
     { keys: 'd', action: 'docs', group: 'open' },
     ...(holds && narrowable(layout) ? [NARROWS] : []),
@@ -171,12 +179,22 @@ function docsBindings(spot: DocsSpot): Binding[] {
   return spot.focus === 'detail' ? DETAIL_WAYS : workedOrOut(spot);
 }
 
+const ANSWERED_GATE: Binding[] = [{ keys: 'esc', action: 'close', group: 'open' }];
+
+function ceremonyBindings(spot: Extract<BindingSpot, { kind: 'gate' }>): Binding[] {
+  return spot.asks ? HELD_SCREENS.gate : ANSWERED_GATE;
+}
+
 function heldBindings(spot: Exclude<BindingSpot, BoardSpot | DocsSpot>): Binding[] {
   if (spot.kind === 'oplog' || spot.kind === 'map') {
     return workedOrOut(spot);
   }
 
-  return spot.kind === 'journey' ? journeyBindings(spot) : HELD_SCREENS[spot.kind];
+  if (spot.kind === 'journey') {
+    return journeyBindings(spot);
+  }
+
+  return spot.kind === 'gate' ? ceremonyBindings(spot) : HELD_SCREENS[spot.kind];
 }
 
 export function bindingsAt(spot: BindingSpot): Binding[] {
@@ -204,77 +222,4 @@ export function groupedOf(bindings: Binding[]): GroupedBindings[] {
 
     return worn.length === 0 ? [] : [{ group, bindings: worn }];
   });
-}
-
-export interface ShownWork {
-  cards: number;
-  logged: number;
-}
-
-export function shownWorkOf(columns: KanbanColumnView[], logRows: OplogEventView[]): ShownWork {
-  return {
-    cards: columns.reduce((count, column) => count + column.cards.length, 0),
-    logged: logRows.length,
-  };
-}
-
-const FOCUS_STANDING: Record<'pane' | 'tabs' | 'content', PaneStanding> = {
-  pane: 'held',
-  tabs: 'tabs',
-  content: 'reading',
-};
-
-function workflowStandingOf(frame: Extract<Frame, { kind: 'journey' }>): PaneStanding {
-  if (frame.tab !== 'workflow' || frame.journey.children.length === 0) {
-    return 'canvas';
-  }
-
-  const nodes = placedOf(frame.journey).nodes;
-
-  return neighborOf(nodes, frame.sel, 'right') === frame.sel ? 'brink' : 'canvas';
-}
-
-function paneStandingOf(frame: Extract<Frame, { kind: 'journey' }>): PaneStanding {
-  if (frame.focus !== 'canvas') {
-    return FOCUS_STANDING[frame.focus];
-  }
-
-  return frame.tab === 'overview' ? 'preview' : workflowStandingOf(frame);
-}
-
-function heldSpotOf(
-  frame: Extract<Frame, { kind: 'docs' | 'map' | 'oplog' | 'surface' | 'gate' | 'edit' }>,
-  shown: ShownWork,
-): BindingSpot {
-  if (frame.kind === 'docs') {
-    return { kind: 'docs', focus: frame.focus, holds: catalogRows(frame.catalog).length > 0 };
-  }
-
-  if (frame.kind === 'map') {
-    return { kind: 'map', holds: 'map' in frame.reading };
-  }
-
-  return frame.kind === 'oplog' ? { kind: 'oplog', holds: shown.logged > 0 } : { kind: frame.kind };
-}
-
-export function spotOf(
-  frame: Frame,
-  layout: BoardLayout,
-  offers: GateActionView[],
-  shown: ShownWork,
-): BindingSpot {
-  if (frame.kind === 'board') {
-    return { kind: 'board', layout, offers, holds: shown.cards > 0 };
-  }
-
-  if (frame.kind === 'journey') {
-    return {
-      kind: 'journey',
-      pane: paneStandingOf(frame),
-      wide: frame.wide,
-      offers: frame.journey.pane.offers,
-    };
-  }
-
-  return heldSpotOf(frame, shown);
 }

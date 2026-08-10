@@ -117,6 +117,7 @@ Terms reach both prose gates. A row with a lowercase and a sentence-case form ac
 | `Turborepo`                  |               | The task runner over the workspace.                                |
 | `typecheck`, `Typecheck`     | `type-check`  | A run of the compiler for types alone.                             |
 | `ui`, `UI`                   |               | The user interface layer of an app.                                |
+| `unfiled`, `Unfiled`         |               | Named by the story map, with no work item filed for it.            |
 | `unscoped`                   |               | Without a declared scope.                                          |
 | `usecase`                    |               | One way an actor uses the system.                                  |
 | `vale`, `Vale`               |               | The prose gate over authored markdown.                             |

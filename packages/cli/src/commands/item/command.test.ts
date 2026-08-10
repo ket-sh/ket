@@ -145,3 +145,83 @@ describe('filing an item with the description somebody wrote for it', () => {
     expect((await filed('K-2'))?.description).toBeUndefined();
   });
 });
+
+const MAP_SOURCE = [
+  'version: 1',
+  'product:',
+  '  name: shop',
+  '  idea: a place to buy a thing',
+  'users: []',
+  'releases:',
+  '  - id: r-skeleton',
+  '    name: walking skeleton',
+  '    outcome: a shopper completes one real purchase',
+  '    metric: one paid order lands in the ledger',
+  'activities:',
+  '  - id: a-buy',
+  '    name: buy a thing',
+  '    steps:',
+  '      - id: s-browse',
+  '        name: browse the catalog',
+  '        stories:',
+  '          - id: st-see',
+  '            name: see what is for sale',
+  '            release: r-skeleton',
+  '',
+].join('\n');
+
+describe('filing an item promoted from a story on the map', () => {
+  async function filed(key: string): Promise<Item | undefined> {
+    return parseItem(
+      await readFile(join(root, '.ket', 'items', key, 'item.yaml'), 'utf8').catch(() => ''),
+    );
+  }
+
+  async function fileFromStory(id: string): Promise<void> {
+    await runItem([
+      'file',
+      '--title',
+      'See what is for sale',
+      '--kind',
+      'feature',
+      '--size',
+      'story',
+      '--story',
+      id,
+    ]);
+  }
+
+  beforeEach(async () => {
+    await writeFile(join(root, '.ket', 'story-map.yaml'), MAP_SOURCE);
+  });
+
+  it('lands the story the map declares beside the fields the gates read', async () => {
+    await fileFromStory('st-see');
+
+    await expect(filed('K-2')).resolves.toMatchObject({
+      title: 'See what is for sale',
+      status: 'triaged',
+      story: 'st-see',
+    });
+  });
+
+  it('refuses a story the map never declared, naming the id and the map file', async () => {
+    await expect(fileFromStory('st-nowhere')).rejects.toThrow(
+      '.ket/story-map.yaml declares no story st-nowhere',
+    );
+  });
+
+  it('files nothing at all when the story is not one the map declares', async () => {
+    await fileFromStory('st-nowhere').catch(() => undefined);
+
+    await expect(filed('K-2')).resolves.toBeUndefined();
+  });
+
+  it('refuses when no map is there to declare the story', async () => {
+    await rm(join(root, '.ket', 'story-map.yaml'));
+
+    await expect(fileFromStory('st-see')).rejects.toThrow(
+      '.ket/story-map.yaml is not there, so nothing declares the story st-see',
+    );
+  });
+});

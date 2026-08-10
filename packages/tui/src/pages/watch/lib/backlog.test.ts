@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { KanbanCardView, KanbanColumnView } from '../../../shared/model';
 
-import { backlogOf } from './backlog.ts';
+import { backlogLeftOf, backlogOf } from './backlog.ts';
 
 function cardOf(key: string, status: string, parent?: string): KanbanCardView {
   return {
@@ -82,5 +82,29 @@ describe('the order the backlog reads in', () => {
 
   it('reads an empty board as an empty backlog', () => {
     expect(backlogOf(boardOf([]))).toStrictEqual([]);
+  });
+});
+
+describe('how much backlog is left below the cursor', () => {
+  const board = boardOf([
+    cardOf('K-1', 'idea'),
+    cardOf('K-2', 'triaged'),
+    cardOf('K-3', 'triaged'),
+  ]);
+
+  it('counts the rows still standing below the chosen one', () => {
+    expect(backlogLeftOf(board, 'K-2')).toBe(2);
+  });
+
+  it('reads the last row as having nothing below it', () => {
+    expect(backlogLeftOf(board, 'K-1')).toBe(0);
+  });
+
+  it('reads a cursor resting on no backlog row as having nothing below it', () => {
+    expect(backlogLeftOf(board, 'K-9')).toBe(0);
+  });
+
+  it('reads an empty backlog as having nothing below it', () => {
+    expect(backlogLeftOf(boardOf([]), undefined)).toBe(0);
   });
 });

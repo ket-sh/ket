@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react';
 
-import type { KanbanColumnView, OplogEventView } from '../../../shared/model';
+import type { KanbanColumnView, OplogEventView, UnfiledShelfView } from '../../../shared/model';
 import type { BoardLayout } from '../model/board-layout.ts';
 import type { FrameStack } from '../model/frames.ts';
 import type { WatchMouse } from '../model/mouse.ts';
 import type { Seat } from '../model/seat.ts';
+import type { ShelfSeat } from '../model/shelf-seat.ts';
 
 import { MapPane } from '../../../widgets/story-map';
 import { BoardView } from './board.tsx';
@@ -21,6 +22,8 @@ export const PAGE_SIDE = 1;
 export interface RoomProps {
   stack: FrameStack;
   columns: KanbanColumnView[];
+  unfiled: UnfiledShelfView;
+  shelfSeat: ShelfSeat;
   logRows: OplogEventView[];
   seat: Seat;
   now: string;
@@ -36,8 +39,15 @@ export interface RoomProps {
 type BoardAreaProps = Omit<RoomProps, 'stack'>;
 
 const BOARD_AREAS: Record<BoardLayout, (held: BoardAreaProps) => ReactNode> = {
-  backlog: ({ columns, now, seat, mouse }): ReactNode => (
-    <BacklogView columns={columns} now={now} chosenKey={seat.chosen?.key} mouse={mouse} />
+  backlog: ({ columns, unfiled, shelfSeat, now, seat, mouse }): ReactNode => (
+    <BacklogView
+      columns={columns}
+      unfiled={unfiled}
+      shelfSeat={shelfSeat}
+      now={now}
+      chosenKey={seat.chosen?.key}
+      mouse={mouse}
+    />
   ),
   archive: ({ columns, now, seat, mouse }): ReactNode => (
     <ArchiveView columns={columns} now={now} chosenKey={seat.chosen?.key} mouse={mouse} />
@@ -51,11 +61,12 @@ const BOARD_AREAS: Record<BoardLayout, (held: BoardAreaProps) => ReactNode> = {
       onWheel={mouse.listWheel}
     />
   ),
-  kanban: ({ columns, now, width, seat, totals, mouse }): ReactNode => (
+  kanban: ({ columns, now, width, tick, seat, totals, mouse }): ReactNode => (
     <BoardView
       columns={columns}
       now={now}
       room={width - PAGE_SIDE * 2}
+      tick={tick}
       seat={seat}
       totals={totals}
       mouse={mouse}

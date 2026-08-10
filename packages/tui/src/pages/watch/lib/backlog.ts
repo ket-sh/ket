@@ -9,3 +9,10 @@ export function backlogOf(columns: KanbanColumnView[]): KanbanCardView[] {
     (status) => columns.find((column) => column.status === status)?.cards ?? [],
   );
 }
+
+export function backlogLeftOf(columns: KanbanColumnView[], key: string | undefined): number {
+  const cards = backlogOf(columns);
+  const at = cards.findIndex((card) => card.key === key);
+
+  return at < 0 ? 0 : cards.length - 1 - at;
+}

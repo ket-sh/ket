@@ -6,7 +6,7 @@ sources:
   - presets/cli/src/**
   - presets/web/src/**
   - harness/**
-stamp: 37c7c316fdee
+stamp: ad7ca5860324
 ---
 
 # The ket handbook
@@ -47,6 +47,13 @@ plugins registered, and the pipeline ready.
   Protocol (MCP) server. Choosing mobbin registers the hosted Mobbin server
   there, the design stage searches it before drawing a screen, and
   `ket update` merges the entry into a project scaffolded before it existed.
+- `package.json` carries what the preset ships and what each chosen
+  integration pins. `ket update` merges it the same way: it adds the pins and
+  scripts the project is missing, never rewrites a version or a script the
+  project made its own, and writes nothing when nothing is missing. That's
+  how an integration chosen after create still lands its dependencies. The
+  update leaves a manifest it can't read untouched and says why nothing
+  merges rather than rebuilding the file.
 - Two Claude Code plugins carry the law: `ket-gates` arms the gates, and
   `ket` carries the pipeline commands and their skills.
 
@@ -66,6 +73,11 @@ sized `subtask` or `trivial` skips the design stage. Only a command moves a
 status, and
 the write gate refuses a hand edit of `item.yaml`'s fields, because a status
 anything can write is a status that means nothing.
+
+An item can also name the story on the map it came from. `ket item file --story <id>`
+records that id on the item, and an id the map never declared refuses with both
+the id and `.ket/story-map.yaml` named in the message. An item filed before the
+map named anything carries no story and stays valid.
 
 ### The commands that drive it
 
@@ -254,6 +266,13 @@ Each scaffold carries project-level skills under `.claude/skills/`.
 grows the env schema, and `vitest` covers the runner and its config. Chosen
 integrations bring their vendors' own skills beside them, and one that
 serves an MCP server lands its registration in `.mcp.json`.
+
+`ket update` installs the ones a project is missing. A skill counts as
+present when `.claude/skills/` holds a directory of that name, so update
+never reinstalls or overwrites what the project already has. That's how a
+project older than the lock entry, or one that chose an integration after
+create, still gains the skill. `--plan` names each skill it would install
+and installs none of them.
 
 ## The vocabulary
 

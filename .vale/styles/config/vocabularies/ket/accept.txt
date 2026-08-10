@@ -103,6 +103,7 @@ tsgolint
 Turborepo
 [Tt]ypecheck
 (?i)ui
+[Uu]nfiled
 unscoped
 usecase
 [Vv]ale

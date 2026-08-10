@@ -1,3 +1,5 @@
+import type { PresetSkill } from '@ket/preset';
+
 import { defineCommand, showUsage } from 'citty';
 import { access, readFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
@@ -6,6 +8,7 @@ import type { Configuration } from '../../shared/configuration.ts';
 import type { FileFate, PlannedFate, ScaffoldRecord } from '../../shared/scaffold-manifest.ts';
 import type { ProjectNames } from '../../shared/scaffold/name-token.ts';
 import type { ScaffoldFile } from '../../shared/write-files.ts';
+import type { PlannedMerges } from './merges.ts';
 
 import { CONFIGURATION_FILE, configurationIn } from '../../shared/configuration-file.ts';
 import { uncommittedIn } from '../../shared/git.ts';
@@ -21,21 +24,15 @@ import {
   updatePlanOf,
 } from '../../shared/scaffold-manifest.ts';
 import { installedFor } from '../../shared/scaffold/install.ts';
-import {
-  crowdedRefusal,
-  mcpServersFor,
-  offeredIntegrations,
-} from '../../shared/scaffold/integrations.ts';
-import { MCP_FILE, mcpFileOf } from '../../shared/scaffold/mcp.ts';
+import { crowdedRefusal, offeredIntegrations } from '../../shared/scaffold/integrations.ts';
 import { heroHint } from '../../shared/scaffold/name-token.ts';
 import { KET_VERSION } from '../../shared/version.ts';
-import { readTextIfPresent, writeFiles } from '../../shared/write-files.ts';
+import { writeFiles } from '../../shared/write-files.ts';
 import { LEGACY_STATE, legacyRefusal } from './legacy.ts';
-import { withCurrentPluginNames } from './plugin-names.ts';
+import { plannedMergesOf, plannedMigrationOf } from './merges.ts';
+import { installPending, skillsPendingIn } from './skills.ts';
 
 const WRITE_FATES = new Set<FileFate>(['refreshed', 'restored', 'arrived']);
-
-const SETTINGS_PATH = '.claude/settings.json';
 
 function say(line: string): void {
   process.stdout.write(`${line}\n`);
@@ -82,22 +79,6 @@ async function refusingAnOlderScaffold(root: string): Promise<void> {
   if (refusal !== undefined) {
     throw new Error(refusal);
   }
-}
-
-async function plannedMigrationOf(root: string): Promise<ScaffoldFile | undefined> {
-  const current = withCurrentPluginNames(await readTextIfPresent(root, SETTINGS_PATH));
-
-  return current === undefined ? undefined : { path: SETTINGS_PATH, contents: current };
-}
-
-async function plannedRegistrationOf(
-  root: string,
-  configuration: Configuration,
-): Promise<ScaffoldFile | undefined> {
-  return mcpFileOf(
-    await readTextIfPresent(root, MCP_FILE),
-    mcpServersFor(Object.values(configuration.targets), configuration.integrations),
-  );
 }
 
 async function recordOf(root: string): Promise<ScaffoldRecord> {
@@ -147,7 +128,7 @@ async function plannedOn(root: string, record: ScaffoldRecord, fresh: ScaffoldFi
 function saidFates(
   plan: PlannedFate[],
   migration: ScaffoldFile | undefined,
-  registration: ScaffoldFile | undefined,
+  merged: PlannedMerges,
 ): void {
   for (const planned of plan.filter((fated) => fated.fate !== 'settled')) {
     say(`${planned.fate} ${planned.path}`);
@@ -157,8 +138,18 @@ function saidFates(
     say(`migrated ${migration.path}`);
   }
 
-  if (registration !== undefined) {
-    say(`merged ${registration.path}`);
+  for (const file of merged.files) {
+    say(`merged ${file.path}`);
+  }
+
+  for (const refusal of merged.refusals) {
+    say(refusal);
+  }
+}
+
+function saidPending(pending: PresetSkill[]): void {
+  for (const skill of pending) {
+    say(`installed ${skill.name}`);
   }
 }
 
@@ -247,22 +238,27 @@ const update = defineCommand({
       key: configuration.key,
       hint: heroHint(configuration),
     };
-    const fresh = recordedAmong(installedFor(configuration, project));
+    const installed = installedFor(configuration, project);
+    const fresh = recordedAmong(installed);
     const plan = forced(await plannedOn(root, record, fresh), args.force);
     const migration = await plannedMigrationOf(root);
-    const registration = await plannedRegistrationOf(root, configuration);
+    const merged = await plannedMergesOf(root, configuration, project.name);
+    const pending = await skillsPendingIn(root, configuration, installed);
 
-    saidFates(plan, migration, registration);
+    saidFates(plan, migration, merged);
+    saidPending(pending);
 
     if (args.plan) {
       return;
     }
 
-    const merges = [migration, registration].filter(
-      (file): file is ScaffoldFile => file !== undefined,
-    );
+    const merges = migration === undefined ? merged.files : [migration, ...merged.files];
 
     await applied(root, record, fresh, plan, merges);
+
+    for (const refusal of await installPending(root, pending)) {
+      say(refusal);
+    }
   },
 });
 

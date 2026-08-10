@@ -6,6 +6,8 @@ import type {
   KanbanColumnView,
   OplogEventView,
   StoryMapView,
+  UnfiledShelfView,
+  UnfiledStoryView,
 } from '../../../shared/model';
 
 import { DOCS } from './docs-fixtures.ts';
@@ -38,6 +40,17 @@ const MAP: StoryMapView = {
     { id: undefined, name: 'unassigned', outcome: undefined, cards: [] },
   ],
 };
+
+const SHELF: UnfiledShelfView = {
+  release: { id: 'r-skeleton', name: 'walking skeleton' },
+  stories: [
+    { id: 'st-see', name: 'see the shelves', release: 'r-skeleton' },
+    { id: 'st-card', name: 'pay by card', release: 'r-skeleton' },
+  ],
+  unassigned: [{ id: 'st-refund', name: 'ask for a refund', release: undefined }],
+};
+
+const BARE_SHELF: UnfiledShelfView = { release: undefined, stories: [], unassigned: [] };
 
 export interface ActedFeed extends BoardFeed {
   acted: string[];
@@ -139,14 +152,86 @@ async function shelvedDocs(): Promise<DocsCatalogView> {
 }
 
 export function idleFeedOf(): ActedFeed {
-  return feedWith(STAGES.map((status) => ({ status, cards: [] })));
+  return feedWith(
+    STAGES.map((status) => ({ status, cards: [] })),
+    structuredClone(BARE_SHELF),
+  );
 }
 
 export function feedOf(): ActedFeed {
-  return feedWith(structuredClone(COLUMNS));
+  return feedWith(structuredClone(COLUMNS), structuredClone(SHELF));
 }
 
-function feedWith(columns: KanbanColumnView[]): ActedFeed {
+export function filedFeedOf(): ActedFeed {
+  return feedWith(structuredClone(COLUMNS), structuredClone(BARE_SHELF));
+}
+
+export function refusingFeedOf(): ActedFeed {
+  const feed = feedOf();
+
+  return {
+    ...feed,
+    promote: async (id) => {
+      await Promise.resolve();
+      feed.acted.push(`${id} promote`);
+
+      return { refused: `the story ${id} is already filed` };
+    },
+  };
+}
+
+function filedFrom(story: UnfiledStoryView, key: string): KanbanCardView {
+  return {
+    key,
+    title: story.name,
+    size: 'story',
+    status: 'triaged',
+    kind: 'feature',
+    parent: undefined,
+    since: undefined,
+    refusal: undefined,
+    note: undefined,
+    offers: ['approve'],
+  };
+}
+
+type Shelving = Pick<BoardFeed, 'promote' | 'unfiledShelf'>;
+
+function shelvingOf(
+  columns: KanbanColumnView[],
+  shelf: UnfiledShelfView,
+  acted: string[],
+  tell: () => void,
+): Shelving {
+  return {
+    unfiledShelf: async () => {
+      await Promise.resolve();
+
+      return structuredClone(shelf);
+    },
+    promote: async (id) => {
+      await Promise.resolve();
+      acted.push(`${id} promote`);
+
+      const story = [...shelf.stories, ...shelf.unassigned].find((one) => one.id === id);
+
+      if (story === undefined) {
+        return { refused: `no story on the map carries the id ${id}` };
+      }
+
+      const key = `K-${String(columns.flatMap((column) => column.cards).length + 1)}`;
+
+      shelf.stories = shelf.stories.filter((one) => one.id !== id);
+      shelf.unassigned = shelf.unassigned.filter((one) => one.id !== id);
+      columns.find((column) => column.status === 'triaged')?.cards.push(filedFrom(story, key));
+      tell();
+
+      return { filed: key };
+    },
+  };
+}
+
+function feedWith(columns: KanbanColumnView[], shelf: UnfiledShelfView): ActedFeed {
   const acted: string[] = [];
   const saved: string[] = [];
   let told: (() => void) | undefined;
@@ -168,6 +253,9 @@ function feedWith(columns: KanbanColumnView[]): ActedFeed {
 
       return { map: MAP };
     },
+    ...shelvingOf(columns, shelf, acted, () => {
+      told?.();
+    }),
     journey: async (key) => {
       await Promise.resolve();
 

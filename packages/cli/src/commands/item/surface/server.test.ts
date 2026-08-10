@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdtemp, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -167,6 +167,25 @@ describe('the live channel', () => {
 
     expect(await pushed).toBe('changed');
     socket.close();
+  });
+});
+
+describe('the watch a surface confirms before it reports ready', () => {
+  it('refuses to start when it cannot confirm it is watching the item', async () => {
+    await expect(startSurface(itemDir, { armingMs: 0 })).rejects.toThrow(
+      `could not confirm it is watching ${itemDir} within 0ms`,
+    );
+  });
+
+  it('leaves no trace of the confirmation in the item directory', async () => {
+    await surfaceUp();
+
+    expect((await readdir(itemDir)).sort()).toEqual([
+      '.surface.json',
+      'features',
+      'item.yaml',
+      'solution-design.md',
+    ]);
   });
 });
 

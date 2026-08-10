@@ -1,6 +1,6 @@
 import type { ShadcnPresetApplied } from './shadcn.ts';
 
-import { toolRefusal } from './project-tools.ts';
+import { toolRefusal } from '../../shared/project-tools.ts';
 import { applyArgvFor, applyRefusalFor, TOOLCHAIN_ARGV } from './shadcn.ts';
 
 const TOOLCHAIN_DEADLINE_MS = 600000;

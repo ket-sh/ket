@@ -32,7 +32,7 @@ export function OverlayBox({
       border
       borderStyle="rounded"
       borderColor={theme.overlay}
-      backgroundColor={theme.base}
+      backgroundColor={theme.mantle}
       flexDirection="column"
       paddingLeft={1}
       paddingRight={1}

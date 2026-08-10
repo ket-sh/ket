@@ -28,6 +28,7 @@ Depends on:
 Depends on:
 
 - [packages/cli shared](#packagescli-shared)
+- [packages/cli shared/story-map](#packagescli-sharedstory-map)
 - [packages/preset root](#packagespreset-root)
 
 ### packages/cli commands/map
@@ -63,6 +64,7 @@ Depends on:
 
 - [packages/cli shared](#packagescli-shared)
 - [packages/cli shared/scaffold](#packagescli-sharedscaffold)
+- [packages/preset root](#packagespreset-root)
 
 ### packages/cli commands/watch
 
@@ -137,6 +139,7 @@ Depends on:
 
 - [packages/tui shared/model](#packagestui-sharedmodel)
 - [packages/tui shared/theme](#packagestui-sharedtheme)
+- [packages/tui shared/ui](#packagestui-sharedui)
 - [packages/tui widgets/story-map](#packagestui-widgetsstory-map)
 
 ### packages/tui pages/watch
