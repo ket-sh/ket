@@ -26,7 +26,37 @@ async function rootHolding(manifest: string | undefined): Promise<string> {
   return root;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function withoutName(contents: string): string {
+  const held: unknown = JSON.parse(contents);
+
+  if (!isRecord(held)) {
+    throw new Error('expected a manifest record');
+  }
+
+  const trimmed = Object.fromEntries(Object.entries(held).filter(([field]) => field !== 'name'));
+
+  return `${JSON.stringify(trimmed, undefined, 2)}\n`;
+}
+
 describe('the merges an update plans', () => {
+  it('plans the manifest merge and carries no refusal beside it', async () => {
+    const fresh = manifestFileOf('', 'app', manifestSourceFor(BARE_CONFIGURATION));
+
+    if (fresh === undefined || 'refused' in fresh) {
+      throw new Error('expected a fresh manifest');
+    }
+
+    const root = await rootHolding(withoutName(fresh.contents));
+    const planned = await plannedMergesOf(root, BARE_CONFIGURATION, 'app');
+
+    expect(planned.refusals).toStrictEqual([]);
+    expect(planned.files.map((file) => file.path)).toStrictEqual(['package.json']);
+  });
+
   it('plans nothing where the project already holds everything', async () => {
     const fresh = manifestFileOf('', 'app', manifestSourceFor(BARE_CONFIGURATION));
 

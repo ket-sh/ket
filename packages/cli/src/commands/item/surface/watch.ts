@@ -1,6 +1,6 @@
 import { once } from 'node:events';
 import { watch } from 'node:fs';
-import { rm, writeFile } from 'node:fs/promises';
+import { mkdir, rm } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 
 export interface Watchdog {
@@ -41,9 +41,31 @@ export async function confirmedByKnocking(
   return false;
 }
 
+async function swept(sentinel: string): Promise<void> {
+  await rm(sentinel, { force: true, recursive: true });
+}
+
 async function knockedFresh(sentinel: string): Promise<void> {
-  await rm(sentinel, { force: true });
-  await writeFile(sentinel, '');
+  await swept(sentinel);
+  await mkdir(sentinel);
+}
+
+async function confirmedThenSwept(
+  sentinel: string,
+  observed: Promise<void>,
+  boundMs: number,
+): Promise<boolean> {
+  try {
+    return await confirmedByKnocking(
+      observed,
+      async () => {
+        await knockedFresh(sentinel);
+      },
+      boundMs,
+    );
+  } finally {
+    await swept(sentinel);
+  }
 }
 
 async function knockUntilWatching(
@@ -52,21 +74,8 @@ async function knockUntilWatching(
   boundMs: number,
 ): Promise<void> {
   const sentinel = join(itemDir, ARMING_SENTINEL);
-  let confirmed = false;
 
-  try {
-    confirmed = await confirmedByKnocking(
-      observed,
-      async () => {
-        await knockedFresh(sentinel);
-      },
-      boundMs,
-    );
-  } finally {
-    await rm(sentinel, { force: true });
-  }
-
-  if (!confirmed) {
+  if (!(await confirmedThenSwept(sentinel, observed, boundMs))) {
     throw new Error(
       `the surface could not confirm it is watching ${itemDir} within ${String(boundMs)}ms`,
     );
