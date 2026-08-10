@@ -230,18 +230,24 @@ describe('the reuse one process gets', () => {
   });
 });
 
+const INSTRUMENTED_ARMING_MS = 15_000;
+
 describe('the arming sentinel a foreign hand planted', () => {
-  it('never writes through a foreign entry standing where the sentinel goes', async () => {
-    const victimDir = await mkdtemp(join(tmpdir(), 'ket-victim-'));
-    const victim = join(victimDir, 'precious.txt');
+  it(
+    'never writes through a foreign entry standing where the sentinel goes',
+    { timeout: INSTRUMENTED_ARMING_MS },
+    async () => {
+      const victimDir = await mkdtemp(join(tmpdir(), 'ket-victim-'));
+      const victim = join(victimDir, 'precious.txt');
 
-    await writeFile(victim, 'precious bytes');
-    await symlink(victim, join(itemDir, '.surface-arming'));
+      await writeFile(victim, 'precious bytes');
+      await symlink(victim, join(itemDir, '.surface-arming'));
 
-    const handle = await surfaceUp();
+      const handle = await surfaceUp();
 
-    expect(await readFile(victim, 'utf8')).toBe('precious bytes');
-    expect((await fetch(handle.address)).status).toBe(200);
-    await rm(victimDir, { recursive: true, force: true });
-  });
+      expect(await readFile(victim, 'utf8')).toBe('precious bytes');
+      expect((await fetch(handle.address)).status).toBe(200);
+      await rm(victimDir, { recursive: true, force: true });
+    },
+  );
 });
