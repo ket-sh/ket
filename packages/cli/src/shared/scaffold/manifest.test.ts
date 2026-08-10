@@ -243,6 +243,15 @@ describe('a manifest that already holds everything', () => {
   });
 });
 
+describe('a manifest standing nowhere', () => {
+  it('writes the preset manifest where none stands', () => {
+    expect(parsed(manifestFileOf('', 'app', PRESET))).toMatchObject({
+      name: 'app',
+      dependencies: { citty: '0.2.2' },
+    });
+  });
+});
+
 describe('a manifest left in no state to merge', () => {
   it('refuses a file it cannot read and merges nothing, since a rewrite would drop what the project holds', () => {
     expect(manifestFileOf('{ not json', 'app', PRESET)).toStrictEqual({

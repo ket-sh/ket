@@ -23,20 +23,27 @@ async function watchConfirmed(observed: Promise<void>, withinMs: number): Promis
   ]);
 }
 
-function racedByAForeignHand(thrown: unknown): boolean {
-  return thrown instanceof Error && 'code' in thrown && thrown.code === 'EEXIST';
+export async function confirmedByKnocking(
+  observed: Promise<void>,
+  knock: () => Promise<void>,
+  boundMs: number,
+): Promise<boolean> {
+  const deadline = Date.now() + boundMs;
+
+  for (let left = boundMs; left > 0; left = deadline - Date.now()) {
+    await knock();
+
+    if (await watchConfirmed(observed, Math.min(ARMING_KNOCK_MS, left))) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 async function knockedFresh(sentinel: string): Promise<void> {
   await rm(sentinel, { force: true });
-
-  try {
-    await writeFile(sentinel, '', { flag: 'wx' });
-  } catch (thrown) {
-    if (!racedByAForeignHand(thrown)) {
-      throw thrown;
-    }
-  }
+  await writeFile(sentinel, '');
 }
 
 async function knockUntilWatching(
@@ -45,23 +52,25 @@ async function knockUntilWatching(
   boundMs: number,
 ): Promise<void> {
   const sentinel = join(itemDir, ARMING_SENTINEL);
-  const deadline = Date.now() + boundMs;
+  let confirmed = false;
 
   try {
-    for (let left = boundMs; left > 0; left = deadline - Date.now()) {
-      await knockedFresh(sentinel);
-
-      if (await watchConfirmed(observed, Math.min(ARMING_KNOCK_MS, left))) {
-        return;
-      }
-    }
+    confirmed = await confirmedByKnocking(
+      observed,
+      async () => {
+        await knockedFresh(sentinel);
+      },
+      boundMs,
+    );
   } finally {
     await rm(sentinel, { force: true });
   }
 
-  throw new Error(
-    `the surface could not confirm it is watching ${itemDir} within ${String(boundMs)}ms`,
-  );
+  if (!confirmed) {
+    throw new Error(
+      `the surface could not confirm it is watching ${itemDir} within ${String(boundMs)}ms`,
+    );
+  }
 }
 
 export async function watching(

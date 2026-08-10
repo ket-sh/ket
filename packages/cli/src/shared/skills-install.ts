@@ -1,7 +1,7 @@
 import type { PresetSkill } from '@ket/preset';
 
 import { skillsFrom } from '@ket/preset';
-import { readdir } from 'node:fs/promises';
+import { access } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type { SkillsInstalled } from './skills.ts';
@@ -71,8 +71,17 @@ export async function installSkills(
   return installEach(root, [...locked.skills, ...brought]);
 }
 
-async function heldSkillsIn(root: string): Promise<string[]> {
-  return readdir(join(root, SKILLS_DIRECTORY)).catch(() => []);
+async function heldAmong(root: string, skills: PresetSkill[]): Promise<string[]> {
+  const standing = await Promise.all(
+    skills.map(async (skill) =>
+      access(join(root, SKILLS_DIRECTORY, skill.name)).then(
+        () => skill.name,
+        () => undefined,
+      ),
+    ),
+  );
+
+  return standing.filter((name): name is string => name !== undefined);
 }
 
 export async function absentSkillsIn(
@@ -86,5 +95,7 @@ export async function absentSkillsIn(
     throw new Error(`ket cannot read the skills lockfile its preset ships: ${locked.unreadable}`);
   }
 
-  return skillsAbsentFrom(await heldSkillsIn(root), [...locked.skills, ...brought]);
+  const promised = [...locked.skills, ...brought];
+
+  return skillsAbsentFrom(await heldAmong(root, promised), promised);
 }
