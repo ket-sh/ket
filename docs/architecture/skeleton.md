@@ -63,6 +63,7 @@ Depends on:
 
 - [packages/cli shared](#packagescli-shared)
 - [packages/cli shared/scaffold](#packagescli-sharedscaffold)
+- [packages/preset root](#packagespreset-root)
 
 ### packages/cli commands/watch
 
