@@ -1,6 +1,6 @@
 import { once } from 'node:events';
 import { watch } from 'node:fs';
-import { mkdir, rm } from 'node:fs/promises';
+import { rm, writeFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 
 export interface Watchdog {
@@ -47,7 +47,7 @@ async function swept(sentinel: string): Promise<void> {
 
 async function knockedFresh(sentinel: string): Promise<void> {
   await swept(sentinel);
-  await mkdir(sentinel);
+  await writeFile(sentinel, sentinel);
 }
 
 async function confirmedThenSwept(
