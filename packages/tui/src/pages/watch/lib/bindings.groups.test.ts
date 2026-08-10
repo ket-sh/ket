@@ -5,7 +5,7 @@ import type { ShelfSpot } from './shelf.ts';
 
 import { bindingsAt, groupedOf, hintOf } from './bindings.ts';
 
-const BARE: ShelfSpot = { rows: 0, spare: 0, whole: false };
+const BARE: ShelfSpot = { rows: 0, unassigned: 0, whole: false };
 
 function groupAt(spot: BindingSpot, hint: string): string | undefined {
   return bindingsAt(spot).find((binding) => hintOf(binding) === hint)?.group;
@@ -98,10 +98,9 @@ describe('the grouping the help screen reads', () => {
   });
 
   it('drops a group nothing wears', () => {
-    expect(groupedOf(bindingsAt({ kind: 'gate' })).map((held) => held.group)).toStrictEqual([
-      'open',
-      'tools',
-    ]);
+    expect(
+      groupedOf(bindingsAt({ kind: 'gate', asks: true })).map((held) => held.group),
+    ).toStrictEqual(['open', 'tools']);
   });
 
   it('drops the move group from the help of a board holding no card', () => {

@@ -55,7 +55,7 @@ function narrowable(layout: BoardLayout): boolean {
 }
 
 function shelved(layout: BoardLayout, shelf: ShelfSpot): boolean {
-  return layout === 'backlog' && shelf.rows + shelf.spare > 0;
+  return layout === 'backlog' && shelf.rows + shelf.unassigned > 0;
 }
 
 function promotes(layout: BoardLayout, shelf: ShelfSpot): Binding[] {
@@ -179,12 +179,22 @@ function docsBindings(spot: DocsSpot): Binding[] {
   return spot.focus === 'detail' ? DETAIL_WAYS : workedOrOut(spot);
 }
 
+const ANSWERED_GATE: Binding[] = [{ keys: 'esc', action: 'close', group: 'open' }];
+
+function ceremonyBindings(spot: Extract<BindingSpot, { kind: 'gate' }>): Binding[] {
+  return spot.asks ? HELD_SCREENS.gate : ANSWERED_GATE;
+}
+
 function heldBindings(spot: Exclude<BindingSpot, BoardSpot | DocsSpot>): Binding[] {
   if (spot.kind === 'oplog' || spot.kind === 'map') {
     return workedOrOut(spot);
   }
 
-  return spot.kind === 'journey' ? journeyBindings(spot) : HELD_SCREENS[spot.kind];
+  if (spot.kind === 'journey') {
+    return journeyBindings(spot);
+  }
+
+  return spot.kind === 'gate' ? ceremonyBindings(spot) : HELD_SCREENS[spot.kind];
 }
 
 export function bindingsAt(spot: BindingSpot): Binding[] {

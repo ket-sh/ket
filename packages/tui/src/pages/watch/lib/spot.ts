@@ -21,7 +21,7 @@ export type BindingSpot =
   | { kind: 'map'; holds: boolean }
   | { kind: 'oplog'; holds: boolean }
   | { kind: 'surface' }
-  | { kind: 'gate' }
+  | { kind: 'gate'; asks: boolean }
   | { kind: 'edit' };
 
 export interface ShownWork {
@@ -76,6 +76,10 @@ function heldSpotOf(
 
   if (frame.kind === 'map') {
     return { kind: 'map', holds: 'map' in frame.reading };
+  }
+
+  if (frame.kind === 'gate') {
+    return { kind: 'gate', asks: frame.phase === 'ask' };
   }
 
   return frame.kind === 'oplog' ? { kind: 'oplog', holds: shown.logged > 0 } : { kind: frame.kind };

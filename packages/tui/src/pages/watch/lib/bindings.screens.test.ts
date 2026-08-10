@@ -158,8 +158,12 @@ describe('the bindings the held screens answer', () => {
     ]);
   });
 
-  it('holds the ceremony to pass or cancel', () => {
-    expect(hintsAt({ kind: 'gate' })).toStrictEqual(['⏎ pass', 'esc cancel']);
+  it('holds the ceremony to pass or cancel while it still asks', () => {
+    expect(hintsAt({ kind: 'gate', asks: true })).toStrictEqual(['⏎ pass', 'esc cancel']);
+  });
+
+  it('offers only the way out once the ceremony has answered', () => {
+    expect(hintsAt({ kind: 'gate', asks: false })).toStrictEqual(['esc close']);
   });
 
   it('holds the editor to typing, saving, and leaving', () => {

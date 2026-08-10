@@ -5,11 +5,11 @@ import type { ShelfSpot } from './shelf.ts';
 
 import { bindingsAt, hintOf } from './bindings.ts';
 
-const BARE: ShelfSpot = { rows: 0, spare: 0, whole: false };
+const BARE: ShelfSpot = { rows: 0, unassigned: 0, whole: false };
 
-const STOOD: ShelfSpot = { rows: 2, spare: 1, whole: false };
+const STOOD: ShelfSpot = { rows: 2, unassigned: 1, whole: false };
 
-const WIDENED: ShelfSpot = { rows: 3, spare: 1, whole: true };
+const WIDENED: ShelfSpot = { rows: 3, unassigned: 1, whole: true };
 
 function queuedWith(shelf: ShelfSpot): BindingSpot {
   return { kind: 'board', layout: 'backlog', offers: [], holds: true, shelf };
@@ -66,7 +66,7 @@ describe('the unassigned bucket the shelf keys reach', () => {
   });
 
   it('offers the bucket, but nothing to promote, where only the bucket holds stories', () => {
-    const hints = hintsAt(queuedWith({ rows: 0, spare: 2, whole: false }));
+    const hints = hintsAt(queuedWith({ rows: 0, unassigned: 2, whole: false }));
 
     expect(hints).toContain('u unassigned');
     expect(hints).not.toContain('p promote');

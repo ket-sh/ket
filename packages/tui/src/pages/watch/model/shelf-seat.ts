@@ -10,7 +10,7 @@ export interface ShelfSeat {
   rows: UnfiledStoryView[];
   chosen: UnfiledStoryView | undefined;
   spot: ShelfSpot;
-  include: () => void;
+  toggleWhole: () => void;
   walk: (delta: number, filedLeft: number) => boolean;
 }
 
@@ -20,7 +20,7 @@ export function useShelfSeat(unfiled: UnfiledShelfView): ShelfSeat {
   const rows = whole ? wholeRowsOf(unfiled) : releaseRowsOf(unfiled);
   const seated = at !== undefined && at < rows.length ? at : undefined;
 
-  const include = (): void => {
+  const toggleWhole = (): void => {
     setWhole((worn) => !worn);
   };
 
@@ -35,8 +35,8 @@ export function useShelfSeat(unfiled: UnfiledShelfView): ShelfSeat {
   return {
     rows,
     chosen: seated === undefined ? undefined : rows[seated],
-    spot: { rows: rows.length, spare: unfiled.unassigned.length, whole },
-    include,
+    spot: { rows: rows.length, unassigned: unfiled.unassigned.length, whole },
+    toggleWhole,
     walk,
   };
 }

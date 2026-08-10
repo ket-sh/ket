@@ -83,7 +83,7 @@ const BOARD_CHORDS: Record<string, (deps: PressDeps) => void> = {
   p: promoted,
   u: (deps) => {
     if (deps.layout === 'backlog') {
-      deps.shelfSeat.include();
+      deps.shelfSeat.toggleWhole();
     }
   },
   m: (deps) => {

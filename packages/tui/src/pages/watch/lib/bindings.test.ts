@@ -5,7 +5,7 @@ import type { ShelfSpot } from './shelf.ts';
 
 import { bindingsAt, hintOf } from './bindings.ts';
 
-const BARE: ShelfSpot = { rows: 0, spare: 0, whole: false };
+const BARE: ShelfSpot = { rows: 0, unassigned: 0, whole: false };
 
 function hintsAt(spot: BindingSpot): string[] {
   return bindingsAt(spot).map((binding) => hintOf(binding));
