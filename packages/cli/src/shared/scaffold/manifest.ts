@@ -91,10 +91,6 @@ function absentIn(
   return Object.fromEntries(Object.entries(fresh).filter(([field]) => !Object.hasOwn(held, field)));
 }
 
-function besideTheBlocks(fresh: Record<string, unknown>): Record<string, unknown> {
-  return Object.fromEntries(Object.entries(fresh).filter(([field]) => !BLOCKS.includes(field)));
-}
-
 function mergedBlocks(
   held: Record<string, unknown>,
   fresh: Record<string, unknown>,
@@ -140,7 +136,7 @@ function mergedManifestFile(
   const fresh = manifestOf(name, source);
   const merged = {
     ...manifest,
-    ...absentIn(manifest, besideTheBlocks(fresh)),
+    ...absentIn(manifest, fresh),
     ...mergedBlocks(manifest, fresh),
   };
   const contents = rendered(merged);
