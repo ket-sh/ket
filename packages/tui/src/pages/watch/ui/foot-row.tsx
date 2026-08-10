@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
-import type { KanbanColumnView, OplogEventView, UnfiledShelfView } from '../../../shared/model';
+import type { KanbanColumnView, OplogEventView } from '../../../shared/model';
+import type { ShelfSpot } from '../lib/shelf.ts';
 import type { BoardLayout } from '../model/board-layout.ts';
 import type { Filter } from '../model/filter.ts';
 import type { Frame, FrameStack } from '../model/frames.ts';
@@ -8,7 +9,6 @@ import type { WatchMouse } from '../model/mouse.ts';
 import type { Seat } from '../model/seat.ts';
 
 import { shownWorkOf } from '../lib/bindings.ts';
-import { releaseShelfOf } from '../lib/shelf.ts';
 import { FilterBar } from './filter-bar.tsx';
 import { KeyBar } from './key-bar.tsx';
 
@@ -33,7 +33,7 @@ interface FootRowProps {
   logFilter: Filter;
   shown: KanbanColumnView[];
   columns: KanbanColumnView[];
-  unfiled: UnfiledShelfView;
+  shelf: ShelfSpot;
   logRows: OplogEventView[];
   stack: FrameStack;
   seat: Seat;
@@ -70,7 +70,7 @@ export function FootRow(foot: FootRowProps): ReactNode {
         layout={layout}
         width={width}
         narrowed={narrowedWorn(filter, logFilter, top)}
-        shown={shownWorkOf(foot.shown, foot.logRows, releaseShelfOf(foot.unfiled))}
+        shown={shownWorkOf(foot.shown, foot.logRows, foot.shelf)}
         mouse={mouse}
       />
     </box>

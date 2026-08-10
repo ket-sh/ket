@@ -1,6 +1,6 @@
 import type { Pressed, WheelDirection } from './compass.ts';
 import type { JourneyMouse } from './journey-mouse.ts';
-import type { PressDeps } from './keys.ts';
+import type { PressDeps } from './press-deps.ts';
 
 import { catalogRows } from '../lib/docs.ts';
 import { seatedRow } from '../lib/oplog.ts';

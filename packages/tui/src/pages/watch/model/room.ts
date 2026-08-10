@@ -6,10 +6,10 @@ import type { BoardLayout } from './board-layout.ts';
 import type { Filter } from './filter.ts';
 import type { Frame, FrameStack } from './frames.ts';
 import type { Help } from './help.ts';
-import type { PressDeps } from './keys.ts';
 import type { WatchView } from './opening.ts';
 import type { Palette } from './palette.ts';
 import type { Picker } from './picker.ts';
+import type { PressDeps } from './press-deps.ts';
 import type { Seat } from './seat.ts';
 
 import { narrowedBy } from '../lib/filter.ts';

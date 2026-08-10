@@ -5,6 +5,7 @@ import type { BoardLayout } from '../model/board-layout.ts';
 import type { FrameStack } from '../model/frames.ts';
 import type { WatchMouse } from '../model/mouse.ts';
 import type { Seat } from '../model/seat.ts';
+import type { ShelfSeat } from '../model/shelf-seat.ts';
 
 import { MapPane } from '../../../widgets/story-map';
 import { BoardView } from './board.tsx';
@@ -22,6 +23,7 @@ export interface RoomProps {
   stack: FrameStack;
   columns: KanbanColumnView[];
   unfiled: UnfiledShelfView;
+  shelfSeat: ShelfSeat;
   logRows: OplogEventView[];
   seat: Seat;
   now: string;
@@ -37,10 +39,11 @@ export interface RoomProps {
 type BoardAreaProps = Omit<RoomProps, 'stack'>;
 
 const BOARD_AREAS: Record<BoardLayout, (held: BoardAreaProps) => ReactNode> = {
-  backlog: ({ columns, unfiled, now, seat, mouse }): ReactNode => (
+  backlog: ({ columns, unfiled, shelfSeat, now, seat, mouse }): ReactNode => (
     <BacklogView
       columns={columns}
       unfiled={unfiled}
+      shelfSeat={shelfSeat}
       now={now}
       chosenKey={seat.chosen?.key}
       mouse={mouse}

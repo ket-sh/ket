@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 
 import type { KanbanCardView, KanbanColumnView, UnfiledShelfView } from '../../../shared/model';
 import type { WatchMouse } from '../model/mouse.ts';
+import type { ShelfSeat } from '../model/shelf-seat.ts';
 import type { FlatRowKind } from './card-row.tsx';
 
 import { useTheme } from '../../../shared/theme';
@@ -53,10 +54,16 @@ function CardShelf({
   );
 }
 
-function UnfiledShelf({ unfiled }: { unfiled: UnfiledShelfView }): ReactNode {
+function UnfiledShelf({
+  unfiled,
+  shelfSeat,
+}: {
+  unfiled: UnfiledShelfView;
+  shelfSeat: ShelfSeat;
+}): ReactNode {
   const { theme } = useTheme();
 
-  if (unfiled.stories.length === 0) {
+  if (shelfSeat.rows.length === 0) {
     return null;
   }
 
@@ -66,16 +73,18 @@ function UnfiledShelf({ unfiled }: { unfiled: UnfiledShelfView }): ReactNode {
       border
       borderStyle="rounded"
       borderColor={theme.surface1}
-      title={` unfiled · ${unfiled.release?.name ?? 'unassigned'} · ${String(unfiled.stories.length)} to file `}
+      title={` unfiled · ${unfiled.release?.name ?? 'unassigned'} · ${String(shelfSeat.rows.length)} to file `}
       paddingLeft={1}
       paddingRight={1}
     >
-      <UnfiledRows stories={unfiled.stories} />
+      <UnfiledRows stories={shelfSeat.rows} chosenId={shelfSeat.chosen?.id} />
     </box>
   );
 }
 
-export function BacklogView(shelf: ShelfProps & { unfiled: UnfiledShelfView }): ReactNode {
+export function BacklogView(
+  shelf: ShelfProps & { unfiled: UnfiledShelfView; shelfSeat: ShelfSeat },
+): ReactNode {
   const cards = backlogOf(shelf.columns);
 
   return (
@@ -86,7 +95,7 @@ export function BacklogView(shelf: ShelfProps & { unfiled: UnfiledShelfView }): 
         cards={cards}
         shelf={shelf}
       />
-      <UnfiledShelf unfiled={shelf.unfiled} />
+      <UnfiledShelf unfiled={shelf.unfiled} shelfSeat={shelf.shelfSeat} />
     </>
   );
 }

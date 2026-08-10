@@ -1,7 +1,7 @@
 import type { Audience } from '../lib/lines.ts';
 import type { WheelDirection } from './compass.ts';
 import type { JourneyTab } from './frames.ts';
-import type { PressDeps } from './keys.ts';
+import type { PressDeps } from './press-deps.ts';
 
 import { neighborOf, placedOf } from '../lib/layout.ts';
 import { ACROSS } from './compass.ts';

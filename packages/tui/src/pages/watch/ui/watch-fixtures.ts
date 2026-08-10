@@ -166,6 +166,20 @@ export function filedFeedOf(): ActedFeed {
   return feedWith(structuredClone(COLUMNS), structuredClone(BARE_SHELF));
 }
 
+export function refusingFeedOf(): ActedFeed {
+  const feed = feedOf();
+
+  return {
+    ...feed,
+    promote: async (id) => {
+      await Promise.resolve();
+      feed.acted.push(`${id} promote`);
+
+      return { refused: `the story ${id} is already filed` };
+    },
+  };
+}
+
 function filedFrom(story: UnfiledStoryView, key: string): KanbanCardView {
   return {
     key,

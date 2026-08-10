@@ -13,19 +13,19 @@ import type { Ring } from '../model/chime.ts';
 import type { Filter } from '../model/filter.ts';
 import type { FrameStack } from '../model/frames.ts';
 import type { Help } from '../model/help.ts';
-import type { PressDeps } from '../model/keys.ts';
 import type { WatchMouse } from '../model/mouse.ts';
 import type { WatchView } from '../model/opening.ts';
 import type { Palette } from '../model/palette.ts';
 import type { Picker } from '../model/picker.ts';
+import type { PressDeps } from '../model/press-deps.ts';
 import type { Seat } from '../model/seat.ts';
-import type { RoomProps } from './stage.tsx';
+import type { ShelfSeat } from '../model/shelf-seat.ts';
 
 import { ThemeProvider } from '../../../shared/theme';
 import { Banner, Scheme, Sheet } from '../../../shared/ui';
+import { backlogLeftOf } from '../lib/backlog.ts';
 import { shownWorkOf } from '../lib/bindings.ts';
 import { laneTotalsOf } from '../lib/lanes.ts';
-import { releaseShelfOf } from '../lib/shelf.ts';
 import { standingOf } from '../lib/standing.ts';
 import { useBoardLayout } from '../model/board-layout.ts';
 import { useBoardState } from '../model/board-state.ts';
@@ -44,15 +44,15 @@ import {
   useWatchKeys,
 } from '../model/room.ts';
 import { useSeat } from '../model/seat.ts';
+import { useShelfSeat } from '../model/shelf-seat.ts';
 import { useFrameStack } from '../model/stack.ts';
 import { FootRow } from './foot-row.tsx';
-import { GateModal } from './gate.tsx';
 import { HeaderRow } from './header-row.tsx';
 import { HelpOverlay } from './help.tsx';
+import { CeremonyOverlay, PickerOverlay } from './overlays.tsx';
 import { PaletteOverlay } from './palette.tsx';
 import { PAGE_SIDE, StageArea } from './stage.tsx';
 import { surfaceMost } from './surface.tsx';
-import { ThemePicker } from './theme.tsx';
 
 const CHROME = 7;
 
@@ -65,56 +65,10 @@ export interface WatchPageProps {
   remember?: ((view: WatchView) => void) | undefined;
 }
 
-function statusOf(columns: KanbanColumnView[], key: string): string | undefined {
-  return columns.flatMap((column) => column.cards).find((card) => card.key === key)?.status;
-}
-
-function CeremonyOverlay({
-  stack,
-  columns,
-  tick,
-  width,
-  height,
-}: Omit<
-  RoomProps,
-  'seat' | 'now' | 'layout' | 'mouse' | 'logRows' | 'calm' | 'totals' | 'unfiled'
->): ReactNode {
-  if (stack.top.kind !== 'gate') {
-    return null;
-  }
-
-  return (
-    <GateModal
-      frame={stack.top}
-      from={statusOf(columns, stack.top.cardKey)}
-      tick={tick}
-      width={width}
-      height={height}
-    />
-  );
-}
-
-function PickerOverlay({
-  picker,
-  width,
-  height,
-  mouse,
-}: {
-  picker: Picker;
-  width: number;
-  height: number;
-  mouse: WatchMouse;
-}): ReactNode {
-  if (picker.at === undefined) {
-    return null;
-  }
-
-  return <ThemePicker at={picker.at} width={width} height={height} mouse={mouse} />;
-}
-
 interface Room {
   columns: KanbanColumnView[];
   unfiled: UnfiledShelfView;
+  shelfSeat: ShelfSeat;
   shown: KanbanColumnView[];
   logRows: OplogEventView[];
   now: string;
@@ -171,12 +125,15 @@ function useWatchRoom({
   const picker = usePicker(stack);
   const { filter, logFilter, shown, logRows } = useNarrowing(columns, layout, stack.top);
   const seat = useSeat(shown);
+  const shelfSeat = useShelfSeat(unfiled);
   const palette = usePalette({ columns, chosen: seat.chosen, stack, wear, picker, refresh, tick });
   const help = useHelp();
   const most = stack.top.kind === 'surface' ? surfaceMost(stack.top, height - CHROME) : 0;
   const standing = standingOf(layout, stack.frames, seat.chosen?.key);
   const leave = leavingOf(remember, standing, onQuit);
-  const deps = { onQuit: leave, refresh, stack, seat, most, tick, layout, swap, queue, shelve };
+  const filedLeft = backlogLeftOf(shown, seat.chosen?.key);
+  const walked = { seat, shelfSeat, filedLeft, layout };
+  const deps = { onQuit: leave, refresh, stack, most, tick, swap, queue, shelve, ...walked };
   const pressDeps = { ...deps, picker, filter, logFilter, palette, help };
   const mouse = mouseOf(pressDeps);
 
@@ -187,6 +144,7 @@ function useWatchRoom({
     totals: laneTotalsOf(columns),
     columns,
     unfiled,
+    shelfSeat,
     shown,
     logRows,
     now,
@@ -219,7 +177,7 @@ function OverlayLayer({ room }: { room: Room }): ReactNode {
         frame={stack.top}
         offers={seat.chosen?.offers ?? []}
         layout={layout}
-        shown={shownWorkOf(shown, logRows, releaseShelfOf(room.unfiled))}
+        shown={shownWorkOf(shown, logRows, room.shelfSeat.spot)}
         width={width}
         height={height}
       />
@@ -228,7 +186,7 @@ function OverlayLayer({ room }: { room: Room }): ReactNode {
 }
 
 function FootLayer({ room }: { room: Room }): ReactNode {
-  const { columns, shown, unfiled, logRows, stack, seat, layout, width, mouse } = room;
+  const { columns, shown, shelfSeat, logRows, stack, seat, layout, width, mouse } = room;
 
   return (
     <FootRow
@@ -236,7 +194,7 @@ function FootLayer({ room }: { room: Room }): ReactNode {
       logFilter={room.logFilter}
       shown={shown}
       columns={columns}
-      unfiled={unfiled}
+      shelf={shelfSeat.spot}
       logRows={logRows}
       stack={stack}
       seat={seat}
@@ -270,6 +228,7 @@ function WatchRoom(props: WatchPageProps): ReactNode {
           stack={stack}
           columns={shown}
           unfiled={unfiled}
+          shelfSeat={room.shelfSeat}
           logRows={logRows}
           seat={seat}
           now={now}

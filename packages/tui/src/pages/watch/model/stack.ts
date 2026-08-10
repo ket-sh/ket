@@ -1,6 +1,12 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import type { BoardFeed, GateActionView, JourneyView, SurfaceDocView } from '../../../shared/model';
+import type {
+  BoardFeed,
+  GateActionView,
+  JourneyView,
+  SurfaceDocView,
+  UnfiledStoryView,
+} from '../../../shared/model';
 import type { Draft } from '../lib/edit.ts';
 import type { Frame, FrameStack, GateSeat, Grow, JourneyTab, Tuning } from './frames.ts';
 import type { Doors } from './journey-tabs.ts';
@@ -12,6 +18,7 @@ import {
   judged,
   landingOf,
   refolded,
+  refusedPromotionOf,
   revisedIn,
   savedMark,
   scrolled,
@@ -22,7 +29,7 @@ import { enteredIn } from './journey-tabs.ts';
 import { logSeated, logSlid, mapSeated, mapWalked } from './screen-frames.ts';
 import { useSteering } from './steering.ts';
 
-type Ceremony = Pick<FrameStack, 'gate' | 'pass'>;
+type Ceremony = Pick<FrameStack, 'gate' | 'pass' | 'promote'>;
 
 function refreshedJourneys(feed: BoardFeed, key: string, setFrames: Grow): void {
   void feed.journey(key).then((fresh) => {
@@ -59,7 +66,18 @@ function useCeremony(feed: BoardFeed, top: Frame, setFrames: Grow): Ceremony {
     [top, feed, setFrames],
   );
 
-  return { gate, pass };
+  const promote = useCallback(
+    (story: UnfiledStoryView, tick: number) => {
+      void feed.promote(story.id).then((outcome) => {
+        if ('refused' in outcome) {
+          setFrames((stack) => [...stack, refusedPromotionOf(story, outcome.refused, tick)]);
+        }
+      });
+    },
+    [feed, setFrames],
+  );
+
+  return { gate, pass, promote };
 }
 
 type Editing = Pick<FrameStack, 'edit' | 'revise' | 'save'>;
@@ -234,7 +252,7 @@ function useHolding(setFrames: Grow): Holding {
 export function useFrameStack(feed: BoardFeed): FrameStack {
   const [frames, setFrames] = useState<Frame[]>([{ kind: 'board' }]);
   const top = frames[frames.length - 1] ?? ({ kind: 'board' } as const);
-  const { gate, pass } = useCeremony(feed, top, setFrames);
+  const { gate, pass, promote } = useCeremony(feed, top, setFrames);
   const { edit, revise, save } = useEditing(feed, top, setFrames);
   const { openMap, mapWalk, mapSeat } = useMapping(feed, setFrames);
   const { openLog, logSeat, logSlide } = useLogging(feed, setFrames);
@@ -266,6 +284,7 @@ export function useFrameStack(feed: BoardFeed): FrameStack {
     tune,
     gate,
     pass,
+    promote,
     edit,
     revise,
     save,
