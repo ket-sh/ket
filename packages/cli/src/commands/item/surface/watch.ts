@@ -87,6 +87,8 @@ export async function watching(
   changed: () => void,
   boundMs: number,
 ): Promise<Watchdog> {
+  await swept(join(itemDir, ARMING_SENTINEL));
+
   let pending: ReturnType<typeof setTimeout> | undefined;
   let confirm: (() => void) | undefined;
 
