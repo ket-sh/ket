@@ -1,11 +1,13 @@
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import type { Filing } from './decompose.ts';
 import type { Item } from './item.ts';
 import type { StoredItem } from './read-item.ts';
 
 import { CONFIGURATION_FILE, configurationIn } from './configuration-file.ts';
-import { renderItem } from './item.ts';
+import { describing } from './item-description.ts';
+import { promotedFrom, renderItem } from './item.ts';
 import { parseItem } from './read-item.ts';
 
 const KET_DIRECTORY = '.ket';
@@ -51,6 +53,19 @@ export async function write(root: string, key: string, item: Item): Promise<void
 
   await mkdir(directory, { recursive: true });
   await writeFile(join(directory, ITEM_FILE), renderItem(item), 'utf8');
+}
+
+export async function fileAlone(root: string, filing: Filing): Promise<void> {
+  await write(root, filing.key, {
+    title: filing.title,
+    kind: filing.kind,
+    size: filing.size,
+    status: 'triaged',
+    parent: undefined,
+    children: [],
+    ...promotedFrom(filing.story),
+    ...describing(filing.description),
+  });
 }
 
 export async function read(root: string, key: string): Promise<Item> {
