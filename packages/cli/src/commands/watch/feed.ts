@@ -11,9 +11,8 @@ import type { GateAction } from '../../shared/transition.ts';
 import type { DocsCatalog } from './docs-catalog.ts';
 import type { UnfiledShelf } from './shelf.ts';
 
-import { readLog, record } from '../../shared/event-log.ts';
-import { fileAlone, itemsIn, keyOf, readStored } from '../../shared/item-store.ts';
-import { nextKey } from '../../shared/item.ts';
+import { readLog } from '../../shared/event-log.ts';
+import { arriveAlone, readStored } from '../../shared/item-store.ts';
 import { foldJourney } from '../../shared/journey.ts';
 import { foldKanban } from '../../shared/kanban.ts';
 import { foldOplog } from '../../shared/oplog.ts';
@@ -119,16 +118,12 @@ async function promoteIn(root: string, id: string): Promise<Promoted> {
     return promotion;
   }
 
-  const key = nextKey(await keyOf(root), await itemsIn(root));
-
-  await fileAlone(root, {
-    key,
+  const key = await arriveAlone(root, {
     title: promotion.story.name,
     kind: 'feature',
     size: 'story',
     story: promotion.story.id,
   });
-  await record(root, { gate: 'transition', outcome: 'allowed', about: 'triaged', item: key });
 
   return { filed: key };
 }
