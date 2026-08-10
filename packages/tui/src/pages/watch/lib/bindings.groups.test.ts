@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import type { BindingSpot } from './bindings.ts';
+import type { ShelfSpot } from './shelf.ts';
 
 import { bindingsAt, groupedOf, hintOf } from './bindings.ts';
+
+const BARE: ShelfSpot = { rows: 0, spare: 0, whole: false };
 
 function groupAt(spot: BindingSpot, hint: string): string | undefined {
   return bindingsAt(spot).find((binding) => hintOf(binding) === hint)?.group;
@@ -15,6 +18,7 @@ describe('the group every binding wears', () => {
       layout: 'kanban',
       offers: ['approve'],
       holds: true,
+      shelf: BARE,
     };
 
     expect(groupAt(board, '←↑↓→ move')).toBe('move');
@@ -28,6 +32,7 @@ describe('the group every binding wears', () => {
       layout: 'kanban',
       offers: ['approve'],
       holds: true,
+      shelf: BARE,
     };
 
     expect(groupAt(board, 'a approve')).toBe('tools');
@@ -35,22 +40,31 @@ describe('the group every binding wears', () => {
   });
 
   it('files the slash under filter', () => {
-    const board: BindingSpot = { kind: 'board', layout: 'kanban', offers: [], holds: true };
+    const board: BindingSpot = {
+      kind: 'board',
+      layout: 'kanban',
+      offers: [],
+      holds: true,
+      shelf: BARE,
+    };
 
     expect(groupAt(board, '/ filter')).toBe('filter');
   });
 
   it('files the palette under open, wherever it appears', () => {
-    expect(groupAt({ kind: 'board', layout: 'kanban', offers: [], holds: true }, 'ctrl+p go')).toBe(
-      'open',
-    );
+    expect(
+      groupAt(
+        { kind: 'board', layout: 'kanban', offers: [], holds: true, shelf: BARE },
+        'ctrl+p go',
+      ),
+    ).toBe('open');
     expect(groupAt({ kind: 'map', holds: true }, 'ctrl+p go')).toBe('open');
   });
 
   it('files the help key under tools, wherever it appears', () => {
-    expect(groupAt({ kind: 'board', layout: 'kanban', offers: [], holds: true }, '? help')).toBe(
-      'tools',
-    );
+    expect(
+      groupAt({ kind: 'board', layout: 'kanban', offers: [], holds: true, shelf: BARE }, '? help'),
+    ).toBe('tools');
     expect(groupAt({ kind: 'surface' }, '? help')).toBe('tools');
   });
 });
@@ -58,7 +72,7 @@ describe('the group every binding wears', () => {
 describe('the grouping the help screen reads', () => {
   it('walks the groups in move, open, filter, tools order', () => {
     const grouped = groupedOf(
-      bindingsAt({ kind: 'board', layout: 'kanban', offers: [], holds: true }),
+      bindingsAt({ kind: 'board', layout: 'kanban', offers: [], holds: true, shelf: BARE }),
     );
 
     expect(grouped.map((held) => held.group)).toStrictEqual(['move', 'open', 'filter', 'tools']);
@@ -66,7 +80,7 @@ describe('the grouping the help screen reads', () => {
 
   it('keeps each binding under its group, in structure order', () => {
     const grouped = groupedOf(
-      bindingsAt({ kind: 'board', layout: 'kanban', offers: [], holds: true }),
+      bindingsAt({ kind: 'board', layout: 'kanban', offers: [], holds: true, shelf: BARE }),
     );
     const open = grouped.find((held) => held.group === 'open');
 
@@ -92,7 +106,7 @@ describe('the grouping the help screen reads', () => {
 
   it('drops the move group from the help of a board holding no card', () => {
     const grouped = groupedOf(
-      bindingsAt({ kind: 'board', layout: 'kanban', offers: [], holds: false }),
+      bindingsAt({ kind: 'board', layout: 'kanban', offers: [], holds: false, shelf: BARE }),
     );
 
     expect(grouped.map((held) => held.group)).toStrictEqual(['open', 'tools']);

@@ -25,6 +25,7 @@ import { ThemeProvider } from '../../../shared/theme';
 import { Banner, Scheme, Sheet } from '../../../shared/ui';
 import { shownWorkOf } from '../lib/bindings.ts';
 import { laneTotalsOf } from '../lib/lanes.ts';
+import { releaseShelfOf } from '../lib/shelf.ts';
 import { standingOf } from '../lib/standing.ts';
 import { useBoardLayout } from '../model/board-layout.ts';
 import { useBoardState } from '../model/board-state.ts';
@@ -218,7 +219,7 @@ function OverlayLayer({ room }: { room: Room }): ReactNode {
         frame={stack.top}
         offers={seat.chosen?.offers ?? []}
         layout={layout}
-        shown={shownWorkOf(shown, logRows)}
+        shown={shownWorkOf(shown, logRows, releaseShelfOf(room.unfiled))}
         width={width}
         height={height}
       />
@@ -226,10 +227,30 @@ function OverlayLayer({ room }: { room: Room }): ReactNode {
   );
 }
 
+function FootLayer({ room }: { room: Room }): ReactNode {
+  const { columns, shown, unfiled, logRows, stack, seat, layout, width, mouse } = room;
+
+  return (
+    <FootRow
+      filter={room.filter}
+      logFilter={room.logFilter}
+      shown={shown}
+      columns={columns}
+      unfiled={unfiled}
+      logRows={logRows}
+      stack={stack}
+      seat={seat}
+      layout={layout}
+      width={width - PAGE_SIDE * 2}
+      mouse={mouse}
+    />
+  );
+}
+
 function WatchRoom(props: WatchPageProps): ReactNode {
   const room = useWatchRoom(props);
-  const { columns, shown, logRows, now, tick, stack, seat, layout, width, height, mouse } = room;
-  const { filter, logFilter, unfiled } = room;
+  const { shown, logRows, now, tick, stack, seat, layout, width, height, mouse } = room;
+  const { unfiled } = room;
 
   return (
     <box
@@ -261,18 +282,7 @@ function WatchRoom(props: WatchPageProps): ReactNode {
           mouse={mouse}
         />
       </box>
-      <FootRow
-        filter={filter}
-        logFilter={logFilter}
-        shown={shown}
-        columns={columns}
-        logRows={logRows}
-        stack={stack}
-        seat={seat}
-        layout={layout}
-        width={width - PAGE_SIDE * 2}
-        mouse={mouse}
-      />
+      <FootLayer room={room} />
       <OverlayLayer room={room} />
     </box>
   );
