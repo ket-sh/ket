@@ -1,9 +1,11 @@
+import { rgbToHex } from '@opentui/core';
 import { createMockKeys } from '@opentui/core/testing';
 import { testRender } from '@opentui/react/test-utils';
 import { afterEach, describe, expect, it } from 'bun:test';
 
 import type { ActedFeed } from './watch-fixtures.ts';
 
+import { KANAGAWA } from '../../../shared/theme';
 import { WatchPage } from './index.tsx';
 import { feedOf, NOW } from './watch-fixtures.ts';
 
@@ -133,5 +135,20 @@ describe('the ceremony an offered gate opens', () => {
 
     expect(frame).not.toContain('approve gate');
     expect(feed.acted).toStrictEqual([]);
+  });
+});
+
+function panelTone(mark: string): string {
+  const spans = (rendered?.captureSpans().lines ?? []).flatMap((line) => line.spans);
+  const row = spans.find((span) => span.text.includes(mark));
+
+  return row === undefined ? '' : rgbToHex(row.bg).toLowerCase();
+}
+
+describe('the ground a gate ceremony stands on', () => {
+  it('lifts the ceremony off the ground it covers', async () => {
+    await opening([OFFERED]);
+
+    expect(panelTone('──►')).toBe(KANAGAWA.mantle.toLowerCase());
   });
 });

@@ -3,7 +3,7 @@ import { createMockKeys } from '@opentui/core/testing';
 import { testRender } from '@opentui/react/test-utils';
 import { afterEach, describe, expect, it } from 'bun:test';
 
-import { THEMES } from '../../../shared/theme';
+import { KANAGAWA, THEMES } from '../../../shared/theme';
 import { WatchPage } from './index.tsx';
 import { feedOf, NOW } from './watch-fixtures.ts';
 
@@ -80,6 +80,19 @@ function crumbTone(): string {
   return crumb === undefined ? '' : rgbToHex(crumb.fg).toLowerCase();
 }
 
+function sheetTone(): string {
+  const first = (rendered?.captureSpans().lines ?? [])[0]?.spans[0];
+
+  return first === undefined ? '' : rgbToHex(first.bg).toLowerCase();
+}
+
+function panelTone(mark: string): string {
+  const spans = (rendered?.captureSpans().lines ?? []).flatMap((line) => line.spans);
+  const row = spans.find((span) => span.text.includes(mark));
+
+  return row === undefined ? '' : rgbToHex(row.bg).toLowerCase();
+}
+
 describe('the theme picker over the watch', () => {
   it('opens on t and lists the wardrobe with color strips', async () => {
     const frame = await opening([PICKED]);
@@ -131,5 +144,27 @@ describe('the theme picker over the watch', () => {
 
     expect(frame).toContain('approve gate');
     expect(frame).not.toContain('themes');
+  });
+});
+
+describe('the ground the watch paints beneath itself', () => {
+  it('grounds the screen in the worn theme base', async () => {
+    await opening([]);
+
+    expect(sheetTone()).toBe(KANAGAWA.base.toLowerCase());
+  });
+
+  it('repaints the ground as the picker previews a theme', async () => {
+    await opening([PICKED, BROWSED]);
+
+    expect(sheetTone()).toBe(
+      SECOND_WORN?.base.toLowerCase() ?? 'the wardrobe lost its second theme',
+    );
+  });
+
+  it('lifts the picker panel off the ground it covers', async () => {
+    await opening([PICKED]);
+
+    expect(panelTone('kanagawa')).toBe(KANAGAWA.mantle.toLowerCase());
   });
 });
