@@ -6,7 +6,7 @@ sources:
   - presets/cli/src/**
   - presets/web/src/**
   - harness/**
-stamp: 63dd53e9a590
+stamp: 3319206bb93a
 ---
 
 # The ket handbook
@@ -71,6 +71,11 @@ sized `subtask` or `trivial` skips the design stage. Only a command moves a
 status, and
 the write gate refuses a hand edit of `item.yaml`'s fields, because a status
 anything can write is a status that means nothing.
+
+An item can also name the story on the map it came from. `ket item file --story <id>`
+records that id on the item, and an id the map never declared refuses with both
+the id and `.ket/story-map.yaml` named in the message. An item filed before the
+map named anything carries no story and stays valid.
 
 ### The commands that drive it
 

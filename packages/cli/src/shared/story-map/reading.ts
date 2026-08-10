@@ -10,6 +10,8 @@ import { readMap } from './schema.ts';
 
 const MAP_FILE = 'story-map.yaml';
 
+export const MAP_PATH = `${KET_DIRECTORY}/${MAP_FILE}`;
+
 export type MapShowing = { absent: true } | { refusals: string[] } | { map: MapView };
 
 function mapPathIn(root: string): string {

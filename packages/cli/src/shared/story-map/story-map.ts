@@ -39,4 +39,8 @@ export interface StoryMap {
   activities: MapActivity[];
 }
 
+export function storiesIn(map: StoryMap): MapStory[] {
+  return map.activities.flatMap((activity) => activity.steps.flatMap((step) => step.stories));
+}
+
 export type MapReading = { absent: true } | { refusals: string[] } | { map: StoryMap };

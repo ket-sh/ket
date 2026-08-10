@@ -1,13 +1,11 @@
 import type { MapStory, StoryMap } from './story-map.ts';
 
+import { storiesIn } from './story-map.ts';
+
 export interface UnfiledStory {
   id: string;
   name: string;
   release: string | undefined;
-}
-
-function storiesIn(map: StoryMap): MapStory[] {
-  return map.activities.flatMap((activity) => activity.steps.flatMap((step) => step.stories));
 }
 
 function standing(story: MapStory): UnfiledStory {

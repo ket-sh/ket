@@ -28,6 +28,7 @@ Depends on:
 Depends on:
 
 - [packages/cli shared](#packagescli-shared)
+- [packages/cli shared/story-map](#packagescli-sharedstory-map)
 - [packages/preset root](#packagespreset-root)
 
 ### packages/cli commands/map

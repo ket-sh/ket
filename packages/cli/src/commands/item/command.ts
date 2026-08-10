@@ -13,10 +13,12 @@ import { failuresAmong, localBinsOf } from '../../shared/checks.ts';
 import { record } from '../../shared/event-log.ts';
 import { semanticsOf } from '../../shared/governing.ts';
 import { describing } from '../../shared/item-description.ts';
-import { ITEM_KINDS, ITEM_SIZES, nextKey, titleRefusal } from '../../shared/item.ts';
+import { ITEM_KINDS, ITEM_SIZES, nextKey, promotedFrom, titleRefusal } from '../../shared/item.ts';
 import { ketRootOrThrow } from '../../shared/locate.ts';
 import { argvOf } from '../../shared/ring.ts';
 import { byStatus, moveThrough, whileNothingElseWorks } from '../../shared/stage.ts';
+import { promotionOf } from '../../shared/story-map/promotion.ts';
+import { readMapIn } from '../../shared/story-map/reading.ts';
 import {
   approvalOf,
   deliveryOf,
@@ -45,6 +47,20 @@ function oneOf<Known extends string>(known: readonly Known[], given: string): Kn
   return found;
 }
 
+async function storyPromotedIn(root: string, id: string | undefined): Promise<string | undefined> {
+  if (id === undefined) {
+    return undefined;
+  }
+
+  const promotion = promotionOf(await readMapIn(root), id);
+
+  if ('refused' in promotion) {
+    throw new Error(promotion.refused);
+  }
+
+  return promotion.story.id;
+}
+
 const file = defineCommand({
   meta: { name: 'file', description: 'File a triaged item' },
   args: {
@@ -52,6 +68,7 @@ const file = defineCommand({
     kind: { type: 'string', required: true, description: 'feature, bug, refactor or chore' },
     size: { type: 'string', required: true, description: 'epic, story, subtask or trivial' },
     parent: { type: 'string', description: 'The epic or story this breaks out of' },
+    story: { type: 'string', description: 'The story on the map this work comes from' },
     description: { type: 'string', description: 'The prose the issue-writing skill wrote' },
   },
   async run({ args }) {
@@ -71,6 +88,7 @@ const file = defineCommand({
       title: args.title,
       kind,
       size,
+      ...promotedFrom(await storyPromotedIn(root, args.story)),
       ...describing(args.description),
     };
 
