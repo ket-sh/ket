@@ -63,8 +63,8 @@ export async function uncommittedIn(root: string): Promise<string[]> {
   return said.split('\n').filter((line) => line !== '');
 }
 
-// The commit hooks arrive with bun install, which the user runs afterwards, so
-// there is nothing here to step around.
+// A step before this commit may have armed the commit hooks through bun
+// install, and the scaffold then passes the gates it wrote: never --no-verify.
 export async function commitScaffold(root: string): Promise<FirstCommit> {
   const staged = await ran(['git', 'add', '--all'], root);
 

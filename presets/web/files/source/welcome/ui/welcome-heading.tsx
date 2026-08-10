@@ -1,4 +1,4 @@
-import { cn } from '@/shared/cn.ts';
+import { cn } from '@/shared/lib/utils.ts';
 
 import { welcomeTo } from '../model/welcome.ts';
 

@@ -141,6 +141,19 @@ describe('a preset against everything a preset must be', () => {
   });
 });
 
+describe('a preset against the design system it names', () => {
+  it('holds a shadcn preset to the config shadcn apply reads', () => {
+    const broken: PresetSubject = {
+      ...SOUND,
+      item: { ...SOUND.item, designSystem: 'shadcn' },
+    };
+
+    expect(brokenInvariantsOf(broken)).toStrictEqual([
+      'the shadcn preset writes no components.json for apply to read',
+    ]);
+  });
+});
+
 describe('a preset against the change its mutation gate faces', () => {
   it('names the mutation gate that runs the whole battery on every change', () => {
     const broken: PresetSubject = {

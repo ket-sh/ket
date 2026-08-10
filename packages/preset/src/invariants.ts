@@ -6,6 +6,7 @@ import type { PresetSemantics } from './semantics.ts';
 import { configInvariantsOf } from './config-invariants.ts';
 import { contentInvariantsOf } from './contents-invariants.ts';
 import { declarationInvariantsOf } from './declaration-invariants.ts';
+import { designSystemInvariantsOf } from './design-system-invariants.ts';
 import { integrationInvariantsOf } from './integration-invariants.ts';
 import { lawInvariantsOf } from './law-invariants.ts';
 import { mutationScalingInvariantsOf, mutationScopeInvariantsOf } from './mutation-invariants.ts';
@@ -28,6 +29,7 @@ export function brokenInvariantsOf(subject: PresetSubject): string[] {
     ...integrationInvariantsOf(subject.item),
     ...pipelineInvariantsOf(subject.item, subject.semantics, subject.shipped),
     ...configInvariantsOf(subject.item, subject.shipped),
+    ...designSystemInvariantsOf(subject.item, subject.shipped),
     ...mutationScopeInvariantsOf(subject.item, subject.semantics, subject.shipped),
     ...mutationScalingInvariantsOf(subject.semantics),
     ...lawInvariantsOf(subject.item, subject.shipped, subject.harnessSkills),
