@@ -2,7 +2,12 @@ import type { ReactNode } from 'react';
 
 import { useTerminalDimensions } from '@opentui/react';
 
-import type { BoardFeed, KanbanColumnView, OplogEventView } from '../../../shared/model';
+import type {
+  BoardFeed,
+  KanbanColumnView,
+  OplogEventView,
+  UnfiledShelfView,
+} from '../../../shared/model';
 import type { BoardLayout } from '../model/board-layout.ts';
 import type { Ring } from '../model/chime.ts';
 import type { Filter } from '../model/filter.ts';
@@ -71,7 +76,7 @@ function CeremonyOverlay({
   height,
 }: Omit<
   RoomProps,
-  'seat' | 'now' | 'layout' | 'mouse' | 'logRows' | 'calm' | 'totals'
+  'seat' | 'now' | 'layout' | 'mouse' | 'logRows' | 'calm' | 'totals' | 'unfiled'
 >): ReactNode {
   if (stack.top.kind !== 'gate') {
     return null;
@@ -108,6 +113,7 @@ function PickerOverlay({
 
 interface Room {
   columns: KanbanColumnView[];
+  unfiled: UnfiledShelfView;
   shown: KanbanColumnView[];
   logRows: OplogEventView[];
   now: string;
@@ -157,7 +163,7 @@ function useWatchRoom({
   opening,
   remember,
 }: WatchPageProps): Room {
-  const { columns, loaded, now, tick, refresh } = useBoardState(feed, clock);
+  const { columns, unfiled, loaded, now, tick, refresh } = useBoardState(feed, clock);
   const stack = useFrameStack(feed);
   const { width, height } = useTerminalDimensions();
   const { layout, swap, queue, shelve, wear } = useBoardLayout();
@@ -179,6 +185,7 @@ function useWatchRoom({
     calm: calmOf(picker, palette, help),
     totals: laneTotalsOf(columns),
     columns,
+    unfiled,
     shown,
     logRows,
     now,
@@ -222,7 +229,7 @@ function OverlayLayer({ room }: { room: Room }): ReactNode {
 function WatchRoom(props: WatchPageProps): ReactNode {
   const room = useWatchRoom(props);
   const { columns, shown, logRows, now, tick, stack, seat, layout, width, height, mouse } = room;
-  const { filter, logFilter } = room;
+  const { filter, logFilter, unfiled } = room;
 
   return (
     <box
@@ -241,6 +248,7 @@ function WatchRoom(props: WatchPageProps): ReactNode {
         <StageArea
           stack={stack}
           columns={shown}
+          unfiled={unfiled}
           logRows={logRows}
           seat={seat}
           now={now}

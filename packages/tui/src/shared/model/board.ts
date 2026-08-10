@@ -183,6 +183,20 @@ export interface JourneyView {
 
 export type MovedView = { moved: string } | { refused: string };
 
+type PromotedView = { filed: string } | { refused: string };
+
+export interface UnfiledStoryView {
+  id: string;
+  name: string;
+  release: string | undefined;
+}
+
+export interface UnfiledShelfView {
+  release: { id: string; name: string } | undefined;
+  stories: UnfiledStoryView[];
+  unassigned: UnfiledStoryView[];
+}
+
 export interface OplogEventView {
   at: string | undefined;
   gate: string | undefined;
@@ -197,6 +211,8 @@ export interface OplogEventView {
 export interface BoardFeed {
   snapshot: () => Promise<KanbanColumnView[]>;
   storyMap: () => Promise<MapReadingView>;
+  unfiledShelf: () => Promise<UnfiledShelfView>;
+  promote: (id: string) => Promise<PromotedView>;
   journey: (key: string) => Promise<JourneyView | undefined>;
   act: (key: string, gate: GateActionView) => Promise<MovedView>;
   saveCriteria: (key: string, name: string, source: string) => Promise<void>;

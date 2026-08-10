@@ -18,6 +18,8 @@ export type {
   StageStateView,
   SketchView,
   SurfaceDocView,
+  UnfiledShelfView,
+  UnfiledStoryView,
 } from './board.ts';
 
 export type {

@@ -148,6 +148,16 @@ const feed: BoardFeed = {
 
     return { absent: true };
   },
+  unfiledShelf: async () => {
+    await Promise.resolve();
+
+    return { release: undefined, stories: [], unassigned: [] };
+  },
+  promote: async (id) => {
+    await Promise.resolve();
+
+    return { refused: `no story map stands behind the rehearsal board, so ${id} cannot be filed` };
+  },
   journey: async (key) => {
     await Promise.resolve();
 

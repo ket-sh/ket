@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import type { KanbanColumnView, OplogEventView } from '../../../shared/model';
+import type { KanbanColumnView, OplogEventView, UnfiledShelfView } from '../../../shared/model';
 import type { BoardLayout } from '../model/board-layout.ts';
 import type { FrameStack } from '../model/frames.ts';
 import type { WatchMouse } from '../model/mouse.ts';
@@ -21,6 +21,7 @@ export const PAGE_SIDE = 1;
 export interface RoomProps {
   stack: FrameStack;
   columns: KanbanColumnView[];
+  unfiled: UnfiledShelfView;
   logRows: OplogEventView[];
   seat: Seat;
   now: string;
@@ -36,8 +37,14 @@ export interface RoomProps {
 type BoardAreaProps = Omit<RoomProps, 'stack'>;
 
 const BOARD_AREAS: Record<BoardLayout, (held: BoardAreaProps) => ReactNode> = {
-  backlog: ({ columns, now, seat, mouse }): ReactNode => (
-    <BacklogView columns={columns} now={now} chosenKey={seat.chosen?.key} mouse={mouse} />
+  backlog: ({ columns, unfiled, now, seat, mouse }): ReactNode => (
+    <BacklogView
+      columns={columns}
+      unfiled={unfiled}
+      now={now}
+      chosenKey={seat.chosen?.key}
+      mouse={mouse}
+    />
   ),
   archive: ({ columns, now, seat, mouse }): ReactNode => (
     <ArchiveView columns={columns} now={now} chosenKey={seat.chosen?.key} mouse={mouse} />
