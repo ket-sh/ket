@@ -1,8 +1,9 @@
-import { chmod, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { teach } from '../../../vitest.toolbox-setup.ts';
 import { runCommand } from '../../run.ts';
 import { parseScaffoldRecord } from '../../shared/scaffold-manifest.ts';
 
@@ -12,7 +13,6 @@ printf 'installed\\n' > ".claude/skills/$5/SKILL.md"
 exit 0
 `;
 
-let restored = '';
 let sandbox = '';
 
 async function readIfWritten(root: string, path: string): Promise<string | undefined> {
@@ -26,13 +26,7 @@ async function recordedPathsOn(root: string): Promise<string[]> {
 }
 
 beforeEach(async () => {
-  restored = process.env['PATH'] ?? '';
-
-  const stubs = await mkdtemp(join(tmpdir(), 'ket-create-stub-'));
-
-  await writeFile(join(stubs, 'bunx'), OBLIGING, 'utf8');
-  await chmod(join(stubs, 'bunx'), 0o755);
-  process.env['PATH'] = `${stubs}:${restored}`;
+  await teach('bunx', OBLIGING);
 
   sandbox = await mkdtemp(join(tmpdir(), 'ket-create-mcp-'));
   vi.spyOn(process.stdout, 'write').mockReturnValue(true);
@@ -40,7 +34,6 @@ beforeEach(async () => {
 
 afterEach(() => {
   vi.restoreAllMocks();
-  process.env['PATH'] = restored;
 });
 
 describe('creating a web project that chose mobbin', () => {

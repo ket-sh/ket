@@ -1,9 +1,10 @@
 import { spawn } from 'node:child_process';
-import { chmod, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { teach } from '../../../vitest.toolbox-setup.ts';
 import { runCommand } from '../../run.ts';
 import { hashOf, parseScaffoldRecord } from '../../shared/scaffold-manifest.ts';
 
@@ -28,7 +29,6 @@ printf 'installed\\n' > ".claude/skills/$5/SKILL.md"
 exit 0
 `;
 
-let restored = '';
 let where = '';
 let lines: string[] = [];
 
@@ -69,13 +69,7 @@ async function rewriteRecord(root: string, files: Record<string, string>): Promi
 }
 
 beforeEach(async () => {
-  restored = process.env['PATH'] ?? '';
-
-  const stubs = await mkdtemp(join(tmpdir(), 'ket-update-stub-'));
-
-  await writeFile(join(stubs, 'bunx'), OBLIGING, 'utf8');
-  await chmod(join(stubs, 'bunx'), 0o755);
-  process.env['PATH'] = `${stubs}:${restored}`;
+  await teach('bunx', OBLIGING);
 
   where = join(await mkdtemp(join(tmpdir(), 'ket-update-')), 'order-service');
   await runCommand('create', [where]);
@@ -92,7 +86,6 @@ beforeEach(async () => {
 
 afterEach(() => {
   vi.restoreAllMocks();
-  process.env['PATH'] = restored;
   process.exitCode = undefined;
 });
 

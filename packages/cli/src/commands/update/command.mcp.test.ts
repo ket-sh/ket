@@ -1,9 +1,10 @@
 import { spawn } from 'node:child_process';
-import { chmod, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { teach } from '../../../vitest.toolbox-setup.ts';
 import { runCommand } from '../../run.ts';
 
 const OBLIGING = `#!/bin/sh
@@ -46,7 +47,6 @@ async function committed(root: string): Promise<void> {
   );
 }
 
-let restored = '';
 let where = '';
 let lines: string[] = [];
 
@@ -57,13 +57,7 @@ async function registrationOn(root: string): Promise<unknown> {
 }
 
 beforeEach(async () => {
-  restored = process.env['PATH'] ?? '';
-
-  const stubs = await mkdtemp(join(tmpdir(), 'ket-update-mcp-stub-'));
-
-  await writeFile(join(stubs, 'bunx'), OBLIGING, 'utf8');
-  await chmod(join(stubs, 'bunx'), 0o755);
-  process.env['PATH'] = `${stubs}:${restored}`;
+  await teach('bunx', OBLIGING);
 
   where = join(await mkdtemp(join(tmpdir(), 'ket-update-mcp-')), 'storefront');
   await runCommand('create', [where, '--preset', 'web', '--with', 'mobbin']);
@@ -80,7 +74,6 @@ beforeEach(async () => {
 
 afterEach(() => {
   vi.restoreAllMocks();
-  process.env['PATH'] = restored;
   process.exitCode = undefined;
 });
 

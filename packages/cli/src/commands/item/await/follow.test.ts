@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { setTimeout as settling } from 'node:timers/promises';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { realBun } from '../../../../vitest.toolbox-setup.ts';
 import { departureFrom } from './follow.ts';
 
 let root = '';
@@ -60,7 +61,7 @@ async function writtenDriver(): Promise<string> {
 
 async function exitCodeOf(driver: string): Promise<number | null> {
   return new Promise<number | null>((settle) => {
-    const child = spawn('bun', [driver], { stdio: 'ignore' });
+    const child = spawn(realBun(), [driver], { stdio: 'ignore' });
     const giveUp = setTimeout(() => {
       child.kill();
       settle(null);

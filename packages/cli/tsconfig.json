@@ -8,6 +8,14 @@
     "declaration": false,
     "declarationMap": false
   },
-  "include": ["src/**/*.ts", "scripts/**/*.ts", "vitest.config.ts", "vitest.git-setup.ts"],
+  "include": [
+    "src/**/*.ts",
+    "scripts/**/*.ts",
+    "vitest.config.ts",
+    "vitest.git-setup.ts",
+    "vitest.projects.ts",
+    "vitest.toolbox-global.ts",
+    "vitest.toolbox-setup.ts"
+  ],
   "exclude": ["src/commands/item/surface/client/**/*.ts"]
 }

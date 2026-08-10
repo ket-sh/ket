@@ -1,8 +1,9 @@
-import { chmod, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { teach } from '../vitest.toolbox-setup.ts';
 import { runCommand } from './run.ts';
 import { hashOf, parseScaffoldRecord } from './shared/scaffold-manifest.ts';
 import { KET_VERSION } from './shared/version.ts';
@@ -18,8 +19,6 @@ echo "could not reach github"
 exit 1
 `;
 
-let restored = '';
-
 const scratched: string[] = [];
 
 async function scratch(): Promise<string> {
@@ -30,26 +29,11 @@ async function scratch(): Promise<string> {
   return where;
 }
 
-// Every create reaches for the skills the preset locks, and a suite that let it
-// reach the network would measure github rather than ket.
-async function installerThat(behaves: string): Promise<void> {
-  const where = await scratch();
-
-  await writeFile(join(where, 'bunx'), behaves, 'utf8');
-  await chmod(join(where, 'bunx'), 0o755);
-
-  process.env['PATH'] = `${where}:${restored}`;
-}
-
 beforeEach(async () => {
-  restored = process.env['PATH'] ?? '';
-
-  await installerThat(OBLIGING);
+  await teach('bunx', OBLIGING);
 });
 
 afterEach(async () => {
-  process.env['PATH'] = restored;
-
   await Promise.all(
     scratched.splice(0).map(async (where) => rm(where, { recursive: true, force: true })),
   );
@@ -290,7 +274,7 @@ describe('the skills a created project starts with', () => {
   it('hands over a project that is still committed when no skill could install', async () => {
     const where = join(await scratch(), 'billing-gateway');
 
-    await installerThat(REFUSING);
+    await teach('bunx', REFUSING);
     await runCommand('create', [where]);
 
     await expect(readFile(join(where, 'skills-lock.json'), 'utf8')).resolves.toContain('vitest');

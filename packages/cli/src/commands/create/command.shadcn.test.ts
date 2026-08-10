@@ -1,8 +1,9 @@
-import { chmod, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { teach } from '../../../vitest.toolbox-setup.ts';
 import { runCommand } from '../../run.ts';
 
 const A_CODE = 'b2D0vQ7G4';
@@ -25,17 +26,11 @@ echo "bunx $*" >> tool.log
 exit 0
 `;
 
-let restored = '';
 let sandbox = '';
 
 async function toolsThat(bunx: string): Promise<void> {
-  const stubs = await mkdtemp(join(tmpdir(), 'ket-create-shadcn-stub-'));
-
-  await writeFile(join(stubs, 'bun'), RECORDING_BUN, 'utf8');
-  await chmod(join(stubs, 'bun'), 0o755);
-  await writeFile(join(stubs, 'bunx'), bunx, 'utf8');
-  await chmod(join(stubs, 'bunx'), 0o755);
-  process.env['PATH'] = `${stubs}:${restored}`;
+  await teach('bun', RECORDING_BUN);
+  await teach('bunx', bunx);
 }
 
 async function readIfWritten(root: string, path: string): Promise<string | undefined> {
@@ -43,14 +38,12 @@ async function readIfWritten(root: string, path: string): Promise<string | undef
 }
 
 beforeEach(async () => {
-  restored = process.env['PATH'] ?? '';
   sandbox = await mkdtemp(join(tmpdir(), 'ket-create-shadcn-'));
   vi.spyOn(process.stdout, 'write').mockReturnValue(true);
 });
 
 afterEach(() => {
   vi.restoreAllMocks();
-  process.env['PATH'] = restored;
 });
 
 describe('creating a web project with a shadcn preset code', () => {
