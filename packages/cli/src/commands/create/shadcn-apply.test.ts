@@ -1,10 +1,11 @@
-import { chmod, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { ShadcnPresetApplied } from './shadcn.ts';
 
+import { teach } from '../../../vitest.toolbox-setup.ts';
 import { applyShadcnPreset } from './shadcn-apply.ts';
 
 const A_CODE = 'b2D0vQ7G4';
@@ -34,20 +35,11 @@ echo "track=\${DO_NOT_TRACK-unset}" >> tool.log
 exit 0
 `;
 
-const PATH_SEPARATOR = ':';
-
-let restored = '';
 let restoredTracking: string | undefined;
 
 async function toolsThat(bun: string, bunx: string): Promise<void> {
-  const where = await mkdtemp(join(tmpdir(), 'ket-shadcn-tools-'));
-
-  await writeFile(join(where, 'bun'), bun, 'utf8');
-  await chmod(join(where, 'bun'), 0o755);
-  await writeFile(join(where, 'bunx'), bunx, 'utf8');
-  await chmod(join(where, 'bunx'), 0o755);
-
-  process.env['PATH'] = `${where}${PATH_SEPARATOR}${restored}`;
+  await teach('bun', bun);
+  await teach('bunx', bunx);
 }
 
 async function project(): Promise<string> {
@@ -63,13 +55,10 @@ function refusalIn(outcome: ShadcnPresetApplied): string {
 }
 
 beforeEach(() => {
-  restored = process.env['PATH'] ?? '';
   restoredTracking = process.env['DO_NOT_TRACK'];
 });
 
 afterEach(() => {
-  process.env['PATH'] = restored;
-
   if (restoredTracking === undefined) {
     delete process.env['DO_NOT_TRACK'];
   } else {

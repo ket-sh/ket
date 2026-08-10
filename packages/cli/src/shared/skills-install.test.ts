@@ -1,10 +1,11 @@
-import { chmod, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import type { SkillsInstalled } from './skills.ts';
 
+import { teach } from '../../vitest.toolbox-setup.ts';
 import { absentSkillsIn, installSkills } from './skills-install.ts';
 
 const LOCKFILE = JSON.stringify({
@@ -31,17 +32,8 @@ echo "clone timed out" >&1
 exit 1
 `;
 
-const PATH_SEPARATOR = ':';
-
-let restored = '';
-
 async function installerThat(behaves: string): Promise<void> {
-  const where = await mkdtemp(join(tmpdir(), 'ket-installer-'));
-
-  await writeFile(join(where, 'bunx'), behaves, 'utf8');
-  await chmod(join(where, 'bunx'), 0o755);
-
-  process.env['PATH'] = `${where}${PATH_SEPARATOR}${restored}`;
+  await teach('bunx', behaves);
 }
 
 async function project(): Promise<string> {
@@ -51,14 +43,6 @@ async function project(): Promise<string> {
 function refusalIn(outcome: SkillsInstalled): string {
   return 'refused' in outcome ? outcome.refused : '';
 }
-
-beforeEach(() => {
-  restored = process.env['PATH'] ?? '';
-});
-
-afterEach(() => {
-  process.env['PATH'] = restored;
-});
 
 describe('installing the skills a preset locks', () => {
   it('installs every skill the lockfile records, and says which arrived', async () => {
