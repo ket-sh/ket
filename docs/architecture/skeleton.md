@@ -139,6 +139,7 @@ Depends on:
 
 - [packages/tui shared/model](#packagestui-sharedmodel)
 - [packages/tui shared/theme](#packagestui-sharedtheme)
+- [packages/tui shared/ui](#packagestui-sharedui)
 - [packages/tui widgets/story-map](#packagestui-widgetsstory-map)
 
 ### packages/tui pages/watch
